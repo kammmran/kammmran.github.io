@@ -20,7 +20,6 @@ class Migration(migrations.Migration):
                 ('slug', models.SlugField(unique=True)),
                 ('content', models.TextField()),
                 ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('is_published', models.BooleanField(default=True)),
             ],
             options={

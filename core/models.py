@@ -9,7 +9,6 @@ class BlogPost(models.Model):
     slug = models.SlugField(unique=True)
     content = models.TextField()
     created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
     is_published = models.BooleanField(default=True)
     
     class Meta:
@@ -35,7 +34,6 @@ class Project(models.Model):
     github_url = models.URLField(blank=True, null=True)
     live_url = models.URLField(blank=True, null=True)
     created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
     is_published = models.BooleanField(default=True)
     
     class Meta:

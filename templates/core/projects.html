@@ -39,12 +39,8 @@
                                     <span>Kamran Heydarov</span>
                                 </div>
                                 <div class="project-date">
-                                    Created: {{ project.created_at|date:'F j, Y' }}
-                                    {% if project.updated_at != project.created_at %}
-                                        <span class="updated">
-                                            (Updated: {{ project.updated_at|date:'F j, Y' }})
-                                        </span>
-                                    {% endif %}
+                                    {{ project.created_at|date:'F j, Y' }}
+                                  
                                 </div>
                             </div>
                             

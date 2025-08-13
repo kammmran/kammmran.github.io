@@ -89,9 +89,10 @@ body {
     padding-bottom: 10px;
 }
 
-.project-content {
-    flex: 1;
-    max-width: 650px;
+@media (max-width: 1200px) {
+    .project-content {
+        max-width: 650px;
+    }
 }
 
 .project-post-content {
@@ -431,9 +432,6 @@ body {
     font-weight: 500;
 }
 
-.updated {
-    font-style: italic;
-}
 
 .blog-content h1 {
   margin-bottom: 10px;

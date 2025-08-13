@@ -37,11 +37,7 @@
                         <time datetime="{{ post.created_at|date:'Y-m-d' }}">
                             {{ post.created_at|date:'F j, Y' }}
                         </time>
-                        {% if post.updated_at != post.created_at %}
-                            <span class="updated">
-                                (Updated: {{ post.updated_at|date:'F j, Y' }})
-                            </span>
-                        {% endif %}
+                      
                     </div>
                 </header>
                 

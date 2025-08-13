@@ -22,7 +22,6 @@ class Migration(migrations.Migration):
                 ('github_url', models.URLField(blank=True, null=True)),
                 ('live_url', models.URLField(blank=True, null=True)),
                 ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
                 ('is_published', models.BooleanField(default=True)),
             ],
             options={
