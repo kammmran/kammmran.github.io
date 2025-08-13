@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}CV - Kamran Heydarov{% endblock %}
+
+{% block content %}
+
+<div class="cv-container">
+    <object
+        data="{% static 'docs/cv.pdf' %}"
+        type="application/pdf"
+        width="100%"
+        height="800px"
+        class="pdf-viewer"
+        style="padding-top: 10px">
+        <p>Unable to display PDF file. <a href="{% static 'cv.pdf' %}">Download</a> instead.</p>
+    </object>
+</div>
+{% endblock %}

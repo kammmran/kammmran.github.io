@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Projects - Kamran Heydarov{% endblock %}
+
+{% block content %}
+<div class="project-container">
+    <aside class="project-sidebar">
+        <h3>Projects</h3>
+        <div class="year-menu">
+            {% for project in all_projects %}
+                <div class="year-section">
+                    <a href="#" class="post-link" onclick="showProject('{{ project.slug }}'); return false;">
+                        {{ project.title }}
+                    </a>
+                </div>
+            {% empty %}
+                <p>No projects yet.</p>
+            {% endfor %}
+        </div>
+    </aside>
+    
+    <main class="project-content">
+        {% if all_projects %}
+            <div class="welcome-content" id="projects-welcome">
+                <h1>My Projects</h1>
+                <p>Here are some of the projects I've been working on. Click on any project in the sidebar to see more details.</p>
+            </div>
+        {% endif %}
+           
+        {% for project in all_projects %}
+            <div id="project-{{ project.slug }}" class="project-post-content" style="display: {% if forloop.first %}block{% else %}none{% endif %};">
+                <div class="project-article">
+                    <header class="project-header">
+                        <div class="project-header-content">
+                            <div class="project-header-left">
+                                <h1 class="project-title">{{ project.title }}</h1>
+                                <div class="project-author">
+                                    <span>Kamran Heydarov</span>
+                                </div>
+                                <div class="project-date">
+                                    Created: {{ project.created_at|date:'F j, Y' }}
+                                    {% if project.updated_at != project.created_at %}
+                                        <span class="updated">
+                                            (Updated: {{ project.updated_at|date:'F j, Y' }})
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Project Links next to header -->
+                            <div class="project-links-header">
+                                {% if project.github_url %}
+                                    <a href="{{ project.github_url }}" target="_blank" class="project-link-btn github-btn">
+                                        View on GitHub
+                                    </a>
+                                {% endif %}
+                                {% if project.live_url %}
+                                    <a href="{{ project.live_url }}" target="_blank" class="project-link-btn live-btn">
+                                        Live Demo
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </header>
+                    
+                    <div class="project-content-text">
+                        {{ project.get_markdown_description|safe }}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="no-posts">
+                <p>No projects to display yet. Check back later!</p>
+            </div>
+        {% endfor %}
+    </main>
+</div>
+
+<script>
+function showProject(slug) {
+    // Hide welcome content
+    const welcomeContent = document.getElementById('projects-welcome');
+    if (welcomeContent) {
+        welcomeContent.style.display = 'none';
+    }
+    
+    // Hide all project contents
+    const allProjects = document.querySelectorAll('.project-post-content');
+    allProjects.forEach(project => {
+        project.style.display = 'none';
+    });
+    
+    // Show selected project
+    const selectedProject = document.getElementById('project-' + slug);
+    if (selectedProject) {
+        selectedProject.style.display = 'block';
+    }
+    
+    // Update active link styling
+    const allLinks = document.querySelectorAll('.post-link');
+    allLinks.forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Add active class to clicked link
+    event.target.classList.add('active');
+}
+
+// When page loads, show the latest project and mark first link as active
+document.addEventListener('DOMContentLoaded', function() {
+    const welcomeContent = document.getElementById('projects-welcome');
+    if (welcomeContent) {
+        welcomeContent.style.display = 'none';
+    }
+    
+    // Show the first (latest) project by default
+    const firstProject = document.querySelector('.project-post-content');
+    if (firstProject) {
+        firstProject.style.display = 'block';
+    }
+    
+    // Mark the first project link as active
+    const firstProjectLink = document.querySelector('.post-link');
+    if (firstProjectLink) {
+        firstProjectLink.classList.add('active');
+    }
+});
+</script>
+{% endblock %}

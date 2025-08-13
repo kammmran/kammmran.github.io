@@ -1,0 +1,48 @@
+
+<title>{% block title %}Kamran Heydarov{% endblock %}</title>
+{% load static %}
+
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h3>Kamran Heydarov</h3>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="{% url 'core:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <span>Home</span>
+                    </a>
+                </li>
+
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'core:projects' %}" class="nav-link {% if request.resolver_match.url_name == 'projects' %}active{% endif %}">
+                        <span>Projects</span>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{% url 'core:cv' %}" class="nav-link {% if request.resolver_match.url_name == 'cv' %}active{% endif %}">
+                        <span>CV</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+     
+        <main class="main-content">
+        <div class="content-container">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
+
+
+</body>
+</html>
