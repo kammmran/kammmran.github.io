@@ -1,0 +1,44 @@
+{
+  "name": "Kamran Heydarov Portfolio",
+  "description": "Personal portfolio website built with Django",
+  "image": "heroku/python",
+  "repository": "https://github.com/kammmran/kamranheydarov.tech-2026",
+  "keywords": ["python", "django", "portfolio", "blog"],
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    }
+  ],
+  "env": {
+    "SECRET_KEY": {
+      "description": "Django secret key for cryptographic signing",
+      "generator": "secret"
+    },
+    "DEBUG": {
+      "description": "Enable debug mode",
+      "value": "False"
+    },
+    "ALLOWED_HOSTS": {
+      "description": "Comma-separated list of allowed hosts",
+      "value": ".herokuapp.com"
+    },
+    "DJANGO_SETTINGS_MODULE": {
+      "description": "Django settings module",
+      "value": "main.settings"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "python manage.py migrate && python manage.py create_sample_posts && python manage.py create_sample_projects"
+  }
+}
