@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamran Heydarov</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Centerizing additions */
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .blog-container, .project-container, .cv-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .project-post-content, .blog-post-content {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .blog-content-text, .project-content-text {
+            text-align: left; /* Keep readable text, but container centered */
+            width: 100%;
+        }
+        .blog-header, .project-header {
+            text-align: center;
+            width: 100%;
+        }
+        /* Overrides for older styles */
+        .blog-sidebar, .project-sidebar { display: none; }
+        .blog-container, .project-container { display: flex; margin: 0 auto; }
+        
+        .year-section a {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+        }
+        .year-section a.active {
+            background: #000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h3>Kamran Heydarov</h3>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link"><span>Home</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="cv.html" class="nav-link"><span>CV</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <main class="main-content">
+        <div class="content-container" id="content-container">
+            <div class="cv-container">
+                <object
+                    data="docs/cv.pdf"
+                    type="application/pdf"
+                    width="100%"
+                    height="800px"
+                    class="pdf-viewer"
+                    style="padding-top: 10px; max-width: 1000px;">
+                    <p>Unable to display PDF file. <a href="docs/cv.pdf">Download</a> instead.</p>
+                </object>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

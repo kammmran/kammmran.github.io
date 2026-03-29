@@ -1,0 +1,74 @@
+[
+  {
+    "type": "project",
+    "title": "pyionics",
+    "file": "data/projects/pyionics.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "ChemGraph (Old Version - KNIME Based",
+    "file": "data/projects/chemgraph-old-version-knime-based.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "IELTS TIMER",
+    "file": "data/projects/ielts-timer.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "ILTHERMO GUI",
+    "file": "data/projects/ilthermo-gui.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "MentorCorp: Specialized Consultancy Group for Targeted Mentorship and Research in Management Practices",
+    "file": "data/projects/mentorcorp-specialized-consultancy-group-for-targeted-mentorship-and-research-in-management-practices.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "Science Club",
+    "file": "data/projects/science-club.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "EVO ECO",
+    "file": "data/projects/evo-eco.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "FreeBee",
+    "file": "data/projects/freebee.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "OxGame",
+    "file": "data/projects/oxgame.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "ChemGraph",
+    "file": "data/projects/chemgraph.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "TEMA HX design",
+    "file": "data/projects/tema-hx-design.md",
+    "date": "2025-07-30"
+  },
+  {
+    "type": "project",
+    "title": "ILpyTHERMO",
+    "file": "data/projects/ilpythermo.md",
+    "date": "2025-07-30"
+  }
+]
