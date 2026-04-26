@@ -50,7 +50,7 @@ Robust JSON endpoints powering the asynchronous frontend fetching:
 - **`/api/features/?dataset=<key>`**: Streams spatial coordinates, deposit types, and HTML descriptions for fast interactive map rendering.
 - **`/api/quiz/?section=<section_name>`**: Implements `random.sample()` logic to inject live, structurally validated 4-choice questions mapped strictly to one accurate answer and three deliberately distinct wrong choices. 
 
----
+
 
 ## ⚙️ Technical Architecture
 
@@ -59,7 +59,6 @@ Robust JSON endpoints powering the asynchronous frontend fetching:
 - **Mapping:** OpenLayers (ol.js) combined with Django ORM generated GeoJSON/JSON payloads.
 - **Data Stores:** SQLite (default Django ORM), reading from parsed `.csv` files and `.kml` structures, directly interfacing with the RRUFF database text and image assets.
 
----
 
 ## 🚀 Running the Server Locally
 
@@ -78,7 +77,7 @@ Robust JSON endpoints powering the asynchronous frontend fetching:
    ```
 4. Access the application on **`http://localhost:8001`**.
 
----
+
 
 *This application is maintained under the Mineralogy Project workspace.*
 
