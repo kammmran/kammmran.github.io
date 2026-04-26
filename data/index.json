@@ -1,6 +1,12 @@
 [
   {
     "type": "project",
+    "title": "CHRON SHIFT",
+    "file": "data/projects/chron-shift.md",
+    "date": "2026-04-20"
+  },
+  {
+    "type": "project",
     "title": "pyionics",
     "file": "data/projects/pyionics.md",
     "date": "2025-07-30"
