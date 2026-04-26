@@ -1,4 +1,5 @@
 
+Game link : [Click](https://kammmran.github.io/game)
 
 ## Introduction
 
@@ -7,7 +8,7 @@ Chron shift is vibe coding based simple game that will be play single and multi 
 Here are video record of game : 
 
 
-<video controls width="100%">
-  <source src="game.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<iframe width="100%" height="315"
+src="https://www.youtube.com/embed/nuVK5tvzwvo"
+frameborder="0" allowfullscreen>
+</iframe>

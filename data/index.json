@@ -1,6 +1,12 @@
 [
   {
     "type": "project",
+    "title": "press.asoiu.edu.az",
+    "file": "data/projects/press.md",
+    "date": "2026-02-20"
+  },
+  {
+    "type": "project",
     "title": "CHRON SHIFT",
     "file": "data/projects/chron-shift.md",
     "date": "2026-04-20"
