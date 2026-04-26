@@ -1,9 +1,27 @@
 [
+    {
+    "type": "project",
+    "title": "Mapology",
+    "file": "data/projects/mapology.md",
+    "date": "2026-02-20"
+  },
   {
     "type": "project",
     "title": "press.asoiu.edu.az",
     "file": "data/projects/press.md",
     "date": "2026-02-20"
+  },
+  {
+    "type": "project",
+    "title": "LIMS",
+    "file": "data/projects/lims.md",
+    "date": "2026-02-28"
+  },
+    {
+    "type": "project",
+    "title": "TruthRadar",
+    "file": "data/projects/truthradar.md",
+    "date": "2026-02-25"
   },
   {
     "type": "project",
@@ -63,7 +81,7 @@
     "type": "project",
     "title": "OxGame",
     "file": "data/projects/oxgame.md",
-    "date": "2025-07-30"
+    "date": "2022-07-30"
   },
   {
     "type": "project",
