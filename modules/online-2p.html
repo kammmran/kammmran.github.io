@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CHRONO SHIFT — ONLINE 2P</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="mode.css">
+</head>
+<body class="mode-1p mode-online">
+<canvas id="bg"></canvas>
+
+<button id="leaveBtn" onclick="toMenu()">✕ LEAVE</button>
+
+<div id="hud">
+  <div class="hp-wrap" id="hpWrap1">
+    <div class="sl" style="margin-bottom:4px; color: var(--c);">HEALTH</div>
+    <div class="hp-tr"><div class="hp-f" id="hpF1"></div></div>
+  </div>
+  <div class="sp"><div class="sl">SCORE</div><div class="sv" id="hSc">0</div></div>
+  <div class="sp" id="hBestBox"><div class="sl">BEST</div><div class="sv" id="hBs">0</div></div>
+  <div class="sp"><div class="sl">LEVEL</div><div class="sv" id="hLv">1</div></div>
+  <div class="sp" id="hKillBox" style="display:none"><div class="sl">KILLS</div><div class="sv" id="hKl">0</div></div>
+  <div class="hp-wrap" id="hpWrap2" style="display:none">
+    <div class="sl" style="margin-bottom:4px; color: var(--r);">FRIEND HP</div>
+    <div class="hp-tr"><div class="hp-f" id="hpF2" style="background: linear-gradient(90deg, #ff0055, #ff8800);"></div></div>
+  </div>
+</div>
+
+<div id="modeBadge">
+  <div class="badge badge-mode" id="bMode">ONLINE 2P</div>
+  <div class="badge badge-diff" id="bDiff">NORMAL</div>
+  <div class="badge badge-net" id="bNet">…</div>
+</div>
+
+<div id="skillBar">
+  <div class="sk" id="sk0" title="Shield Pulse">
+    <div class="sk-icon">🛡</div><div class="sk-key">Q</div>
+    <div class="sk-cd" id="scd0" style="width:0%"></div>
+  </div>
+  <div class="sk" id="sk1" title="Time Bomb">
+    <div class="sk-icon">💣</div><div class="sk-key">E</div>
+    <div class="sk-cd" id="scd1" style="width:0%"></div>
+  </div>
+  <div class="sk" id="sk2" title="Overdrive">
+    <div class="sk-icon">⚡</div><div class="sk-key">R</div>
+    <div class="sk-cd" id="scd2" style="width:0%"></div>
+  </div>
+</div>
+
+<div id="weapBar">
+  <div class="wp active" id="wp0">
+    <div class="wp-name">🔫 PISTOL <span class="kbd">[1]</span></div>
+    <div class="wp-ammo" id="wa0">∞</div>
+  </div>
+  <div class="wp" id="wp1">
+    <div class="wp-name">⚡ PLASMA <span class="kbd">[2]</span></div>
+    <div class="wp-ammo" id="wa1">0</div>
+  </div>
+  <div class="wp" id="wp2">
+    <div class="wp-name">❄ TIME GUN <span class="kbd">[3]</span></div>
+    <div class="wp-ammo" id="wa2">0</div>
+  </div>
+</div>
+
+<div id="comboBox">
+  <div id="comboCount">x1</div>
+  <div id="comboLbl">COMBO</div>
+  <div id="comboBr"><div id="comboFill" style="width:100%"></div></div>
+</div>
+
+<canvas id="gameCanvas" width="1200" height="680"></canvas>
+
+<!-- ONLINE LOBBY — shown until both peers have connected. -->
+<div class="panel" id="lobbyPanel" style="min-width:480px; max-width:560px">
+  <div class="pt" style="font-size:28px">ONLINE 2P</div>
+  <div id="lobbyInit">
+    <p class="rd" style="text-align:center;margin:0 0 18px">One friend hosts (gets a code) · the other joins (enters that code).</p>
+    <div style="display:flex;flex-direction:column;gap:10px;align-items:center">
+      <button class="btn" id="btnHost">🎮 GENERATE CODE (Host)</button>
+      <div style="font-size:11px;color:#777;margin:6px 0">— OR —</div>
+      <input id="joinCode" class="sel-ctl" style="text-transform:uppercase;letter-spacing:2px;font-size:16px;padding:10px;width:80%;text-align:center" placeholder="ENTER CODE" maxlength="20">
+      <button class="btn btn-g" id="btnJoin">🤝 JOIN GAME</button>
+    </div>
+    <div style="text-align:center;margin-top:14px"><button class="btn btn-g" onclick="toMenu()">← BACK</button></div>
+  </div>
+
+  <div id="lobbyHosting" style="display:none">
+    <p class="rd" style="text-align:center;margin:0 0 12px">Share this code with your friend:</p>
+    <div id="codeDisplay" class="code-pill">…</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+      <button class="btn btn-g" id="btnCopy">📋 COPY</button>
+      <button class="btn btn-g" id="btnRegen">🎲 NEW CODE</button>
+    </div>
+    <p class="rd" style="text-align:center;margin:18px 0 0;color:var(--c)" id="hostStatus">⏳ Waiting for friend to join…</p>
+    <div style="text-align:center;margin-top:14px"><button class="btn btn-g" onclick="toMenu()">CANCEL</button></div>
+  </div>
+
+  <div id="lobbyJoining" style="display:none">
+    <p class="rd" style="text-align:center;margin:0 0 12px" id="joinStatus">⏳ Connecting…</p>
+    <div style="text-align:center;margin-top:14px"><button class="btn btn-g" onclick="toMenu()">CANCEL</button></div>
+  </div>
+
+  <div id="lobbyError" style="display:none">
+    <p class="rd" style="text-align:center;margin:0 0 12px;color:var(--r)" id="errMsg">Connection failed.</p>
+    <div style="text-align:center"><button class="btn btn-g" onclick="location.reload()">TRY AGAIN</button></div>
+  </div>
+</div>
+
+<div class="panel" id="shopPanel" style="min-width:500px">
+  <div class="pt">LEVEL SHOP</div>
+  <div class="ps">Score: <span id="shopScore">0</span> &nbsp;|&nbsp; Kills: <span id="shopKills">0</span></div>
+  <div class="shop-grid" id="shopGrid"></div>
+  <button class="btn" onclick="continueLevel()">CONTINUE →</button>
+</div>
+
+<div class="panel" id="lcPanel">
+  <div class="pt">LEVEL CLEAR!</div>
+  <div class="ps">Score: <span id="lcScore">0</span></div>
+  <div class="pb" id="lcBonus">+500 Portal Bonus</div>
+  <div class="psub" id="lcDetail"></div>
+  <button class="btn" onclick="openShop()">SHOP & CONTINUE →</button>
+</div>
+
+<div class="panel" id="goPanel">
+  <div class="pt r">TIME COLLAPSED</div>
+  <div class="ps">Score: <span id="goSc">0</span></div>
+  <div class="psub">Level <span id="goLv">1</span> · Kills: <span id="goKl">0</span></div>
+  <div class="rec" id="goRec" style="display:none">⚡ NEW RECORD!</div>
+  <br>
+  <button class="btn" onclick="restartGame()">PLAY AGAIN</button>
+  <button class="btn btn-g" onclick="toMenu()">MENU</button>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="../script.js"></script>
+<script src="online-2p.js"></script>
+</body>
+</html>

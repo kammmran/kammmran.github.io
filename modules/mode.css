@@ -1,0 +1,55 @@
+/* Mode-specific cosmetics. Layered on top of ../style.css. */
+
+body.mode-1p{
+  background:radial-gradient(ellipse at center, #0a0a22 0%, #02020a 70%);
+}
+body.mode-1p #gameCanvas{
+  border-color:rgba(0,245,255,.55);
+  box-shadow:0 0 60px rgba(0,245,255,.25), inset 0 0 40px rgba(161,0,255,.08);
+}
+body.mode-1p .badge-mode{background:rgba(0,245,255,.15);color:var(--c);border-color:var(--c)}
+
+/* In single-player mode, push the skill bar and weapon bar to the right edge so the player's
+   left side stays clear. The shared style.css pins them to the left for split-screen 2P. */
+body.mode-1p #skillBar{left:auto;right:20px}
+body.mode-1p #weapBar{left:auto;right:240px;align-items:flex-end}
+
+body.mode-2p{
+  background:linear-gradient(135deg, #0d031c 0%, #1a0418 50%, #061224 100%);
+}
+body.mode-2p #gameCanvas{
+  border-color:rgba(255,0,85,.45);
+  box-shadow:0 0 60px rgba(255,0,85,.18), inset 0 0 60px rgba(0,245,255,.08);
+}
+body.mode-2p #hpWrap1 .hp-f{background:linear-gradient(90deg,#00f5ff,#a100ff)}
+body.mode-2p .badge-mode{background:rgba(255,0,212,.15);color:var(--pk);border-color:var(--pk)}
+
+/* P1 (cyan) and P2 (red/orange) controls hint chips in 2P mode */
+body.mode-2p #ctrlHint{
+  bottom:8px;
+  max-width:100vw;
+}
+body.mode-2p .ch.p1{border-color:rgba(0,245,255,.45);color:var(--c)}
+body.mode-2p .ch.p1 span{color:#fff;background:rgba(0,245,255,.18);padding:1px 6px;border-radius:4px;margin-right:6px}
+body.mode-2p .ch.p2{border-color:rgba(255,0,85,.45);color:#ff7799}
+body.mode-2p .ch.p2 span{color:#fff;background:rgba(255,0,85,.22);padding:1px 6px;border-radius:4px;margin-right:6px}
+
+.kbd{font-size:10px;color:#aaa;background:rgba(255,255,255,.08);padding:1px 5px;border-radius:3px;margin-left:4px}
+
+/* ── Online lobby ──────────────────────────────────────────── */
+body.mode-online{
+  background:linear-gradient(135deg,#0a0420 0%, #082042 50%, #060220 100%);
+}
+.code-pill{
+  font-family:'Segoe UI',monospace;font-size:34px;font-weight:900;letter-spacing:6px;
+  background:linear-gradient(135deg,rgba(0,245,255,.2),rgba(161,0,255,.2));
+  border:2px solid rgba(0,245,255,.55);
+  color:var(--c);
+  text-align:center;padding:14px 18px;border-radius:12px;
+  user-select:all;cursor:text;
+  box-shadow:0 0 24px rgba(0,245,255,.25), inset 0 0 14px rgba(161,0,255,.15);
+}
+.badge-net{
+  background:rgba(0,255,136,.15);color:var(--g);border:1px solid var(--g);
+  padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CHRONO SHIFT — 1 PLAYER</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="mode.css">
+</head>
+<body class="mode-1p">
+<canvas id="bg"></canvas>
+
+<button id="leaveBtn" onclick="toMenu()">✕ LEAVE</button>
+
+<div id="hud">
+  <div class="hp-wrap" id="hpWrap1">
+    <div class="sl" style="margin-bottom:4px; color: var(--c);">HEALTH</div>
+    <div class="hp-tr"><div class="hp-f" id="hpF1"></div></div>
+  </div>
+  <div class="sp"><div class="sl">SCORE</div><div class="sv" id="hSc">0</div></div>
+  <div class="sp" id="hBestBox"><div class="sl">BEST</div><div class="sv" id="hBs">0</div></div>
+  <div class="sp"><div class="sl">LEVEL</div><div class="sv" id="hLv">1</div></div>
+  <div class="sp" id="hKillBox" style="display:none"><div class="sl">KILLS</div><div class="sv" id="hKl">0</div></div>
+</div>
+
+<div id="modeBadge">
+  <div class="badge badge-mode" id="bMode">1 PLAYER</div>
+  <div class="badge badge-diff" id="bDiff">NORMAL</div>
+</div>
+
+<div id="skillBar">
+  <div class="sk" id="sk0" title="Shield Pulse">
+    <div class="sk-icon">🛡</div><div class="sk-key">Q</div>
+    <div class="sk-cd" id="scd0" style="width:0%"></div>
+  </div>
+  <div class="sk" id="sk1" title="Time Bomb">
+    <div class="sk-icon">💣</div><div class="sk-key">E</div>
+    <div class="sk-cd" id="scd1" style="width:0%"></div>
+  </div>
+  <div class="sk" id="sk2" title="Overdrive">
+    <div class="sk-icon">⚡</div><div class="sk-key">R</div>
+    <div class="sk-cd" id="scd2" style="width:0%"></div>
+  </div>
+</div>
+
+<div id="weapBar">
+  <div class="wp active" id="wp0">
+    <div class="wp-name">🔫 PISTOL <span class="kbd">[1]</span></div>
+    <div class="wp-ammo" id="wa0">∞</div>
+  </div>
+  <div class="wp" id="wp1">
+    <div class="wp-name">⚡ PLASMA <span class="kbd">[2]</span></div>
+    <div class="wp-ammo" id="wa1">0</div>
+  </div>
+  <div class="wp" id="wp2">
+    <div class="wp-name">❄ TIME GUN <span class="kbd">[3]</span></div>
+    <div class="wp-ammo" id="wa2">0</div>
+  </div>
+</div>
+
+<div id="comboBox">
+  <div id="comboCount">x1</div>
+  <div id="comboLbl">COMBO</div>
+  <div id="comboBr"><div id="comboFill" style="width:100%"></div></div>
+</div>
+
+<canvas id="gameCanvas" width="1200" height="680"></canvas>
+
+<!-- Touch controls -->
+<div id="touch">
+  <div class="tg">
+    <div class="tb" id="tL">◀</div>
+    <div class="tb" id="tR">▶</div>
+  </div>
+  <div class="tg">
+    <div class="tb" id="tFr">⏪</div>
+    <div class="tb" id="tSh">🛡</div>
+    <div class="tb" id="tDs">💨</div>
+    <div class="tb" id="tFi">🔫</div>
+    <div class="tb" id="tJp">▲</div>
+  </div>
+</div>
+
+<!-- Game-over / shop / level-complete panels (re-used by engine). Menu panels live on the
+     home page; pressing LEAVE returns there. -->
+<div class="panel" id="shopPanel" style="min-width:500px">
+  <div class="pt">LEVEL SHOP</div>
+  <div class="ps">Score: <span id="shopScore">0</span> &nbsp;|&nbsp; Kills: <span id="shopKills">0</span></div>
+  <div class="shop-grid" id="shopGrid"></div>
+  <button class="btn" onclick="continueLevel()">CONTINUE →</button>
+</div>
+
+<div class="panel" id="lcPanel">
+  <div class="pt">LEVEL CLEAR!</div>
+  <div class="ps">Score: <span id="lcScore">0</span></div>
+  <div class="pb" id="lcBonus">+500 Portal Bonus</div>
+  <div class="psub" id="lcDetail"></div>
+  <button class="btn" onclick="openShop()">SHOP & CONTINUE →</button>
+</div>
+
+<div class="panel" id="goPanel">
+  <div class="pt r">TIME COLLAPSED</div>
+  <div class="ps">Score: <span id="goSc">0</span></div>
+  <div class="psub">Level <span id="goLv">1</span> · Kills: <span id="goKl">0</span></div>
+  <div class="rec" id="goRec" style="display:none">⚡ NEW RECORD!</div>
+  <br>
+  <button class="btn" onclick="restartGame()">PLAY AGAIN</button>
+  <button class="btn btn-g" onclick="toMenu()">MENU</button>
+</div>
+
+<script src="../script.js"></script>
+<script src="1-person.js"></script>
+</body>
+</html>
