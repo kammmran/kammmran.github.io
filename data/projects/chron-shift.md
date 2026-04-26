@@ -12,3 +12,6 @@ Here are video record of game :
 src="https://www.youtube.com/embed/nuVK5tvzwvo"
 frameborder="0" allowfullscreen>
 </iframe>
+
+
+Also! I have been selected as one of the top 15 studios for the Xsolla-IDDA Baku Incubator, with Chrono Shift.

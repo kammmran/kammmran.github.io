@@ -1,7 +1,7 @@
 # What is Press?
 
 
-<img src="media/press/pahtei_new.png" width="70%">
+
 
 About eight months ago (around August 2025), I built a free journal website for my university. Around the same time, I also created another website, although it was not very useful in practice.
 
@@ -47,12 +47,14 @@ At least this allowed the website to run reliably on the internet.
 During this stage I completed the following:
 
 1. Updated the journal covers.
-
+[Image 1](media/press/ajcnews_new.png)
+[Image 2](media/press/pahtei_new.png)
 2. Redesigned the website interface.
 3. Rewrote the backend using PHP.
 4. Built a more user-friendly database structure.
 5. Created a visual interface to manage the system.
 
+Final website link : [Click](https://press.asoiu.edu.az/)
 ## Current Situation
 
 Eventually, I had to stop development because the IT department did not allow further code deployment.
@@ -64,5 +66,4 @@ Currently, I serve as an **editor of one of the journals** and manage the proces
 This work is especially interesting because the Editor-in-Chief of the journal is a very knowledgeable and capable person, which makes the collaboration productive and motivating.
 
 
-[Image 1](media/press/ajcnew_new.png)
-[Image 2](media/press/pahtei_new.png)
+
