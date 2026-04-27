@@ -1,9 +1,20 @@
+function renderMarkdown(md) {
+    const html = marked.parse ? marked.parse(md) : md;
+    // Markdown files live in data/projects/, but the page is at site root,
+    // so rewrite relative media/ references to resolve correctly.
+    return html
+        .replace(/(<img[^>]+src=)"(?!https?:|\/|data:)(media\/[^"]+)"/g,
+                 '$1"data/projects/$2"')
+        .replace(/(<a[^>]+href=)"(?!https?:|\/|#|mailto:)(media\/[^"]+)"/g,
+                 '$1"data/projects/$2"');
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     fetch('data/index.json')
         .then(response => response.json())
         .then(indexData => {
             // Fetch all markdown files based on the index
-            const promises = indexData.map(item => 
+            const promises = indexData.map(item =>
                 fetch(item.file)
                     .then(res => res.text())
                     .then(content => ({ ...item, content }))
@@ -18,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 blogContainer.innerHTML = posts.map(p => `
                     <div class="blog-post-content" style="margin-bottom: 30px;">
                         <header class="blog-header"><h1 style="color: var(--primary-color);">${p.title}</h1></header>
-                        <div class="blog-content-text" style="margin-top: 10px;">${marked.parse ? marked.parse(p.content) : p.content}</div>
+                        <div class="blog-content-text" style="margin-top: 10px;">${renderMarkdown(p.content)}</div>
                     </div>
                 `).join('');
             }
@@ -35,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 projects.forEach((p, i) => {
                     const dateStr = p.date ? ` <span style="font-size: 0.8em; color: #666; margin-left: 5px;">(${p.date.substring(0, 4)})</span>` : '';
                     menuHtml += `<div class="year-section"><a href="#" class="post-link" onclick="showProject('proj-${i}'); return false;">${p.title}${dateStr}</a></div>`;
-                    contentHtml += `<div id="proj-${i}" class="project-post-content" style="display: ${i === 0 ? 'block' : 'none'};"><div class="project-article"><header class="project-header"><h1 class="project-title">${p.title}</h1><div style="color: #666; margin-bottom: 15px;">${p.date || ''}</div></header><div class="project-content-text">${marked.parse ? marked.parse(p.content) : p.content}</div></div></div>`;
+                    contentHtml += `<div id="proj-${i}" class="project-post-content" style="display: ${i === 0 ? 'block' : 'none'};"><div class="project-article"><header class="project-header"><h1 class="project-title">${p.title}</h1><div style="color: #666; margin-bottom: 15px;">${p.date || ''}</div></header><div class="project-content-text">${renderMarkdown(p.content)}</div></div></div>`;
                 });
                 projectMenu.innerHTML = menuHtml;
                 projectContent.innerHTML = contentHtml;

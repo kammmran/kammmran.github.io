@@ -66,17 +66,53 @@ body {
 
 /* Project Layout Styles */
 .project-container {
+    width: 100%;
     display: flex;
-    margin-top: 20px;
+    flex-direction: row;
+    align-items: flex-start;
+    margin: 0 auto;
+    padding-top: 20px;
+    text-align: left;
 }
 
 .project-sidebar {
-    width: 180px;
+    width: 250px;
     flex-shrink: 0;
-    background-color: #f8f9fa;
-margin-left: 0;    
-height: fit-content;
-    position: sticky;
+    background-color: transparent;
+    padding: 0;
+    height: fit-content;
+}
+
+.project-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.project-post-content {
+    width: 100%;
+}
+
+.project-content-text {
+    text-align: left;
+    width: 100%;
+}
+
+.year-section a {
+    display: block;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #333;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.year-section a:hover {
+    background: #f1f3f5;
+    border-left-color: #000;
 }
 
 .project-sidebar h3 {
@@ -141,6 +177,51 @@ height: fit-content;
 .project-content-text pre code {
     background-color: transparent;
     padding: 0;
+}
+
+.project-content-text img,
+.blog-content-text img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 16px 0;
+    border-radius: 6px;
+}
+
+.image-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin: 16px 0;
+    align-items: flex-start;
+}
+
+.image-row img,
+.image-row p {
+    flex: 1 1 0;
+    min-width: 0;
+    margin: 0;
+}
+
+.image-row p img {
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .image-row {
+        flex-direction: column;
+    }
+}
+
+.project-content-text iframe,
+.blog-content-text iframe {
+    max-width: 100%;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    height: auto;
+    border: 0;
+    border-radius: 6px;
+    margin: 16px 0;
 }
 
 /* Markdown Table Styles */
@@ -500,69 +581,189 @@ height: fit-content;
 /* Responsive Design */
 @media (max-width: 768px) {
     body {
-        width: 95%;
+        width: 100%;
+        padding: 0;
     }
-    
+
     .navbar {
-        width: 95%;
+        width: 100%;
+        left: 0;
+        padding: 0 16px;
     }
-    
+
+    .nav-container {
+        height: 54px;
+    }
+
+    .nav-brand h3 {
+        font-size: 1.1rem;
+        margin: 0;
+    }
+
+    .nav-menu {
+        gap: 16px;
+        padding: 0;
+        margin: 0;
+    }
+
+    .nav-link {
+        font-size: 0.95rem;
+    }
+
+    .main-content {
+        margin-top: 54px;
+        padding: 0 16px;
+    }
+
     .blog-container {
         flex-direction: column;
-        gap: 20px;
+        gap: 16px;
     }
-    
+
     .blog-sidebar {
         width: 100%;
         position: relative;
         top: auto;
     }
-    
+
+    /* Stack the project layout and turn the sidebar into a horizontal
+       scrolling chip strip so it uses minimal vertical space. */
     .project-container {
         flex-direction: column;
-        gap: 20px;
+        gap: 12px;
+        padding-top: 12px;
     }
-    
+
     .project-sidebar {
         width: 100%;
         position: relative;
         top: auto;
+        background: transparent;
+        padding: 0;
+        margin: 0 -16px;
+        max-width: calc(100% + 32px);
     }
-    
+
     .year-menu {
         flex-direction: row;
-        flex-wrap: wrap;
-        gap: 10px;
+        flex-wrap: nowrap;
+        gap: 8px;
+        overflow-x: auto;
+        padding: 4px 16px 12px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        border-bottom: 1px solid #eee;
     }
-    
-    .year-link {
-        flex: 1;
-        min-width: 120px;
-        text-align: center;
+
+    .year-menu::-webkit-scrollbar {
+        height: 4px;
     }
-    
+
+    .year-menu::-webkit-scrollbar-thumb {
+        background: #ddd;
+        border-radius: 2px;
+    }
+
+    .year-section {
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+    }
+
+    .year-section a {
+        white-space: nowrap;
+        padding: 8px 14px;
+        font-size: 0.9rem;
+        border-left: none;
+        border: 1px solid #e5e5e5;
+    }
+
+    .year-section a:hover {
+        border-left: 1px solid #e5e5e5;
+        border-color: #000;
+    }
+
+    .project-article {
+        padding: 0;
+    }
+
+    .project-header {
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+    }
+
+    .project-title {
+        font-size: 1.5rem;
+    }
+
     .project-header-content {
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
     }
-    
+
     .project-links-header {
         align-items: flex-start;
         flex-direction: row;
         flex-wrap: wrap;
     }
-    
+
+    .project-content-text {
+        font-size: 0.95rem;
+    }
+
+    .project-content-text h1 { font-size: 1.4rem; }
+    .project-content-text h2 { font-size: 1.2rem; }
+    .project-content-text h3 { font-size: 1.05rem; }
+
     /* Responsive table styles */
     .project-content-text table,
     .blog-content-text table {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        display: block;
+        overflow-x: auto;
     }
-    
+
     .project-content-text table th,
     .project-content-text table td,
     .blog-content-text table th,
     .blog-content-text table td {
         padding: 8px 10px;
+    }
+
+    .project-content-text pre,
+    .blog-content-text pre {
+        font-size: 0.8rem;
+        padding: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0 12px;
+    }
+
+    .main-content {
+        padding: 0 12px;
+    }
+
+    .project-sidebar {
+        margin: 0 -12px;
+        max-width: calc(100% + 24px);
+    }
+
+    .year-menu {
+        padding: 4px 12px 12px;
+    }
+
+    .nav-menu {
+        gap: 12px;
+    }
+
+    .nav-link span {
+        font-size: 0.9rem;
+    }
+
+    .project-title {
+        font-size: 1.3rem;
     }
 }
 

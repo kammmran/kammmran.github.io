@@ -47,12 +47,15 @@ At least this allowed the website to run reliably on the internet.
 During this stage I completed the following:
 
 1. Updated the journal covers.
-[Image 1](media/press/ajcnews_new.png)
-[Image 2](media/press/pahtei_new.png)
 2. Redesigned the website interface.
 3. Rewrote the backend using PHP.
 4. Built a more user-friendly database structure.
 5. Created a visual interface to manage the system.
+
+<div class="image-row">
+  <img src="media/press/ajcnews_new.png" alt="AJC News cover">
+  <img src="media/press/pahtei_new.png" alt="Pahtei cover">
+</div>
 
 Final website link : [Click](https://press.asoiu.edu.az/)
 ## Current Situation
