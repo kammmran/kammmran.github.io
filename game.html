@@ -67,7 +67,7 @@
 </div>
 
 <!-- MODE SELECT -->
-<div class="panel" id="modePanel" style="min-width:540px">
+<div class="panel" id="modePanel" style="min-width:760px;max-width:90vw">
   <div class="pt">SELECT MODE</div>
   <div class="mode-grid">
     <div class="mode-card sel" id="mc0" onclick="selMode(0)">
@@ -76,6 +76,11 @@
       <div class="mc-desc">Solo run. WASD/arrows · Q E R skills · 1/2/3 weapons · Click/X shoot.</div>
     </div>
     <div class="mode-card" id="mc1" onclick="selMode(1)">
+      <div class="mc-icon">🎮</div>
+      <div class="mc-name">2 PLAYERS · LOCAL</div>
+      <div class="mc-desc">Same keyboard. P1: WASD + F + 1/2/3. P2: arrows + / + 7/8/9.</div>
+    </div>
+    <div class="mode-card" id="mc2" onclick="selMode(2)">
       <div class="mc-icon">🌐</div>
       <div class="mc-name">2 PLAYERS · ONLINE</div>
       <div class="mc-desc">Co-op across two browsers. One friend hosts (gets a code), the other joins with that code.</div>

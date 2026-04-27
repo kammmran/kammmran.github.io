@@ -62,7 +62,7 @@ canvas{display:block}
 .rec{font-size:16px;color:#f60;font-weight:700;animation:pulse .6s ease-in-out infinite alternate}
 @keyframes pulse{from{opacity:.7;transform:scale(1)}to{opacity:1;transform:scale(1.06)}}
 /* Mode select */
-.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
 .mode-card{background:rgba(161,0,255,.08);border:2px solid rgba(161,0,255,.3);border-radius:12px;padding:16px 14px;cursor:pointer;transition:.22s;text-align:left}
 .mode-card:hover{border-color:var(--c);background:rgba(0,245,255,.08);transform:scale(1.03)}
 .mode-card.sel{border-color:var(--g);background:rgba(0,255,136,.08)}

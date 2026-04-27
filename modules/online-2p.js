@@ -10,7 +10,7 @@
   const diff=Math.max(0,Math.min(3,parseInt(params.get('diff')||'1',10)));
   // Engine globals.
   playerCount=2;
-  selModeIdx=1;
+  selModeIdx=2;
   selDiffIdx=diff;
 
   // Hide the in-game HUD until the lobby resolves and the game actually starts.
@@ -30,6 +30,21 @@
   let peer=null,connRef=null;
   let hostRetryAttempts=0;
   const HOST_MAX_RETRIES=4;
+
+  // ICE servers: Google STUN for direct hole-punching + Open Relay TURN as a relay
+  // fallback. Without TURN, peers behind symmetric NAT (cellular, many office
+  // networks) fail with `negotiation-failed`.
+  // If the openrelayproject credentials stop working, sign up for free creds at
+  // https://www.metered.ca/tools/openrelay/ and replace the entries below.
+  const ICE_SERVERS=[
+    {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},
+    {urls:['stun:stun2.l.google.com:19302','stun:stun3.l.google.com:19302']},
+    {urls:['stun:stun4.l.google.com:19302']},
+    {urls:'turn:openrelay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+    {urls:'turn:openrelay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+    {urls:'turn:openrelay.metered.ca:443?transport=tcp',username:'openrelayproject',credential:'openrelayproject'}
+  ];
+  const PEER_OPTS={debug:1,config:{iceServers:ICE_SERVERS}};
 
   function setLobbyView(which){
     ['lobbyInit','lobbyHosting','lobbyJoining','lobbyError'].forEach(id=>{
@@ -53,19 +68,15 @@
   }
   // Spin up a fresh peer with a new code. Retries automatically on `unavailable-id`
   // collisions (very rare with a 6-char alphabet, but the broker is shared).
+  // The code is only revealed in the UI after the broker confirms registration —
+  // otherwise a fast guest could enter the code before the host exists on the
+  // broker and would get a "could not reach" error.
   function spinHost(){
     const code=genCode();
-    document.getElementById('codeDisplay').textContent=code;
-    document.getElementById('hostStatus').textContent='⏳ Waiting for friend to join…';
+    document.getElementById('codeDisplay').textContent='…';
+    document.getElementById('hostStatus').textContent='⏳ Registering with matchmaking server…';
     destroyPeer();
-    peer=new Peer(code,{
-      debug:1,
-      iceServers:[
-        {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},
-        {urls:['stun:stun2.l.google.com:19302','stun:stun3.l.google.com:19302']},
-        {urls:['stun:stun4.l.google.com:19302']}
-      ]
-    });
+    peer=new Peer(code,PEER_OPTS);
     peer.on('error',e=>{
       console.error('peer host error',e);
       if(e.type==='unavailable-id'){
@@ -84,7 +95,11 @@
       }
       showError('Hosting failed: '+e.type);
     });
-    peer.on('open',()=>{hostRetryAttempts=0;});
+    peer.on('open',()=>{
+      hostRetryAttempts=0;
+      document.getElementById('codeDisplay').textContent=code;
+      document.getElementById('hostStatus').textContent='⏳ Waiting for friend to join…';
+    });
     peer.on('connection',c=>{
       connRef=c;
       Net.role='host';
@@ -94,7 +109,10 @@
         c.on('close',()=>{showError('Friend disconnected.');});
         startNetGame();
       });
-      c.on('error',e=>{console.error('connection error',e);showError('Connection error with guest: '+e.type);});
+      c.on('error',e=>{
+        console.error('connection error',e);
+        showError('Connection error with guest: '+e.type+'. If this keeps happening, both players may be behind a firewall blocking WebRTC.');
+      });
     });
   }
   function regenerateCode(){
@@ -108,29 +126,52 @@
     if(!code){showError('Please enter a code.');return;}
     setLobbyView('lobbyJoining');
     document.getElementById('joinStatus').textContent='⏳ Connecting to '+code+'…';
-    peer=new Peer({
-      debug:1,
-      iceServers:[
-        {urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302']},
-        {urls:['stun:stun2.l.google.com:19302','stun:stun3.l.google.com:19302']},
-        {urls:['stun:stun4.l.google.com:19302']}
-      ]
+    destroyPeer();
+    peer=new Peer(PEER_OPTS);
+    let joinAttempts=0;
+    const JOIN_MAX_ATTEMPTS=3;
+
+    // `peer-unavailable` means the broker doesn't know that code yet — usually
+    // because the host hasn't finished registering. Retry a couple of times
+    // before giving up.
+    peer.on('error',e=>{
+      console.error('peer guest error',e);
+      if(e.type==='peer-unavailable'){
+        joinAttempts++;
+        if(joinAttempts<JOIN_MAX_ATTEMPTS){
+          document.getElementById('joinStatus').textContent='⏳ Host not ready yet — retrying ('+joinAttempts+'/'+JOIN_MAX_ATTEMPTS+')…';
+          setTimeout(()=>tryConnect(code),1200);
+          return;
+        }
+        showError('No host found for code "'+code+'". Make sure your friend is on the lobby screen.');
+        return;
+      }
+      if(e.type==='network'||e.type==='server-error'||e.type==='disconnected'){
+        showError('Lost the matchmaking server. Check your internet and try again.');
+        return;
+      }
+      showError('Could not connect: '+e.type);
     });
-    peer.on('error',e=>{console.error(e);showError('Could not connect: '+e.type);});
-    peer.on('open',()=>{
-      const c=peer.connect(code);
-      connRef=c;
-      Net.role='guest';
-      Net.conn=c;
-      c.on('open',()=>{
-        c.on('data',d=>{if(d&&d.t==='s')Net.lastState=d;});
-        c.on('close',()=>{showError('Host disconnected.');});
-        startNetGame();
-      });
-      c.on('error',e=>{console.error('connection error',e);showError('Could not reach that code. Double-check it.');});
-      // Fallback if open never fires
-      setTimeout(()=>{if(!c.open)showError('Could not reach that code. Double-check it.');},10000);
+    peer.on('open',()=>tryConnect(code));
+  }
+
+  function tryConnect(code){
+    if(!peer) return;
+    const c=peer.connect(code,{reliable:true});
+    connRef=c;
+    Net.role='guest';
+    Net.conn=c;
+    c.on('open',()=>{
+      c.on('data',d=>{if(d&&d.t==='s')Net.lastState=d;});
+      c.on('close',()=>{showError('Host disconnected.');});
+      startNetGame();
     });
+    c.on('error',e=>{
+      console.error('connection error',e);
+      showError('Connection error: '+e.type+'. If this keeps happening, both players may be behind a firewall blocking WebRTC.');
+    });
+    // Fallback if neither open nor error fires within 15s.
+    setTimeout(()=>{if(c&&!c.open&&!Net.lastState)showError('Connection timed out. Double-check the code or try a different network.');},15000);
   }
 
   function startNetGame(){

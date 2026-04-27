@@ -343,7 +343,10 @@ function hideAllPanels(){['menuPanel','modePanel','howPanel','settingsPanel','re
 let selModeIdx=0,selDiffIdx=1;
 function selMode(i){
   selModeIdx=i;
-  ['mc0','mc1'].forEach((id,j)=>document.getElementById(id).className='mode-card'+(j===i?' sel':''));
+  ['mc0','mc1','mc2'].forEach((id,j)=>{
+    const el=document.getElementById(id);
+    if(el) el.className='mode-card'+(j===i?' sel':'');
+  });
 }
 function selDiff(i){
   selDiffIdx=i;
@@ -1268,7 +1271,7 @@ function toMenu(){
   if(Net.conn){try{Net.conn.close();}catch(e){}Net.conn=null;}
   Net.role=null;Net.lastState=null;Net.remoteInput={};
   if(window.location.href.includes('modules')) {
-    window.location.href = '../index.html';
+    window.location.href = '../game.html';
     return;
   }
   canvas.style.display='none';
@@ -1280,9 +1283,10 @@ function startGame(directMode=null, directDiff=null){
   if (directMode !== null) selModeIdx = directMode;
   if (directDiff !== null) selDiffIdx = directDiff;
   if (!window.location.href.includes('modules')) {
-    // Menu picks: 0 → solo, 1 → online 2P (per the current build's "2 PLAYERS" card). The
-    // local split-screen page (2-person.html) is still reachable by direct URL.
-    const target = selModeIdx===1?'online-2p.html':selModeIdx===2?'2-person.html':'1-person.html';
+    // Menu picks: 0 → solo, 1 → local split-screen 2P, 2 → online 2P.
+    const target = selModeIdx===2?'online-2p.html'
+                 : selModeIdx===1?'2-person.html'
+                 : '1-person.html';
     window.location.href = 'modules/' + target + '?diff=' + selDiffIdx;
     return;
   }

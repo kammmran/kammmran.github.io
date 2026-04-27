@@ -4,7 +4,7 @@
   const params=new URLSearchParams(window.location.search);
   const diff=Math.max(0,Math.min(3,parseInt(params.get('diff')||'1',10)));
   playerCount=2;
-  selModeIdx=2;
+  selModeIdx=1;
   selDiffIdx=diff;
   Music.apply();
   startGame(2,diff);
