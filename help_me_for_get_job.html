@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Patent → Company Job-Hunt Explorer</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --bg:#0f1216; --panel:#171b22; --panel2:#1d222b; --line:#262c37;
+    --txt:#e8ecf2; --mut:#9aa3b2; --acc:#7c5cff; --acc2:#22c1c3;
+    --ok:#2dd4bf; --warn:#f59e0b; --bad:#ef4444; --star:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font:14px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Inter,sans-serif}
+  a{color:var(--acc2);text-decoration:none}
+  button{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);padding:6px 12px;border-radius:6px;cursor:pointer}
+  button:hover{border-color:var(--acc);color:#fff}
+  button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  button.primary:hover{background:#6a4dff;border-color:#6a4dff}
+  input,select,textarea{font:inherit;color:inherit;background:var(--panel2);border:1px solid var(--line);padding:6px 10px;border-radius:6px;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+  input[type=search]{min-width:280px}
+  header{display:flex;align-items:center;gap:14px;padding:14px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:10}
+  header h1{font-size:16px;margin:0;font-weight:600;letter-spacing:.2px}
+  header h1 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--acc2));margin-right:8px;vertical-align:middle}
+  header .grow{flex:1}
+  header .meta{font-size:12px;color:var(--mut)}
+  nav.tabs{display:flex;gap:4px;padding:8px 20px;border-bottom:1px solid var(--line);background:var(--panel)}
+  nav.tabs button{background:transparent;border:1px solid transparent;color:var(--mut);padding:6px 14px;border-radius:6px}
+  nav.tabs button.active{background:var(--panel2);color:#fff;border-color:var(--line)}
+  nav.tabs button:hover{color:#fff}
+  main{padding:20px;max-width:1400px;margin:0 auto}
+  section{display:none}
+  section.active{display:block}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .card h3{margin:0 0 12px 0;font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.6px}
+  .stat{flex:1;min-width:180px}
+  .stat .num{font-size:28px;font-weight:700;color:#fff}
+  .stat .sub{font-size:12px;color:var(--mut);margin-top:2px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media(max-width:900px){.grid3{grid-template-columns:1fr}}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--mut);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;user-select:none;white-space:nowrap;background:var(--panel)}
+  th:hover{color:#fff}
+  tbody tr:hover{background:rgba(124,92,255,.06)}
+  tbody tr.clickable{cursor:pointer}
+  .pill{display:inline-block;padding:2px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:99px;font-size:11px;color:var(--mut);margin:1px 2px}
+  .pill.acc{color:#fff;background:rgba(124,92,255,.18);border-color:rgba(124,92,255,.4)}
+  .pill.warn{color:#fde68a;background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4)}
+  .pill.ok{color:#a7f3d0;background:rgba(45,212,191,.15);border-color:rgba(45,212,191,.4)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .empty{padding:60px 20px;text-align:center;color:var(--mut)}
+  .empty h2{color:#fff;font-weight:600;margin:8px 0}
+  .drop{border:2px dashed var(--line);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--acc);background:rgba(124,92,255,.06)}
+  .progress{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:8px}
+  .progress > div{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));width:0;transition:width .1s}
+  .star{cursor:pointer;color:var(--mut);font-size:16px;line-height:1}
+  .star.on{color:var(--star)}
+  .drawer{position:fixed;top:0;right:0;width:min(640px,100vw);height:100vh;background:var(--panel);border-left:1px solid var(--line);overflow:auto;transform:translateX(100%);transition:transform .2s;z-index:50;padding:20px}
+  .drawer.open{transform:translateX(0)}
+  .drawer .x{position:absolute;top:14px;right:18px;font-size:24px;cursor:pointer;color:var(--mut)}
+  .drawer .x:hover{color:#fff}
+  .drawer h2{margin-top:24px;font-size:16px}
+  .kv{display:grid;grid-template-columns:140px 1fr;gap:6px 14px;font-size:13px;margin-top:12px}
+  .kv dt{color:var(--mut)}
+  .kv dd{margin:0}
+  .abstract{margin-top:14px;font-size:13px;line-height:1.55;background:var(--panel2);padding:12px;border-radius:8px;max-height:300px;overflow:auto;white-space:pre-wrap}
+  .pagination{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:14px;color:var(--mut);font-size:12px}
+  .pagination button{padding:4px 10px}
+  svg{display:block}
+  .bar text{font:11px sans-serif;fill:var(--mut)}
+  .bar .lbl{fill:#e8ecf2}
+  .bar rect{fill:url(#g1)}
+  .bar rect:hover{fill:var(--acc)}
+  .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}
+  .legend span::before{content:'';display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:middle;background:var(--acc)}
+  details{margin-top:8px}
+  details summary{cursor:pointer;color:var(--mut);font-size:12px}
+  textarea{width:100%;min-height:60px;resize:vertical;font-family:inherit}
+  .status-pill{padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.3px}
+  .status-todo{background:rgba(156,163,175,.2);color:#d1d5db}
+  .status-contacted{background:rgba(245,158,11,.2);color:#fde68a}
+  .status-replied{background:rgba(34,193,195,.2);color:#a7f3d0}
+  .status-applied{background:rgba(124,92,255,.25);color:#cdb9ff}
+  .status-rejected{background:rgba(239,68,68,.2);color:#fca5a5}
+  .truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:380px;display:inline-block;vertical-align:middle}
+  .toolbar{display:flex;gap:6px;align-items:center}
+  .help{color:var(--mut);font-size:12px;margin:6px 0 14px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="dot"></span>Patent → Company Job-Hunt Explorer</h1>
+  <div class="grow"></div>
+  <span class="meta" id="metaCount"></span>
+  <button id="loadBtn">Load CSVs</button>
+  <input type="file" id="fileInput" multiple accept=".csv" hidden />
+  <button id="resetBtn" title="Clear loaded data">Clear</button>
+</header>
+
+<nav class="tabs">
+  <button data-tab="dash" class="active">Dashboard</button>
+  <button data-tab="companies">Companies</button>
+  <button data-tab="patents">Patents</button>
+  <button data-tab="saved">Outreach List</button>
+  <button data-tab="help">How to use</button>
+</nav>
+
+<main>
+
+<section id="dash" class="active">
+  <div id="dashEmpty" class="empty">
+    <h2>Load your patent CSV files to begin</h2>
+    <p>Drag and drop one or more Engineering Village CSV exports below, or click to choose files.</p>
+    <div class="drop" id="dropZone">
+      <div style="font-size:32px;margin-bottom:6px">⤓</div>
+      <div>Drop CSV files here, or click to browse</div>
+      <div class="progress" id="prog" style="display:none"><div></div></div>
+    </div>
+    <p style="margin-top:30px;color:var(--mut);font-size:12px">
+      Supported columns: Title, Inventor, Assignee, Publication number, Patent office,<br>
+      Publication year, Filing date, Document type, Abstract, IPC code, CPC code, Subject terms…
+    </p>
+  </div>
+  <div id="dashBody" style="display:none">
+    <div class="row" style="margin-bottom:16px">
+      <div class="card stat"><div class="sub">Total patents</div><div class="num" id="sTotal">—</div></div>
+      <div class="card stat"><div class="sub">Unique companies</div><div class="num" id="sCompanies">—</div></div>
+      <div class="card stat"><div class="sub">Unique inventors</div><div class="num" id="sInventors">—</div></div>
+      <div class="card stat"><div class="sub">Year range</div><div class="num" id="sYears">—</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Top 20 companies (assignees)</h3><div id="chartCo"></div></div>
+      <div class="card"><h3>Patents per year</h3><div id="chartYr"></div></div>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div class="card"><h3>Patent offices (geographic spread)</h3><div id="chartOff"></div></div>
+      <div class="card"><h3>Top technical areas (IPC sections)</h3><div id="chartIpc"></div></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Top recurring keywords (subject terms)</h3>
+      <div id="chartKw"></div>
+    </div>
+  </div>
+</section>
+
+<section id="companies">
+  <div class="controls">
+    <input type="search" id="coSearch" placeholder="Search company name…" />
+    <select id="coSort">
+      <option value="count">Sort: most patents</option>
+      <option value="recent">Sort: most recent activity</option>
+      <option value="name">Sort: name (A→Z)</option>
+    </select>
+    <select id="coCountry"><option value="">All countries</option></select>
+    <select id="coYear"><option value="">All years</option></select>
+    <span class="meta" id="coMeta"></span>
+    <div class="grow" style="flex:1"></div>
+    <button id="coExport">Export visible to CSV</button>
+  </div>
+  <div class="card" style="padding:0;overflow:auto">
+    <table id="coTable">
+      <thead><tr>
+        <th>★</th>
+        <th>Company</th>
+        <th data-sort="count"># Patents</th>
+        <th>First → Last</th>
+        <th>Top tech areas</th>
+        <th>Countries</th>
+        <th>Sample title</th>
+        <th></th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="coPager"></div>
+</section>
+
+<section id="patents">
+  <div class="controls">
+    <input type="search" id="ptSearch" placeholder="Search title, abstract, keywords…" />
+    <select id="ptOffice"><option value="">All offices</option></select>
+    <select id="ptYear"><option value="">All years</option></select>
+    <select id="ptType"><option value="">All document types</option></select>
+    <input type="search" id="ptAssignee" placeholder="Filter by assignee…" />
+    <span class="meta" id="ptMeta"></span>
+    <div class="grow" style="flex:1"></div>
+    <button id="ptExport">Export visible to CSV</button>
+  </div>
+  <div class="card" style="padding:0;overflow:auto">
+    <table id="ptTable">
+      <thead><tr>
+        <th>Year</th>
+        <th>Office</th>
+        <th>Title</th>
+        <th>Assignee</th>
+        <th>Type</th>
+        <th>IPC</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="ptPager"></div>
+</section>
+
+<section id="saved">
+  <div class="help">Star companies on the Companies tab to add them here. Track outreach progress, add notes, then export the list.</div>
+  <div class="controls">
+    <select id="svFilter">
+      <option value="">All statuses</option>
+      <option>To contact</option>
+      <option>Contacted</option>
+      <option>Replied</option>
+      <option>Applied</option>
+      <option>Rejected</option>
+    </select>
+    <span class="meta" id="svMeta"></span>
+    <div class="grow" style="flex:1"></div>
+    <button id="svExport">Export to CSV</button>
+  </div>
+  <div id="svList"></div>
+</section>
+
+<section id="help">
+  <div class="card">
+    <h3>What this is</h3>
+    <p>This tool reads patent search exports (Engineering Village CSV format) and turns them into a job-hunting database. The core idea: <b>companies that file patents in cheminformatics / chemistry / pharma are companies actively investing in R&amp;D in those areas — they're the ones likely to be hiring</b>. Inventors listed on those patents are also strong potential contacts (e.g. for LinkedIn outreach).</p>
+    <h3 style="margin-top:18px">Workflow</h3>
+    <ol>
+      <li><b>Load CSVs</b> on the Dashboard tab. Multiple files merge automatically.</li>
+      <li><b>Dashboard</b>: get a feel for which companies, countries, and tech areas dominate your dataset.</li>
+      <li><b>Companies tab</b>: ranked list of every assignee. Click a row to see their patents and inventors. <b>Click the ★</b> to add to your outreach list.</li>
+      <li><b>Patents tab</b>: full-text search to find patents matching specific topics (e.g. <i>"machine learning molecule"</i>) — the assignees of those hits are your most relevant targets.</li>
+      <li><b>Outreach list</b>: track who you've contacted, paste in HR emails / LinkedIn URLs as notes, set status. Export when ready.</li>
+    </ol>
+    <h3 style="margin-top:18px">Tips for cheminfo job search</h3>
+    <ul>
+      <li>Search for terms like <i>"machine learning"</i>, <i>"neural network"</i>, <i>"in silico"</i>, <i>"QSAR"</i>, <i>"docking"</i>, <i>"generative"</i>, <i>"deep learning"</i> — companies whose patents mention these are using your skills.</li>
+      <li>IPC sections <b>G06N</b> (AI/ML), <b>G16C</b> (cheminformatics), <b>C07</b> (organic chemistry), <b>A61K</b> (pharma formulations) are high-signal.</li>
+      <li>Sort companies by <i>most recent activity</i> — a company that filed in the last 1–2 years is far more likely to have an open R&amp;D budget than one that stopped 5 years ago.</li>
+      <li>Inventors who appear on multiple recent patents from the same company are usually <b>team leads</b> — those are the people to message on LinkedIn.</li>
+    </ul>
+    <h3 style="margin-top:18px">Privacy</h3>
+    <p>Everything runs in your browser. CSVs are not uploaded anywhere. Your starred companies and notes are saved in <code>localStorage</code> on this device only.</p>
+  </div>
+</section>
+
+</main>
+
+<div class="drawer" id="drawer">
+  <span class="x" onclick="closeDrawer()">×</span>
+  <div id="drawerBody"></div>
+</div>
+
+<script>
+/* ===================== CSV PARSER (RFC 4180-ish, handles BOM + multiline + escaped quotes) ===================== */
+function parseCSV(text){
+  if(text.charCodeAt(0)===0xFEFF) text = text.slice(1);
+  const rows=[]; let row=[]; let field=''; let inQ=false; let i=0; const N=text.length;
+  while(i<N){
+    const c=text[i];
+    if(inQ){
+      if(c==='"'){
+        if(text[i+1]==='"'){ field+='"'; i+=2; continue; }
+        inQ=false; i++; continue;
+      }
+      field+=c; i++; continue;
+    }
+    if(c==='"'){ inQ=true; i++; continue; }
+    if(c===','){ row.push(field); field=''; i++; continue; }
+    if(c==='\r'){ i++; continue; }
+    if(c==='\n'){ row.push(field); field=''; rows.push(row); row=[]; i++; continue; }
+    field+=c; i++;
+  }
+  if(field.length||row.length){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+/* ===================== STATE ===================== */
+const state = {
+  records: [],
+  byAssignee: new Map(), // norm -> {raw, count, years:Set, offices:Set, ipcs:Map, kws:Map, ids:[idx]}
+  filtered: [],
+  fav: JSON.parse(localStorage.getItem('jobhunt.fav')||'{}'),
+};
+function saveFav(){ localStorage.setItem('jobhunt.fav', JSON.stringify(state.fav)); }
+
+/* ===================== NORMALIZATION ===================== */
+const normCompany = s => (s||'').toUpperCase().normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/[^\w &.\-]/g,' ').replace(/\s+/g,' ').trim();
+function splitMulti(s){
+  if(!s) return [];
+  return s.split(/[;]+/).map(x=>x.trim()).filter(Boolean);
+}
+// Prefer ASCII / latin script when there are mixed scripts
+function preferLatin(parts){
+  const latin = parts.filter(p=>/[A-Za-z]/.test(p) && !/[一-鿿぀-ヿЀ-ӿ]/.test(p));
+  return latin.length ? latin : parts;
+}
+
+/* ===================== INGEST ===================== */
+const COL_ALIAS = {
+  title:['Title'],inventor:['Inventor'],assignee:['Assignee'],appNo:['Application number'],
+  pubNo:['Publication number'],priority:['Priority information'],pubDate:['Publication date'],
+  kind:['Kind'],patentNo:['Patent number'],office:['Patent office'],filingDate:['Filing date'],
+  pubYear:['Publication year'],docType:['Document type'],abstract:['Abstract'],
+  states:['Designated states'],mainHead:['Main heading'],subjects:['Controlled/Subject terms'],
+  uncontrolled:['Uncontrolled terms'],classCode:['Classification code'],fos:['Field of search'],
+  ipc:['IPC code'],cpc:['CPC code'],db:['Database']
+};
+function buildHeaderMap(headers){
+  const m={};
+  Object.keys(COL_ALIAS).forEach(k=>{
+    for(const a of COL_ALIAS[k]){
+      const idx = headers.findIndex(h=>h.trim()===a);
+      if(idx>=0){ m[k]=idx; break; }
+    }
+  });
+  return m;
+}
+
+function ingest(rows){
+  const headers = rows[0];
+  const hm = buildHeaderMap(headers);
+  const out=[];
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r]; if(!row || row.length<3) continue;
+    const get = k => hm[k]!=null ? (row[hm[k]]||'') : '';
+    const assigneeRaw = get('assignee');
+    const inventors = preferLatin(splitMulti(get('inventor')));
+    // Treat ; in assignee as language alternates rather than separate companies — most files use it that way.
+    // But also some files actually list multiple companies. Take latin parts, dedupe.
+    const assigneeParts = preferLatin(splitMulti(assigneeRaw));
+    const assignees = [...new Set(assigneeParts.map(s=>s.replace(/\s+/g,' ').trim()).filter(Boolean))];
+    const ipcs = splitMulti(get('ipc')).map(s=>s.split(/\s+/)[0]).filter(Boolean);
+    const cpcs = splitMulti(get('cpc')).map(s=>s.split(/\s+/)[0]).filter(Boolean);
+    const subjects = splitMulti(get('subjects'));
+    const uncontrolled = splitMulti(get('uncontrolled'));
+    const yr = parseInt(get('pubYear'),10) || (get('pubDate').match(/\b(19|20)\d{2}\b/)||[])[0] || null;
+    out.push({
+      title: get('title'),
+      inventors,
+      inventorRaw: get('inventor'),
+      assignees,
+      assigneeRaw,
+      appNo: get('appNo'),
+      pubNo: get('pubNo'),
+      pubDate: get('pubDate'),
+      kind: get('kind'),
+      office: get('office'),
+      filingDate: get('filingDate'),
+      year: yr ? +yr : null,
+      docType: get('docType'),
+      abstract: get('abstract'),
+      mainHead: get('mainHead'),
+      subjects,
+      uncontrolled,
+      ipcs,
+      cpcs,
+    });
+  }
+  return out;
+}
+
+/* ===================== INDEXING ===================== */
+function buildIndexes(){
+  const map = new Map();
+  state.records.forEach((rec,idx)=>{
+    rec.assignees.forEach(a=>{
+      const k = normCompany(a);
+      if(!k) return;
+      if(!map.has(k)) map.set(k,{raw:a,count:0,years:new Set(),offices:new Set(),ipcs:new Map(),kws:new Map(),ids:[]});
+      const e = map.get(k);
+      e.count++;
+      if(rec.year) e.years.add(rec.year);
+      if(rec.office) e.offices.add(rec.office);
+      rec.ipcs.forEach(ip=>{ const sec = ip.match(/^[A-H]\d\d?[A-Z]?/)?.[0] || ip.slice(0,4); e.ipcs.set(sec,(e.ipcs.get(sec)||0)+1); });
+      rec.subjects.forEach(s=>e.kws.set(s,(e.kws.get(s)||0)+1));
+      e.ids.push(idx);
+      if((e.raw||'').length < a.length) e.raw = a; // keep longest variant
+    });
+  });
+  state.byAssignee = map;
+}
+
+/* ===================== UI HELPERS ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+function el(tag,attrs={},...kids){
+  const e = document.createElement(tag);
+  Object.entries(attrs).forEach(([k,v])=>{
+    if(k==='class') e.className=v;
+    else if(k==='style') e.style.cssText=v;
+    else if(k.startsWith('on')) e.addEventListener(k.slice(2),v);
+    else if(v!=null) e.setAttribute(k,v);
+  });
+  kids.flat().forEach(k=>{ if(k==null) return; e.appendChild(typeof k==='string'?document.createTextNode(k):k); });
+  return e;
+}
+function fmt(n){ return new Intl.NumberFormat().format(n); }
+
+/* ===================== TABS ===================== */
+$$('nav.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  $$('nav.tabs button').forEach(x=>x.classList.toggle('active', x===b));
+  $$('main > section').forEach(s=>s.classList.toggle('active', s.id===b.dataset.tab));
+  if(b.dataset.tab==='saved') renderSaved();
+}));
+
+/* ===================== FILE LOADING ===================== */
+$('#loadBtn').onclick = ()=>$('#fileInput').click();
+$('#fileInput').onchange = e => loadFiles(e.target.files);
+$('#resetBtn').onclick = ()=>{
+  if(!confirm('Clear loaded data? (Your starred companies will be kept.)')) return;
+  state.records=[]; state.byAssignee=new Map(); state.filtered=[];
+  $('#dashEmpty').style.display=''; $('#dashBody').style.display='none';
+  $('#metaCount').textContent='';
+};
+const dz = $('#dropZone');
+dz.addEventListener('click',()=>$('#fileInput').click());
+['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('over');}));
+dz.addEventListener('drop',e=>loadFiles(e.dataTransfer.files));
+
+async function loadFiles(files){
+  if(!files || !files.length) return;
+  $('#prog').style.display='';
+  const bar = $('#prog > div');
+  let added = 0;
+  for(let i=0;i<files.length;i++){
+    bar.style.width = ((i/files.length)*100)+'%';
+    const txt = await files[i].text();
+    const rows = parseCSV(txt);
+    const recs = ingest(rows);
+    state.records = state.records.concat(recs);
+    added += recs.length;
+  }
+  // Dedupe by publication number
+  const seen = new Set(); const unique=[];
+  for(const r of state.records){
+    const k = r.pubNo || (r.title+'|'+r.year);
+    if(seen.has(k)) continue; seen.add(k); unique.push(r);
+  }
+  state.records = unique;
+  bar.style.width='100%';
+  setTimeout(()=>{ $('#prog').style.display='none'; bar.style.width='0%'; },400);
+  buildIndexes();
+  renderAll();
+}
+
+/* ===================== DASHBOARD ===================== */
+function renderAll(){
+  const N = state.records.length;
+  if(!N){ $('#dashEmpty').style.display=''; $('#dashBody').style.display='none'; return; }
+  $('#dashEmpty').style.display='none';
+  $('#dashBody').style.display='';
+  $('#metaCount').textContent = `${fmt(N)} patents · ${fmt(state.byAssignee.size)} companies`;
+
+  $('#sTotal').textContent = fmt(N);
+  $('#sCompanies').textContent = fmt(state.byAssignee.size);
+  const inv = new Set();
+  state.records.forEach(r=>r.inventors.forEach(i=>inv.add(normCompany(i))));
+  $('#sInventors').textContent = fmt(inv.size);
+  const yrs = state.records.map(r=>r.year).filter(Boolean);
+  $('#sYears').textContent = yrs.length? `${Math.min(...yrs)}–${Math.max(...yrs)}` : '—';
+
+  // Top companies
+  const co = [...state.byAssignee.entries()].map(([k,v])=>({name:v.raw,count:v.count,recent:Math.max(...v.years,0)}));
+  co.sort((a,b)=>b.count-a.count);
+  drawBars('#chartCo', co.slice(0,20).map(x=>({l:x.name,v:x.count})));
+
+  // Years
+  const yMap = new Map();
+  state.records.forEach(r=>{ if(r.year) yMap.set(r.year,(yMap.get(r.year)||0)+1); });
+  const ySorted = [...yMap.entries()].sort((a,b)=>a[0]-b[0]);
+  drawBars('#chartYr', ySorted.map(([y,c])=>({l:String(y),v:c})), {h:Math.max(220, ySorted.length*16)});
+
+  // Offices
+  const oMap = new Map();
+  state.records.forEach(r=>{ if(r.office) oMap.set(r.office,(oMap.get(r.office)||0)+1); });
+  const oSorted = [...oMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,15);
+  drawBars('#chartOff', oSorted.map(([o,c])=>({l:o,v:c})));
+
+  // IPC sections
+  const ipcMap = new Map();
+  state.records.forEach(r=>r.ipcs.forEach(ip=>{
+    const sec = ip.match(/^[A-H]\d\d?[A-Z]?/)?.[0] || ip.slice(0,4);
+    if(sec) ipcMap.set(sec,(ipcMap.get(sec)||0)+1);
+  }));
+  const ipcSorted = [...ipcMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,15);
+  drawBars('#chartIpc', ipcSorted.map(([k,c])=>({l:k+' '+ipcLabel(k),v:c})));
+
+  // Keywords
+  const kwMap = new Map();
+  state.records.forEach(r=>r.subjects.forEach(s=>kwMap.set(s,(kwMap.get(s)||0)+1)));
+  const kwSorted = [...kwMap.entries()].filter(([,c])=>c>=3).sort((a,b)=>b[1]-a[1]).slice(0,30);
+  drawBars('#chartKw', kwSorted.map(([k,c])=>({l:k,v:c})), {h:Math.max(220,kwSorted.length*18)});
+
+  populateFilters();
+  renderCompanies();
+  renderPatents();
+}
+
+const IPC_LABELS = {
+  A:'Human necessities', A01:'Agriculture', A23:'Foods', A61:'Medical/Pharma', A62:'Life-saving',
+  B:'Transport/Operations', B01:'Physical/chem processes', B05:'Spraying/Atomizing', B65:'Conveying/Packaging',
+  C:'Chemistry/Metallurgy', C01:'Inorganic chem', C02:'Water treatment', C07:'Organic chem',
+  C08:'Polymers', C09:'Dyes/Coatings', C10:'Petroleum/Fuels', C11:'Oils/Fats/Detergents', C12:'Biochem/Microbiology',
+  D:'Textiles/Paper', E:'Construction', F:'Mech eng/Lighting/Heating',
+  G:'Physics', G01:'Measuring/Testing', G02:'Optics', G05:'Control', G06:'Computing',
+  G16:'Information & comm tech for specific applications', H:'Electricity', H01:'Basic elec elements'
+};
+function ipcLabel(k){ return IPC_LABELS[k] || IPC_LABELS[k.slice(0,3)] || IPC_LABELS[k[0]] || ''; }
+
+/* ===================== SVG BAR CHART ===================== */
+function drawBars(sel, data, opts={}){
+  const W = opts.w || 600;
+  const labelW = opts.labelW || 200;
+  const rowH = 18;
+  const H = opts.h || Math.max(220, data.length*rowH + 40);
+  const max = Math.max(1, ...data.map(d=>d.v));
+  const x0 = labelW + 8;
+  const barMax = W - x0 - 60;
+  const svg = `
+    <svg class="bar" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMinYMin meet" style="height:${H}px;max-height:${H}px">
+      <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset="1" stop-color="#22c1c3"/></linearGradient></defs>
+      ${data.map((d,i)=>{
+        const y = i*rowH + 12;
+        const w = (d.v/max)*barMax;
+        const safeL = (d.l||'').length>34? (d.l.slice(0,33)+'…') : d.l;
+        return `
+          <text class="lbl" x="${labelW}" y="${y+11}" text-anchor="end">${escapeXml(safeL)}</text>
+          <rect x="${x0}" y="${y}" width="${w}" height="${rowH-4}" rx="2"><title>${escapeXml(d.l)}: ${d.v}</title></rect>
+          <text x="${x0+w+5}" y="${y+11}">${d.v}</text>`;
+      }).join('')}
+    </svg>`;
+  document.querySelector(sel).innerHTML = svg;
+}
+function escapeXml(s){ return String(s).replace(/[<>&"']/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&apos;"}[c])); }
+
+/* ===================== FILTERS POPULATION ===================== */
+function populateFilters(){
+  const offices = [...new Set(state.records.map(r=>r.office).filter(Boolean))].sort();
+  const years = [...new Set(state.records.map(r=>r.year).filter(Boolean))].sort((a,b)=>b-a);
+  const types = [...new Set(state.records.map(r=>r.docType).filter(Boolean))].sort();
+  fillSelect('#ptOffice','All offices',offices);
+  fillSelect('#coCountry','All countries',offices);
+  fillSelect('#ptYear','All years',years);
+  fillSelect('#coYear','All years',years);
+  fillSelect('#ptType','All document types',types);
+}
+function fillSelect(sel, blank, items){
+  const e = $(sel); const cur = e.value;
+  e.innerHTML = `<option value="">${blank}</option>` + items.map(v=>`<option value="${escapeXml(v)}">${escapeXml(v)}</option>`).join('');
+  if(items.includes(cur)) e.value = cur;
+}
+
+/* ===================== COMPANIES TAB ===================== */
+let coPage=0; const coPerPage=50;
+['#coSearch','#coSort','#coCountry','#coYear'].forEach(s=>$(s).addEventListener('input',()=>{coPage=0;renderCompanies();}));
+$('#coExport').onclick = ()=>exportCompanies();
+
+function renderCompanies(){
+  const q = $('#coSearch').value.trim().toLowerCase();
+  const sort = $('#coSort').value;
+  const country = $('#coCountry').value;
+  const year = $('#coYear').value && +$('#coYear').value;
+
+  let list = [...state.byAssignee.entries()].map(([k,v])=>{
+    const topIpc = [...v.ipcs.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]);
+    return {key:k, name:v.raw, count:v.count, years:[...v.years].sort(), offices:[...v.offices], topIpc, sample:state.records[v.ids[0]]?.title||'', ids:v.ids};
+  });
+  if(q) list = list.filter(c => c.name.toLowerCase().includes(q));
+  if(country) list = list.filter(c => c.offices.includes(country));
+  if(year) list = list.filter(c => c.years.includes(year));
+  if(sort==='count') list.sort((a,b)=>b.count-a.count || (Math.max(...b.years,0)-Math.max(...a.years,0)));
+  else if(sort==='recent') list.sort((a,b)=>(Math.max(...b.years,0)-Math.max(...a.years,0)) || b.count-a.count);
+  else if(sort==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+
+  const total = list.length;
+  $('#coMeta').textContent = `${fmt(total)} companies`;
+  const pages = Math.max(1,Math.ceil(total/coPerPage));
+  if(coPage>=pages) coPage=pages-1;
+  const slice = list.slice(coPage*coPerPage, coPage*coPerPage+coPerPage);
+
+  const tb = $('#coTable tbody'); tb.innerHTML='';
+  slice.forEach(c=>{
+    const tr = document.createElement('tr'); tr.classList.add('clickable');
+    const starOn = !!state.fav[c.key];
+    tr.innerHTML = `
+      <td><span class="star ${starOn?'on':''}" data-k="${escapeXml(c.key)}">★</span></td>
+      <td><b>${escapeXml(c.name)}</b></td>
+      <td>${c.count}</td>
+      <td>${c.years.length?`${c.years[0]} → ${c.years[c.years.length-1]}`:'—'}</td>
+      <td>${c.topIpc.map(t=>`<span class="pill acc" title="${escapeXml(ipcLabel(t))}">${escapeXml(t)}</span>`).join('')}</td>
+      <td>${c.offices.slice(0,5).map(o=>`<span class="pill">${escapeXml(o)}</span>`).join('')}${c.offices.length>5?` +${c.offices.length-5}`:''}</td>
+      <td><span class="truncate" title="${escapeXml(c.sample)}">${escapeXml(c.sample)}</span></td>
+      <td><button class="viewCo">View</button></td>`;
+    tr.querySelector('.star').onclick = (e)=>{ e.stopPropagation(); toggleFav(c); renderCompanies(); };
+    tr.querySelector('.viewCo').onclick = (e)=>{ e.stopPropagation(); openCompany(c); };
+    tr.onclick = ()=>openCompany(c);
+    tb.appendChild(tr);
+  });
+  renderPager('#coPager', coPage, pages, p=>{coPage=p;renderCompanies();});
+}
+
+function toggleFav(c){
+  if(state.fav[c.key]) delete state.fav[c.key];
+  else state.fav[c.key] = {name:c.name, status:'To contact', notes:'', addedAt:new Date().toISOString().slice(0,10)};
+  saveFav();
+}
+
+function openCompany(c){
+  const recs = c.ids.map(i=>state.records[i]);
+  const inventors = {};
+  recs.forEach(r=>r.inventors.forEach(i=>inventors[i]=(inventors[i]||0)+1));
+  const topInv = Object.entries(inventors).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  const body = $('#drawerBody');
+  const fav = state.fav[c.key];
+  body.innerHTML = `
+    <h2 style="margin-top:6px;font-size:18px">${escapeXml(c.name)}</h2>
+    <div style="margin:6px 0">
+      <span class="pill acc">${c.count} patents</span>
+      <span class="pill">${c.years[0]||'?'} → ${c.years[c.years.length-1]||'?'}</span>
+      ${c.offices.map(o=>`<span class="pill">${escapeXml(o)}</span>`).join('')}
+    </div>
+    <button class="primary" id="favBtn">${fav?'★ Saved for outreach':'☆ Save for outreach'}</button>
+    <h2>Top inventors (potential contacts)</h2>
+    <div>${topInv.length? topInv.map(([n,k])=>`<span class="pill ok">${escapeXml(n)} <b style="color:#fff">×${k}</b></span>`).join(''):'—'}</div>
+    <h2>Top tech areas</h2>
+    <div>${c.topIpc.map(t=>`<span class="pill acc">${escapeXml(t)} — ${escapeXml(ipcLabel(t))}</span>`).join('')}</div>
+    <h2>Patents (${recs.length})</h2>
+    <div style="max-height:400px;overflow:auto;border:1px solid var(--line);border-radius:8px">
+      <table>
+        <thead><tr><th>Year</th><th>Office</th><th>Title</th></tr></thead>
+        <tbody>
+          ${recs.sort((a,b)=>(b.year||0)-(a.year||0)).map(r=>`
+            <tr class="clickable" data-i="${state.records.indexOf(r)}">
+              <td>${r.year||'—'}</td><td>${escapeXml(r.office||'')}</td>
+              <td>${escapeXml(r.title)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  body.querySelector('#favBtn').onclick = ()=>{ toggleFav(c); openCompany(c); renderCompanies(); };
+  body.querySelectorAll('tbody tr').forEach(tr=>tr.onclick=()=>openPatent(+tr.dataset.i));
+  $('#drawer').classList.add('open');
+}
+
+/* ===================== PATENTS TAB ===================== */
+let ptPage=0; const ptPerPage=100;
+['#ptSearch','#ptOffice','#ptYear','#ptType','#ptAssignee'].forEach(s=>$(s).addEventListener('input',()=>{ptPage=0;renderPatents();}));
+$('#ptExport').onclick = ()=>exportPatents();
+
+function renderPatents(){
+  const q = $('#ptSearch').value.trim().toLowerCase();
+  const office = $('#ptOffice').value;
+  const year = $('#ptYear').value && +$('#ptYear').value;
+  const type = $('#ptType').value;
+  const aQ = $('#ptAssignee').value.trim().toLowerCase();
+
+  let list = state.records;
+  if(q){
+    const terms = q.split(/\s+/).filter(Boolean);
+    list = list.filter(r=>{
+      const blob = (r.title+' '+r.abstract+' '+r.subjects.join(' ')+' '+r.uncontrolled.join(' ')+' '+r.mainHead).toLowerCase();
+      return terms.every(t=>blob.includes(t));
+    });
+  }
+  if(office) list = list.filter(r=>r.office===office);
+  if(year) list = list.filter(r=>r.year===year);
+  if(type) list = list.filter(r=>r.docType===type);
+  if(aQ) list = list.filter(r=>r.assignees.some(a=>a.toLowerCase().includes(aQ)));
+
+  state.filtered = list;
+  $('#ptMeta').textContent = `${fmt(list.length)} patents`;
+  const pages = Math.max(1,Math.ceil(list.length/ptPerPage));
+  if(ptPage>=pages) ptPage=pages-1;
+  const slice = list.slice(ptPage*ptPerPage, ptPage*ptPerPage+ptPerPage);
+
+  const tb = $('#ptTable tbody'); tb.innerHTML='';
+  slice.forEach((r,iLocal)=>{
+    const idx = state.records.indexOf(r);
+    const tr = document.createElement('tr'); tr.classList.add('clickable');
+    tr.innerHTML = `
+      <td>${r.year||'—'}</td>
+      <td><span class="pill">${escapeXml(r.office||'')}</span></td>
+      <td><span class="truncate" title="${escapeXml(r.title)}">${escapeXml(r.title)}</span></td>
+      <td>${escapeXml((r.assignees[0]||'').slice(0,40))}</td>
+      <td>${r.docType?`<span class="pill">${escapeXml(r.docType)}</span>`:''}</td>
+      <td>${r.ipcs.slice(0,2).map(i=>`<span class="pill acc">${escapeXml(i)}</span>`).join('')}</td>`;
+    tr.onclick = ()=>openPatent(idx);
+    tb.appendChild(tr);
+  });
+  renderPager('#ptPager', ptPage, pages, p=>{ptPage=p;renderPatents();});
+}
+
+function openPatent(idx){
+  const r = state.records[idx];
+  const body = $('#drawerBody');
+  body.innerHTML = `
+    <h2 style="margin-top:6px;font-size:17px;line-height:1.35">${escapeXml(r.title)}</h2>
+    <div style="margin:6px 0">
+      <span class="pill acc">${r.year||'—'}</span>
+      <span class="pill">${escapeXml(r.office||'')} ${escapeXml(r.pubNo||'')}</span>
+      ${r.docType?`<span class="pill">${escapeXml(r.docType)}</span>`:''}
+    </div>
+    <dl class="kv">
+      <dt>Assignee(s)</dt><dd>${r.assignees.map(a=>escapeXml(a)).join('<br>')}</dd>
+      <dt>Inventor(s)</dt><dd>${r.inventors.length?r.inventors.map(i=>`<span class="pill ok">${escapeXml(i)}</span>`).join(''):'—'}</dd>
+      <dt>Application</dt><dd>${escapeXml(r.appNo)}</dd>
+      <dt>Filed</dt><dd>${escapeXml(r.filingDate)}</dd>
+      <dt>Published</dt><dd>${escapeXml(r.pubDate)}</dd>
+      <dt>Kind</dt><dd>${escapeXml(r.kind)}</dd>
+      <dt>IPC codes</dt><dd>${r.ipcs.map(i=>`<span class="pill acc" title="${escapeXml(ipcLabel(i.match(/^[A-H]\d\d?[A-Z]?/)?.[0]||''))}">${escapeXml(i)}</span>`).join('')}</dd>
+      <dt>CPC codes</dt><dd>${r.cpcs.slice(0,12).map(i=>`<span class="pill">${escapeXml(i)}</span>`).join('')}${r.cpcs.length>12?`<br><span class="meta">+${r.cpcs.length-12} more</span>`:''}</dd>
+      <dt>Subject terms</dt><dd>${r.subjects.map(s=>`<span class="pill warn">${escapeXml(s)}</span>`).join('')}</dd>
+      <dt>Keywords</dt><dd>${r.uncontrolled.slice(0,30).map(s=>`<span class="pill">${escapeXml(s)}</span>`).join('')}</dd>
+    </dl>
+    ${r.abstract?`<h2>Abstract</h2><div class="abstract">${escapeXml(r.abstract)}</div>`:''}`;
+  $('#drawer').classList.add('open');
+}
+function closeDrawer(){ $('#drawer').classList.remove('open'); }
+window.closeDrawer = closeDrawer;
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+
+/* ===================== PAGINATION ===================== */
+function renderPager(sel, page, pages, onGo){
+  const e = $(sel);
+  if(pages<=1){ e.innerHTML=''; return; }
+  e.innerHTML='';
+  const mk=(t,p,disabled)=>{ const b=el('button',{onclick:()=>onGo(p)},t); if(disabled)b.disabled=true; return b; };
+  e.appendChild(mk('« first',0, page===0));
+  e.appendChild(mk('‹ prev',Math.max(0,page-1), page===0));
+  e.appendChild(el('span',{},`Page ${page+1} / ${pages}`));
+  e.appendChild(mk('next ›',Math.min(pages-1,page+1), page===pages-1));
+  e.appendChild(mk('last »',pages-1, page===pages-1));
+}
+
+/* ===================== SAVED / OUTREACH TAB ===================== */
+$('#svFilter').addEventListener('input',renderSaved);
+$('#svExport').onclick = ()=>exportSaved();
+function renderSaved(){
+  const filt = $('#svFilter').value;
+  const keys = Object.keys(state.fav).filter(k=>!filt || state.fav[k].status===filt);
+  $('#svMeta').textContent = `${keys.length} companies`;
+  const wrap = $('#svList'); wrap.innerHTML='';
+  if(!keys.length){ wrap.appendChild(el('div',{class:'empty'},'No companies saved yet. Star a company on the Companies tab to add it here.')); return; }
+  keys.forEach(k=>{
+    const f = state.fav[k];
+    const co = state.byAssignee.get(k);
+    const card = el('div',{class:'card', style:'margin-bottom:12px'});
+    const recs = co? co.ids.map(i=>state.records[i]) : [];
+    const inv = {};
+    recs.forEach(r=>r.inventors.forEach(i=>inv[i]=(inv[i]||0)+1));
+    const topInv = Object.entries(inv).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]);
+    const offices = co? [...co.offices]:[];
+    const yrs = co? [...co.years].sort():[];
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1"><b style="font-size:15px">${escapeXml(f.name)}</b>
+        ${co?`<span class="pill acc" style="margin-left:6px">${co.count} patents</span>`:''}
+        ${yrs.length?`<span class="pill">${yrs[0]} → ${yrs[yrs.length-1]}</span>`:''}
+        ${offices.map(o=>`<span class="pill">${escapeXml(o)}</span>`).join('')}
+        </div>
+        <select class="status" style="min-width:140px">
+          ${['To contact','Contacted','Replied','Applied','Rejected'].map(s=>`<option ${s===f.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <span class="status-pill status-${(f.status||'todo').toLowerCase().replace(/ /g,'')}">${escapeXml(f.status||'To contact')}</span>
+        <button class="rm">Remove</button>
+      </div>
+      ${topInv.length?`<div style="margin-top:8px">Potential contacts: ${topInv.map(n=>`<span class="pill ok">${escapeXml(n)}</span>`).join('')}</div>`:''}
+      <details><summary>Notes / contact details (HR email, LinkedIn URLs…)</summary>
+        <textarea placeholder="Paste HR email, careers page URL, LinkedIn of inventors, your application date…">${escapeXml(f.notes||'')}</textarea>
+      </details>`;
+    card.querySelector('.status').onchange = e=>{ f.status=e.target.value; saveFav(); renderSaved(); };
+    card.querySelector('.rm').onclick = ()=>{ if(confirm('Remove '+f.name+'?')){ delete state.fav[k]; saveFav(); renderSaved(); renderCompanies(); }};
+    card.querySelector('textarea').oninput = e=>{ f.notes=e.target.value; saveFav(); };
+    wrap.appendChild(card);
+  });
+}
+
+/* ===================== EXPORT ===================== */
+function toCSV(rows){
+  const esc = s => { s = s==null?'':String(s); return /[",\n\r]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s; };
+  return rows.map(r=>r.map(esc).join(',')).join('\n');
+}
+function download(name, text){
+  const blob = new Blob([text],{type:'text/csv'});
+  const a = el('a',{href:URL.createObjectURL(blob),download:name});
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function exportCompanies(){
+  const rows = [['Company','Patents','First year','Last year','Countries','Top IPC','Sample title','Starred','Status','Notes']];
+  // export the currently-visible filtered list
+  const q = $('#coSearch').value.trim().toLowerCase();
+  const country = $('#coCountry').value;
+  const year = $('#coYear').value && +$('#coYear').value;
+  state.byAssignee.forEach((v,k)=>{
+    if(q && !v.raw.toLowerCase().includes(q)) return;
+    if(country && !v.offices.has(country)) return;
+    if(year && !v.years.has(year)) return;
+    const yrs=[...v.years].sort();
+    const topIpc=[...v.ipcs.entries()].sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]).join('|');
+    const fav = state.fav[k];
+    rows.push([v.raw, v.count, yrs[0]||'', yrs[yrs.length-1]||'', [...v.offices].join('|'), topIpc, state.records[v.ids[0]]?.title||'', fav?'yes':'', fav?.status||'', fav?.notes||'']);
+  });
+  download('companies.csv', toCSV(rows));
+}
+function exportPatents(){
+  const rows = [['Year','Office','Title','Assignees','Inventors','PubNo','Type','IPC','CPC','Subjects','Abstract']];
+  state.filtered.forEach(r=>rows.push([r.year||'',r.office||'',r.title,r.assignees.join('|'),r.inventors.join('|'),r.pubNo,r.docType,r.ipcs.join('|'),r.cpcs.join('|'),r.subjects.join('|'),r.abstract]));
+  download('patents-filtered.csv', toCSV(rows));
+}
+function exportSaved(){
+  const rows = [['Company','Status','Patents','First year','Last year','Countries','Top inventors','Notes','Added']];
+  Object.entries(state.fav).forEach(([k,f])=>{
+    const co = state.byAssignee.get(k);
+    const yrs = co? [...co.years].sort():[];
+    const inv = {};
+    if(co) co.ids.map(i=>state.records[i]).forEach(r=>r.inventors.forEach(i=>inv[i]=(inv[i]||0)+1));
+    const topInv = Object.entries(inv).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]).join('|');
+    rows.push([f.name, f.status||'', co?co.count:'', yrs[0]||'', yrs[yrs.length-1]||'', co?[...co.offices].join('|'):'', topInv, f.notes||'', f.addedAt||'']);
+  });
+  download('outreach-list.csv', toCSV(rows));
+}
+
+/* ===================== AUTO-LOAD on first visit (try fetching siblings) ===================== */
+window.addEventListener('DOMContentLoaded', async ()=>{
+  // Attempt to auto-load known files when served via http(s); silently fail under file:// (CORS).
+  const tryFiles = ['data/1.csv','data/2.csv'];
+  if(location.protocol.startsWith('http')){
+    try{
+      const blobs = [];
+      for(const f of tryFiles){
+        const r = await fetch(f);
+        if(r.ok) blobs.push(new File([await r.blob()], f));
+      }
+      if(blobs.length){ loadFiles(blobs); return; }
+    }catch(e){}
+  }
+});
+</script>
+</body>
+</html>
