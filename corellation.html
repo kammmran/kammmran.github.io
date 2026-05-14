@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mixture Correlation Analyzer</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="noise"></div>
+
+  <header class="app-header">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="2" fill="none" opacity="0.4"/>
+          <circle cx="32" cy="32" r="6" fill="currentColor"/>
+          <circle cx="14" cy="20" r="3" fill="currentColor"/>
+          <circle cx="50" cy="20" r="3" fill="currentColor"/>
+          <circle cx="14" cy="44" r="3" fill="currentColor"/>
+          <circle cx="50" cy="44" r="3" fill="currentColor"/>
+          <line x1="14" y1="20" x2="32" y2="32" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="50" y1="20" x2="32" y2="32" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="14" y1="44" x2="32" y2="32" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="50" y1="44" x2="32" y2="32" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>Mixture Correlation Analyzer</h1>
+        <p class="subtitle">Statistical comparison of thermodynamic correlations</p>
+      </div>
+    </div>
+
+    <div class="header-status">
+      <div class="status-pill">
+        <span class="dot"></span>
+        <span class="status-text" id="statusText">System Ready</span>
+      </div>
+      <div class="kbd-hint">Press <kbd>R</kbd> to Run Analysis</div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <!-- LEFT: Mixture Input -->
+    <section class="panel glow-border" aria-label="Mixture composition">
+      <header class="panel-header">
+        <span class="panel-index">01</span>
+        <h2>Mixture Composition</h2>
+        <span class="panel-tag">INPUT</span>
+      </header>
+
+      <div class="panel-body">
+        <div class="mode-toggle" role="tablist" aria-label="Composition mode">
+          <button class="mode-btn active" data-mode="molecular" role="tab" aria-selected="true">Molecular</button>
+          <button class="mode-btn" data-mode="petroleum" role="tab" aria-selected="false">Petroleum</button>
+        </div>
+
+        <div class="dataset-type-row">
+          <label class="preset-label" for="datasetType">Dataset Type</label>
+          <select class="select" id="datasetType">
+            <!-- options injected by app.js -->
+          </select>
+        </div>
+
+        <div class="preset-row" id="presetRow" hidden>
+          <label class="preset-label">Crude Sample</label>
+          <select class="select" id="presetSelect">
+            <option value="">— select preset —</option>
+          </select>
+          <button class="btn btn-ghost small" id="loadPresetBtn">Load</button>
+        </div>
+
+        <div class="composition-table" id="compositionTable">
+          <div class="composition-row composition-head">
+            <span>Compound</span>
+            <span>Mole Fraction</span>
+            <span></span>
+          </div>
+          <!-- rows injected by JS -->
+        </div>
+
+        <div class="row-controls">
+          <button class="btn btn-ghost" id="addRowBtn">+ Add Component</button>
+          <div class="sum-indicator" id="sumIndicator">Σ x = 0.000</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="data-sources">
+          <h3 class="mini-title">Data Sources</h3>
+          <label class="check-row">
+            <input type="checkbox" id="srcPubChem" checked />
+            <span>PubChem REST API</span>
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="srcUpload" />
+            <span>Experimental Dataset Upload</span>
+          </label>
+          <label class="check-row">
+            <input type="checkbox" id="srcLocal" checked />
+            <span>Local Database (JSON)</span>
+          </label>
+
+          <input type="file" id="datasetFile" accept=".csv,.json" hidden />
+          <button class="btn btn-ghost small" id="uploadBtn">Upload dataset…</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <details class="compound-meta" id="compoundMeta">
+          <summary><span class="mini-title">Fetched Compound Data</span><span class="meta-count" id="metaCount">0</span></summary>
+          <div class="meta-body">
+            <div class="meta-empty">No data fetched yet.</div>
+          </div>
+        </details>
+
+        <details class="estimator-panel" id="estimatorPanel" hidden>
+          <summary>
+            <span class="mini-title">Property Estimators</span>
+            <span class="meta-count" id="estimatorRunBadge">run</span>
+          </summary>
+          <div class="estimator-body">
+            <div class="estimator-help">
+              Twu · Kesler–Lee · Riazi–Daubert · Watson K — estimates from Tb &amp; SG.
+            </div>
+            <button class="btn btn-ghost small" id="runEstimatorsBtn">Estimate Properties</button>
+            <div id="estimatorResults"></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <!-- CENTER: Correlation Models -->
+    <section class="panel glow-border" aria-label="Correlation models">
+      <header class="panel-header">
+        <span class="panel-index">02</span>
+        <h2>Correlation Models</h2>
+        <span class="panel-tag">SELECT</span>
+      </header>
+
+      <div class="panel-body">
+        <div class="model-grid" id="modelGrid">
+          <!-- model cards injected by JS -->
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="property-select">
+          <h3 class="mini-title">Variable Axis</h3>
+          <select id="variableSelect" class="select" style="margin-bottom:10px">
+            <option value="composition">Mole Fraction x₁</option>
+            <option value="temperature">Temperature T (°C)</option>
+            <option value="density">Density ρ (g/cm³)</option>
+            <option value="api">API Gravity (°API)</option>
+          </select>
+
+          <h3 class="mini-title">Target Property</h3>
+          <select id="propertySelect" class="select">
+            <optgroup label="Primary">
+              <option value="density">Density ρ (g/cm³)</option>
+              <option value="viscosity">Dynamic Viscosity η (mPa·s)</option>
+              <option value="excessMolarVolume">Excess Molar Volume Vᴱ (cm³/mol)</option>
+              <option value="activityCoefficient">Activity Coefficient γ</option>
+              <option value="vaporPressure">Vapor Pressure P (kPa)</option>
+            </optgroup>
+            <optgroup label="Secondary">
+              <option value="refractiveIndex">Refractive Index n</option>
+              <option value="surfaceTension">Surface Tension σ (mN/m)</option>
+              <option value="electricalConductivity">Electrical Conductivity κ (mS/cm)</option>
+              <option value="speedOfSound">Speed of Sound u (m/s)</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="solubility">Solubility S (mol/L)</option>
+              <option value="heatCapacity">Heat Capacity Cₚ (J/mol·K)</option>
+              <option value="thermalConductivity">Thermal Conductivity k (W/m·K)</option>
+            </optgroup>
+            <optgroup label="Petroleum">
+              <option value="apiGravity">API Gravity (°API)</option>
+              <option value="specificGravity">Specific Gravity (SG)</option>
+              <option value="molecularWeight">Molecular Weight (g/mol)</option>
+              <option value="compressibilityZ">Compressibility Factor Z</option>
+              <option value="watsonK">Watson K factor</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="run-block">
+          <button class="btn btn-primary" id="runBtn">
+            <span class="btn-label">▶ Run Analysis</span>
+            <span class="btn-progress" id="btnProgress"></span>
+          </button>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Results -->
+    <section class="panel glow-border" aria-label="Statistical results">
+      <header class="panel-header">
+        <span class="panel-index">03</span>
+        <h2>Statistical Results</h2>
+        <span class="panel-tag">OUTPUT</span>
+      </header>
+
+      <div class="panel-body">
+        <div class="results-table-wrap">
+          <table class="results-table" id="resultsTable">
+            <thead>
+              <tr>
+                <th>Correlation</th>
+                <th>RMSE</th>
+                <th>MAE</th>
+                <th>R²</th>
+                <th>AIC</th>
+                <th>BIC</th>
+                <th>Rank</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="empty"><td colspan="7">Run an analysis to populate results.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="best-model" id="bestModel" hidden>
+          <div class="best-label">BEST FIT</div>
+          <div class="best-name" id="bestName">—</div>
+          <div class="best-stats" id="bestStats">—</div>
+        </div>
+
+        <div class="export-row">
+          <button class="btn btn-ghost small" id="exportCSV">Export CSV</button>
+          <button class="btn btn-ghost small" id="exportJSON">Export JSON</button>
+          <button class="btn btn-ghost small" id="exportPNG">Save Chart</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM: Charts -->
+    <section class="panel glow-border panel-wide" aria-label="Graph visualization">
+      <header class="panel-header">
+        <span class="panel-index">04</span>
+        <h2>Visualization</h2>
+        <span class="panel-tag">CHARTS</span>
+
+        <div class="tab-groups" role="tablist" aria-label="Chart category">
+          <button class="tab-group active" data-group="core">Core</button>
+          <button class="tab-group" data-group="diagnostic">Diagnostics</button>
+          <button class="tab-group" data-group="advanced">Advanced</button>
+          <button class="tab-group" data-group="multivariate">Multivariate</button>
+        </div>
+      </header>
+
+      <div class="tabs-row">
+        <div class="tabs" data-group-tabs="core">
+          <button class="tab active" data-tab="scatter">Parity</button>
+          <button class="tab" data-tab="composition">Composition</button>
+          <button class="tab" data-tab="excess">Excess Curve</button>
+          <button class="tab" data-tab="residual">Residuals</button>
+          <button class="tab" data-tab="histogram">Error Histogram</button>
+          <button class="tab" data-tab="bars">RMSE / R²</button>
+          <button class="tab" data-tab="aicbic">AIC / BIC</button>
+        </div>
+        <div class="tabs" data-group-tabs="diagnostic" hidden>
+          <button class="tab" data-tab="qq">Q–Q Plot</button>
+          <button class="tab" data-tab="cooks">Cook's Distance</button>
+          <button class="tab" data-tab="leverage">Leverage vs Residual</button>
+          <button class="tab" data-tab="acf">Autocorrelation</button>
+        </div>
+        <div class="tabs" data-group-tabs="advanced" hidden>
+          <button class="tab" data-tab="complexity">Complexity vs Accuracy</button>
+          <button class="tab" data-tab="radar">Radar</button>
+          <button class="tab" data-tab="sensitivity">Param Sensitivity</button>
+          <button class="tab" data-tab="ci">Parameter CI</button>
+          <button class="tab" data-tab="tornado">Tornado</button>
+          <button class="tab" data-tab="envelope">Multi-Model Envelope</button>
+          <button class="tab" data-tab="uncertainty">Uncertainty Band</button>
+        </div>
+        <div class="tabs" data-group-tabs="multivariate" hidden>
+          <button class="tab" data-tab="errorHeatmap">Error Heatmap</button>
+          <button class="tab" data-tab="corrMatrix">Correlation Matrix</button>
+          <button class="tab" data-tab="surface3d">3D Surface</button>
+          <button class="tab" data-tab="contour">Contour Map</button>
+          <button class="tab" data-tab="pca">PCA Projection</button>
+          <button class="tab" data-tab="parcoords">Parallel Coordinates</button>
+          <button class="tab" data-tab="phase">Phase Diagram</button>
+        </div>
+      </div>
+
+      <div class="panel-body charts-body">
+        <!-- Core -->
+        <div class="chart-wrap" data-panel="scatter"><canvas id="scatterChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="composition"><canvas id="compositionChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="excess"><canvas id="excessChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="residual"><canvas id="residualChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="histogram"><canvas id="histogramChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="bars"><canvas id="barsChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="aicbic"><canvas id="aicbicChart"></canvas></div>
+        <!-- Diagnostics -->
+        <div class="chart-wrap hidden" data-panel="qq"><canvas id="qqChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="cooks"><canvas id="cooksChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="leverage"><canvas id="leverageChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="acf"><canvas id="acfChart"></canvas></div>
+        <!-- Advanced -->
+        <div class="chart-wrap hidden" data-panel="complexity"><canvas id="complexityChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="radar"><canvas id="radarChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="sensitivity"><canvas id="sensitivityChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="ci"><canvas id="ciChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="tornado"><canvas id="tornadoChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="envelope"><canvas id="envelopeChart"></canvas></div>
+        <div class="chart-wrap hidden" data-panel="uncertainty"><canvas id="uncertaintyChart"></canvas></div>
+        <!-- Multivariate (Plotly) -->
+        <div class="chart-wrap hidden" data-panel="errorHeatmap"><div id="errorHeatmapChart" class="plotly-host"></div></div>
+        <div class="chart-wrap hidden" data-panel="corrMatrix"><div id="corrMatrixChart" class="plotly-host"></div></div>
+        <div class="chart-wrap hidden" data-panel="surface3d"><div id="surface3dChart" class="plotly-host"></div></div>
+        <div class="chart-wrap hidden" data-panel="contour"><div id="contourChart" class="plotly-host"></div></div>
+        <div class="chart-wrap hidden" data-panel="pca"><div id="pcaChart" class="plotly-host"></div></div>
+        <div class="chart-wrap hidden" data-panel="parcoords"><div id="parcoordsChart" class="plotly-host"></div></div>
+        <div class="chart-wrap hidden" data-panel="phase"><div id="phaseChart" class="plotly-host"></div></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <span>Mixture Correlation Analyzer · Scientific Workstation Build</span>
+    <span class="mono" id="clock">--:--:--</span>
+  </footer>
+
+  <script src="js/cor/correlations.js"></script>
+  <script src="js/cor/dataManager.js"></script>
+  <script src="js/cor/estimators.js"></script>
+  <script src="js/cor/charts.js"></script>
+  <script src="js/cor/ui.js"></script>
+  <script src="js/cor/app.js"></script>
+</body>
+</html>
