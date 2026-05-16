@@ -12,6 +12,12 @@
 
 <!-- MENU -->
 <div class="panel" id="menuPanel">
+  <!-- Cloud signin pill (top-right). Hidden via JS when Firebase isn't configured. -->
+  <div id="cloudPill" class="cloud-pill" style="display:none">
+    <img id="cloudAvatar" class="cloud-avatar" alt="">
+    <span id="cloudName">Sign in</span>
+    <button class="cloud-pill-btn" id="cloudPillBtn" onclick="cloudPillClick()">SIGN IN</button>
+  </div>
   <div class="gt">CHRONO SHIFT</div>
   <div class="gsub">COMBAT EDITION</div>
   <div class="gbest" id="menuBest">BEST: 0</div>
@@ -52,6 +58,16 @@
         <div class="page-section-sub">Scroll to GUN STORE below to buy new guns and reshuffle slots.</div>
       </div>
 
+      <!-- Daily missions — rotates every day at local midnight -->
+      <div class="page-section">
+        <div class="page-section-title">
+          <span class="ico">📅</span>DAILY MISSIONS
+          <span class="hb-daily-timer" id="hbDailyTimer" style="margin-left:auto;font-size:11px;color:#888;letter-spacing:1px;font-weight:600"></span>
+        </div>
+        <div class="page-section-sub">Three missions per day. Rewards auto-credit when you complete one.</div>
+        <div class="hb-daily-grid" id="hbDailyGrid"></div>
+      </div>
+
       <div class="page-grid-2">
         <!-- Roster -->
         <div class="page-section">
@@ -72,6 +88,34 @@
         <div class="page-section-title"><span class="ico">🔫</span>GUN STORE</div>
         <div class="page-section-sub">Buy guns with coins. Equip up to 3 into slots 1 · 2 · 3.</div>
         <div class="hb-store-grid" id="hbStoreGrid"></div>
+      </div>
+
+      <!-- Weapon skins -->
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">🎨</span>WEAPON SKINS</div>
+        <div class="page-section-sub">Cosmetic variants per gun. Shop skins cost coins; loot-tier skins come from loot boxes.</div>
+        <div class="hb-skins-grid" id="hbSkinsGrid"></div>
+      </div>
+
+      <!-- Loot boxes -->
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">📦</span>LOOT BOXES</div>
+        <div class="page-section-sub">Buy a mystery box (300🪙), open boxes earned from bosses, level-clears, and daily missions.</div>
+        <div class="hb-loot-row" id="hbLootRow"></div>
+      </div>
+
+      <!-- Global leaderboard (cloud) -->
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">🏆</span>GLOBAL LEADERBOARD</div>
+        <div class="page-section-sub">Top 50 by best score. Updates live.</div>
+        <div class="hb-lb" id="hbLeaderboard"></div>
+      </div>
+
+      <!-- Friends (cloud) -->
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">👥</span>FRIENDS</div>
+        <div class="page-section-sub">Add friends with their 6-char code. See their best score at a glance.</div>
+        <div class="hb-fr" id="hbFriends"></div>
       </div>
 
       <!-- Coupon -->
@@ -487,6 +531,24 @@
     </div>
   </div>
 </div>
+
+<!-- Loot box reveal modal — populated by openLootBox() in script.js -->
+<div id="lootModalBg" class="loot-modal-bg" onclick="if(event.target===this)closeLootModal()">
+  <div class="loot-modal">
+    <div class="loot-modal-title">📦 LOOT REVEAL</div>
+    <div id="lootModalPrize" class="loot-modal-prize">—</div>
+    <div id="lootModalDetail" class="loot-modal-detail">—</div>
+    <button class="loot-modal-close" onclick="closeLootModal()">AWESOME</button>
+  </div>
+</div>
+
+<!-- Firebase SDK + cloud wrapper. Optional: cloud features silently disable when js/firebase-config.js
+     is missing or contains the placeholder API key (see js/firebase-config.example.js). -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js" onerror="console.log('[Cloud] js/firebase-config.js not present — cloud features disabled.')"></script>
+<script src="js/cloud.js"></script>
 
 <script src="script.js"></script>
 </body>

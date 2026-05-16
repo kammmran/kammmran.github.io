@@ -28,3 +28,9 @@ npm-debug.log*
 .env.local
 .env.*.local
 
+# Firebase config (real one) — keep the .example file in git for the template.
+js/firebase-config.js
+js/firebase-config.example.js
+
+
+*.md

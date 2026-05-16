@@ -113,7 +113,11 @@
       Net.role='host';
       Net.conn=c;
       c.on('open',()=>{
-        c.on('data',d=>{if(d&&d.t==='i')Net.remoteInput=d.d||{};});
+        c.on('data',d=>{
+          if(!d) return;
+          if(d.t==='i') Net.remoteInput=d.d||{};
+          else if(d.t==='e' && typeof QuickChat!=='undefined') QuickChat.onReceive(d);
+        });
         c.on('close',()=>{showError('Friend disconnected.');});
         startNetGame();
       });
@@ -170,7 +174,11 @@
     Net.role='guest';
     Net.conn=c;
     c.on('open',()=>{
-      c.on('data',d=>{if(d&&d.t==='s')Net.lastState=d;});
+      c.on('data',d=>{
+        if(!d) return;
+        if(d.t==='s') Net.lastState=d;
+        else if(d.t==='e' && typeof QuickChat!=='undefined') QuickChat.onReceive(d);
+      });
       c.on('close',()=>{showError('Host disconnected.');});
       startNetGame();
     });

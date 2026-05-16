@@ -312,10 +312,81 @@ const GUNS=[
   {id:'shotgun',     icon:'💥', name:'Shotgun',     color:'#ff8844', speed:13, dmg:0.7, ammo:0,       maxAmmo:30,       pierce:false, freeze:false, rof:32, lastShot:0, sz:4, cost:600,  pellets:5, spread:0.35, range:520},
   {id:'sniper',      icon:'🎯', name:'Sniper',      color:'#33ff99', speed:28, dmg:5,   ammo:0,       maxAmmo:12,       pierce:true,  freeze:false, rof:55, lastShot:0, sz:3, cost:900},
   {id:'railgun',     icon:'⚙',  name:'Rail Gun',    color:'#88e0ff', speed:22, dmg:3,   ammo:0,       maxAmmo:24,       pierce:true,  freeze:false, rof:20, lastShot:0, sz:5, cost:1200},
-  {id:'flamethrower',icon:'🔥', name:'Flame',       color:'#ff0000', speed:9,  dmg:0.4, ammo:Infinity,maxAmmo:Infinity, pierce:false, freeze:false, rof:4,  lastShot:0, sz:6, cost:800,  range:240},
+  {id:'flamethrower',icon:'🔥', name:'Flame',       color:'#ff0000', speed:9,  dmg:0.4, ammo:Infinity,maxAmmo:Infinity, pierce:false, freeze:false, rof:1,  lastShot:0, sz:6, cost:800,  range:380, pellets:3, spread:0.22},
   {id:'rocket',      icon:'🚀', name:'Rocket',      color:'#ff3366', speed:11, dmg:4,   ammo:0,       maxAmmo:8,        pierce:false, freeze:false, rof:60, lastShot:0, sz:7, cost:1500, explode:80},
 ];
 const GUNS_BY_ID = GUNS.reduce((m,g)=>{m[g.id]=g;return m;},{});
+
+// ──────────────────────────────────────────────
+// WEAPON SKINS
+//
+// Per-gun cosmetic variants. Each gun has a 'default' (always owned, free) plus 2-4 unlockable
+// skins. `src` values:
+//   shop — purchasable with coins
+//   loot — only obtainable from loot boxes (rare prestige variant)
+//   milestone — unlocked when a per-gun stat threshold is hit (e.g., 100 kills with the gun)
+// A skin's `color` overrides the gun's bullet color and HUD tint. `trail` picks a per-frame
+// particle pattern from PARTICLE_TRAILS below (null = no extra trail beyond the gun default).
+// ──────────────────────────────────────────────
+const SKINS={
+  pistol:[
+    {id:'default',  name:'Standard',   color:'#ffcc00', trail:null,      cost:0,   src:'free'},
+    {id:'venom',    name:'Venom',      color:'#00ff88', trail:'poison',  cost:300, src:'shop'},
+    {id:'royal',    name:'Royal',      color:'#aa66ff', trail:'sparkle', cost:600, src:'shop'},
+  ],
+  plasma:[
+    {id:'default',  name:'Standard',   color:'#00f5ff', trail:null,      cost:0,   src:'free'},
+    {id:'crimson',  name:'Crimson',    color:'#ff3366', trail:null,      cost:400, src:'shop'},
+    {id:'spectre',  name:'Spectre',    color:'#aaffff', trail:'sparkle', cost:null,src:'loot'},
+  ],
+  timegun:[
+    {id:'default',  name:'Standard',   color:'#a100ff', trail:null,      cost:0,   src:'free'},
+    {id:'glacier',  name:'Glacier',    color:'#66ddff', trail:'ice',     cost:400, src:'shop'},
+    {id:'voidchill',name:'Void Chill', color:'#ff00d4', trail:'ice',     cost:null,src:'loot'},
+  ],
+  shotgun:[
+    {id:'default',  name:'Standard',   color:'#ff8844', trail:null,      cost:0,   src:'free'},
+    {id:'overkill', name:'Overkill',   color:'#ff0066', trail:'ember',   cost:500, src:'shop'},
+    {id:'frost',    name:'Frostlash',  color:'#88ddff', trail:'ice',     cost:null,src:'loot'},
+  ],
+  sniper:[
+    {id:'default',  name:'Standard',   color:'#33ff99', trail:null,      cost:0,   src:'free'},
+    {id:'phantom',  name:'Phantom',    color:'#aa66ff', trail:'sparkle', cost:600, src:'shop'},
+    {id:'goldeye',  name:'Gold Eye',   color:'#ffcc00', trail:'sparkle', cost:null,src:'loot'},
+  ],
+  railgun:[
+    {id:'default',  name:'Standard',   color:'#88e0ff', trail:null,      cost:0,   src:'free'},
+    {id:'fusion',   name:'Fusion',     color:'#ff8800', trail:'ember',   cost:700, src:'shop'},
+    {id:'arcane',   name:'Arcane',     color:'#ff00d4', trail:'sparkle', cost:null,src:'loot'},
+  ],
+  flamethrower:[
+    {id:'default',  name:'Standard',   color:'#ff0000', trail:null,      cost:0,   src:'free'},
+    {id:'azure',    name:'Azure Flame',color:'#00aaff', trail:null,      cost:500, src:'shop'},
+    {id:'hellfire', name:'Hellfire',   color:'#ff00aa', trail:'ember',   cost:null,src:'loot'},
+  ],
+  rocket:[
+    {id:'default',  name:'Standard',   color:'#ff3366', trail:null,      cost:0,   src:'free'},
+    {id:'plasma',   name:'Plasma Warhead', color:'#00f5ff', trail:'sparkle', cost:800, src:'shop'},
+    {id:'antimatter',name:'Antimatter',color:'#aa00ff', trail:'sparkle', cost:null,src:'loot'},
+  ],
+};
+// Index for quick "skin def by (gun id, skin id)".
+function findSkin(gunId, skinId){
+  const list=SKINS[gunId]; if(!list) return null;
+  return list.find(s=>s.id===skinId) || list[0];
+}
+// All loot-only skin defs across all guns, used by LootBox to pick rare drops.
+function allLootSkins(){
+  const out=[];
+  for(const k in SKINS) SKINS[k].forEach(s=>{if(s.src==='loot') out.push({gunId:k, skin:s});});
+  return out;
+}
+// All shop-tier skins (used by LootBox as the common skin drop pool).
+function allShopSkins(){
+  const out=[];
+  for(const k in SKINS) SKINS[k].forEach(s=>{if(s.src==='shop') out.push({gunId:k, skin:s});});
+  return out;
+}
 
 
 // ──────────────────────────────────────────────
@@ -351,6 +422,26 @@ function applyCharacter(p){
   // Skills are owned by the character now. Clone so each player has their own cooldowns.
   p.skills=(ch.skillIds||[]).map(makeSkill);
 }
+
+// ──────────────────────────────────────────────
+// BOSSES
+//
+// One boss per backdrop theme. Spawned by initLevel when `level % 5 === 0` instead of
+// (in addition to) the regular enemy wave. Bosses live inside `obstacles` with `type:'boss'`
+// so all existing collision / freeze / explode logic applies; their dedicated state lives on
+// `obs.boss`. Attack patterns dispatch on `pattern`; HP scales with difficulty + level tier.
+// ──────────────────────────────────────────────
+const BOSSES={
+  neon:    {id:'neonOverlord',    name:'NEON OVERLORD',    icon:'👁', color:'#00f5ff', c2:'#a100ff', hp:25, w:80,  h:80, speedMul:0.45, pattern:'volley'},
+  spire:   {id:'temporalTitan',   name:'TEMPORAL TITAN',   icon:'⏳', color:'#a100ff', c2:'#0066ff', hp:30, w:84,  h:84, speedMul:0.55, pattern:'volley'},
+  foundry: {id:'foundryBehemoth', name:'FOUNDRY BEHEMOTH', icon:'🔥', color:'#ff5500', c2:'#880000', hp:35, w:100, h:80, speedMul:0.85, pattern:'charge'},
+  alien:   {id:'voidHarbinger',   name:'VOID HARBINGER',   icon:'🌀', color:'#ff00d4', c2:'#ffcc00', hp:30, w:80,  h:80, speedMul:0.40, pattern:'volley'},
+};
+// Bosses every Nth level. Set to a function of level if you want progressive escalation.
+const BOSS_LEVEL_INTERVAL=5;
+// Track the active boss reference for the HUD's top-screen HP bar. Set in initLevel when a
+// boss is spawned, cleared on level transition or death.
+let activeBoss=null;
 
 // ──────────────────────────────────────────────
 // PERSISTENT UPGRADES + COIN BALANCE
@@ -453,6 +544,225 @@ const Achievements={
 Achievements.load();
 
 // ──────────────────────────────────────────────
+// DAILY MISSIONS
+//
+// Three missions per day, rotated at local midnight. The rotation is deterministic per date
+// (seeded RNG keyed off the YYYY-MM-DD string) so all players on the same day share the same
+// mission set and reloading the page can't reroll. Progress + claim state persists to
+// localStorage. Each mission has a `metric` that the game-event hooks increment.
+// ──────────────────────────────────────────────
+const Daily={
+  data:{date:null, missions:[]},
+  TEMPLATES:[
+    {id:'killAny30',   name:'Defeat 30 enemies',         cat:'kill', metric:'killAny',       target:30,   reward:100},
+    {id:'killAny60',   name:'Defeat 60 enemies',         cat:'kill', metric:'killAny',       target:60,   reward:200},
+    {id:'killBasic25', name:'Defeat 25 basics',          cat:'kill', metric:'killBasic',     target:25,   reward:90},
+    {id:'killChaser15',name:'Defeat 15 chasers',         cat:'kill', metric:'killChaser',    target:15,   reward:150},
+    {id:'killSpinner12',name:'Defeat 12 spinners',       cat:'kill', metric:'killSpinner',   target:12,   reward:140},
+    {id:'killTank5',   name:'Defeat 5 tanks',            cat:'kill', metric:'killTank',      target:5,    reward:200},
+    {id:'killBoss',    name:'Defeat a boss',             cat:'boss', metric:'killBoss',      target:1,    reward:300},
+    {id:'clearLv5',    name:'Clear 5 levels in a run',   cat:'level',metric:'levelClear',    target:5,    reward:200},
+    {id:'clearLv8',    name:'Clear 8 levels in a run',   cat:'level',metric:'levelClear',    target:8,    reward:400},
+    {id:'endless2k',   name:'Reach 2,000m in Endless',   cat:'endless',metric:'endlessMeters',target:2000,reward:250},
+    {id:'endless5k',   name:'Reach 5,000m in Endless',   cat:'endless',metric:'endlessMeters',target:5000,reward:500},
+    {id:'score10k',    name:'Score 10,000 in a run',     cat:'score',metric:'scoreRun',      target:10000,reward:300},
+    {id:'score25k',    name:'Score 25,000 in a run',     cat:'score',metric:'scoreRun',      target:25000,reward:500},
+    {id:'useSkill20',  name:'Use 20 skills',             cat:'skill',metric:'skillUse',      target:20,   reward:150},
+  ],
+  load(){
+    try{
+      const raw=localStorage.getItem('csDailyMissions');
+      if(raw){
+        const p=JSON.parse(raw);
+        if(p&&p.date&&Array.isArray(p.missions)) this.data=p;
+      }
+    }catch(e){this.data={date:null,missions:[]};}
+    this.checkRoll();
+  },
+  save(){try{localStorage.setItem('csDailyMissions',JSON.stringify(this.data));}catch(e){}},
+  todayKey(){
+    const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  },
+  checkRoll(){
+    const today=this.todayKey();
+    if(this.data.date===today) return;
+    this.rollNewMissions(today);
+  },
+  rollNewMissions(today){
+    // Convert YYYY-MM-DD to a deterministic 32-bit seed so the day's pick is reproducible.
+    const seed=today.split('-').reduce((a,c)=>(a*31+parseInt(c,10))>>>0, 7);
+    const rng=this._seededRng(seed);
+    const pool=this.TEMPLATES.slice();
+    for(let i=pool.length-1;i>0;i--){
+      const j=Math.floor(rng()*(i+1));
+      [pool[i],pool[j]]=[pool[j],pool[i]];
+    }
+    this.data={
+      date:today,
+      missions:pool.slice(0,3).map(t=>({
+        id:t.id, name:t.name, cat:t.cat, metric:t.metric, target:t.target,
+        progress:0, reward:t.reward, claimed:false,
+      })),
+    };
+    this.save();
+  },
+  _seededRng(seed){
+    let s=seed>>>0;
+    return ()=>{ s=(Math.imul(s,1664525)+1013904223)>>>0; return s/4294967296; };
+  },
+  // Increment-style metric. Used for events that fire repeatedly (kills, skill uses).
+  bumpMetric(metric, by=1){
+    let any=false;
+    this.data.missions.forEach(m=>{
+      if(m.claimed||m.metric!==metric) return;
+      m.progress=Math.min(m.target, m.progress+by);
+      if(m.progress>=m.target){any=this._claim(m)||any;}
+    });
+    this.save();
+  },
+  // Snapshot-style metric. Used for cumulative values (score this run, endless meters).
+  setMetric(metric, value){
+    this.data.missions.forEach(m=>{
+      if(m.claimed||m.metric!==metric) return;
+      if(value>m.progress) m.progress=Math.min(m.target, value);
+      if(m.progress>=m.target){this._claim(m);}
+    });
+    this.save();
+  },
+  _claim(m){
+    if(m.claimed) return false;
+    m.claimed=true;
+    Upgrades.addCoins(m.reward);
+    if(typeof FT!=='undefined'&&typeof canvas!=='undefined'){
+      FT.add(canvas.width/2, 200, '✓ DAILY: '+m.name+' +'+m.reward+'🪙', '#00ff88', 22, true);
+    }
+    if(typeof AU!=='undefined'&&AU.buy) AU.buy();
+    // 25% chance per claim to also drop a loot box.
+    if(typeof LootBox!=='undefined' && Math.random()<0.25){
+      LootBox.add(1, 'DAILY BONUS');
+    }
+    return true;
+  },
+  // Convenience hooks called from game events.
+  onKill(type){
+    this.checkRoll();
+    this.bumpMetric('killAny');
+    if(type==='basic')   this.bumpMetric('killBasic');
+    if(type==='chaser')  this.bumpMetric('killChaser');
+    if(type==='tank')    this.bumpMetric('killTank');
+    if(type==='spinner') this.bumpMetric('killSpinner');
+  },
+  onBossKill(){this.checkRoll(); this.bumpMetric('killBoss');},
+  onLevelClear(){this.checkRoll(); this.bumpMetric('levelClear');},
+  onScoreChange(s){this.checkRoll(); this.setMetric('scoreRun', s);},
+  onEndlessMeters(m){this.checkRoll(); this.setMetric('endlessMeters', m);},
+  onSkillUse(){this.checkRoll(); this.bumpMetric('skillUse');},
+  msUntilTomorrow(){
+    const now=new Date();
+    const tom=new Date(now.getFullYear(), now.getMonth(), now.getDate()+1);
+    return tom-now;
+  },
+};
+Daily.load();
+
+// ──────────────────────────────────────────────
+// LOOT BOXES
+//
+// Mystery boxes earned from boss kills (guaranteed), level clears (8% chance), and daily
+// mission completion (25% bonus chance). Also purchasable from Home Base for 300 coins.
+// Opening a box rolls a single reward from a weighted table — see rollReward().
+// Storage: localStorage['csLootBoxes'].
+// ──────────────────────────────────────────────
+const LootBox={
+  data:{unopened:0, totalOpened:0},
+  BUY_COST:300,
+  load(){
+    try{
+      const raw=localStorage.getItem('csLootBoxes');
+      if(raw){
+        const p=JSON.parse(raw);
+        if(p&&typeof p==='object') this.data=Object.assign(this.data, p);
+      }
+    }catch(e){this.data={unopened:0, totalOpened:0};}
+  },
+  save(){try{localStorage.setItem('csLootBoxes',JSON.stringify(this.data));}catch(e){}},
+  count(){return this.data.unopened|0;},
+  add(n=1, source=''){
+    this.data.unopened=(this.data.unopened|0)+n;
+    this.save();
+    // Floating notification while in-game.
+    if(typeof FT!=='undefined'&&typeof canvas!=='undefined'){
+      FT.add(canvas.width/2, 240, '📦 +'+n+' LOOT BOX'+(source?' ('+source+')':'')+'!', '#ff66cc', 22, true);
+    }
+  },
+  // Open one box. Returns the reward (see rollReward) or null if there's nothing to open.
+  open(){
+    if(this.data.unopened<=0) return null;
+    this.data.unopened--;
+    this.data.totalOpened++;
+    const reward=this.rollReward();
+    this.save();
+    return reward;
+  },
+  // Reward weights:
+  //   55%  coins (50-500, biased low)
+  //   30%  random shop-tier skin you don't own (fallback: coins)
+  //   10%  random gun you don't own (fallback: coins)
+  //   5%   random loot-tier skin you don't own (fallback: coins x2)
+  rollReward(){
+    const r=Math.random();
+    if(r<0.55){
+      // Coins. Triangular distribution skewed to ~150.
+      const v=Math.floor(50 + Math.random()*Math.random()*450);
+      Upgrades.addCoins(v);
+      return {kind:'coins', amount:v, label:v+'🪙', detail:'Coin pile'};
+    }
+    if(r<0.85){
+      const pool=Inventory.unownedSkinsByTier('shop');
+      if(pool.length>0){
+        const pick=pool[Math.floor(Math.random()*pool.length)];
+        Inventory.addSkin(pick.gunId, pick.skin.id);
+        const gunName=(GUNS_BY_ID[pick.gunId]||{name:'Gun'}).name;
+        return {kind:'skin', gunId:pick.gunId, skinId:pick.skin.id, label:pick.skin.name+' Skin', detail:gunName+' · cosmetic'};
+      }
+      // Fallback to coins if all shop skins owned.
+      const v=200; Upgrades.addCoins(v);
+      return {kind:'coins', amount:v, label:v+'🪙', detail:'Coin pile (all shop skins owned)'};
+    }
+    if(r<0.95){
+      const unowned=GUNS.filter(g=>g.cost && !Inventory.isOwned(g.id));
+      if(unowned.length>0){
+        const pick=unowned[Math.floor(Math.random()*unowned.length)];
+        Inventory.data.owned[pick.id]=true; Inventory.save();
+        return {kind:'gun', gunId:pick.id, label:pick.name+' '+pick.icon, detail:'Weapon unlocked!'};
+      }
+      const v=400; Upgrades.addCoins(v);
+      return {kind:'coins', amount:v, label:v+'🪙', detail:'Coin pile (all guns owned)'};
+    }
+    // Loot-only rare skin.
+    const pool=Inventory.unownedSkinsByTier('loot');
+    if(pool.length>0){
+      const pick=pool[Math.floor(Math.random()*pool.length)];
+      Inventory.addSkin(pick.gunId, pick.skin.id);
+      const gunName=(GUNS_BY_ID[pick.gunId]||{name:'Gun'}).name;
+      return {kind:'lootskin', gunId:pick.gunId, skinId:pick.skin.id, label:'★ '+pick.skin.name+' ★', detail:gunName+' · prestige skin'};
+    }
+    // Fallback (all loot skins owned): big coin pile.
+    const v=600; Upgrades.addCoins(v);
+    return {kind:'coins', amount:v, label:v+'🪙', detail:'Coin jackpot (all loot skins owned)'};
+  },
+  buyBox(){
+    if(!Upgrades.spend(this.BUY_COST)) return {ok:false, msg:'Not enough coins'};
+    this.data.unopened++;
+    this.save();
+    if(typeof AU!=='undefined'&&AU.buy) AU.buy();
+    return {ok:true};
+  },
+};
+LootBox.load();
+
+// ──────────────────────────────────────────────
 // INVENTORY (gun ownership + equipped loadout)
 //
 // Persists which guns the player has bought and which 3 they have equipped to in-game slots
@@ -461,8 +771,14 @@ Achievements.load();
 // reads to build each player's `p.guns` array.
 // ──────────────────────────────────────────────
 const FREE_GUN_IDS=['pistol','plasma','timegun'];
+// AMMO_TIER_PRICES: cost to buy each successive ammo-capacity tier on a gun. Index = tiers
+// already owned (0 → buys tier 1, 1 → buys tier 2, 2 → buys tier 3). Each tier adds +50% to
+// the gun's maxAmmo. Skipped for guns with infinite ammo.
+const AMMO_TIER_PRICES=[200,500,1200];
+const AMMO_TIER_MAX=AMMO_TIER_PRICES.length;
 const Inventory={
-  data:{owned:{}, equipped:[...FREE_GUN_IDS]},
+  // ownedSkins keyed by gunId → {skinId:true}. equippedSkin keyed by gunId → skinId (or 'default').
+  data:{owned:{}, equipped:[...FREE_GUN_IDS], ammoTiers:{}, ownedSkins:{}, equippedSkin:{}},
   load(){
     try{
       const raw=localStorage.getItem('csInventory');
@@ -471,9 +787,12 @@ const Inventory={
         if(parsed&&typeof parsed==='object'){
           this.data.owned=parsed.owned||{};
           this.data.equipped=Array.isArray(parsed.equipped)?parsed.equipped.slice(0,3):[...FREE_GUN_IDS];
+          this.data.ammoTiers=parsed.ammoTiers||{};
+          this.data.ownedSkins=parsed.ownedSkins||{};
+          this.data.equippedSkin=parsed.equippedSkin||{};
         }
       }
-    }catch(e){this.data={owned:{},equipped:[...FREE_GUN_IDS]};}
+    }catch(e){this.data={owned:{},equipped:[...FREE_GUN_IDS],ammoTiers:{},ownedSkins:{},equippedSkin:{}};}
     // Force-own the free guns no matter what was saved.
     FREE_GUN_IDS.forEach(id=>{this.data.owned[id]=true;});
     // Repair equipped slots: drop unknown ids, pad to length 3 with free guns.
@@ -513,9 +832,90 @@ const Inventory={
     this.save();
     return {ok:true};
   },
-  // Returns the 3 GUNS entries in slot order. Used by createPlayer.
+  // Returns the 3 GUNS entries in slot order. Used by createPlayer. Applies the per-gun ammo
+  // capacity tier (+50% per tier) by patching `maxAmmo` on a shallow copy. Skips infinite-ammo
+  // guns so we don't try to multiply Infinity.
   getEquippedGunSpecs(){
-    return this.data.equipped.map(id=>GUNS_BY_ID[id]||GUNS_BY_ID.pistol);
+    return this.data.equipped.map(id=>{
+      const base=GUNS_BY_ID[id]||GUNS_BY_ID.pistol;
+      const tier=this.getAmmoTier(base.id);
+      if(tier<=0 || base.maxAmmo===Infinity) return base;
+      return {...base, maxAmmo: Math.floor(base.maxAmmo * (1 + 0.5*tier))};
+    });
+  },
+  getAmmoTier(id){ return (this.data.ammoTiers&&this.data.ammoTiers[id])|0; },
+  canBuyAmmoTier(id){
+    const g=GUNS_BY_ID[id]; if(!g) return false;
+    if(g.maxAmmo===Infinity) return false;
+    return this.getAmmoTier(id) < AMMO_TIER_MAX;
+  },
+  ammoTierPrice(id){
+    const t=this.getAmmoTier(id);
+    if(t>=AMMO_TIER_MAX) return null;
+    return AMMO_TIER_PRICES[t];
+  },
+  buyAmmoTier(id){
+    if(!this.isOwned(id)) return {ok:false,msg:'Not owned'};
+    if(!this.canBuyAmmoTier(id)) return {ok:false,msg:'Maxed or infinite'};
+    const price=this.ammoTierPrice(id);
+    if(!Upgrades.spend(price)) return {ok:false,msg:'Not enough coins'};
+    if(!this.data.ammoTiers) this.data.ammoTiers={};
+    this.data.ammoTiers[id]=this.getAmmoTier(id)+1;
+    this.save();
+    return {ok:true,msg:'Ammo +'+(50*this.data.ammoTiers[id])+'%'};
+  },
+  // ── Skin helpers ───────────────────────────────────────
+  // Defaults are always owned (free). isSkinOwned returns true for any 'default' skin even if
+  // ownedSkins doesn't list it (avoids needing to seed defaults on first load).
+  isSkinOwned(gunId, skinId){
+    if(skinId==='default') return true;
+    const o=this.data.ownedSkins||{};
+    return !!(o[gunId] && o[gunId][skinId]);
+  },
+  ownedSkinIds(gunId){
+    const list=SKINS[gunId]||[];
+    return list.filter(s=>this.isSkinOwned(gunId, s.id)).map(s=>s.id);
+  },
+  equippedSkinId(gunId){
+    const e=(this.data.equippedSkin||{})[gunId];
+    if(e && this.isSkinOwned(gunId, e)) return e;
+    return 'default';
+  },
+  equippedSkinDef(gunId){
+    return findSkin(gunId, this.equippedSkinId(gunId));
+  },
+  equipSkin(gunId, skinId){
+    if(!this.isSkinOwned(gunId, skinId)) return {ok:false, msg:'Not owned'};
+    if(!this.data.equippedSkin) this.data.equippedSkin={};
+    this.data.equippedSkin[gunId]=skinId;
+    this.save();
+    return {ok:true};
+  },
+  buySkin(gunId, skinId){
+    const def=findSkin(gunId, skinId);
+    if(!def||def.src!=='shop'||!def.cost) return {ok:false, msg:'Not for sale'};
+    if(this.isSkinOwned(gunId, skinId)) return {ok:false, msg:'Already owned'};
+    if(!this.isOwned(gunId)) return {ok:false, msg:'Buy the gun first'};
+    if(!Upgrades.spend(def.cost)) return {ok:false, msg:'Not enough coins'};
+    this.addSkin(gunId, skinId);
+    return {ok:true, msg:'Got '+def.name};
+  },
+  // Used by LootBox / milestone unlocks to grant a skin without payment.
+  addSkin(gunId, skinId){
+    if(!this.data.ownedSkins) this.data.ownedSkins={};
+    if(!this.data.ownedSkins[gunId]) this.data.ownedSkins[gunId]={};
+    this.data.ownedSkins[gunId][skinId]=true;
+    this.save();
+  },
+  // Used by LootBox to pick a random skin you don't already own. tier='shop' or 'loot'.
+  unownedSkinsByTier(tier){
+    const out=[];
+    for(const k in SKINS){
+      SKINS[k].forEach(s=>{
+        if(s.src===tier && !this.isSkinOwned(k, s.id)) out.push({gunId:k, skin:s});
+      });
+    }
+    return out;
   },
 };
 Inventory.load();
@@ -600,7 +1000,22 @@ const Storage={
 // HIGH SCORE
 // ──────────────────────────────────────────────
 let highScore=parseInt(localStorage.getItem('csBest2')||'0');
-function saveBest(){if(score>highScore){highScore=score;localStorage.setItem('csBest2',highScore);return true;}return false;}
+function saveBest(){
+  if(score>highScore){
+    highScore=score;
+    localStorage.setItem('csBest2',highScore);
+    // Cloud high-water-mark sync — bypass the debounce since this only happens at game-end.
+    if(typeof Cloud!=='undefined' && Cloud.isSignedIn()){
+      Cloud.syncStatsNow({bestScore:highScore, totalCoins:Upgrades.data.coins, totalKills:totalKills, levelsCleared:level});
+    }
+    return true;
+  }
+  // Even if no new best, push a debounced periodic sync so other stats stay in sync.
+  if(typeof Cloud!=='undefined' && Cloud.isSignedIn()){
+    Cloud.syncStats({totalCoins:Upgrades.data.coins, totalKills:totalKills, levelsCleared:level});
+  }
+  return false;
+}
 function refreshBest(){
   const mb=document.getElementById('menuBest');if(mb)mb.textContent='BEST: '+highScore;
   const hb=document.getElementById('hBs');if(hb)hb.textContent=Math.max(highScore,score);
@@ -611,9 +1026,216 @@ function refreshBest(){
 // ──────────────────────────────────────────────
 const bgC=document.getElementById('bg'),bgX=bgC.getContext('2d');
 bgC.width=window.innerWidth;bgC.height=window.innerHeight;
+// Active background theme — set in initLevel from the picked LAYOUT (or per-level for MIX).
+// Defaults to 'neon' for the main menu.
+let currentBgTheme='neon';
+// Long-lived theme decoration state. Lazily-initialized so the menu doesn't pay the cost.
+const BG_DECO={
+  // CHRONO SPIRE: drifting nebula blobs
+  nebula:null,
+  shootingStar:{x:-1,y:0,vx:0,vy:0,life:0,cooldown:120},
+  // VOID FOUNDRY: distant rotating gears
+  gears:null,
+  // ALIEN ENDLESS: mountain silhouette layers + moons
+  mountains:null,
+  clouds:null,
+};
+function _bgInitNebula(){
+  if(BG_DECO.nebula) return;
+  BG_DECO.nebula=Array.from({length:14},()=>({
+    x:Math.random()*bgC.width, y:Math.random()*bgC.height,
+    r:120+Math.random()*220,
+    hue:[260,290,200,320,180][0|Math.random()*5],
+    a:0.05+Math.random()*0.08,
+    dx:(Math.random()-0.5)*0.08, dy:(Math.random()-0.5)*0.06,
+  }));
+}
+function _bgInitGears(){
+  if(BG_DECO.gears) return;
+  BG_DECO.gears=Array.from({length:5},()=>({
+    x:Math.random()*bgC.width, y:Math.random()*bgC.height,
+    r:80+Math.random()*160,
+    teeth:8+Math.floor(Math.random()*8),
+    spd:(Math.random()<0.5?-1:1)*(0.0015+Math.random()*0.0035),
+    rot:Math.random()*Math.PI*2,
+    a:0.05+Math.random()*0.06,
+  }));
+}
+function _bgInitAlien(){
+  if(BG_DECO.mountains) return;
+  // Two parallax mountain layers — back layer darker, front layer brighter, each made of jagged peaks.
+  const mk=(count,baseY,amp,hue)=>Array.from({length:count},(_,i)=>({
+    px:i/(count-1), y:baseY+(Math.random()-0.5)*amp, hue,
+  }));
+  BG_DECO.mountains=[
+    {layer:mk(22, bgC.height*0.78, 70, 'rgba(60,30,90,'),  speed:0.03},
+    {layer:mk(28, bgC.height*0.86, 90, 'rgba(120,40,120,'),speed:0.08},
+  ];
+  BG_DECO.clouds=Array.from({length:6},()=>({
+    x:Math.random()*bgC.width, y:50+Math.random()*bgC.height*0.4,
+    w:140+Math.random()*180, spd:0.06+Math.random()*0.12,
+  }));
+}
 let bgT=0;
 const stars=Array.from({length:160},()=>({x:Math.random()*bgC.width,y:Math.random()*bgC.height,r:.3+Math.random()*1.5,tw:Math.random()*Math.PI*2,spd:.005+Math.random()*.015,col:['rgba(161,0,255,','rgba(0,245,255,','rgba(255,0,212,'][0|Math.random()*3]}));
-function drawBg(){bgX.fillStyle='rgba(5,5,15,.14)';bgX.fillRect(0,0,bgC.width,bgC.height);bgT+=.007;bgX.strokeStyle='rgba(161,0,255,.035)';bgX.lineWidth=1;const gs=60,off=(bgT*7)%gs;for(let x=off%gs;x<bgC.width;x+=gs){bgX.beginPath();bgX.moveTo(x,0);bgX.lineTo(x,bgC.height);bgX.stroke();}for(let y=off%gs;y<bgC.height;y+=gs){bgX.beginPath();bgX.moveTo(0,y);bgX.lineTo(bgC.width,y);bgX.stroke();}stars.forEach(s=>{s.tw+=s.spd;const a=.15+Math.sin(s.tw)*.3;bgX.globalAlpha=a;bgX.fillStyle=s.col+a+')';bgX.beginPath();bgX.arc(s.x,s.y,s.r,0,Math.PI*2);bgX.fill();});bgX.globalAlpha=1;requestAnimationFrame(drawBg);}
+// Single bg loop that dispatches to the active theme. Each theme function is responsible for
+// clearing the canvas (or fading it for a trail effect) and drawing its decorations.
+function drawBg(){
+  bgT+=.007;
+  switch(currentBgTheme){
+    case 'spire':   drawBgSpire();   break;
+    case 'foundry': drawBgFoundry(); break;
+    case 'alien':   drawBgAlien();   break;
+    case 'neon':
+    default:        drawBgNeon();    break;
+  }
+  bgX.globalAlpha=1;
+  requestAnimationFrame(drawBg);
+}
+// Default theme: cyberpunk grid + drifting starfield. Matches the original game look.
+function drawBgNeon(){
+  bgX.fillStyle='rgba(5,5,15,.14)';bgX.fillRect(0,0,bgC.width,bgC.height);
+  bgX.strokeStyle='rgba(161,0,255,.035)';bgX.lineWidth=1;
+  const gs=60,off=(bgT*7)%gs;
+  for(let x=off%gs;x<bgC.width;x+=gs){bgX.beginPath();bgX.moveTo(x,0);bgX.lineTo(x,bgC.height);bgX.stroke();}
+  for(let y=off%gs;y<bgC.height;y+=gs){bgX.beginPath();bgX.moveTo(0,y);bgX.lineTo(bgC.width,y);bgX.stroke();}
+  stars.forEach(s=>{s.tw+=s.spd;const a=.15+Math.sin(s.tw)*.3;bgX.globalAlpha=a;bgX.fillStyle=s.col+a+')';bgX.beginPath();bgX.arc(s.x,s.y,s.r,0,Math.PI*2);bgX.fill();});
+}
+// Galactic deep-space: rotating tinted nebula blobs, dense starfield, occasional shooting star.
+function drawBgSpire(){
+  _bgInitNebula();
+  // Hard clear with a near-black blue-purple wash so nebula colors pop.
+  bgX.fillStyle='rgba(2,2,18,.35)';bgX.fillRect(0,0,bgC.width,bgC.height);
+  // Nebula blobs — large soft radial gradients, drifting slowly. Use additive-ish via 'lighter'.
+  bgX.save();
+  bgX.globalCompositeOperation='lighter';
+  BG_DECO.nebula.forEach(n=>{
+    n.x+=n.dx; n.y+=n.dy;
+    if(n.x<-n.r)n.x=bgC.width+n.r; else if(n.x>bgC.width+n.r)n.x=-n.r;
+    if(n.y<-n.r)n.y=bgC.height+n.r; else if(n.y>bgC.height+n.r)n.y=-n.r;
+    const g=bgX.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
+    g.addColorStop(0, `hsla(${n.hue}, 80%, 55%, ${n.a})`);
+    g.addColorStop(1, `hsla(${n.hue}, 80%, 30%, 0)`);
+    bgX.fillStyle=g;
+    bgX.beginPath();bgX.arc(n.x,n.y,n.r,0,Math.PI*2);bgX.fill();
+  });
+  bgX.restore();
+  // Denser, brighter star pulses.
+  stars.forEach(s=>{
+    s.tw+=s.spd*1.4;
+    const a=.25+Math.sin(s.tw)*.45;
+    bgX.globalAlpha=a;
+    bgX.fillStyle=s.col+a+')';
+    bgX.beginPath();bgX.arc(s.x,s.y,s.r*1.4,0,Math.PI*2);bgX.fill();
+  });
+  // Shooting star — fires occasionally, streaks across, leaves a fading tail.
+  const ss=BG_DECO.shootingStar;
+  if(ss.life<=0){
+    ss.cooldown--;
+    if(ss.cooldown<=0){
+      ss.cooldown=180+Math.floor(Math.random()*240);
+      ss.x=Math.random()*bgC.width*0.6;
+      ss.y=Math.random()*bgC.height*0.4;
+      const ang=Math.PI*0.18+Math.random()*0.18;
+      ss.vx=Math.cos(ang)*14; ss.vy=Math.sin(ang)*14;
+      ss.life=60;
+    }
+  } else {
+    ss.x+=ss.vx; ss.y+=ss.vy; ss.life--;
+    bgX.save();bgX.globalAlpha=Math.min(1,ss.life/40);bgX.strokeStyle='rgba(220,220,255,0.9)';bgX.lineWidth=2;bgX.shadowColor='#ccccff';bgX.shadowBlur=12;
+    bgX.beginPath();bgX.moveTo(ss.x,ss.y);bgX.lineTo(ss.x-ss.vx*4, ss.y-ss.vy*4);bgX.stroke();
+    bgX.restore();
+  }
+}
+// Alien industrial: deep crimson wash, distant rotating gear silhouettes, lava-orange embers.
+function drawBgFoundry(){
+  _bgInitGears();
+  // Dark crimson clear with a vertical lava-glow gradient from the bottom.
+  const grad=bgX.createLinearGradient(0,0,0,bgC.height);
+  grad.addColorStop(0,'rgba(20,6,10,0.35)');
+  grad.addColorStop(0.7,'rgba(50,12,5,0.22)');
+  grad.addColorStop(1,'rgba(120,30,0,0.30)');
+  bgX.fillStyle=grad;bgX.fillRect(0,0,bgC.width,bgC.height);
+  // Rotating gear silhouettes — thin outlines, very dark, soft red shadow.
+  BG_DECO.gears.forEach(g=>{
+    g.rot+=g.spd;
+    bgX.save();bgX.translate(g.x,g.y);bgX.rotate(g.rot);
+    bgX.strokeStyle=`rgba(255,80,30,${g.a})`;
+    bgX.lineWidth=2;bgX.shadowColor='rgba(255,60,0,0.5)';bgX.shadowBlur=10;
+    // Outer toothed ring
+    bgX.beginPath();
+    for(let i=0;i<g.teeth;i++){
+      const a=(i/g.teeth)*Math.PI*2;
+      const r1=g.r, r2=g.r*1.13;
+      const a2=a+Math.PI/g.teeth;
+      bgX.lineTo(Math.cos(a)*r1, Math.sin(a)*r1);
+      bgX.lineTo(Math.cos(a)*r2, Math.sin(a)*r2);
+      bgX.lineTo(Math.cos(a2)*r2, Math.sin(a2)*r2);
+      bgX.lineTo(Math.cos(a2)*r1, Math.sin(a2)*r1);
+    }
+    bgX.closePath();bgX.stroke();
+    // Inner ring + hub
+    bgX.beginPath();bgX.arc(0,0,g.r*0.55,0,Math.PI*2);bgX.stroke();
+    bgX.beginPath();bgX.arc(0,0,g.r*0.18,0,Math.PI*2);bgX.stroke();
+    bgX.restore();
+  });
+  // Lava ember drift — tiny rising orange particles using the starfield as seed positions.
+  stars.forEach(s=>{
+    s.tw+=s.spd;
+    // Reuse star y as a rising-ember offset; wrap when off-screen at top.
+    const ey=( (s.y - bgT*40*s.spd*30) % bgC.height + bgC.height) % bgC.height;
+    const a=.3+Math.sin(s.tw)*.4;
+    bgX.globalAlpha=a;
+    bgX.fillStyle=`rgba(255,${120+Math.floor(Math.sin(s.tw)*40)},0,${a})`;
+    bgX.beginPath();bgX.arc(s.x, ey, s.r*1.2, 0, Math.PI*2);bgX.fill();
+  });
+}
+// Alien world (used by ENDLESS): horizon mountains, dual moons, drifting clouds, deep teal sky.
+function drawBgAlien(){
+  _bgInitAlien();
+  // Sky gradient — teal top, peachy near the horizon.
+  const sky=bgX.createLinearGradient(0,0,0,bgC.height);
+  sky.addColorStop(0,'rgba(6,18,40,0.30)');
+  sky.addColorStop(0.55,'rgba(30,12,60,0.28)');
+  sky.addColorStop(0.85,'rgba(120,40,80,0.25)');
+  sky.addColorStop(1,'rgba(255,140,70,0.22)');
+  bgX.fillStyle=sky;bgX.fillRect(0,0,bgC.width,bgC.height);
+  // Dual moons — one large pale, one small blood-orange. Offset horizontally; gentle bob.
+  const moonY=bgC.height*0.22 + Math.sin(bgT*0.5)*6;
+  bgX.save();bgX.globalAlpha=0.9;
+  bgX.shadowColor='rgba(200,200,255,0.6)';bgX.shadowBlur=24;
+  bgX.fillStyle='rgba(220,220,235,0.9)';bgX.beginPath();bgX.arc(bgC.width*0.72, moonY, 60, 0, Math.PI*2);bgX.fill();
+  bgX.shadowColor='rgba(255,120,40,0.6)';bgX.shadowBlur=18;
+  bgX.fillStyle='rgba(255,150,80,0.85)';bgX.beginPath();bgX.arc(bgC.width*0.86, moonY+50, 32, 0, Math.PI*2);bgX.fill();
+  bgX.restore();
+  // Stars (sparse, since the sky is brighter).
+  stars.forEach((s,i)=>{
+    if(i%3!==0) return;
+    s.tw+=s.spd;const a=.15+Math.sin(s.tw)*.25;
+    bgX.globalAlpha=a;bgX.fillStyle=`rgba(255,255,255,${a})`;
+    bgX.beginPath();bgX.arc(s.x,s.y*0.45,s.r*0.9,0,Math.PI*2);bgX.fill();
+  });
+  // Clouds — soft elongated ellipses drifting slowly across the upper-middle band.
+  BG_DECO.clouds.forEach(c=>{
+    c.x+=c.spd;
+    if(c.x-c.w>bgC.width) c.x=-c.w;
+    bgX.save();bgX.globalAlpha=0.15;
+    bgX.fillStyle='#ffccaa';
+    bgX.beginPath();bgX.ellipse(c.x, c.y, c.w*0.5, c.w*0.12, 0, 0, Math.PI*2);bgX.fill();
+    bgX.restore();
+  });
+  // Mountain silhouettes — two parallax layers. Build a jagged polygon path for each.
+  BG_DECO.mountains.forEach((m,li)=>{
+    bgX.save();
+    bgX.fillStyle = m.layer[0].hue + (li===0 ? '0.85)' : '0.95)');
+    bgX.beginPath();
+    bgX.moveTo(0, bgC.height);
+    m.layer.forEach(pt=>{ bgX.lineTo(pt.px*bgC.width, pt.y); });
+    bgX.lineTo(bgC.width, bgC.height);
+    bgX.closePath();bgX.fill();
+    bgX.restore();
+  });
+}
 drawBg();
 
 // Vertical climb world. WORLD_W matches the canvas width — no horizontal scrolling.
@@ -636,16 +1258,19 @@ const LAYOUTS=[
   {
     name:'NEON ASCENT',
     desc:'Beginner climb. Wide platforms, few hazards. Layout shuffles each level.',
+    theme:'neon',
     build: buildNeonAscent,
   },
   {
     name:'CHRONO SPIRE',
     desc:'Twisting spire. Crumbling platforms required. Layout shuffles each level.',
+    theme:'spire',
     build: buildChronoSpire,
   },
   {
     name:'VOID FOUNDRY',
     desc:'Lava floor, dense saws, big gaps. Layout shuffles each level.',
+    theme:'foundry',
     build: buildVoidFoundry,
   },
   // ENDLESS — see buildEndlessChunk. The chunk is rebuilt every level by initLevel().
@@ -653,6 +1278,7 @@ const LAYOUTS=[
     name:'ENDLESS',
     desc:'Procedural climb that never ends. Difficulty ramps every 1000m.',
     isEndless:true,
+    theme:'alien',
     build: buildEndlessChunk,
   },
   // MIX — randomly picks one of the 3 themes each level. The picked theme name is included in
@@ -660,6 +1286,7 @@ const LAYOUTS=[
   {
     name:'MIX',
     desc:'Random theme each level — surprise climb.',
+    theme:'mix',
     build: buildMixChunk,
   },
 ];
@@ -785,13 +1412,14 @@ function buildVoidFoundry(lvl){
 // onto the returned chunk so initLevel can flash it on screen.
 function buildMixChunk(lvl){
   const choices = [
-    {name:'NEON ASCENT',  fn: buildNeonAscent},
-    {name:'CHRONO SPIRE', fn: buildChronoSpire},
-    {name:'VOID FOUNDRY', fn: buildVoidFoundry},
+    {name:'NEON ASCENT',  theme:'neon',    fn: buildNeonAscent},
+    {name:'CHRONO SPIRE', theme:'spire',   fn: buildChronoSpire},
+    {name:'VOID FOUNDRY', theme:'foundry', fn: buildVoidFoundry},
   ];
   const pick = choices[Math.floor(Math.random()*choices.length)];
   const result = pick.fn(lvl);
   result.name = pick.name;
+  result.theme = pick.theme;
   return result;
 }
 
@@ -909,6 +1537,7 @@ function createPlayer(idx,keymap){
     // Per-character skill state. Timers are decremented in updatePhysics; stompPending fires on
     // ground touch. dmgBonus is added to bullet dmg in tryShoot (set by applyUpgrades).
     flameTrailT:0, adrenalineT:0, phaseT:0, reflectT:0, stompPending:false, dmgBonus:0,
+    sniperCharged:false,
     keymap,
     jumpHeld:false,dashHeld:false,fireHeld:false,fireTimer:0,
     coopHeld:false,
@@ -1018,6 +1647,15 @@ function openHomeBase(){
   buildHomeStore();
   buildHomeAchievements();
   buildHomeEquippedStrip();
+  buildHomeDaily();
+  buildHomeSkins();
+  buildHomeLoot();
+  // Cloud-aware sections — subscribe to live leaderboard on first open so the rest of the
+  // navigation doesn't keep an active Firestore listener when not needed.
+  if(typeof Cloud!=='undefined' && Cloud.isReady()){
+    Cloud.subscribeLeaderboard(50);
+  }
+  refreshCloudUI();
   refreshHomeCoinPill();
   refreshHomeStats();
   const inp=document.getElementById('hbCouponInput'); if(inp) inp.value='';
@@ -1047,6 +1685,262 @@ function refreshHomeStats(){
     sg.textContent=got+'/'+total;
   }
 }
+// Render the WEAPON SKINS section. One collapsible block per gun the player owns. Each block
+// shows the gun's full skin lineup with EQUIP / BUY / LOCKED status. Loot-only skins display a
+// 📦 LOOT badge instead of a price.
+function buildHomeSkins(){
+  const wrap=document.getElementById('hbSkinsGrid'); if(!wrap) return;
+  wrap.innerHTML=GUNS.map(g=>{
+    const skinList=SKINS[g.id]||[];
+    if(skinList.length<=1 || !Inventory.isOwned(g.id)) return ''; // skip if gun isn't owned (default skin only)
+    const equippedId=Inventory.equippedSkinId(g.id);
+    const tiles=skinList.map(s=>{
+      const owned=Inventory.isSkinOwned(g.id, s.id);
+      const equipped=s.id===equippedId;
+      const swatch=`<div class="hb-skin-swatch" style="background:${s.color};box-shadow:0 0 10px ${s.color}"></div>`;
+      let action='';
+      if(equipped){
+        action=`<div class="hb-skin-status equipped">EQUIPPED</div>`;
+      }else if(owned){
+        action=`<button class="hb-skin-btn equip" onclick="equipSkin('${g.id}','${s.id}')">EQUIP</button>`;
+      }else if(s.src==='shop'){
+        const canAfford=Upgrades.data.coins>=s.cost;
+        action=`<button class="hb-skin-btn buy" ${canAfford?'':'disabled'} onclick="buySkin('${g.id}','${s.id}')">${s.cost}🪙</button>`;
+      }else if(s.src==='loot'){
+        action=`<div class="hb-skin-status loot">📦 LOOT</div>`;
+      }
+      return `<div class="hb-skin-tile${equipped?' equipped':owned?' owned':' locked'}">
+        ${swatch}
+        <div class="hb-skin-name">${s.name}</div>
+        ${action}
+      </div>`;
+    }).join('');
+    return `<div class="hb-skin-block">
+      <div class="hb-skin-block-head">
+        <span class="hb-skin-block-ico">${g.icon||'•'}</span>
+        <span class="hb-skin-block-name">${g.name.toUpperCase()}</span>
+      </div>
+      <div class="hb-skin-tiles">${tiles}</div>
+    </div>`;
+  }).join('');
+}
+function buySkin(gunId, skinId){
+  const r=Inventory.buySkin(gunId, skinId);
+  if(r.ok){
+    if(typeof AU!=='undefined'&&AU.buy)AU.buy();
+    Inventory.equipSkin(gunId, skinId);
+  }
+  buildHomeSkins();
+  refreshHomeCoinPill();
+}
+function equipSkin(gunId, skinId){
+  Inventory.equipSkin(gunId, skinId);
+  if(typeof AU!=='undefined'&&AU.jump)AU.jump();
+  buildHomeSkins();
+}
+// LOOT BOX UI: render the Home Base stack widget showing unopened count + buy/open buttons.
+function buildHomeLoot(){
+  const wrap=document.getElementById('hbLootRow'); if(!wrap) return;
+  const n=LootBox.count();
+  const canAffordBox=Upgrades.data.coins>=LootBox.BUY_COST;
+  wrap.innerHTML=`
+    <div class="hb-loot-stack">
+      <div class="hb-loot-icon">📦</div>
+      <div class="hb-loot-count">UNOPENED<b>${n}</b></div>
+      <button class="hb-loot-btn" ${n>0?'':'disabled'} onclick="openLootBox()">OPEN BOX</button>
+      <button class="hb-loot-btn buy" ${canAffordBox?'':'disabled'} onclick="buyLootBox()">BUY · ${LootBox.BUY_COST}🪙</button>
+    </div>
+    <div class="page-section-sub" style="margin:0">Opened: ${LootBox.data.totalOpened|0} · 100% chance from boss kills, 8% per level clear, 25% per daily mission claim.</div>
+  `;
+}
+function buyLootBox(){
+  const r=LootBox.buyBox();
+  if(r.ok) openLootBox();
+  buildHomeLoot();
+  refreshHomeCoinPill();
+}
+// ── Cloud (Firebase) UI handlers ───────────────────────────────────────────
+// Sign-in pill on the main menu. Hidden unless Cloud.isReady() (i.e., firebase-config.js is set).
+function cloudPillClick(){
+  if(typeof Cloud==='undefined' || !Cloud.isReady()){
+    alert('Cloud features need Firebase setup.\n\nSee js/firebase-config.example.js for instructions.');
+    return;
+  }
+  if(Cloud.isSignedIn()) Cloud.signOut();
+  else Cloud.signIn().catch(e=>alert('Sign-in failed: '+e.message));
+}
+// Re-render any cloud-aware UI bits. Safe to call before/after sign-in. Invoked from Cloud.js
+// on auth changes and from openHomeBase() so the panels stay fresh.
+function refreshCloudUI(){
+  const ready = (typeof Cloud!=='undefined') && Cloud.isReady();
+  const pill=document.getElementById('cloudPill');
+  if(pill) pill.style.display = ready ? 'flex' : 'none';
+  if(ready){
+    const signed=Cloud.isSignedIn();
+    const nameEl=document.getElementById('cloudName');
+    const btn=document.getElementById('cloudPillBtn');
+    const av=document.getElementById('cloudAvatar');
+    if(nameEl) nameEl.textContent = signed ? (Cloud.displayName()||'Player') : 'Not signed in';
+    if(btn) btn.textContent = signed ? 'SIGN OUT' : 'SIGN IN';
+    if(av){
+      if(signed && Cloud.photoURL()){ av.src=Cloud.photoURL(); av.style.display='block'; }
+      else av.style.display='none';
+    }
+  }
+  buildHomeLeaderboard();
+  buildHomeFriends();
+}
+// Leaderboard panel (Home Base). Top 50 by bestScore via Firestore onSnapshot. While not
+// signed in, shows a teaser with a SIGN IN button.
+function buildHomeLeaderboard(){
+  const wrap=document.getElementById('hbLeaderboard'); if(!wrap) return;
+  if(typeof Cloud==='undefined' || !Cloud.isReady()){
+    wrap.innerHTML=`<div class="hb-cloud-empty">Cloud features disabled. See <code>js/firebase-config.example.js</code>.</div>`;
+    return;
+  }
+  if(!Cloud.isSignedIn()){
+    wrap.innerHTML=`<div class="hb-cloud-empty">
+      <p>Sign in with Google to compete on the global leaderboard.</p>
+      <button class="btn" style="max-width:220px;margin:8px auto" onclick="cloudPillClick()">SIGN IN WITH GOOGLE</button>
+    </div>`;
+    return;
+  }
+  const rows=Cloud.leaderboard||[];
+  const myUid=Cloud.uid();
+  if(rows.length===0){
+    wrap.innerHTML=`<div class="hb-cloud-empty">Loading leaderboard…</div>`;
+    return;
+  }
+  const rowHtml=rows.map(r=>`
+    <div class="hb-lb-row${r.uid===myUid?' me':''}">
+      <div class="hb-lb-rank">#${r.rank}</div>
+      ${r.photoURL?`<img class="hb-lb-avatar" src="${r.photoURL}" alt="">`:`<div class="hb-lb-avatar default"></div>`}
+      <div class="hb-lb-name">${escapeHtml(r.displayName)}</div>
+      <div class="hb-lb-score">${(r.bestScore|0).toLocaleString()}</div>
+    </div>
+  `).join('');
+  // If the local player isn't in top-50, show a divider + their rank from the profile doc.
+  let footer='';
+  const mine=rows.find(r=>r.uid===myUid);
+  if(!mine && Cloud.profile){
+    footer=`<div class="hb-lb-divider">…</div>
+      <div class="hb-lb-row me">
+        <div class="hb-lb-rank">—</div>
+        <div class="hb-lb-avatar default"></div>
+        <div class="hb-lb-name">${escapeHtml(Cloud.profile.displayName||'You')}</div>
+        <div class="hb-lb-score">${(Cloud.profile.bestScore|0).toLocaleString()}</div>
+      </div>`;
+  }
+  wrap.innerHTML=rowHtml+footer;
+}
+// Friends panel — list current friends + add-by-code input.
+function buildHomeFriends(){
+  const wrap=document.getElementById('hbFriends'); if(!wrap) return;
+  if(typeof Cloud==='undefined' || !Cloud.isReady()){
+    wrap.innerHTML=`<div class="hb-cloud-empty">Cloud features disabled.</div>`;
+    return;
+  }
+  if(!Cloud.isSignedIn()){
+    wrap.innerHTML=`<div class="hb-cloud-empty">Sign in to add friends and compare scores.</div>`;
+    return;
+  }
+  const myCode=(Cloud.profile&&Cloud.profile.shortCode)||'—';
+  const friendRows=Cloud.friends.length===0
+    ? `<div class="hb-cloud-empty">No friends yet — share your code or add one below.</div>`
+    : Cloud.friends.map(f=>`
+        <div class="hb-fr-row">
+          ${f.photoURL?`<img class="hb-fr-avatar" src="${f.photoURL}" alt="">`:`<div class="hb-fr-avatar default"></div>`}
+          <div class="hb-fr-name">${escapeHtml(f.displayName)}</div>
+          <div class="hb-fr-score">${(f.bestScore|0).toLocaleString()}🏆</div>
+          <button class="hb-fr-remove" onclick="removeFriend('${f.uid}')">×</button>
+        </div>`).join('');
+  wrap.innerHTML=`
+    <div class="hb-fr-mycode">YOUR CODE: <b>${escapeHtml(myCode)}</b> <span style="opacity:.6">(share so friends can add you)</span></div>
+    <div class="hb-fr-list">${friendRows}</div>
+    <div class="hb-fr-add">
+      <input type="text" id="hbFriendInput" placeholder="Enter friend code" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+      <button class="btn" style="max-width:140px;margin:0;padding:8px 16px;font-size:11px" onclick="addFriendByCode()">ADD</button>
+    </div>
+    <div id="hbFriendMsg" class="hb-coupon-msg"></div>
+  `;
+}
+async function addFriendByCode(){
+  const inp=document.getElementById('hbFriendInput');
+  const msg=document.getElementById('hbFriendMsg');
+  if(!inp||!msg||typeof Cloud==='undefined') return;
+  const r=await Cloud.addFriendByCode(inp.value);
+  msg.textContent=r.msg;
+  msg.className='hb-coupon-msg '+(r.ok?'ok':'err');
+  if(r.ok) inp.value='';
+}
+async function removeFriend(uid){
+  if(typeof Cloud==='undefined') return;
+  await Cloud.removeFriend(uid);
+}
+// Plain HTML escape so user-supplied display names can't inject markup.
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function openLootBox(){
+  const reward=LootBox.open();
+  if(!reward){ buildHomeLoot(); return; }
+  // Show reveal modal.
+  const bg=document.getElementById('lootModalBg');
+  const prize=document.getElementById('lootModalPrize');
+  const detail=document.getElementById('lootModalDetail');
+  if(bg && prize && detail){
+    prize.textContent=reward.label;
+    detail.textContent=reward.detail;
+    bg.classList.add('on');
+  }
+  if(typeof AU!=='undefined'){
+    if(reward.kind==='lootskin' || reward.kind==='gun') AU.levelOK();
+    else AU.buy();
+  }
+  buildHomeLoot();
+  buildHomeSkins();   // skin rewards: refresh skin tiles
+  buildHomeStore();   // gun rewards: refresh store
+  refreshHomeCoinPill();
+  refreshHomeStats();
+}
+function closeLootModal(){
+  const bg=document.getElementById('lootModalBg');
+  if(bg) bg.classList.remove('on');
+}
+
+// Render the daily missions section in Home Base. Three cards, progress bars, claim badges.
+// Re-checks the rotation date on open so a player who left the game open across midnight gets
+// the new day's missions next time they look.
+function buildHomeDaily(){
+  if(typeof Daily==='undefined') return;
+  Daily.checkRoll();
+  const grid=document.getElementById('hbDailyGrid'); if(!grid) return;
+  const iconFor=cat=>cat==='boss'?'👹':cat==='kill'?'💀':cat==='level'?'⬆':cat==='endless'?'🌌':cat==='score'?'⭐':cat==='skill'?'⚡':'•';
+  grid.innerHTML=Daily.data.missions.map(m=>{
+    const pct=Math.min(100, Math.round((m.progress/m.target)*100));
+    const status = m.claimed
+      ? `<div class="hb-daily-status done">✓ CLAIMED</div>`
+      : (m.progress>=m.target
+          ? `<div class="hb-daily-status ready">✓ COMPLETE</div>`
+          : `<div class="hb-daily-status">${m.progress}/${m.target}</div>`);
+    return `
+      <div class="hb-daily-card${m.claimed?' claimed':m.progress>=m.target?' ready':''}">
+        <div class="hb-daily-head">
+          <div class="hb-daily-icon">${iconFor(m.cat)}</div>
+          <div class="hb-daily-name">${m.name}</div>
+          <div class="hb-daily-reward">+${m.reward}🪙</div>
+        </div>
+        <div class="hb-daily-bar"><div class="hb-daily-bar-fill" style="width:${pct}%"></div></div>
+        ${status}
+      </div>`;
+  }).join('');
+  // Refresh-in countdown.
+  const t=document.getElementById('hbDailyTimer');
+  if(t){
+    const ms=Daily.msUntilTomorrow();
+    const h=Math.floor(ms/3600000), mins=Math.floor((ms%3600000)/60000);
+    t.textContent='RESETS IN '+h+'H '+mins+'M';
+  }
+}
+
 // Render the currently-equipped 3-slot loadout strip.
 function buildHomeEquippedStrip(){
   const strip=document.getElementById('hbEqStrip'); if(!strip) return;
@@ -1144,6 +2038,20 @@ function buildHomeStore(){
         <button class="hb-store-slot${slot===2?' on':''}" onclick="equipGun('${g.id}',2)">SLOT 3</button>
       </div>`;
     }
+    // Ammo capacity tier row — visible on owned, non-infinite guns. Shows ★ filled per tier and
+    // a BUY button at the next price (or MAX when tier 3 is reached).
+    let ammoTierRow='';
+    if(owned && g.maxAmmo!==Infinity){
+      const tier=Inventory.getAmmoTier(g.id);
+      const stars=Array.from({length:AMMO_TIER_MAX}, (_,i)=>i<tier?'★':'☆').join('');
+      const price=Inventory.ammoTierPrice(g.id);
+      const canBuy=price!==null && Upgrades.data.coins>=price;
+      const effMax=Math.floor(g.maxAmmo*(1+0.5*tier));
+      const btn=price===null
+        ? `<button class="hb-store-ammo-btn" disabled>MAX · ${effMax}</button>`
+        : `<button class="hb-store-ammo-btn" ${canBuy?'':'disabled'} onclick="buyAmmoTier('${g.id}')">AMMO+ · ${price}🪙</button>`;
+      ammoTierRow=`<div class="hb-store-ammo"><span class="hb-store-ammo-stars">${stars}</span><span class="hb-store-ammo-cap">CAP ${effMax}</span>${btn}</div>`;
+    }
     return `<div class="hb-store-card${equipped?' equipped':owned?' owned':''}">
       <div class="hb-store-head">
         <div class="hb-store-icon">${g.icon||'•'}</div>
@@ -1152,6 +2060,7 @@ function buildHomeStore(){
       </div>
       <div class="hb-store-stats">${stats}</div>
       <div class="hb-store-actions">${actions}</div>
+      ${ammoTierRow}
     </div>`;
   }).join('');
 }
@@ -1165,6 +2074,14 @@ function equipGun(id, slot){
   Inventory.equip(id, slot);
   if(typeof AU!=='undefined'&&AU.jump)AU.jump();
   buildHomeStore();
+}
+function buyAmmoTier(id){
+  const r=Inventory.buyAmmoTier(id);
+  if(r.ok){
+    if(typeof AU!=='undefined'&&AU.buy)AU.buy();
+  }
+  buildHomeStore();
+  refreshHomeCoinPill();
 }
 function applyCoupon(){
   const inp=document.getElementById('hbCouponInput');
@@ -1375,6 +2292,9 @@ function initLevel(){
      && pickedLayout.name==='MIX' && source.name){
     FT.add(canvas.width/2, 110, '★ '+source.name, '#a100ff', 28, true);
   }
+  // Pick the backdrop theme. MIX uses the per-level pick (source.theme); other layouts use
+  // the static theme on the layout. Fallback to neon for safety.
+  currentBgTheme = (source && source.theme) || pickedLayout.theme || 'neon';
   platforms=source.platforms.map(p=>({
     x:p.x,y:p.y,width:p.w,height:p.h,
     type:p.type||'solid',
@@ -1425,8 +2345,42 @@ function initLevel(){
       vx:(Math.random()<.5?1:-1)*speed*(0.7+Math.random()*.6),
       vy:(Math.random()<.5?1:-1)*speed*(0.5+Math.random()*.5),
       glow:Math.random()*Math.PI*2,rot:0,type:tp,hp,maxHp:hp,
-      frozenT:0,shootTimer:0|Math.random()*180,
+      frozenT:0,burnT:0,shootTimer:0|Math.random()*180,
       color:tp==='tank'?'#880000':tp==='chaser'?'#ff6600':tp==='spinner'?'#cc00ff':'#ff0055'});
+  }
+
+  // BOSS — every BOSS_LEVEL_INTERVAL levels, spawn one boss matching the current backdrop
+  // theme. Endless mode skips it (the climb is meant to be uninterrupted). Boss HP scales with
+  // difficulty (D.hpM) and the boss tier (one tier added per BOSS_LEVEL_INTERVAL).
+  activeBoss=null;
+  if(!isEndlessRun() && level>0 && level%BOSS_LEVEL_INTERVAL===0){
+    const bossDef=BOSSES[currentBgTheme]||BOSSES.neon;
+    const bossTier=Math.floor(level/BOSS_LEVEL_INTERVAL);
+    const bossHp=(bossDef.hp + bossTier*5) * D.hpM;
+    const bx=WORLD_W/2 - bossDef.w/2;
+    // Spawn mid-air around the top third of the world so the player has to climb to engage.
+    const by=Math.max(180, WORLD_H*0.28);
+    const boss={
+      x:bx, y:by, width:bossDef.w, height:bossDef.h,
+      vx:0, vy:0,
+      glow:0, rot:0, type:'boss',
+      hp:bossHp, maxHp:bossHp,
+      frozenT:0, burnT:0, shootTimer:120,
+      color:bossDef.color,
+      boss:{
+        def:bossDef, tier:bossTier,
+        phase:1, attackCd:120,
+        chargeT:0, chargeDir:1,
+      },
+    };
+    obstacles.push(boss);
+    activeBoss=boss;
+    // Bosses don't increment the regular enemy count — they're tracked via activeBoss for the
+    // HUD and portal-lock logic.
+    AU.enemyDie(true); // dramatic intro hit-bass; placeholder until a dedicated bossIntro sfx exists
+    if(typeof FT!=='undefined'&&typeof canvas!=='undefined'){
+      FT.add(canvas.width/2, 140, '⚠ '+bossDef.name+' ⚠', bossDef.color, 30, true);
+    }
   }
 
   enemiesLeft=cnt;
@@ -1440,7 +2394,9 @@ function initLevel(){
     portal=null;
     portalLocked=false;
   }else{
-    portalLocked=!D.portalFree && cnt>0;
+    // Lock portal if there are enemies (subject to difficulty's portalFree flag) OR a boss is
+    // active. A boss alone with 0 minions still gates the level.
+    portalLocked=(!D.portalFree && cnt>0) || !!activeBoss;
     portal={x:WORLD_W/2-35,y:80,width:70,height:110,rot:0,pt:0,locked:portalLocked};
   }
 
@@ -1456,12 +2412,13 @@ function initLevel(){
   }
 
   // Starting ammo: even on PRO (D.ammoBonus=0) give the player a usable base loadout so the
-  // limited weapons aren't dead at level start.
+  // limited weapons aren't dead at level start. Skip infinite-ammo guns so the bonus doesn't
+  // accidentally clobber Infinity if anything upstream set ammo to a finite number.
   players.forEach(p => {
     const plasGain=Math.max(D.ammoBonus,15);
     const timeGain=Math.max(Math.floor(D.ammoBonus*.67),10);
-    p.guns[1].ammo=Math.min(p.guns[1].maxAmmo,p.guns[1].ammo+plasGain);
-    p.guns[2].ammo=Math.min(p.guns[2].maxAmmo,p.guns[2].ammo+timeGain);
+    if(p.guns[1].maxAmmo!==Infinity) p.guns[1].ammo=Math.min(p.guns[1].maxAmmo,p.guns[1].ammo+plasGain);
+    if(p.guns[2].maxAmmo!==Infinity) p.guns[2].ammo=Math.min(p.guns[2].maxAmmo,p.guns[2].ammo+timeGain);
   });
 }
 
@@ -1490,9 +2447,12 @@ function tryShoot(p){
   const gun=p.guns[p.curGun];
   // Rate-of-fire gate. gun.lastShot is reset in initLevel() so a stale value from a previous
   // level / rewind can't lock out the first shot. Adrenaline (CRIMSON skill) cuts the
-  // effective rof to 66% so the player fires 50% faster.
-  const effRof = p.adrenalineT>0 ? Math.max(2, Math.floor(gun.rof*0.66)) : gun.rof;
-  if(gTime-gun.lastShot<effRof)return;
+  // effective rof to 66% so the player fires 50% faster. Flamethrower bypasses the gate so it
+  // fires every frame as a true continuous stream.
+  if(gun.id!=='flamethrower'){
+    const effRof = p.adrenalineT>0 ? Math.max(2, Math.floor(gun.rof*0.66)) : gun.rof;
+    if(gTime-gun.lastShot<effRof)return;
+  }
   if(gun.ammo!==Infinity&&gun.ammo<=0){
     FT.add(p.x+16,p.y,'NO AMMO!','#ff0055',16);return;
   }
@@ -1509,7 +2469,22 @@ function tryShoot(p){
   else{dx=p.facing*0.3;dy=-1;}
   const d=Math.hypot(dx,dy)||1;
   // dmgBonus comes from the per-character Damage upgrade applied by applyUpgrades().
-  const bulletDmg = gun.dmg + (p.dmgBonus||0);
+  // Scoped sniper shots (held ≥30 frames before release) get a 1.5× damage bonus + telegraph.
+  const sniperScoped = p.sniperCharged && gun.id==='sniper';
+  const bulletDmg = (gun.dmg + (p.dmgBonus||0)) * (sniperScoped ? 1.5 : 1);
+  if(sniperScoped){
+    FT.add(p.x+16,p.y-12,'SCOPED!','#33ff99',18,true);
+    SFX.shake=Math.max(SFX.shake,6);
+  }
+  // Shotgun knockback: nudge the player backwards along their facing axis for a satisfying kick.
+  if(gun.id==='shotgun'){
+    p.vx -= (p.facing||1)*2.2;
+  }
+  // Active skin overrides bullet color and adds an extra particle-trail tag (poison/sparkle/
+  // ember/ice). Falls back to the gun's base color when no skin is equipped.
+  const skinDef = Inventory.equippedSkinDef(gun.id);
+  const bulletColor = (skinDef && skinDef.color) || gun.color;
+  const skinTrail = skinDef && skinDef.trail;
   // Multi-pellet (shotgun) — fire `pellets` bullets in a spread cone. Single-shot guns just
   // loop once with no jitter. Each pellet inherits the gun's pierce/freeze/explode/range tags.
   const pellets=gun.pellets|0||1;
@@ -1520,10 +2495,13 @@ function tryShoot(p){
     const vx=Math.cos(ang)*gun.speed, vy=Math.sin(ang)*gun.speed;
     bullets.push({
       x:px,y:py,vx,vy,
-      dmg:bulletDmg, color:gun.color, sz:gun.sz,
+      dmg:bulletDmg, color:bulletColor, sz: gun.sz * (gun.id==='flamethrower' ? 1.6 : 1),
       pierce:gun.pierce, freeze:gun.freeze,
       explode:gun.explode||0, range:gun.range||0, traveled:0,
       life:1, gun:p.curGun, gunId:gun.id, pIndex:p.pid,
+      scoped: sniperScoped,
+      burn: gun.id==='flamethrower' ? 60 : 0,
+      skinTrail,
     });
   }
   // SFX dispatch by id so newly equipped guns still play a sound. Default to pistol's pop.
@@ -1560,6 +2538,7 @@ function useSkill(i, pIndex=0){
   if(!eff)return;
   sk.cd=sk.maxCd;
   eff(p,sk);
+  if(typeof Daily!=='undefined' && Daily.onSkillUse) Daily.onSkillUse();
 }
 
 // ──────────────────────────────────────────────
@@ -1642,7 +2621,32 @@ function updatePlayerInput(p){
     p.dashHeld=true;
   }
   if(!dashKey)p.dashHeld=false;
-  if(shootKey){p.fireTimer++;if(p.fireTimer%p.guns[p.curGun].rof===1)tryShoot(p);}else{p.fireTimer=0;}
+  const curGun=p.guns[p.curGun];
+  const isSniper=curGun&&curGun.id==='sniper';
+  const isFlame=curGun&&curGun.id==='flamethrower';
+  if(shootKey){
+    p.fireTimer++;
+    if(isSniper){
+      // Sniper charges while held; fires on release. Spam-fire fallback at full RoF so DPS-only
+      // players aren't forced to release-press for every shot.
+      if(p.fireTimer===curGun.rof){
+        p.sniperCharged=true;tryShoot(p);p.sniperCharged=false;p.fireTimer=0;
+      }
+    } else if(isFlame){
+      // Flamethrower is a true continuous stream — fire every frame while held. The rate gate
+      // inside tryShoot is already bypassed for flame, and ammo is Infinity so it never stops.
+      tryShoot(p);
+    } else if(p.fireTimer%curGun.rof===1){
+      tryShoot(p);
+    }
+  } else {
+    if(isSniper && p.fireTimer>=1){
+      p.sniperCharged=p.fireTimer>=30;
+      tryShoot(p);
+      p.sniperCharged=false;
+    }
+    p.fireTimer=0;
+  }
 }
 
 // Co-op move dispatch. Called from handleInput on edge-trigger. Falls through silently for
@@ -1716,6 +2720,51 @@ function resolvePlat(pl,plat){
 }
 
 function killEnemy(obs,idx){
+  // BOSS KILL — dedicated reward + cleanup path. Bosses don't decrement enemiesLeft (they
+  // weren't counted in the spawn loop) but their death must still unlock the portal.
+  if(obs.type==='boss'){
+    const def=obs.boss&&obs.boss.def;
+    const cx=obs.x+obs.width/2, cy=obs.y+obs.height/2;
+    // Massive death VFX — multi-burst of particles, screen shake, flash, sfx.
+    for(let i=0;i<3;i++){
+      PS.enemyDie(cx + (Math.random()-0.5)*60, cy + (Math.random()-0.5)*60, def?def.color:'#ff0055');
+      PS.orbBurst(cx + (Math.random()-0.5)*40, cy + (Math.random()-0.5)*40);
+    }
+    PS.portalVortex(cx, cy);
+    AU.enemyDie(true); AU.levelOK();
+    SFX.shake=24; SFX.clear();
+    // Score + coin reward.
+    const bossPts=Combo.score(2000);
+    score+=bossPts;
+    const bossCoins=500 + (obs.boss?obs.boss.tier:0)*100;
+    Upgrades.addCoins(bossCoins);
+    FT.add(cx, cy-40, '★ BOSS DOWN ★', def?def.color:'#ffcc00', 32, true);
+    FT.add(cx, cy-12, '+'+bossPts, '#ffcc00', 26, true);
+    FT.add(cx, cy+18, '+'+bossCoins+'🪙', '#ffd700', 22, true);
+    // Drop a heal + ammo to soften the next push.
+    collectibles.push({x:cx-20, y:cy, r:10, collected:false, pulse:0, type:'heal'});
+    collectibles.push({x:cx+20, y:cy, r:10, collected:false, pulse:0, type:'plasma'});
+    obstacles.splice(idx,1);
+    activeBoss=null;
+    // Notify daily missions that a boss fell — completes any "defeat boss" mission.
+    if(typeof Daily!=='undefined' && Daily.onBossKill) Daily.onBossKill(def);
+    // Guaranteed loot box from every boss kill.
+    if(typeof LootBox!=='undefined') LootBox.add(1, 'BOSS');
+    // Cloud: bump bossesDown counter (debounced).
+    if(typeof Cloud!=='undefined' && Cloud.isSignedIn()){
+      const cur=(Cloud.profile&&Cloud.profile.bossesDown)|0;
+      Cloud.syncStats({bossesDown:cur+1});
+    }
+    Achievements.check();
+    // Boss death always unlocks the portal regardless of enemiesLeft count.
+    if(portal && portal.locked){
+      portal.locked=false;
+      const p0=players[0];
+      const tx=p0?p0.x+16:WORLD_W/2, ty=p0?p0.y-30:WORLD_H/2;
+      FT.add(tx,ty,'PORTAL UNLOCKED!','#00f5ff',32,true);
+    }
+    return;
+  }
   const big=obs.type==='tank';
   PS.enemyDie(obs.x+obs.width/2,obs.y+obs.height/2,obs.color);
   AU.enemyDie(big);
@@ -1731,14 +2780,16 @@ function killEnemy(obs,idx){
   obstacles.splice(idx,1);
   SFX.good();
   Achievements.check();
+  // Notify daily missions of the kill so per-type counters can tick.
+  if(typeof Daily!=='undefined' && Daily.onKill) Daily.onKill(obs.type);
   // Drop ammo and heals
   if(Math.random()<.45){
     const tp=Math.random()<.4?'plasma':Math.random()<.5?'timeammo':'heal';
     collectibles.push({x:obs.x+obs.width/2,y:obs.y,r:10,collected:false,pulse:0,type:tp});
   }
-  // Portal unlocks when all enemies are killed (combat-style behavior, always-on).
+  // Portal unlocks when all regular enemies are killed AND the boss (if any) is down.
   // Skipped in endless mode where there is no portal.
-  if(portal&&portal.locked&&enemiesLeft===0){
+  if(portal&&portal.locked&&enemiesLeft===0&&!activeBoss){
     portal.locked=false;
     const p0=players[0];
     const tx=p0?p0.x+16:WORLD_W/2, ty=p0?p0.y-30:WORLD_H/2;
@@ -1939,17 +2990,39 @@ function updatePhysics(){
     if(b.gunId==='rocket'){
       b.vx*=1.03;b.vy*=1.03;
       PS.exhaust(b.x-b.vx*0.5,b.y-b.vy*0.5);
+      PS.emit(b.x-b.vx*0.6, b.y-b.vy*0.6, 2, {speed:0.8, color:['#ff8800','#ff3300','#999'], size:3.5, decay:0.05, grav:-0.04, glow:true});
     } else if(b.gunId==='flamethrower'){
-      b.sz+=0.15;
-      b.vx+=(Math.random()-0.5)*1.5;
-      b.vy+=(Math.random()-0.5)*1.5;
-      b.life-=0.008; // extra decay
+      // Flame stream: balloon size, heavy jitter, heat-rise drift, sparse-but-bright particle trail.
+      // Trail emit cut to 1/frame since we now spawn 3 pellet-bullets per frame; net density is up.
+      b.sz+=0.28;
+      b.vx+=(Math.random()-0.5)*2.2;
+      b.vy+=(Math.random()-0.5)*1.6 - 0.18; // upward drift = rising heat
+      b.life-=0.012; // burns out quicker than a normal bullet
+      PS.emit(b.x, b.y, 1, {speed:1.4, spread:Math.PI, color:['#ffcc00','#ff6600','#ff2200','#661100'], size:5, decay:0.05, glow:true, grav:-0.06});
     } else if(b.gunId==='sniper'){
-      PS.emit(b.x,b.y,1,{speed:0,color:['#33ff99'],size:1,decay:0.04,glow:true});
+      // Bright tracer line + extra-thick trail for scoped shots.
+      const tSz = b.scoped ? 2.4 : 1.2;
+      PS.emit(b.x,b.y,b.scoped?3:1,{speed:0,color:['#33ff99','#aaffcc','#fff'],size:tSz,decay:0.035,glow:true});
     } else if(b.gunId==='railgun'){
-      PS.emit(b.x,b.y,1,{speed:0,color:['#88e0ff'],size:1.5,decay:0.1,glow:true});
+      PS.emit(b.x,b.y,2,{speed:0,color:['#88e0ff','#fff'],size:2,decay:0.08,glow:true});
     } else if(b.gunId==='plasma'){
-      PS.emit(b.x,b.y,1,{speed:0,color:['#00f5ff'],size:2,decay:0.08,glow:true});
+      PS.emit(b.x,b.y,1,{speed:0.6,spread:Math.PI*2,color:['#00f5ff','#aaffff'],size:2.2,decay:0.08,glow:true});
+    } else if(b.gunId==='timegun'){
+      // Snowflake trail — small frozen specks drifting in the bullet's wake.
+      PS.emit(b.x-b.vx*0.3, b.y-b.vy*0.3, 1, {speed:0.8, spread:Math.PI*2, color:['#cceeff','#88aaff','#fff'], size:2.5, decay:0.06, glow:true, grav:0.04});
+    }
+    // Skin overlay trail — extra particles on top of the gun's base trail to make skins distinct.
+    if(b.skinTrail){
+      const t=b.skinTrail;
+      if(t==='poison'){
+        PS.emit(b.x, b.y, 1, {speed:0.6, spread:Math.PI*2, color:['#88ff00','#00ff88','#aaff44'], size:2.5, decay:0.05, glow:true, grav:0.06});
+      } else if(t==='sparkle'){
+        PS.emit(b.x, b.y, 1, {speed:1.2, spread:Math.PI*2, color:['#ffffff','#ffeecc','#ccffff'], size:2.2, decay:0.06, glow:true});
+      } else if(t==='ember'){
+        PS.emit(b.x, b.y, 1, {speed:0.9, spread:Math.PI, color:['#ff8800','#ff3300','#ffcc00'], size:3, decay:0.05, glow:true, grav:-0.04});
+      } else if(t==='ice'){
+        PS.emit(b.x, b.y, 1, {speed:0.5, spread:Math.PI*2, color:['#aaffff','#88aaff','#fff'], size:2.4, decay:0.05, glow:true, grav:0.03});
+      }
     }
 
     b.life-=.008;
@@ -1968,6 +3041,8 @@ function updatePhysics(){
         PS.bulletHit(b.x,b.y,b.color);
         // Bug fix: re-freezing a frozen enemy used to be a no-op. Refresh the timer instead.
         if(b.freeze){ob.frozenT=Math.max(ob.frozenT,180);FT.add(ob.x+ob.width/2,ob.y,'FROZEN!','#66aaff',14);}
+        // Flamethrower DOT — stamp a burn timer on the enemy; obstacle update drains HP per frame.
+        if(b.burn){ob.burnT=Math.max(ob.burnT||0, b.burn);}
         // Rocket / AOE: damage every other obstacle within `explode` radius of impact point.
         // Damage-only here; we splice killed obstacles in a single sweep below to avoid
         // shifting indices mid-loop.
@@ -2041,7 +3116,99 @@ function updatePhysics(){
 
   // OBSTACLES movement + multi-player collision
   obstacles.forEach((obs,i)=>{
+    // Flamethrower DOT: tick down burnT and drain HP per frame while it's positive.
+    if(obs.burnT>0){
+      obs.burnT--;
+      obs.hp-=0.06;
+      if(Math.random()<0.35){
+        PS.emit(obs.x+Math.random()*obs.width, obs.y+Math.random()*obs.height, 1,
+          {speed:1.5, angle:-Math.PI/2, spread:0.6, color:['#ff8800','#ff4400','#ffcc00'], size:3, decay:0.04, glow:true, grav:-0.05});
+      }
+      if(obs.hp<=0){killEnemy(obs,i);return;}
+    }
     if(obs.frozenT>0){obs.frozenT--;return;}
+    // BOSS update — homing flight + state-machine attack pattern. Phase escalates at 66% / 33%
+    // HP. Bosses ignore the standard wall-bounce / random-walk physics below.
+    if(obs.type==='boss' && obs.boss){
+      const b=obs.boss, def=b.def;
+      // Phase transition.
+      const pct=obs.hp/obs.maxHp;
+      const newPhase = pct<=0.34 ? 3 : pct<=0.67 ? 2 : 1;
+      if(newPhase!==b.phase){
+        b.phase=newPhase;
+        FT.add(obs.x+obs.width/2, obs.y, 'PHASE '+newPhase, def.color, 22, true);
+        SFX.shake=Math.max(SFX.shake, 10);
+      }
+      // Movement: homing toward nearest player. Foundry behemoth charges horizontally.
+      let homeTarget=null, bestD=Infinity;
+      players.forEach(pl=>{const dd=Math.hypot((pl.x+16)-(obs.x+obs.width/2),(pl.y+16)-(obs.y+obs.height/2));if(dd<bestD){bestD=dd;homeTarget=pl;}});
+      if(homeTarget){
+        if(def.pattern==='charge'){
+          // Charge: slide horizontally toward player at high speed, leave lava-ember trail.
+          const tx=(homeTarget.x+16)-(obs.x+obs.width/2);
+          obs.vx += Math.sign(tx) * 0.18 * def.speedMul;
+          obs.vy += ((homeTarget.y-obs.y)*0.0025);
+          if(Math.random()<0.6){
+            PS.emit(obs.x+Math.random()*obs.width, obs.y+obs.height, 1,
+              {speed:1.4, angle:Math.PI/2, spread:1, color:['#ff8800','#ff3300','#660000'], size:5, decay:0.04, glow:true, grav:-0.05});
+          }
+        } else {
+          // Default: drift slowly toward the player.
+          const dx=(homeTarget.x+16)-(obs.x+obs.width/2), dy=(homeTarget.y+16)-(obs.y+obs.height/2);
+          const dd=Math.hypot(dx,dy)||1;
+          obs.vx += (dx/dd) * 0.10 * def.speedMul;
+          obs.vy += (dy/dd) * 0.08 * def.speedMul;
+        }
+      }
+      // Damping + speed cap.
+      obs.vx *= 0.92; obs.vy *= 0.92;
+      const cap=6*def.speedMul;
+      obs.vx=Math.max(-cap, Math.min(cap, obs.vx));
+      obs.vy=Math.max(-cap, Math.min(cap, obs.vy));
+      obs.x+=obs.vx*fts; obs.y+=obs.vy*fts;
+      // Soft world bounds — bosses bounce off so they don't fly off the map.
+      if(obs.x<20){obs.x=20; obs.vx*=-0.6;}
+      if(obs.x+obs.width>WORLD_W-20){obs.x=WORLD_W-20-obs.width; obs.vx*=-0.6;}
+      if(obs.y<100){obs.y=100; obs.vy*=-0.6;}
+      if(obs.y+obs.height>WORLD_H-80){obs.y=WORLD_H-80-obs.height; obs.vy*=-0.6;}
+      obs.glow=(obs.glow+.12)%(Math.PI*2);
+
+      // Attack cooldown — fires depend on phase. Phase 1: single shot. Phase 2: triple volley.
+      // Phase 3: triple volley + faster cadence.
+      const baseCd = def.pattern==='charge' ? 110 : 90;
+      const cd = b.phase===1 ? baseCd : b.phase===2 ? Math.floor(baseCd*0.75) : Math.floor(baseCd*0.55);
+      b.attackCd--;
+      if(b.attackCd<=0 && homeTarget){
+        b.attackCd=cd;
+        const shots = b.phase===1 ? 1 : 3;
+        const spread = 0.3;
+        const baseAng = Math.atan2((homeTarget.y+16)-(obs.y+obs.height/2), (homeTarget.x+16)-(obs.x+obs.width/2));
+        for(let s=0;s<shots;s++){
+          const off = shots===1 ? 0 : (s-1)*spread;
+          const ang = baseAng + off;
+          enemyBullets.push({
+            x:obs.x+obs.width/2, y:obs.y+obs.height/2,
+            vx:Math.cos(ang)*6, vy:Math.sin(ang)*6,
+            life:1.4, owner: undefined, fromBoss:true, color:def.color,
+          });
+        }
+        PS.emit(obs.x+obs.width/2, obs.y+obs.height/2, 12, {speed:3.5, color:[def.color,'#fff'], size:5, decay:0.05, glow:true});
+        AU.plasmaShoot();
+      }
+
+      // Touch damage on any player (heavier than regular enemies).
+      players.forEach(pl=>{
+        if(pl.invincTimer>0||shieldTimer>0||overdriveTmr>0||pl.shieldedBy>0)return;
+        if(aabb(pl.x,pl.y,pl.width,pl.height,obs.x,obs.y,obs.width,obs.height)){
+          pl.hp-=6*D.drainM;
+          pl.invincTimer=30;
+          SFX.hit(true); AU.hit(); PS.hitBlast(pl.x+16,pl.y+16,true);
+          FT.add(pl.x+16, pl.y, '-6 BOSS!', '#ff0055', 24, true);
+          Combo.reset();
+        }
+      });
+      return; // skip the regular enemy AI path below
+    }
     
     // Chase target
     let target = null;
@@ -2134,6 +3301,7 @@ function updatePhysics(){
   }
 
   PS.update(ts);FT.update();Combo.update();
+  if(typeof QuickChat!=='undefined') QuickChat.update();
   saveState();updateHUD();
 }
 
@@ -2198,6 +3366,41 @@ function render(){
   if(timeShift){ctx.save();ctx.shadowColor='#a100ff';ctx.shadowBlur=14;ctx.fillStyle='rgba(200,100,255,.95)';ctx.font='bold 12px Segoe UI';ctx.textAlign='center';ctx.fillText('⏱ TIME SHIFT',canvas.width/2,26);ctx.restore();}
   if(overdriveTmr>0){ctx.save();ctx.shadowColor='#ffcc00';ctx.shadowBlur=14;ctx.fillStyle='rgba(255,200,0,.95)';ctx.font='bold 12px Segoe UI';ctx.textAlign='center';ctx.fillText('⚡ OVERDRIVE '+Math.ceil(overdriveTmr/60)+'s',canvas.width/2,42);ctx.restore();}
   if(enemiesLeft>0){ctx.fillStyle='rgba(255,0,85,.85)';ctx.font='bold 13px Segoe UI';ctx.textAlign='center';ctx.fillText('ENEMIES LEFT: '+enemiesLeft,canvas.width/2,canvas.height-8);ctx.textAlign='left';}
+
+  // BOSS HP BAR — screen-fixed strip at the top center while a boss is active. Pulses red when
+  // the boss is in its final (<33% HP) phase.
+  if(activeBoss && activeBoss.hp>0){
+    const b=activeBoss, def=b.boss&&b.boss.def;
+    const pct=Math.max(0, Math.min(1, b.hp/b.maxHp));
+    const barW=Math.min(580, canvas.width*0.6), barH=18;
+    const barX=(canvas.width-barW)/2, barY=14;
+    ctx.save();
+    // Name label
+    ctx.font='bold 14px Segoe UI'; ctx.textAlign='center';
+    ctx.shadowColor=def?def.color:'#ff0055'; ctx.shadowBlur=12;
+    ctx.fillStyle=def?def.color:'#ff0055';
+    ctx.fillText('⚠ '+(def?def.name:'BOSS')+(b.boss?' · PHASE '+b.boss.phase:''), canvas.width/2, barY-2);
+    // Frame
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(0,0,0,.65)';
+    ctx.fillRect(barX, barY+6, barW, barH);
+    // Fill — color shifts from red→orange→yellow as HP drops; pulses in phase 3.
+    const phaseBoost = b.boss && b.boss.phase===3 ? (0.6 + 0.4*Math.sin(gTime*0.25)) : 1;
+    const fillColor = pct>0.66 ? '#ff3344' : pct>0.33 ? '#ff8822' : '#ffcc00';
+    ctx.fillStyle=fillColor;
+    ctx.globalAlpha=phaseBoost;
+    ctx.fillRect(barX+2, barY+8, (barW-4)*pct, barH-4);
+    ctx.globalAlpha=1;
+    // Frame stroke
+    ctx.strokeStyle=def?def.color:'#ff0055'; ctx.lineWidth=2;
+    ctx.strokeRect(barX, barY+6, barW, barH);
+    // HP numbers
+    ctx.font='bold 11px Segoe UI';
+    ctx.fillStyle='#fff';
+    ctx.fillText(Math.ceil(b.hp)+' / '+Math.ceil(b.maxHp), canvas.width/2, barY+19);
+    ctx.restore();
+    ctx.textAlign='left';
+  }
 
   // Mini-map (single, screen-right-side, vertical). Shows both players' altitude. Top of the
   // bar = top of the world (portal), bottom = ground.
@@ -2436,12 +3639,36 @@ function drawWorld(viewer){
     ctx.fillStyle='#ff0055';ctx.beginPath();ctx.arc(b.x,b.y,5,0,Math.PI*2);ctx.fill();ctx.restore();
   });
 
-  // Player bullets
+  // Player bullets — most guns draw as glowing orbs; flame/railgun/sniper have bespoke looks.
   bullets.forEach(b=>{
     const gun=GUNS_BY_ID[b.gunId] || GUNS[b.gun];
-    ctx.save();ctx.globalAlpha=b.life;ctx.shadowColor=gun.color;ctx.shadowBlur=14;
-    ctx.fillStyle=gun.color;ctx.beginPath();ctx.arc(b.x,b.y,gun.sz,0,Math.PI*2);ctx.fill();
-    ctx.globalAlpha=b.life*.35;ctx.fillStyle=gun.color;ctx.beginPath();ctx.arc(b.x-b.vx*2,b.y-b.vy*2,gun.sz*.7,0,Math.PI*2);ctx.fill();
+    if(b.gunId==='flamethrower'){
+      // Layered radial gradient — outer dark red, mid bright orange, hot yellow core.
+      ctx.save();ctx.globalAlpha=b.life;
+      const r=b.sz;
+      const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,r);
+      g.addColorStop(0,'rgba(255,255,200,'+(0.9*b.life)+')');
+      g.addColorStop(0.35,'rgba(255,180,0,'+(0.8*b.life)+')');
+      g.addColorStop(0.7,'rgba(255,60,0,'+(0.5*b.life)+')');
+      g.addColorStop(1,'rgba(102,17,0,0)');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.x,b.y,r,0,Math.PI*2);ctx.fill();
+      ctx.restore();
+      return;
+    }
+    if(b.gunId==='railgun'){
+      // Render as a bright line segment along the velocity vector for a beam-rifle feel.
+      ctx.save();ctx.globalAlpha=b.life;
+      ctx.strokeStyle=gun.color;ctx.shadowColor=gun.color;ctx.shadowBlur=18;ctx.lineWidth=gun.sz*1.1;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(b.x-b.vx*1.4,b.y-b.vy*1.4);ctx.lineTo(b.x+b.vx*0.4,b.y+b.vy*0.4);ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    const drawSz = b.scoped ? gun.sz*1.6 : gun.sz;
+    ctx.save();ctx.globalAlpha=b.life;ctx.shadowColor=gun.color;ctx.shadowBlur=b.scoped?22:14;
+    ctx.fillStyle=gun.color;ctx.beginPath();ctx.arc(b.x,b.y,drawSz,0,Math.PI*2);ctx.fill();
+    // Longer tracer for scoped sniper shots.
+    const trailLen = b.scoped ? 4 : 2;
+    ctx.globalAlpha=b.life*.35;ctx.fillStyle=gun.color;ctx.beginPath();ctx.arc(b.x-b.vx*trailLen,b.y-b.vy*trailLen,drawSz*.7,0,Math.PI*2);ctx.fill();
     ctx.restore();
   });
 
@@ -2468,10 +3695,47 @@ function drawWorld(viewer){
     if(obs.type==='spinner')ctx.rotate(obs.rot);
     if(obs.frozenT>0){ctx.shadowColor='#66aaff';ctx.shadowBlur=20;}else{ctx.shadowColor=obs.color;ctx.shadowBlur=22*gl;}
     const og=ctx.createLinearGradient(-obs.width/2,-obs.height/2,obs.width/2,obs.height/2);
-    const c0=obs.frozenT>0?'#4488cc':obs.color;const c1=obs.frozenT>0?'#224466':obs.type==='tank'?'#550000':obs.type==='chaser'?'#cc4400':obs.type==='spinner'?'#8800cc':'#aa0033';
+    const c0=obs.frozenT>0?'#4488cc':obs.color;const c1=obs.frozenT>0?'#224466':obs.type==='tank'?'#550000':obs.type==='chaser'?'#cc4400':obs.type==='spinner'?'#8800cc':obs.type==='boss'?(obs.boss&&obs.boss.def.c2)||'#000':'#aa0033';
     og.addColorStop(0,c0);og.addColorStop(1,c1);ctx.fillStyle=og;
     if(obs.type==='spinner'){ctx.beginPath();ctx.moveTo(0,-obs.height/2);ctx.lineTo(obs.width/2,0);ctx.lineTo(0,obs.height/2);ctx.lineTo(-obs.width/2,0);ctx.closePath();ctx.fill();}
     else if(obs.type==='chaser'){const dir=(viewer.x>obs.x)?1:-1;ctx.beginPath();ctx.moveTo(obs.width/2*dir,0);ctx.lineTo(-obs.width/2*dir,-obs.height/2);ctx.lineTo(-obs.width/2*dir,obs.height/2);ctx.closePath();ctx.fill();}
+    else if(obs.type==='boss'){
+      // Boss: larger gradient body with halo ring + center icon. Phase 3 pulses red.
+      const b=obs.boss, def=b&&b.def;
+      const phaseGlow = b ? (b.phase===3 ? 0.9 : b.phase===2 ? 0.6 : 0.3) : 0.3;
+      ctx.shadowBlur=30 + phaseGlow*15;
+      // Hexagon-ish body for a more menacing silhouette than a plain rectangle.
+      ctx.beginPath();
+      const hw=obs.width/2, hh=obs.height/2;
+      ctx.moveTo(-hw*0.6, -hh);
+      ctx.lineTo(hw*0.6, -hh);
+      ctx.lineTo(hw, 0);
+      ctx.lineTo(hw*0.6, hh);
+      ctx.lineTo(-hw*0.6, hh);
+      ctx.lineTo(-hw, 0);
+      ctx.closePath();
+      ctx.fill();
+      // Halo ring — pulsing.
+      if(def){
+        ctx.save();
+        ctx.globalAlpha = 0.5 + Math.sin(gTime*0.1) * 0.3;
+        ctx.strokeStyle = def.color;
+        ctx.lineWidth = 3;
+        ctx.shadowBlur = 18;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(hw, hh)*1.15 + Math.sin(gTime*0.08)*4, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+        // Icon glyph at center.
+        ctx.save();
+        ctx.shadowBlur=0;
+        ctx.font='bold 36px "Segoe UI Emoji", sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle='#fff';
+        ctx.fillText(def.icon, 0, 2);
+        ctx.restore();
+      }
+    }
     else{ctx.fillRect(-obs.width/2,-obs.height/2,obs.width,obs.height);}
     if(obs.maxHp>1){
       const bw=obs.width,bh=5,bx=-bw/2,by=-obs.height/2-10;
@@ -2485,6 +3749,7 @@ function drawWorld(viewer){
   players.forEach(pl=>drawPlayer(pl));
 
   PS.draw(ctx);FT.draw(ctx);
+  if(typeof QuickChat!=='undefined') QuickChat.drawBubbles(ctx);
 }
 
 function drawPlayer(pl){
@@ -2496,6 +3761,35 @@ function drawPlayer(pl){
     ctx.fillStyle=t.dash?`rgba(0,245,255,${a})`:overdriveTmr>0?`rgba(255,200,0,${a})`:`rgba(${parseInt(ch.c1.slice(1,3),16)},${parseInt(ch.c1.slice(3,5),16)},${parseInt(ch.c1.slice(5,7),16)},${a})`;
     ctx.fillRect(t.x,t.y,pl.width,pl.height);
   });
+
+  // Sniper laser sight: a dotted red line from the player muzzle toward the aim target. Brighter
+  // and thicker once the player has charged the shot (≥30 held frames).
+  const _curGun = pl.guns && pl.guns[pl.curGun];
+  if(_curGun && _curGun.id==='sniper'){
+    const px=pl.x+pl.width/2, py=pl.y+pl.height/2;
+    let dx,dy;
+    const tgt=findAimTarget(px,py);
+    if(tgt){dx=tgt.x-px;dy=tgt.y-py;}
+    else if(pl.keymap.useMouse){dx=(pl.mouseX+pl.cameraX)-px;dy=(pl.mouseY+(pl.cameraY||0))-py;}
+    else{dx=(pl.facing||1)*0.3;dy=-1;}
+    const d=Math.hypot(dx,dy)||1;
+    const len=600;
+    const ex=px+dx/d*len, ey=py+dy/d*len;
+    const charged=pl.fireTimer>=30;
+    ctx.save();
+    ctx.globalAlpha=charged?0.85:0.45;
+    ctx.strokeStyle=charged?'#ff3344':'#ff6677';
+    ctx.lineWidth=charged?1.8:1;
+    ctx.setLineDash(charged?[6,4]:[3,5]);
+    ctx.shadowColor='#ff3344';ctx.shadowBlur=charged?10:0;
+    ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(ex,ey);ctx.stroke();
+    ctx.setLineDash([]);
+    if(charged){
+      ctx.globalAlpha=0.9;ctx.fillStyle='#33ff99';ctx.shadowColor='#33ff99';ctx.shadowBlur=14;
+      ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fill();
+    }
+    ctx.restore();
+  }
 
   ctx.save();
   const invBlink=pl.invincTimer>0&&Math.floor(gTime/4)%2===0;
@@ -2805,6 +4099,15 @@ function triggerLevelComplete(){
   const lvlBonus = 50 + level*15 + levelKills*5;
   Upgrades.addCoins(lvlBonus);
   Achievements.check();
+  if(typeof Daily!=='undefined'){
+    Daily.onLevelClear();
+    Daily.onScoreChange(score);
+  }
+  // 8% chance to drop a loot box on level clear. Boss levels already give a guaranteed box
+  // via killEnemy, so this only fires for normal level clears.
+  if(typeof LootBox!=='undefined' && Math.random()<0.08){
+    LootBox.add(1, 'LEVEL CLEAR');
+  }
   continueLevel();
 }
 
@@ -2822,6 +4125,10 @@ function endlessAdvanceChunk(){
   rewinds=Math.min(8,rewinds+1);
   level++;
   Achievements.check();
+  if(typeof Daily!=='undefined'){
+    Daily.onEndlessMeters(endlessMeters);
+    Daily.onScoreChange(score);
+  }
   FT.add(WORLD_W/2,140,'+'+chunkM+'m','#00f5ff',24,true);
   FT.add(WORLD_W/2,170,'+'+bonus+'🪙','#ffcc00',18,true);
   AU.jump();
@@ -2854,7 +4161,9 @@ function restartGame(){
   endlessMeters=0;
   gTime=0;
   players.forEach(p=>{
-    p.guns[1].ammo=0;p.guns[2].ammo=0;
+    // Only zero ammo on guns with finite max ammo — flame / pistol stay at Infinity.
+    if(p.guns[1].maxAmmo!==Infinity) p.guns[1].ammo=0;
+    if(p.guns[2].maxAmmo!==Infinity) p.guns[2].ammo=0;
     p.guns.forEach(g=>{g.lastShot=0;});
     p.coopCd=0;p.shieldedBy=0;
     p.flameTrailT=0;p.adrenalineT=0;p.phaseT=0;p.reflectT=0;p.stompPending=false;
@@ -2869,6 +4178,8 @@ function restartGame(){
 function toMenu(){
   clearInterval(lcTimer);cancelAnimationFrame(animId);
   saveBest();level=1;score=0;rewinds=3;totalKills=0;state='menu';
+  currentBgTheme='neon';
+  if(typeof refreshCloudUI==='function') refreshCloudUI();
   // Tear down any active peer connection cleanly so we don't leak data channels.
   if(Net.conn){try{Net.conn.close();}catch(e){}Net.conn=null;}
   Net.role=null;Net.lastState=null;Net.remoteInput={};
@@ -2952,7 +4263,10 @@ function startGame(directMode=null, directDiff=null){
   // particular must be zero or the player can't fire until gTime catches up.
   // NOTE: do NOT overwrite p.speed here — applyCharacter+applyUpgrades already set it.
   players.forEach(p => {
-    p.guns[1].ammo=0; p.guns[2].ammo=0;
+    // Reset ammo on non-infinite guns only — clobbering Infinity → 0 makes infinite-ammo
+    // guns (flame) start at 0/∞ and then pick up the +15 plasma bonus, showing "15/∞".
+    if(p.guns[1].maxAmmo!==Infinity) p.guns[1].ammo=0;
+    if(p.guns[2].maxAmmo!==Infinity) p.guns[2].ammo=0;
     p.guns.forEach(g=>{g.lastShot=0;});
   });
   gTime=0;
@@ -2965,9 +4279,163 @@ function startGame(directMode=null, directDiff=null){
 }
 
 // ──────────────────────────────────────────────
+// QUICK CHAT — emoji wheel + floating bubbles
+//
+// Press V (or the on-screen button if added later) to open the radial wheel. Click an emoji
+// (or press 1-9 for the first nine) to send. The pick spawns a local bubble above the player
+// for ~3s and, in online mode, broadcasts a `{t:'e',emoji,pid}` packet so the peer also
+// sees it. Per-player cooldown prevents spam.
+// ──────────────────────────────────────────────
+const QuickChat={
+  EMOJIS:['👋','👍','😬','🔥','💀','🎯','❤️','⚠️','🆘','🤝','😂','👀'],
+  bubbles:[],          // {pid, emoji, t, age}
+  cooldown:0,          // frames remaining before local player can send again
+  COOLDOWN:300,        // 5s at 60fps
+  BUBBLE_LIFE:180,     // 3s
+  wheelOpen:false,
+  // Open the wheel as a DOM overlay (created lazily). No-op while on cooldown.
+  open(){
+    if(this.cooldown>0){
+      FT.add(canvas.width/2, 240, 'CHAT COOLDOWN '+Math.ceil(this.cooldown/60)+'s', '#ff8800', 16, true);
+      return;
+    }
+    if(this.wheelOpen) return;
+    this.wheelOpen=true;
+    this._ensureWheel();
+    const wheel=document.getElementById('qcWheel');
+    if(wheel) wheel.classList.add('on');
+  },
+  close(){
+    this.wheelOpen=false;
+    const wheel=document.getElementById('qcWheel');
+    if(wheel) wheel.classList.remove('on');
+  },
+  pick(idx){
+    const emoji=this.EMOJIS[idx];
+    if(!emoji) return;
+    this.close();
+    this.send(emoji);
+  },
+  // Local pick → spawn bubble, set cooldown, broadcast over network if connected.
+  send(emoji){
+    const localPid=(typeof Net!=='undefined' && Net.role==='guest') ? 1 : 0;
+    this.spawnBubble(localPid, emoji);
+    this.cooldown=this.COOLDOWN;
+    if(typeof Net!=='undefined' && Net.conn && Net.conn.open){
+      try{ Net.conn.send({t:'e', emoji, pid:localPid}); }catch(e){}
+    }
+  },
+  // Remote packet handler — called from modules/online-2p.js connection data handlers.
+  onReceive(d){
+    if(!d || typeof d.emoji!=='string') return;
+    const pid=(d.pid|0);
+    this.spawnBubble(pid, d.emoji);
+  },
+  spawnBubble(pid, emoji){
+    // One bubble per player at a time — latest replaces any prior.
+    this.bubbles=this.bubbles.filter(b=>b.pid!==pid);
+    this.bubbles.push({pid, emoji, t:this.BUBBLE_LIFE, age:0});
+    if(typeof AU!=='undefined' && AU.collect) AU.collect();
+  },
+  update(){
+    if(this.cooldown>0) this.cooldown--;
+    this.bubbles.forEach(b=>{b.t--; b.age++;});
+    this.bubbles=this.bubbles.filter(b=>b.t>0);
+  },
+  // Render bubbles above their respective players in world space. Called from drawWorld.
+  drawBubbles(ctx){
+    this.bubbles.forEach(b=>{
+      const pl=players[b.pid];
+      if(!pl) return;
+      const fade=b.t<30 ? b.t/30 : 1;
+      const rise=Math.min(28, b.age*0.18);
+      const cx=pl.x+pl.width/2, cy=pl.y-22-rise;
+      ctx.save();
+      ctx.globalAlpha=fade;
+      // Speech-bubble background.
+      ctx.fillStyle='rgba(10,10,30,.88)';
+      ctx.strokeStyle='rgba(0,245,255,.7)';
+      ctx.lineWidth=1.5;
+      ctx.shadowColor='rgba(0,245,255,.5)';
+      ctx.shadowBlur=8;
+      ctx.beginPath();
+      const bw=44, bh=42;
+      ctx.moveTo(cx-bw/2+8, cy-bh/2);
+      ctx.lineTo(cx+bw/2-8, cy-bh/2);
+      ctx.quadraticCurveTo(cx+bw/2, cy-bh/2, cx+bw/2, cy-bh/2+8);
+      ctx.lineTo(cx+bw/2, cy+bh/2-8);
+      ctx.quadraticCurveTo(cx+bw/2, cy+bh/2, cx+bw/2-8, cy+bh/2);
+      ctx.lineTo(cx+6, cy+bh/2);
+      ctx.lineTo(cx, cy+bh/2+8); // tail
+      ctx.lineTo(cx-6, cy+bh/2);
+      ctx.lineTo(cx-bw/2+8, cy+bh/2);
+      ctx.quadraticCurveTo(cx-bw/2, cy+bh/2, cx-bw/2, cy+bh/2-8);
+      ctx.lineTo(cx-bw/2, cy-bh/2+8);
+      ctx.quadraticCurveTo(cx-bw/2, cy-bh/2, cx-bw/2+8, cy-bh/2);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+      // Emoji glyph.
+      ctx.shadowBlur=0;
+      ctx.font='28px "Segoe UI Emoji", "Apple Color Emoji", sans-serif';
+      ctx.textAlign='center';
+      ctx.textBaseline='middle';
+      ctx.fillStyle='#fff';
+      ctx.fillText(b.emoji, cx, cy+2);
+      ctx.restore();
+    });
+  },
+  // Build the wheel overlay DOM lazily on first open. 12 emoji tiles arranged radially around
+  // a central cancel button.
+  _ensureWheel(){
+    if(document.getElementById('qcWheel')) return;
+    const wrap=document.createElement('div');
+    wrap.id='qcWheel';
+    wrap.className='qc-wheel';
+    wrap.onclick=(e)=>{ if(e.target===wrap) this.close(); };
+    const inner=document.createElement('div');
+    inner.className='qc-wheel-inner';
+    const radius=120;
+    this.EMOJIS.forEach((em,i)=>{
+      const ang=(i/this.EMOJIS.length)*Math.PI*2 - Math.PI/2; // start at top
+      const x=Math.cos(ang)*radius, y=Math.sin(ang)*radius;
+      const btn=document.createElement('button');
+      btn.className='qc-tile';
+      btn.style.transform=`translate(${x}px,${y}px)`;
+      btn.textContent=em;
+      btn.title=(i<9?(i+1)+' · ':'')+em;
+      btn.onclick=(ev)=>{ ev.stopPropagation(); this.pick(i); };
+      inner.appendChild(btn);
+    });
+    const center=document.createElement('button');
+    center.className='qc-cancel';
+    center.textContent='ESC';
+    center.title='Cancel (Esc)';
+    center.onclick=(ev)=>{ ev.stopPropagation(); this.close(); };
+    inner.appendChild(center);
+    wrap.appendChild(inner);
+    document.body.appendChild(wrap);
+  },
+};
+
+// ──────────────────────────────────────────────
 // KEYBOARD
 // ──────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
+  // Quick-chat wheel handling takes priority over game key bindings while open.
+  if(QuickChat.wheelOpen){
+    if(e.key==='Escape'){QuickChat.close(); e.preventDefault(); return;}
+    if(e.key>='1' && e.key<='9'){QuickChat.pick(parseInt(e.key,10)-1); e.preventDefault(); return;}
+    if(e.key==='0'){QuickChat.pick(9); e.preventDefault(); return;}
+  }
+  // V opens the wheel during play. Skip while typing in inputs (e.g., coupon field, room code).
+  if((e.key==='v'||e.key==='V') && state==='playing'){
+    const t=e.target;
+    if(!t || (t.tagName!=='INPUT' && t.tagName!=='TEXTAREA')){
+      QuickChat.open();
+      e.preventDefault();
+      return;
+    }
+  }
   keys[e.key]=true;keyCodes[e.code]=true;
   // Arrow keys / Space / `/` are still bound to game actions and should not scroll the page.
   if(state==='playing'&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','/'].includes(e.key))e.preventDefault();
@@ -3052,6 +4520,7 @@ applySettingsUI();
 // own bootstrap that calls startGame() directly with the right player count. Music is
 // armed on first user gesture so browsers don't block the AudioContext.
 refreshBest();
+if(typeof refreshCloudUI==='function') refreshCloudUI();
 const _inModule=window.location.pathname.includes('/modules/');
 if(!_inModule)showPanel('menuPanel');
 let _musicArmed=false;

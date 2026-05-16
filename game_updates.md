@@ -83,26 +83,3 @@ Improve game UI and menus.
 Add Home button on main screen.
 Improve coin visuals and reward animations.
 Improve character and weapon selection interfaces.
-
----
-
-## Status (2026-05-16)
-
-Shipped this session:
-
-- §1 Maps: ENDLESS map added — procedural climb, no portal, no level break, continues until you die. Difficulty ramps every 1000m.
-- §3 Weapons: weapon inventory system added; buy guns in Home Base; 5 new gun types (Shotgun, Sniper, RailGun, Flame, Rocket); 3-slot equip UI for selecting most-used guns. Skins/customization still TODO.
-- §4 Home Base: hub page added between menu and play. Roster, gun store, coupon entry, achievements. Per-character upgrades moved here from char-select.
-- §5 Economy: coupon system added (kammmran code → 1,000,000 coins, one-shot per browser). Achievements scaffold with 6 milestones + coin rewards. Coin visuals redrawn as classic gold coin.
-
-Still TODO from the original list:
-
-- §1: dynamic map rotation mid-game, alien/space/lava environments, atmospheric effects.
-- §2: character abilities/skills (kit exists per char), progression tied to missions.
-- §3: weapon skins, gun storage upgrades.
-- §5: loot boxes, daily missions/quests, expanded achievements.
-- §6: more enemy types, boss enemies.
-- §7: PvP multiplayer battle arena (separate from existing co-op online 2P).
-- §8: accounts, friends, global leaderboard (needs backend).
-- §9: emoji chat (needs backend for online).
-- §10: more UI polish.
