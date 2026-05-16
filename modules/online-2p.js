@@ -8,10 +8,18 @@
 (function(){
   const params=new URLSearchParams(window.location.search);
   const diff=Math.max(0,Math.min(3,parseInt(params.get('diff')||'1',10)));
+  const map=Math.max(0,Math.min(LAYOUTS.length-1,parseInt(params.get('map')||'0',10)));
+  // Online: each browser only knows its OWN character pick. The friend's pick will arrive on
+  // their browser via the same query param (in the URL they opened). The partner stays at the
+  // engine default until they actually join — visible default is CRIMSON for the remote side.
+  const p1=Math.max(0,Math.min(CHARACTERS.length-1,parseInt(params.get('p1')||'0',10)));
   // Engine globals.
   playerCount=2;
   selModeIdx=2;
   selDiffIdx=diff;
+  selMapIdx=map;
+  selectedMap=map;
+  selP1CharIdx=p1;
 
   // Hide the in-game HUD until the lobby resolves and the game actually starts.
   ['hud','skillBar','weapBar','modeBadge','leaveBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});

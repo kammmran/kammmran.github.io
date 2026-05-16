@@ -18,8 +18,10 @@
     <div class="hp-tr"><div class="hp-f" id="hpF1"></div></div>
   </div>
   <div class="sp"><div class="sl">SCORE</div><div class="sv" id="hSc">0</div></div>
+  <div class="sp" id="hCoinsBox"><div class="sl">COINS</div><div class="sv" id="hCoins">0</div></div>
   <div class="sp" id="hBestBox"><div class="sl">BEST</div><div class="sv" id="hBs">0</div></div>
   <div class="sp"><div class="sl">LEVEL</div><div class="sv" id="hLv">1</div></div>
+  <div class="sp" id="hHeightBox"><div class="sl">HEIGHT</div><div class="sv" id="hHeight">0m</div></div>
   <div class="sp" id="hKillBox" style="display:none"><div class="sl">KILLS</div><div class="sv" id="hKl">0</div></div>
   <div class="hp-wrap" id="hpWrap2" style="display:none">
     <div class="sl" style="margin-bottom:4px; color: var(--r);">FRIEND HP</div>
@@ -107,15 +109,12 @@
   </div>
 </div>
 
-<div class="panel" id="shopPanel" style="min-width:500px">
-  <div class="pt">LEVEL SHOP</div>
+<div class="panel" id="shopPanel" style="display:none;">
   <div class="ps">Score: <span id="shopScore">0</span> &nbsp;|&nbsp; Kills: <span id="shopKills">0</span></div>
-  <div class="shop-grid" id="shopGrid"></div>
   <button class="btn" onclick="continueLevel()">CONTINUE →</button>
 </div>
 
-<div class="panel" id="lcPanel">
-  <div class="pt">LEVEL CLEAR!</div>
+<div class="panel" id="lcPanel" style="display:none;">
   <div class="ps">Score: <span id="lcScore">0</span></div>
   <div class="pb" id="lcBonus">+500 Portal Bonus</div>
   <div class="psub" id="lcDetail"></div>
