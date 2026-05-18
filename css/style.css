@@ -67,20 +67,24 @@ body {
 /* Project Layout Styles */
 .project-container {
     width: 100%;
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    column-gap: 64px;
     align-items: flex-start;
     margin: 0 auto;
-    padding-top: 20px;
+    padding-top: 56px;
     text-align: left;
 }
 
 .project-sidebar {
-    width: 250px;
+    width: 100%;
     flex-shrink: 0;
     background-color: transparent;
-    padding: 0;
+    padding: 4px 32px 0 0;
+    border-right: 1px solid #ececec;
     height: fit-content;
+    position: sticky;
+    top: 84px;
 }
 
 .project-content {
@@ -88,6 +92,7 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    max-width: 720px;
 }
 
 .project-post-content {
@@ -99,20 +104,32 @@ body {
     width: 100%;
 }
 
-.year-section a {
-    display: block;
-    padding: 8px 12px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    text-decoration: none;
-    color: #333;
-    border-left: 3px solid transparent;
-    transition: all 0.2s ease;
+.year-section {
+    border-top: 1px solid #ececec;
 }
 
-.year-section a:hover {
-    background: #f1f3f5;
-    border-left-color: #000;
+.year-section:first-child {
+    border-top: none;
+}
+
+.year-section a {
+    display: block;
+    padding: 12px 0;
+    background: transparent;
+    text-decoration: none;
+    color: #888;
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+    border-left: none;
+    transition: color 0.2s ease;
+}
+
+.year-section a:hover,
+.year-section a.active {
+    color: #c75d3a;
 }
 
 .project-sidebar h3 {
@@ -141,7 +158,10 @@ body {
 
 .project-content-text {
     margin-top: 20px;
-    line-height: 1.6;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #2a2a2a;
+    line-height: 1.78;
+    font-size: 1.05rem;
 }
 
 .project-content-text h1,
@@ -150,13 +170,32 @@ body {
 .project-content-text h4,
 .project-content-text h5,
 .project-content-text h6 {
-    margin-top: 30px;
-    margin-bottom: 15px;
-    color: #333;
+    margin-top: 40px;
+    margin-bottom: 16px;
+    color: #111;
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.project-content-text h2::before {
+    content: "§ ";
+    color: #c75d3a;
 }
 
 .project-content-text p {
     margin-bottom: 15px;
+}
+
+.project-content-text a {
+    color: #c75d3a;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(199, 93, 58, 0.4);
+    transition: border-color 0.2s ease;
+}
+
+.project-content-text a:hover {
+    border-bottom-color: #c75d3a;
 }
 
 .project-content-text code {
@@ -285,10 +324,19 @@ body {
 }
 
 .project-title {
-    margin: 0 0 15px 0;
-    color: #333;
-    font-size: 2.2rem;
-    font-weight: bold;
+    margin: 0 0 18px 0;
+    color: #111;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 3rem;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+}
+
+.project-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: #c75d3a;
 }
 
 .project-author {
@@ -629,6 +677,7 @@ body {
     /* Stack the project layout and turn the sidebar into a horizontal
        scrolling chip strip so it uses minimal vertical space. */
     .project-container {
+        display: flex;
         flex-direction: column;
         gap: 12px;
         padding-top: 12px;
@@ -642,6 +691,7 @@ body {
         padding: 0;
         margin: 0 -16px;
         max-width: calc(100% + 32px);
+        border-right: none;
     }
 
     .year-menu {
