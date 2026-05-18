@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamran Heydarov - Podcast</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/podcast.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h3>Kamran Heydarov</h3>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="index.html" class="nav-link"><span>Projects</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="podcast.html" class="nav-link active"><span>Podcast</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="cv.html" class="nav-link"><span>CV</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="contact.html" class="nav-link"><span>Contact</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <main class="main-content podcast-main">
+        <section class="podcast-hero">
+            <div class="podcast-hero-inner">
+                <span class="podcast-eyebrow">— Podcast</span>
+                <h1 class="podcast-display">Conversations<br><em>at the edge of science.</em></h1>
+                <p class="podcast-lede">Long-form talks with researchers, builders and thinkers exploring the boundary between disciplines.</p>
+            </div>
+            <div class="podcast-hero-marquee" aria-hidden="true">
+                <span>Science · Chemistry · Data · Materials · People · Ideas ·&nbsp;</span>
+                <span>Science · Chemistry · Data · Materials · People · Ideas ·&nbsp;</span>
+            </div>
+        </section>
+
+        <section class="podcast-section">
+            <header class="podcast-section-head">
+                <h2>All episodes</h2>
+                <span id="podcast-count" class="podcast-section-count"></span>
+            </header>
+            <div id="podcast-grid" class="podcast-grid"></div>
+        </section>
+    </main>
+    <script src="js/podcast.js"></script>
+</body>
+</html>

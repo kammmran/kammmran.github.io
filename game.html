@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>CHRONO SHIFT — Combat Edition</title>
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/game.css">
 </head>
 <body class="menu">
 <canvas id="bg"></canvas>
@@ -12,12 +12,6 @@
 
 <!-- MENU -->
 <div class="panel" id="menuPanel">
-  <!-- Cloud signin pill (top-right). Hidden via JS when Firebase isn't configured. -->
-  <div id="cloudPill" class="cloud-pill" style="display:none">
-    <img id="cloudAvatar" class="cloud-avatar" alt="">
-    <span id="cloudName">Sign in</span>
-    <button class="cloud-pill-btn" id="cloudPillBtn" onclick="cloudPillClick()">SIGN IN</button>
-  </div>
   <div class="gt">CHRONO SHIFT</div>
   <div class="gsub">COMBAT EDITION</div>
   <div class="gbest" id="menuBest">BEST: 0</div>
@@ -30,7 +24,7 @@
   </div>
 </div>
 
-<!-- HOME BASE — full-page hub. Characters, store, coupon, achievements all live here. -->
+<!-- HOME BASE — single-screen dashboard. Each tile opens a modal with the section's content. -->
 <div class="page" id="homePanel">
   <div class="page-header">
     <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
@@ -40,8 +34,8 @@
       <button class="btn" style="margin:0;padding:9px 20px;font-size:12px;max-width:none;width:auto" onclick="showPanel('modePanel')">▶ QUICK PLAY</button>
     </div>
   </div>
-  <div class="page-body">
-    <div class="page-body-inner">
+  <div class="page-body hb-no-scroll">
+    <div class="page-body-inner hb-dashboard">
 
       <!-- Stats strip -->
       <div class="page-stats">
@@ -51,85 +45,115 @@
         <div class="page-stat"><div class="lbl">GUNS OWNED</div><div class="val" id="hbStatGuns">0/0</div></div>
       </div>
 
-      <!-- Currently equipped loadout summary -->
-      <div class="page-section">
-        <div class="page-section-title"><span class="ico">🎯</span>EQUIPPED LOADOUT</div>
-        <div class="eq-strip" id="hbEqStrip"></div>
-        <div class="page-section-sub">Scroll to GUN STORE below to buy new guns and reshuffle slots.</div>
+      <!-- Compact equipped loadout (always visible — at-a-glance reference) -->
+      <div class="hb-equipped-bar">
+        <span class="hb-equipped-label">🎯 LOADOUT</span>
+        <div class="eq-strip eq-strip-compact" id="hbEqStrip"></div>
       </div>
 
-      <!-- Daily missions — rotates every day at local midnight -->
-      <div class="page-section">
-        <div class="page-section-title">
-          <span class="ico">📅</span>DAILY MISSIONS
-          <span class="hb-daily-timer" id="hbDailyTimer" style="margin-left:auto;font-size:11px;color:#888;letter-spacing:1px;font-weight:600"></span>
-        </div>
-        <div class="page-section-sub">Three missions per day. Rewards auto-credit when you complete one.</div>
-        <div class="hb-daily-grid" id="hbDailyGrid"></div>
-      </div>
-
-      <div class="page-grid-2">
-        <!-- Roster -->
-        <div class="page-section">
-          <div class="page-section-title"><span class="ico">★</span>ROSTER</div>
-          <div class="page-section-sub">Click UPGRADE to spend coins on a character's tracks.</div>
-          <div class="char-grid" id="hbCharGrid"></div>
-        </div>
-
-        <!-- Achievements -->
-        <div class="page-section">
-          <div class="page-section-title"><span class="ico">🏆</span>ACHIEVEMENTS</div>
-          <div class="hb-achv-grid" id="hbAchvGrid"></div>
-        </div>
-      </div>
-
-      <!-- Gun store -->
-      <div class="page-section">
-        <div class="page-section-title"><span class="ico">🔫</span>GUN STORE</div>
-        <div class="page-section-sub">Buy guns with coins. Equip up to 3 into slots 1 · 2 · 3.</div>
-        <div class="hb-store-grid" id="hbStoreGrid"></div>
-      </div>
-
-      <!-- Weapon skins -->
-      <div class="page-section">
-        <div class="page-section-title"><span class="ico">🎨</span>WEAPON SKINS</div>
-        <div class="page-section-sub">Cosmetic variants per gun. Shop skins cost coins; loot-tier skins come from loot boxes.</div>
-        <div class="hb-skins-grid" id="hbSkinsGrid"></div>
-      </div>
-
-      <!-- Loot boxes -->
-      <div class="page-section">
-        <div class="page-section-title"><span class="ico">📦</span>LOOT BOXES</div>
-        <div class="page-section-sub">Buy a mystery box (300🪙), open boxes earned from bosses, level-clears, and daily missions.</div>
-        <div class="hb-loot-row" id="hbLootRow"></div>
-      </div>
-
-      <!-- Global leaderboard (cloud) -->
-      <div class="page-section">
-        <div class="page-section-title"><span class="ico">🏆</span>GLOBAL LEADERBOARD</div>
-        <div class="page-section-sub">Top 50 by best score. Updates live.</div>
-        <div class="hb-lb" id="hbLeaderboard"></div>
-      </div>
-
-      <!-- Friends (cloud) -->
-      <div class="page-section">
-        <div class="page-section-title"><span class="ico">👥</span>FRIENDS</div>
-        <div class="page-section-sub">Add friends with their 6-char code. See their best score at a glance.</div>
-        <div class="hb-fr" id="hbFriends"></div>
-      </div>
-
-      <!-- Coupon -->
-      <div class="page-section">
-        <div class="page-section-title"><span class="ico">🎟</span>COUPON</div>
-        <div class="hb-coupon-row">
-          <input type="text" id="hbCouponInput" placeholder="Enter code" maxlength="32" autocomplete="off">
-          <button class="btn" style="max-width:140px;padding:10px 18px;margin:0;width:auto" onclick="applyCoupon()">APPLY</button>
-        </div>
-        <div id="hbCouponMsg" class="hb-coupon-msg"></div>
-      </div>
+      <!-- 9-tile dashboard. Each tile opens a modal via openHbModal(). Counts populated by JS. -->
+      <div class="hb-tile-grid" id="hbTileGrid"></div>
 
     </div>
   </div>
+</div>
+
+<!-- ─────────── HOME BASE MODALS ─────────── -->
+<!-- Each modal wraps the original section content. Existing element IDs (hbStoreGrid, etc.)
+     are preserved so all buildHomeXxx renderers keep targeting the right place. -->
+
+<div class="hb-modal-bg" id="hbModal_roster" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">★</span><span class="hb-modal-title">ROSTER</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Click UPGRADE on any character to spend coins on stat tracks.</div>
+      <div class="char-grid" id="hbCharGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_store" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🔫</span><span class="hb-modal-title">GUN STORE</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Buy guns with coins. Equip up to 3 into slots 1 · 2 · 3.</div>
+      <div class="hb-store-grid" id="hbStoreGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_skins" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🎨</span><span class="hb-modal-title">WEAPON SKINS</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Cosmetic variants per gun. Shop skins cost coins; loot-tier skins drop from loot boxes.</div>
+      <div class="hb-skins-grid" id="hbSkinsGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_daily" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">📅</span><span class="hb-modal-title">DAILY MISSIONS</span><span class="hb-daily-timer" id="hbDailyTimer" style="margin-left:auto;margin-right:12px;font-size:11px;color:#888;letter-spacing:1px;font-weight:600"></span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Three missions per day. Rewards auto-credit when you complete one.</div>
+      <div class="hb-daily-grid" id="hbDailyGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_achv" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🏆</span><span class="hb-modal-title">ACHIEVEMENTS</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="hb-achv-grid" id="hbAchvGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_loot" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">📦</span><span class="hb-modal-title">LOOT BOXES</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Buy mystery boxes (300🪙), open boxes earned from bosses, level-clears, and daily missions.</div>
+      <div class="hb-loot-row" id="hbLootRow"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_leaderboard" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🏆</span><span class="hb-modal-title">GLOBAL LEADERBOARD</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Top 50 by best score. Updates live (Firebase required).</div>
+      <div class="hb-lb" id="hbLeaderboard"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_friends" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">👥</span><span class="hb-modal-title">FRIENDS</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Add friends by their 6-char code. See their best score at a glance.</div>
+      <div class="hb-fr" id="hbFriends"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_coupon" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal hb-modal-narrow">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🎟</span><span class="hb-modal-title">REDEEM COUPON</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Enter a code. One-shot per browser; codes can grant coins.</div>
+      <div class="hb-coupon-row">
+        <input type="text" id="hbCouponInput" placeholder="Enter code" maxlength="32" autocomplete="off">
+        <button class="btn" style="max-width:140px;padding:10px 18px;margin:0;width:auto" onclick="applyCoupon()">APPLY</button>
+      </div>
+      <div id="hbCouponMsg" class="hb-coupon-msg"></div>
+    </div>
+  </div>
+</div>
 </div>
 
 <!-- SETTINGS — full-page -->
@@ -283,6 +307,11 @@
       <div class="mc-name">2 PLAYERS · ONLINE</div>
       <div class="mc-desc">Co-op across two browsers. One friend hosts (gets a code), the other joins with that code.</div>
     </div>
+    <div class="mode-card" id="mc3" onclick="selMode(3)">
+      <div class="mc-icon">⚔</div>
+      <div class="mc-name">BATTLE ROYALE · 2-6P</div>
+      <div class="mc-desc">Last fighter standing. Friendly fire on. Solo vs bots, or invite friends with a room code.</div>
+    </div>
   </div>
   <div class="pt" style="font-size:22px;margin-top:12px">DIFFICULTY</div>
   <div class="diff-grid">
@@ -330,74 +359,91 @@
 </div>
 
 <!-- CHARACTER LOBBY -->
-<div class="panel" id="charPanel" style="min-width:780px;max-width:92vw">
+<div class="panel" id="charPanel" style="min-width:1040px;max-width:96vw">
   <div class="pt">CHOOSE CHARACTER</div>
   <div class="psub" id="charHint" style="margin-bottom:10px">Pick your hero. Co-op specialists (AEGIS, LIFTER) only help in 2-player.</div>
 
-  <div id="p1CharSection">
-    <div class="char-side-label" style="color:var(--c)">★ PLAYER 1</div>
-    <div class="char-grid">
-      <div class="char-card sel" id="p1c0" onclick="selChar(0,0)" data-c="#00f5ff">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#00f5ff,#a100ff)"></div>
-        <div class="cc-name">NEON</div><div class="cc-tag">balanced</div>
+  <div class="char-layout">
+    <!-- LEFT: character pickers + actions -->
+    <div class="char-main">
+      <div id="p1CharSection">
+        <div class="char-side-label" style="color:var(--c)">★ PLAYER 1</div>
+        <div class="char-grid">
+          <div class="char-card sel" id="p1c0" onclick="selChar(0,0)" data-c="#00f5ff">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00f5ff,#a100ff)"></div>
+            <div class="cc-name">NEON</div><div class="cc-tag">balanced</div>
+          </div>
+          <div class="char-card" id="p1c1" onclick="selChar(0,1)" data-c="#ff3366">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ff3366,#ff8800)"></div>
+            <div class="cc-name">CRIMSON</div><div class="cc-tag">fast · low jump</div>
+          </div>
+          <div class="char-card" id="p1c2" onclick="selChar(0,2)" data-c="#00ff88">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ff88,#00aa66)"></div>
+            <div class="cc-name">EMERALD</div><div class="cc-tag">slow · high jump</div>
+          </div>
+          <div class="char-card" id="p1c3" onclick="selChar(0,3)" data-c="#ffcc00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff00d4)"></div>
+            <div class="cc-name">VOID</div><div class="cc-tag">well-rounded</div>
+          </div>
+          <div class="char-card coop" id="p1c4" onclick="selChar(0,4)" data-c="#00ffaa">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ffaa,#0066ff)"></div>
+            <div class="cc-name">AEGIS</div><div class="cc-tag">⊕ shield ally</div>
+          </div>
+          <div class="char-card coop" id="p1c5" onclick="selChar(0,5)" data-c="#ffaa00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffaa00,#ff5500)"></div>
+            <div class="cc-name">LIFTER</div><div class="cc-tag">⊕ boost ally</div>
+          </div>
+        </div>
       </div>
-      <div class="char-card" id="p1c1" onclick="selChar(0,1)" data-c="#ff3366">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#ff3366,#ff8800)"></div>
-        <div class="cc-name">CRIMSON</div><div class="cc-tag">fast · low jump</div>
+
+      <div id="p2CharSection" style="display:none;margin-top:14px">
+        <div class="char-side-label" style="color:var(--r)">★ PLAYER 2</div>
+        <div class="char-grid">
+          <div class="char-card" id="p2c0" onclick="selChar(1,0)" data-c="#00f5ff">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00f5ff,#a100ff)"></div>
+            <div class="cc-name">NEON</div><div class="cc-tag">balanced</div>
+          </div>
+          <div class="char-card sel" id="p2c1" onclick="selChar(1,1)" data-c="#ff3366">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ff3366,#ff8800)"></div>
+            <div class="cc-name">CRIMSON</div><div class="cc-tag">fast · low jump</div>
+          </div>
+          <div class="char-card" id="p2c2" onclick="selChar(1,2)" data-c="#00ff88">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ff88,#00aa66)"></div>
+            <div class="cc-name">EMERALD</div><div class="cc-tag">slow · high jump</div>
+          </div>
+          <div class="char-card" id="p2c3" onclick="selChar(1,3)" data-c="#ffcc00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff00d4)"></div>
+            <div class="cc-name">VOID</div><div class="cc-tag">well-rounded</div>
+          </div>
+          <div class="char-card coop" id="p2c4" onclick="selChar(1,4)" data-c="#00ffaa">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ffaa,#0066ff)"></div>
+            <div class="cc-name">AEGIS</div><div class="cc-tag">⊕ shield ally</div>
+          </div>
+          <div class="char-card coop" id="p2c5" onclick="selChar(1,5)" data-c="#ffaa00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffaa00,#ff5500)"></div>
+            <div class="cc-name">LIFTER</div><div class="cc-tag">⊕ boost ally</div>
+          </div>
+        </div>
       </div>
-      <div class="char-card" id="p1c2" onclick="selChar(0,2)" data-c="#00ff88">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#00ff88,#00aa66)"></div>
-        <div class="cc-name">EMERALD</div><div class="cc-tag">slow · high jump</div>
-      </div>
-      <div class="char-card" id="p1c3" onclick="selChar(0,3)" data-c="#ffcc00">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff00d4)"></div>
-        <div class="cc-name">VOID</div><div class="cc-tag">well-rounded</div>
-      </div>
-      <div class="char-card coop" id="p1c4" onclick="selChar(0,4)" data-c="#00ffaa">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#00ffaa,#0066ff)"></div>
-        <div class="cc-name">AEGIS</div><div class="cc-tag">⊕ shield ally</div>
-      </div>
-      <div class="char-card coop" id="p1c5" onclick="selChar(0,5)" data-c="#ffaa00">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#ffaa00,#ff5500)"></div>
-        <div class="cc-name">LIFTER</div><div class="cc-tag">⊕ boost ally</div>
+
+      <div style="margin-top:14px">
+        <button class="btn btn-g" onclick="showPanel('mapPanel')" style="margin-right:10px">← BACK</button>
+        <button class="btn" onclick="launchGame()">LAUNCH ▶</button>
       </div>
     </div>
+
+    <!-- RIGHT: cloud-driven leaderboard side panel (live, top 50 by bestScore) -->
+    <aside class="char-lb-side" id="charLbSide">
+      <div class="char-lb-head">
+        <span class="char-lb-ico">🏆</span>
+        <span class="char-lb-title">GLOBAL TOP 50</span>
+      </div>
+      <div class="char-lb-body" id="charLbBody">
+        <div class="hb-cloud-empty" style="padding:14px;font-size:11px">Loading…</div>
+      </div>
+    </aside>
   </div>
 
-  <div id="p2CharSection" style="display:none;margin-top:14px">
-    <div class="char-side-label" style="color:var(--r)">★ PLAYER 2</div>
-    <div class="char-grid">
-      <div class="char-card" id="p2c0" onclick="selChar(1,0)" data-c="#00f5ff">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#00f5ff,#a100ff)"></div>
-        <div class="cc-name">NEON</div><div class="cc-tag">balanced</div>
-      </div>
-      <div class="char-card sel" id="p2c1" onclick="selChar(1,1)" data-c="#ff3366">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#ff3366,#ff8800)"></div>
-        <div class="cc-name">CRIMSON</div><div class="cc-tag">fast · low jump</div>
-      </div>
-      <div class="char-card" id="p2c2" onclick="selChar(1,2)" data-c="#00ff88">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#00ff88,#00aa66)"></div>
-        <div class="cc-name">EMERALD</div><div class="cc-tag">slow · high jump</div>
-      </div>
-      <div class="char-card" id="p2c3" onclick="selChar(1,3)" data-c="#ffcc00">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff00d4)"></div>
-        <div class="cc-name">VOID</div><div class="cc-tag">well-rounded</div>
-      </div>
-      <div class="char-card coop" id="p2c4" onclick="selChar(1,4)" data-c="#00ffaa">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#00ffaa,#0066ff)"></div>
-        <div class="cc-name">AEGIS</div><div class="cc-tag">⊕ shield ally</div>
-      </div>
-      <div class="char-card coop" id="p2c5" onclick="selChar(1,5)" data-c="#ffaa00">
-        <div class="cc-swatch" style="background:linear-gradient(135deg,#ffaa00,#ff5500)"></div>
-        <div class="cc-name">LIFTER</div><div class="cc-tag">⊕ boost ally</div>
-      </div>
-    </div>
-  </div>
-
-  <div style="margin-top:14px">
-    <button class="btn btn-g" onclick="showPanel('mapPanel')" style="margin-right:10px">← BACK</button>
-    <button class="btn" onclick="launchGame()">LAUNCH ▶</button>
-  </div>
   <div class="char-coin-pill" id="charCoinPill">🪙 <span id="charCoinTotal">0</span></div>
 </div>
 
@@ -532,6 +578,47 @@
   </div>
 </div>
 
+<!-- Cloud sign-in card. Lives at body root so it's positioned to the viewport, not a panel.
+     Two variants are toggled by refreshCloudUI(): signed-out (CTA card) and signed-in (user
+     chip with a popover menu). Hidden entirely when Firebase isn't configured. -->
+<div id="cloudCard" class="cloud-card" style="display:none">
+  <!-- Signed-out state -->
+  <button id="cloudSignInBtn" class="cloud-signin" onclick="cloudPillClick()">
+    <span class="cloud-signin-glyph">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path fill="#4285F4" d="M22.5 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.92a5.07 5.07 0 0 1-2.2 3.32v2.77h3.56c2.08-1.92 3.27-4.74 3.27-8.12z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.99 7.28-2.68l-3.56-2.77c-.99.66-2.26 1.05-3.72 1.05-2.86 0-5.28-1.93-6.15-4.53H2.18v2.86A11 11 0 0 0 12 23z"/>
+        <path fill="#FBBC05" d="M5.85 14.07A6.6 6.6 0 0 1 5.5 12c0-.72.13-1.42.35-2.07V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.93l3.67-2.86z"/>
+        <path fill="#EA4335" d="M12 5.4c1.62 0 3.07.56 4.21 1.65l3.16-3.16A11 11 0 0 0 12 1 11 11 0 0 0 2.18 7.07l3.67 2.86C6.72 7.33 9.14 5.4 12 5.4z"/>
+      </svg>
+    </span>
+    <span class="cloud-signin-text">
+      <span class="cloud-signin-label">Sign in with Google</span>
+      <span class="cloud-signin-sub">Sync scores, leaderboard, friends</span>
+    </span>
+  </button>
+  <!-- Signed-in state (initially hidden, shown by refreshCloudUI when user is signed in) -->
+  <div id="cloudUserChip" class="cloud-user-chip" style="display:none" onclick="toggleCloudMenu(event)">
+    <img id="cloudAvatar" class="cloud-avatar" alt="">
+    <div class="cloud-user-meta">
+      <div class="cloud-user-name" id="cloudName">Player</div>
+      <div class="cloud-user-status"><span class="cloud-online-dot"></span><span>Online</span></div>
+    </div>
+    <span class="cloud-user-caret">▾</span>
+    <!-- Popover menu — shows on click. Profile actions live here. -->
+    <div class="cloud-menu" id="cloudMenu" onclick="event.stopPropagation()">
+      <div class="cloud-menu-code">
+        <span class="cloud-menu-code-label">YOUR CODE</span>
+        <span class="cloud-menu-code-val" id="cloudMyCode">—</span>
+      </div>
+      <button class="cloud-menu-item" onclick="openHomeBase();closeCloudMenu();">🏠 Open Home Base</button>
+      <button class="cloud-menu-item" onclick="openHbModal('leaderboard');showPanel('homePanel');closeCloudMenu();">🏆 Leaderboard</button>
+      <button class="cloud-menu-item" onclick="openHbModal('friends');showPanel('homePanel');closeCloudMenu();">👥 Friends</button>
+      <button class="cloud-menu-item danger" onclick="Cloud.signOut();closeCloudMenu();">⎋ Sign out</button>
+    </div>
+  </div>
+</div>
+
 <!-- Loot box reveal modal — populated by openLootBox() in script.js -->
 <div id="lootModalBg" class="loot-modal-bg" onclick="if(event.target===this)closeLootModal()">
   <div class="loot-modal">
@@ -550,6 +637,6 @@
 <script src="js/firebase-config.js" onerror="console.log('[Cloud] js/firebase-config.js not present — cloud features disabled.')"></script>
 <script src="js/cloud.js"></script>
 
-<script src="script.js"></script>
+<script src="js/game.js"></script>
 </body>
 </html>

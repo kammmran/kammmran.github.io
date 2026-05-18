@@ -1,0 +1,11 @@
+[
+  {
+    "title": "Episode 1 :  Dr. Valentina Erestova",
+    "guest": "Dr. Valentina Erestova",
+    "cover": "data/podcasts/images/1.png",
+    "file": "data/podcasts/episode-1.md",
+    "audio": "data/podcasts/audio/1.mp3",
+    "video": "https://youtu.be/n-T04g2F4w8?si=V5aPITaLjbTSCJHD",
+    "date": "2026-05-19"
+  }
+]

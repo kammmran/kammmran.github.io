@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CHRONO SHIFT — BATTLE ROYALE</title>
+<link rel="stylesheet" href="../css/game.css">
+<link rel="stylesheet" href="mode.css">
+</head>
+<body class="mode-1p">
+<canvas id="bg"></canvas>
+
+<button id="leaveBtn" onclick="toMenu()">✕ LEAVE</button>
+
+<!-- BR pre-match lobby (shown until START). When playing it's hidden. -->
+<div class="panel" id="brLobby" style="min-width:520px;max-width:720px">
+  <div class="pt">⚔ BATTLE ROYALE</div>
+  <div class="psub" style="text-align:center;margin-bottom:18px">
+    Last fighter standing wins. Friendly fire on. Reach the teleporter for an instant win, or be the last alive when the timer expires.
+  </div>
+
+  <div id="brLobbyTabs" style="display:flex;gap:8px;margin-bottom:14px;justify-content:center">
+    <button class="btn btn-g" id="brTabSolo" onclick="brSetTab('solo')" style="max-width:160px;margin:0;padding:10px 18px">SOLO vs BOTS</button>
+    <button class="btn btn-g" id="brTabHost" onclick="brSetTab('host')" style="max-width:160px;margin:0;padding:10px 18px">HOST ROOM</button>
+    <button class="btn btn-g" id="brTabJoin" onclick="brSetTab('join')" style="max-width:160px;margin:0;padding:10px 18px">JOIN ROOM</button>
+  </div>
+
+  <!-- Solo tab -->
+  <div id="brSoloPane" class="brTabPane">
+    <div class="page-section" style="margin:0">
+      <div class="page-section-title"><span class="ico">🤖</span>SOLO vs BOTS</div>
+      <div style="display:flex;align-items:center;gap:14px;margin:12px 0">
+        <label style="font-size:12px;letter-spacing:1px;color:#aaa">BOT COUNT:</label>
+        <select id="brBotCount" class="sel-ctl" style="width:120px">
+          <option value="1">1 bot</option>
+          <option value="2">2 bots</option>
+          <option value="3" selected>3 bots</option>
+          <option value="4">4 bots</option>
+          <option value="5">5 bots</option>
+        </select>
+      </div>
+      <button class="btn" onclick="brStartSolo()" style="max-width:220px;margin:0">▶ START MATCH</button>
+    </div>
+  </div>
+
+  <!-- Host tab -->
+  <div id="brHostPane" class="brTabPane" style="display:none">
+    <div class="page-section" style="margin:0">
+      <div class="page-section-title"><span class="ico">🌐</span>HOST ROOM</div>
+      <div id="brHostStatus" style="font-size:12px;color:#aaa;margin:8px 0">Click HOST to generate a room code.</div>
+      <div id="brHostCode" style="font-family:monospace;font-size:32px;letter-spacing:6px;color:#ffcc00;text-align:center;background:rgba(255,200,0,.08);padding:10px;border-radius:8px;margin:10px 0;display:none"></div>
+      <div id="brHostPeers" style="font-size:11px;color:#9aa;margin:6px 0;text-align:center"></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="brHostBtn" onclick="brHostRoom()" style="max-width:none;margin:0;flex:1">HOST</button>
+        <button class="btn btn-g" id="brHostStartBtn" onclick="brHostStart()" style="max-width:none;margin:0;flex:1;display:none">▶ START MATCH</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Join tab -->
+  <div id="brJoinPane" class="brTabPane" style="display:none">
+    <div class="page-section" style="margin:0">
+      <div class="page-section-title"><span class="ico">📡</span>JOIN ROOM</div>
+      <div style="display:flex;gap:8px;align-items:center;margin:10px 0">
+        <input id="brJoinCode" type="text" placeholder="ROOM CODE" maxlength="9" style="flex:1;background:rgba(10,10,30,.9);color:#fff;border:1px solid rgba(0,245,255,.4);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:18px;letter-spacing:4px;text-transform:uppercase">
+        <button class="btn" onclick="brJoinRoom()" style="max-width:140px;margin:0">JOIN</button>
+      </div>
+      <div id="brJoinStatus" style="font-size:12px;color:#aaa;text-align:center"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BR HUD: simplified vs the standard one. Shows alive count + timer + your kills/HP. -->
+<div id="hud" style="display:none">
+  <div class="hp-wrap" id="hpWrap1">
+    <div class="sl" style="margin-bottom:4px; color: var(--r);">HEALTH</div>
+    <div class="hp-tr"><div class="hp-f" id="hpF1"></div></div>
+  </div>
+  <div class="sp"><div class="sl">ALIVE</div><div class="sv" id="brAlive">0</div></div>
+  <div class="sp"><div class="sl">KILLS</div><div class="sv" id="brKills">0</div></div>
+  <div class="sp"><div class="sl">TIMER</div><div class="sv" id="brTimer">3:00</div></div>
+  <div class="sp" id="hCoinsBox"><div class="sl">COINS</div><div class="sv" id="hCoins">0</div></div>
+</div>
+
+<div id="modeBadge" style="display:none">
+  <div class="badge badge-mode" id="bMode">BATTLE ROYALE</div>
+  <div class="badge badge-diff" id="bDiff">NORMAL</div>
+</div>
+
+<div id="skillBar" style="display:none">
+  <div class="sk" id="sk0"><div class="sk-icon">🛡</div><div class="sk-key">Q</div><div class="sk-cd" id="scd0"></div></div>
+  <div class="sk" id="sk1"><div class="sk-icon">💣</div><div class="sk-key">E</div><div class="sk-cd" id="scd1"></div></div>
+  <div class="sk" id="sk2"><div class="sk-icon">⚡</div><div class="sk-key">R</div><div class="sk-cd" id="scd2"></div></div>
+</div>
+
+<div id="weapBar" style="display:none">
+  <div class="wp active" id="wp0"><div class="wp-name">🔫 PISTOL <span class="kbd">[1]</span></div><div class="wp-ammo" id="wa0">∞</div></div>
+  <div class="wp" id="wp1"><div class="wp-name">⚡ PLASMA <span class="kbd">[2]</span></div><div class="wp-ammo" id="wa1">0</div></div>
+  <div class="wp" id="wp2"><div class="wp-name">❄ TIME GUN <span class="kbd">[3]</span></div><div class="wp-ammo" id="wa2">0</div></div>
+</div>
+
+<div id="comboBox" style="display:none">
+  <div id="comboCount">x1</div>
+  <div id="comboLbl">COMBO</div>
+  <div id="comboBr"><div id="comboFill" style="width:100%"></div></div>
+</div>
+
+<canvas id="gameCanvas" width="1200" height="680" style="display:none"></canvas>
+
+<!-- Touch controls -->
+<div id="touch" style="display:none">
+  <div class="tg"><div class="tb" id="tL">◀</div><div class="tb" id="tR">▶</div></div>
+  <div class="tg"><div class="tb" id="tFr">⏪</div><div class="tb" id="tSh">🛡</div><div class="tb" id="tDs">💨</div><div class="tb" id="tFi">🔫</div><div class="tb" id="tJp">▲</div></div>
+</div>
+
+<!-- Results panel after a BR match. -->
+<div class="panel" id="brResults" style="display:none;min-width:480px;max-width:640px">
+  <div class="pt" id="brResultTitle">VICTORY</div>
+  <div class="ps" id="brResultPlacement">Placement: 1st</div>
+  <div class="psub" id="brResultStats">Kills: 0 · Coins earned: 0</div>
+  <div id="brResultBoard" style="margin:18px 0;display:flex;flex-direction:column;gap:6px"></div>
+  <button class="btn" onclick="brBackToLobby()">▶ PLAY AGAIN</button>
+  <button class="btn btn-g" onclick="toMenu()">MENU</button>
+</div>
+
+<!-- Existing panels reused by engine. -->
+<div class="panel" id="goPanel" style="display:none">
+  <div class="pt r">ELIMINATED</div>
+  <div class="ps">Score: <span id="goSc">0</span></div>
+  <div class="psub">Kills: <span id="goKl">0</span></div>
+  <br><button class="btn" onclick="brBackToLobby()">▶ PLAY AGAIN</button>
+  <button class="btn btn-g" onclick="toMenu()">MENU</button>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js" onerror="console.log('[Cloud] js/firebase-config.js not present — cloud features disabled.')"></script>
+<script src="../js/cloud.js"></script>
+<script src="../js/game.js"></script>
+<script src="battle-royale.js"></script>
+</body>
+</html>

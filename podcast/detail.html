@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamran Heydarov - Podcast Episode</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/podcast.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h3>Kamran Heydarov</h3>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="../index.html" class="nav-link"><span>Projects</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="../podcast.html" class="nav-link active"><span>Podcast</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="../cv.html" class="nav-link"><span>CV</span></a>
+                </li>
+                <li class="nav-item">
+                    <a href="../contact.html" class="nav-link"><span>Contact</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <main class="main-content podcast-main">
+        <section id="podcast-hero" class="podcast-detail-hero">
+            <div class="podcast-detail-hero-bg" id="podcast-hero-bg"></div>
+            <div class="podcast-detail-hero-overlay"></div>
+            <div class="podcast-detail-hero-content">
+                <a href="../podcast.html" class="podcast-back">← All episodes</a>
+                <span id="podcast-epnum" class="podcast-eyebrow podcast-eyebrow-light"></span>
+                <h1 id="podcast-title" class="podcast-display podcast-display-light">Loading…</h1>
+                <div id="podcast-sub" class="podcast-detail-sub"></div>
+                <div id="podcast-detail-actions" class="podcast-detail-actions"></div>
+            </div>
+        </section>
+
+        <article class="podcast-detail">
+            <div id="podcast-body" class="podcast-detail-body"></div>
+        </article>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="../js/podcast.js"></script>
+</body>
+</html>
