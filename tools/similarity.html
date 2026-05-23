@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Similarity Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-copy-check"></i></div><div>Similarity Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-copy-check"></i></div>
+      <div>
+        <div class="tool-title">Similarity Checker</div>
+        <div class="tool-desc">Compare two texts. N-gram Jaccard, cosine, longest common substring, overlap highlighting.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px; gap:14px">
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+      N-gram size
+      <select id="ngram">
+        <option value="3">Trigram (3 words)</option>
+        <option value="2">Bigram (2 words)</option>
+        <option value="4">4-gram</option>
+        <option value="5">5-gram</option>
+      </select>
+    </label>
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+      <input type="checkbox" id="case-insens" checked> Case insensitive
+    </label>
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+      <input type="checkbox" id="strip-punct" checked> Ignore punctuation
+    </label>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="sample-btn"><i class="ti ti-sparkles"></i> Load sample</button>
+    <button class="btn btn-sm" id="swap-btn"><i class="ti ti-arrows-left-right"></i> Swap</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Text A</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" data-clear="a"><i class="ti ti-eraser"></i></button>
+        </div>
+      </div>
+      <textarea id="text-a" placeholder="Paste the original text…"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Text B</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" data-clear="b"><i class="ti ti-eraser"></i></button>
+        </div>
+      </div>
+      <textarea id="text-b" placeholder="Paste the text to compare…"></textarea>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Similarity scores</span></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Jaccard (n-gram)</div><div class="stat-value" id="m-jaccard" style="color:var(--accent3)">—</div></div>
+      <div class="stat-card"><div class="stat-label">Cosine (TF)</div><div class="stat-value" id="m-cosine">—</div></div>
+      <div class="stat-card"><div class="stat-label">Overlap (containment)</div><div class="stat-value" id="m-overlap">—</div></div>
+      <div class="stat-card"><div class="stat-label">Longest common</div><div class="stat-value" id="m-lcs" style="font-size:14px">—</div></div>
+      <div class="stat-card"><div class="stat-label">Shared n-grams</div><div class="stat-value" id="m-shared">—</div></div>
+      <div class="stat-card"><div class="stat-label">Verdict</div><div class="stat-value" id="m-verdict" style="font-size:14px">—</div></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Overlap in Text A (matching n-grams highlighted)</span></div>
+    <div id="hi-a" class="output-box" style="white-space:pre-wrap; line-height:1.7">—</div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Top shared phrases</span></div>
+    <div id="shared-list" class="muted" style="font-size:13px">—</div>
+  </div>
+</main>
+
+<style>
+.match { background: rgba(251,191,36,0.25); padding: 1px 3px; border-radius: 3px; }
+.match-strong { background: rgba(248,113,113,0.30); padding: 1px 3px; border-radius: 3px; color: var(--text); }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+
+function tokenize(text, ci, stripPunct) {
+  let t = text || '';
+  if (ci) t = t.toLowerCase();
+  if (stripPunct) t = t.replace(/[^\w\s'-]/g, ' ');
+  return t.split(/\s+/).filter(Boolean);
+}
+
+function ngrams(tokens, n) {
+  const out = [];
+  for (let i = 0; i + n <= tokens.length; i++) out.push(tokens.slice(i, i + n).join(' '));
+  return out;
+}
+
+function tfMap(tokens) {
+  const m = new Map();
+  for (const t of tokens) m.set(t, (m.get(t) || 0) + 1);
+  return m;
+}
+
+function jaccard(setA, setB) {
+  if (!setA.size && !setB.size) return 1;
+  let inter = 0;
+  for (const x of setA) if (setB.has(x)) inter += 1;
+  return inter / (setA.size + setB.size - inter);
+}
+
+function overlap(setA, setB) {
+  if (!setA.size || !setB.size) return 0;
+  let inter = 0;
+  for (const x of setA) if (setB.has(x)) inter += 1;
+  return inter / Math.min(setA.size, setB.size);
+}
+
+function cosine(mapA, mapB) {
+  let dot = 0, normA = 0, normB = 0;
+  for (const [k, v] of mapA) { normA += v * v; if (mapB.has(k)) dot += v * mapB.get(k); }
+  for (const v of mapB.values()) normB += v * v;
+  if (!normA || !normB) return 0;
+  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
+}
+
+function lcs(a, b) {
+  // longest common substring (character-based) — bounded to avoid huge memory
+  if (!a || !b) return '';
+  const MAX = 3000;
+  const A = a.slice(0, MAX), B = b.slice(0, MAX);
+  const m = A.length, n = B.length;
+  let prev = new Uint16Array(n + 1);
+  let best = 0, bestEnd = 0;
+  for (let i = 1; i <= m; i++) {
+    const cur = new Uint16Array(n + 1);
+    for (let j = 1; j <= n; j++) {
+      if (A[i-1] === B[j-1]) {
+        cur[j] = prev[j-1] + 1;
+        if (cur[j] > best) { best = cur[j]; bestEnd = i; }
+      }
+    }
+    prev = cur;
+  }
+  return A.slice(bestEnd - best, bestEnd);
+}
+
+function highlight(tokens, sharedSet, n) {
+  // For each n-gram window, if it's shared, mark all its tokens
+  const flags = new Array(tokens.length).fill(false);
+  for (let i = 0; i + n <= tokens.length; i++) {
+    const ng = tokens.slice(i, i + n).join(' ');
+    if (sharedSet.has(ng)) for (let k = 0; k < n; k++) flags[i + k] = true;
+  }
+  // Reconstruct text with simple highlight wrapping; we lose original case/punct, so re-render from tokens
+  let html = '';
+  for (let i = 0; i < tokens.length; i++) {
+    const span = escapeHtml(tokens[i]);
+    html += flags[i] ? `<span class="match">${span}</span>` : span;
+    html += ' ';
+  }
+  return html.trim();
+}
+
+function escapeHtml(s) { return (s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+function compute() {
+  const a = $('#text-a').value;
+  const b = $('#text-b').value;
+  const n = +$('#ngram').value;
+  const ci = $('#case-insens').checked;
+  const sp = $('#strip-punct').checked;
+
+  if (!a.trim() || !b.trim()) {
+    ['m-jaccard','m-cosine','m-overlap','m-shared'].forEach(id => $('#' + id).textContent = '—');
+    $('#m-lcs').textContent = '—';
+    $('#m-verdict').textContent = '—';
+    $('#hi-a').textContent = '—';
+    $('#shared-list').textContent = '—';
+    return;
+  }
+
+  const tokA = tokenize(a, ci, sp);
+  const tokB = tokenize(b, ci, sp);
+  const ngA = ngrams(tokA, n);
+  const ngB = ngrams(tokB, n);
+  const setA = new Set(ngA);
+  const setB = new Set(ngB);
+  const shared = new Set();
+  for (const x of setA) if (setB.has(x)) shared.add(x);
+
+  const tfA = tfMap(tokA);
+  const tfB = tfMap(tokB);
+
+  const jac = jaccard(setA, setB);
+  const cos = cosine(tfA, tfB);
+  const ovp = overlap(setA, setB);
+  const lcsStr = lcs(a, b);
+
+  $('#m-jaccard').textContent = (jac * 100).toFixed(1) + '%';
+  $('#m-cosine').textContent = (cos * 100).toFixed(1) + '%';
+  $('#m-overlap').textContent = (ovp * 100).toFixed(1) + '%';
+  $('#m-shared').textContent = shared.size;
+  $('#m-lcs').textContent = lcsStr.length + ' chars';
+
+  let verdict, vColor;
+  if (jac >= 0.5 || cos >= 0.7) { verdict = 'High overlap'; vColor = 'var(--red)'; }
+  else if (jac >= 0.2 || cos >= 0.4) { verdict = 'Moderate overlap'; vColor = 'var(--amber)'; }
+  else if (jac > 0.05) { verdict = 'Low overlap'; vColor = 'var(--blue)'; }
+  else { verdict = 'Likely independent'; vColor = 'var(--green)'; }
+  $('#m-verdict').textContent = verdict;
+  $('#m-verdict').style.color = vColor;
+
+  $('#hi-a').innerHTML = highlight(tokA, shared, n) || '—';
+
+  // top shared phrases by length
+  const top = [...shared].sort((x, y) => y.length - x.length).slice(0, 20);
+  if (!top.length) {
+    $('#shared-list').textContent = 'No shared n-grams found.';
+  } else {
+    $('#shared-list').innerHTML = top.map(p => `<span class="chip accent" style="margin:2px 4px 2px 0">${escapeHtml(p)}</span>`).join('');
+  }
+  if (lcsStr.length > 12) {
+    $('#shared-list').innerHTML += `<div class="divider"></div><b style="color:var(--text2)">Longest common substring (${lcsStr.length} chars):</b><div style="background:var(--bg2); padding:8px 10px; border-radius:6px; margin-top:6px; font-family:ui-monospace,Menlo,monospace; font-size:12px; white-space:pre-wrap">${escapeHtml(lcsStr.slice(0, 800))}${lcsStr.length > 800 ? '…' : ''}</div>`;
+  }
+}
+
+const sampleA = `Researchers found that participants who slept seven to nine hours per night showed significantly improved memory consolidation and cognitive performance compared to those who slept less than six hours.`;
+const sampleB = `Studies indicate that individuals sleeping seven to nine hours per night demonstrate notably better memory consolidation and cognitive performance compared to people sleeping fewer than six hours.`;
+
+['#text-a','#text-b','#ngram','#case-insens','#strip-punct'].forEach(s => $(s).addEventListener('input', compute));
+document.querySelectorAll('[data-clear]').forEach(b => b.addEventListener('click', () => {
+  $('#text-' + b.dataset.clear).value = ''; compute();
+}));
+$('#sample-btn').addEventListener('click', () => {
+  $('#text-a').value = sampleA;
+  $('#text-b').value = sampleB;
+  compute();
+});
+$('#swap-btn').addEventListener('click', () => {
+  const a = $('#text-a').value; $('#text-a').value = $('#text-b').value; $('#text-b').value = a; compute();
+});
+
+compute();
+</script>
+
+</body>
+</html>

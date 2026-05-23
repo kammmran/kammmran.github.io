@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Images → PDF — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-photo-plus"></i></div><div>Images → PDF</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-photo-plus"></i></div>
+      <div>
+        <div class="tool-title">Images → PDF</div>
+        <div class="tool-desc">Drop images, reorder, choose page size, get a single PDF. Stays in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace single">
+    <div class="panel">
+      <div class="dropzone" id="drop">
+        <i class="ti ti-photo-up"></i>
+        <div class="dropzone-title">Drop PNG / JPG images, or click to choose</div>
+        <div class="dropzone-hint">Drag tiles to reorder. Add more anytime.</div>
+        <input type="file" id="file" accept="image/png,image/jpeg" multiple hidden>
+      </div>
+
+      <div class="row" style="margin-top:14px; gap:10px; flex-wrap:wrap">
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">Page size
+          <select id="size">
+            <option value="A4">A4 (210 × 297 mm)</option>
+            <option value="Letter">Letter (8.5 × 11 in)</option>
+            <option value="Legal">Legal (8.5 × 14 in)</option>
+            <option value="A3">A3</option>
+            <option value="A5">A5</option>
+            <option value="fit">Fit to image</option>
+          </select>
+        </label>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">Orientation
+          <select id="orient">
+            <option value="auto">Auto</option>
+            <option value="portrait">Portrait</option>
+            <option value="landscape">Landscape</option>
+          </select>
+        </label>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">Margin
+          <input type="number" id="margin" value="20" min="0" max="100" style="width:80px"> pt
+        </label>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)"><input type="checkbox" id="bg-white" checked> White background</label>
+      </div>
+
+      <div id="grid" class="img-grid" style="margin-top:14px"></div>
+
+      <div class="row" style="margin-top:14px">
+        <button class="btn btn-primary" id="make-btn" disabled><i class="ti ti-file-export"></i> Build PDF</button>
+        <button class="btn" id="clear-btn" disabled><i class="ti ti-trash"></i> Clear all</button>
+        <span class="spacer"></span>
+        <span id="status" class="muted" style="font-size:13px"></span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<style>
+.img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.img-tile { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; cursor: grab; position: relative; }
+.img-tile.drag { opacity: .3; }
+.img-tile img { width: 100%; height: 110px; object-fit: contain; background: #fff; border-radius: 4px; }
+.img-tile .meta { font-size: 11px; color: var(--text3); margin-top: 6px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.img-tile .rm { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6); border: none; color: white; width: 22px; height: 22px; border-radius: 50%; cursor: pointer; font-size: 12px; }
+.img-tile .ord { position: absolute; top: 4px; left: 4px; background: var(--accent); color: white; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const drop = $('#drop'), fileInput = $('#file'), grid = $('#grid');
+const makeBtn = $('#make-btn'), clearBtn = $('#clear-btn'), status = $('#status');
+
+let images = []; // { id, name, file, dataUrl, w, h }
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+async function handleFiles(files) {
+  const arr = Array.from(files).filter(f => /image\/(png|jpeg)/.test(f.type));
+  for (const f of arr) {
+    const dataUrl = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(f); });
+    const img = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = dataUrl; });
+    images.push({ id: uid(), name: f.name, file: f, dataUrl, w: img.naturalWidth, h: img.naturalHeight });
+  }
+  render();
+}
+
+function render() {
+  grid.innerHTML = '';
+  images.forEach((im, i) => {
+    const t = document.createElement('div');
+    t.className = 'img-tile';
+    t.draggable = true;
+    t.dataset.id = im.id;
+    t.innerHTML = `
+      <span class="ord">${i + 1}</span>
+      <button class="rm" title="Remove">×</button>
+      <img src="${im.dataUrl}" alt="">
+      <div class="meta">${im.name} · ${im.w}×${im.h}</div>
+    `;
+    grid.appendChild(t);
+    t.querySelector('.rm').addEventListener('click', e => { e.stopPropagation(); images = images.filter(x => x.id !== im.id); render(); });
+    t.addEventListener('dragstart', e => { t.classList.add('drag'); e.dataTransfer.setData('text/plain', im.id); });
+    t.addEventListener('dragend', () => t.classList.remove('drag'));
+    t.addEventListener('dragover', e => e.preventDefault());
+    t.addEventListener('drop', e => {
+      e.preventDefault();
+      const srcId = e.dataTransfer.getData('text/plain');
+      if (srcId === im.id) return;
+      const srcIdx = images.findIndex(x => x.id === srcId);
+      const dstIdx = images.findIndex(x => x.id === im.id);
+      const [moved] = images.splice(srcIdx, 1);
+      images.splice(dstIdx, 0, moved);
+      render();
+    });
+  });
+  makeBtn.disabled = images.length === 0;
+  clearBtn.disabled = images.length === 0;
+  status.textContent = images.length ? `${images.length} image${images.length === 1 ? '' : 's'} ready` : '';
+}
+
+const SIZES = {
+  A4: [595.28, 841.89],
+  Letter: [612, 792],
+  Legal: [612, 1008],
+  A3: [841.89, 1190.55],
+  A5: [419.53, 595.28]
+};
+
+clearBtn.addEventListener('click', () => { images = []; render(); });
+
+makeBtn.addEventListener('click', async () => {
+  if (!images.length) return;
+  if (!window.PDFLib) { status.textContent = 'Loading library…'; await new Promise(r => setTimeout(r, 300)); }
+  makeBtn.disabled = true;
+  status.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Building PDF…';
+  try {
+    const { PDFDocument } = PDFLib;
+    const doc = await PDFDocument.create();
+    const sizeKey = $('#size').value;
+    const orient = $('#orient').value;
+    const margin = +$('#margin').value || 0;
+    const bgWhite = $('#bg-white').checked;
+    for (const im of images) {
+      const bytes = await im.file.arrayBuffer();
+      let embedded;
+      if (im.file.type === 'image/png') embedded = await doc.embedPng(bytes);
+      else embedded = await doc.embedJpg(bytes);
+      let pw, ph;
+      if (sizeKey === 'fit') {
+        pw = im.w + margin * 2; ph = im.h + margin * 2;
+      } else {
+        [pw, ph] = SIZES[sizeKey] || SIZES.A4;
+        let landscape = orient === 'landscape';
+        if (orient === 'auto') landscape = im.w > im.h;
+        if (landscape) [pw, ph] = [ph, pw];
+      }
+      const page = doc.addPage([pw, ph]);
+      if (bgWhite) page.drawRectangle({ x: 0, y: 0, width: pw, height: ph, color: PDFLib.rgb(1, 1, 1) });
+      const aw = pw - margin * 2, ah = ph - margin * 2;
+      const scale = Math.min(aw / im.w, ah / im.h, 1);
+      const dw = im.w * scale, dh = im.h * scale;
+      page.drawImage(embedded, {
+        x: (pw - dw) / 2,
+        y: (ph - dh) / 2,
+        width: dw,
+        height: dh
+      });
+    }
+    const out = await doc.save();
+    const blob = new Blob([out], { type: 'application/pdf' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `images-${new Date().toISOString().slice(0,10)}.pdf`;
+    a.click();
+    status.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> PDF ready (${images.length} pages)`;
+  } catch (e) {
+    status.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+  }
+  makeBtn.disabled = false;
+});
+</script>
+
+</body>
+</html>

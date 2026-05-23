@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Color Extractor — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-photo-search"></i></div><div>Image Color Extractor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-photo-search"></i></div>
+      <div>
+        <div class="tool-title">Image Color Extractor</div>
+        <div class="tool-desc">Drop an image, get the dominant palette. K-means clustering, all in-browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="dropzone" id="drop">
+        <i class="ti ti-photo-up"></i>
+        <div class="dropzone-title">Drop an image, paste URL, or click to choose</div>
+        <div class="dropzone-hint">PNG, JPG, GIF, WebP — stays on your device.</div>
+        <input type="file" id="file" accept="image/*" hidden>
+      </div>
+      <div class="row" style="margin-top:10px; gap:6px">
+        <input type="text" id="url" placeholder="…or paste image URL" style="flex:1">
+        <button class="btn btn-sm" id="url-btn">Load</button>
+      </div>
+      <div id="img-wrap" style="margin-top:14px; display:none">
+        <img id="img" style="width:100%; max-height:300px; object-fit:contain; border-radius:var(--radius-sm); background:#fff; cursor:crosshair">
+        <div class="muted" style="font-size:12px; margin-top:6px">Click the image to pick a specific pixel.</div>
+        <div id="picked" style="margin-top:8px; font-size:13px; color:var(--text2)"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Extracted palette</span>
+        <div class="panel-actions">
+          <label class="row" style="gap:4px; font-size:12px; color:var(--text2)">Colors
+            <input type="number" id="kk" min="3" max="12" value="6" style="width:60px; padding:4px 6px; font-size:12px">
+          </label>
+          <button class="btn btn-sm" id="re-extract"><i class="ti ti-refresh"></i> Re-run</button>
+          <button class="btn btn-sm" id="copy-pal"><i class="ti ti-copy"></i> Copy hex</button>
+        </div>
+      </div>
+      <div id="palette" class="muted" style="font-size:13px">Drop an image to see its dominant colors.</div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Average / dominant</span></div>
+      <div id="stats" class="stat-grid"></div>
+    </div>
+  </div>
+</main>
+
+<canvas id="hidden" style="display:none"></canvas>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.pal-swatch { display:flex; align-items:stretch; margin-bottom:6px; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); cursor: pointer; transition: transform .15s; }
+.pal-swatch:hover { transform: translateX(2px); }
+.pal-swatch .col { width: 60px; }
+.pal-swatch .info { flex:1; padding: 10px 12px; background: var(--bg2); display: flex; align-items:center; justify-content: space-between; gap:8px; }
+.pal-swatch .info code { font-family: ui-monospace,Menlo,monospace; font-size:13px; color: var(--text); }
+.pal-swatch .info .pct { font-size: 12px; color: var(--text3); }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script src="../assets/color-lib.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const drop = $('#drop'), fileInput = $('#file');
+const cvs = $('#hidden'), ctx = cvs.getContext('2d', { willReadFrequently: true });
+
+let currentPalette = [];
+let imgLoaded = false;
+
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1200); }
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); load(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => load(e.target.files[0]));
+$('#url-btn').addEventListener('click', () => loadUrl($('#url').value.trim()));
+
+async function load(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file);
+  loadUrl(url);
+}
+async function loadUrl(url) {
+  if (!url) return;
+  $('#palette').innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Loading…';
+  const img = $('#img');
+  img.crossOrigin = 'anonymous';
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; }).catch(() => {});
+  if (!img.naturalWidth) { $('#palette').innerHTML = '<span style="color:var(--red)">Could not load image (CORS may block remote URLs).</span>'; return; }
+  $('#img-wrap').style.display = '';
+  imgLoaded = true;
+  extract();
+}
+
+function getPixels() {
+  const img = $('#img');
+  const max = 200;
+  const ratio = Math.min(max / img.naturalWidth, max / img.naturalHeight, 1);
+  const w = Math.max(1, Math.floor(img.naturalWidth * ratio));
+  const h = Math.max(1, Math.floor(img.naturalHeight * ratio));
+  cvs.width = w; cvs.height = h;
+  ctx.drawImage(img, 0, 0, w, h);
+  return ctx.getImageData(0, 0, w, h).data;
+}
+
+function kmeans(pixels, k, iters = 8) {
+  // sample pixels for speed
+  const samples = [];
+  for (let i = 0; i < pixels.length; i += 4) {
+    const a = pixels[i + 3];
+    if (a < 128) continue; // ignore transparent
+    samples.push([pixels[i], pixels[i+1], pixels[i+2]]);
+  }
+  if (!samples.length) return [];
+  // init centroids: random samples
+  const centroids = [];
+  const used = new Set();
+  while (centroids.length < k) {
+    const i = Math.floor(Math.random() * samples.length);
+    if (used.has(i)) continue;
+    used.add(i);
+    centroids.push(samples[i].slice());
+  }
+  let assignments = new Array(samples.length);
+  for (let it = 0; it < iters; it++) {
+    // assign
+    for (let i = 0; i < samples.length; i++) {
+      let best = 0, bestD = Infinity;
+      for (let j = 0; j < k; j++) {
+        const d = (samples[i][0]-centroids[j][0])**2 + (samples[i][1]-centroids[j][1])**2 + (samples[i][2]-centroids[j][2])**2;
+        if (d < bestD) { bestD = d; best = j; }
+      }
+      assignments[i] = best;
+    }
+    // update
+    const sums = Array(k).fill(0).map(() => [0,0,0,0]);
+    for (let i = 0; i < samples.length; i++) {
+      const j = assignments[i];
+      sums[j][0] += samples[i][0]; sums[j][1] += samples[i][1]; sums[j][2] += samples[i][2]; sums[j][3]++;
+    }
+    for (let j = 0; j < k; j++) {
+      if (sums[j][3] > 0) {
+        centroids[j][0] = sums[j][0] / sums[j][3];
+        centroids[j][1] = sums[j][1] / sums[j][3];
+        centroids[j][2] = sums[j][2] / sums[j][3];
+      }
+    }
+  }
+  // counts
+  const counts = Array(k).fill(0);
+  for (const a of assignments) counts[a]++;
+  const result = centroids.map((c, i) => ({
+    r: Math.round(c[0]), g: Math.round(c[1]), b: Math.round(c[2]),
+    count: counts[i],
+    pct: counts[i] / assignments.length * 100
+  }));
+  return result.sort((a, b) => b.count - a.count);
+}
+
+function extract() {
+  if (!imgLoaded) return;
+  $('#palette').innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Extracting…';
+  setTimeout(() => {
+    const px = getPixels();
+    const k = +$('#kk').value || 6;
+    const clusters = kmeans(px, k);
+    currentPalette = clusters;
+    if (!clusters.length) { $('#palette').textContent = 'No usable pixels.'; return; }
+    $('#palette').innerHTML = clusters.map(c => {
+      const hex = ColorLib.rgbToHex(c.r, c.g, c.b);
+      const lum = ColorLib.relativeLuminance(c.r, c.g, c.b);
+      const tc = lum > 0.5 ? '#000' : '#fff';
+      return `<div class="pal-swatch" data-hex="${hex}">
+        <div class="col" style="background:${hex}; color:${tc}; display:flex; align-items:center; justify-content:center; font-size:11px">${c.pct.toFixed(0)}%</div>
+        <div class="info">
+          <code>${hex}</code>
+          <span class="pct">rgb(${c.r}, ${c.g}, ${c.b})</span>
+        </div>
+      </div>`;
+    }).join('');
+    $('#palette').querySelectorAll('[data-hex]').forEach(el => el.addEventListener('click', () => {
+      navigator.clipboard.writeText(el.dataset.hex).then(() => toast(el.dataset.hex + ' copied'));
+    }));
+
+    // stats: average color, brightest, darkest, most saturated
+    const px2 = getPixels();
+    let rSum = 0, gSum = 0, bSum = 0, count = 0;
+    for (let i = 0; i < px2.length; i += 4) {
+      if (px2[i+3] < 128) continue;
+      rSum += px2[i]; gSum += px2[i+1]; bSum += px2[i+2]; count++;
+    }
+    const avg = { r: Math.round(rSum/count), g: Math.round(gSum/count), b: Math.round(bSum/count) };
+    const brightest = [...clusters].sort((a,b) => ColorLib.relativeLuminance(b.r,b.g,b.b) - ColorLib.relativeLuminance(a.r,a.g,a.b))[0];
+    const darkest = [...clusters].sort((a,b) => ColorLib.relativeLuminance(a.r,a.g,a.b) - ColorLib.relativeLuminance(b.r,b.g,b.b))[0];
+    const mostSat = [...clusters].sort((a,b) => ColorLib.rgbToHsl(b.r,b.g,b.b).s - ColorLib.rgbToHsl(a.r,a.g,a.b).s)[0];
+    $('#stats').innerHTML = [
+      ['Average', avg],
+      ['Dominant', clusters[0]],
+      ['Brightest', brightest],
+      ['Darkest', darkest],
+      ['Most saturated', mostSat]
+    ].map(([l, c]) => {
+      const hex = ColorLib.rgbToHex(c.r, c.g, c.b);
+      const lum = ColorLib.relativeLuminance(c.r, c.g, c.b);
+      const tc = lum > 0.5 ? '#000' : '#fff';
+      return `<div class="stat-card" style="cursor:pointer" data-hex="${hex}">
+        <div class="stat-label">${l}</div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:4px"><div style="width:24px; height:24px; border-radius:4px; background:${hex}; border:1px solid var(--border)"></div><b style="font-size:13px; color:var(--text); font-family:ui-monospace,Menlo,monospace">${hex}</b></div>
+      </div>`;
+    }).join('');
+    $('#stats').querySelectorAll('[data-hex]').forEach(el => el.addEventListener('click', () => {
+      navigator.clipboard.writeText(el.dataset.hex).then(() => toast(el.dataset.hex + ' copied'));
+    }));
+  }, 20);
+}
+
+$('#kk').addEventListener('change', extract);
+$('#re-extract').addEventListener('click', extract);
+$('#copy-pal').addEventListener('click', () => {
+  if (!currentPalette.length) return;
+  const hexes = currentPalette.map(c => ColorLib.rgbToHex(c.r, c.g, c.b)).join('\n');
+  navigator.clipboard.writeText(hexes).then(() => toast('Palette copied'));
+});
+
+// click on image to pick pixel
+$('#img').addEventListener('click', e => {
+  const img = e.target;
+  const rect = img.getBoundingClientRect();
+  const sx = (e.clientX - rect.left) / rect.width * img.naturalWidth;
+  const sy = (e.clientY - rect.top) / rect.height * img.naturalHeight;
+  cvs.width = img.naturalWidth; cvs.height = img.naturalHeight;
+  ctx.drawImage(img, 0, 0);
+  const d = ctx.getImageData(Math.floor(sx), Math.floor(sy), 1, 1).data;
+  const hex = ColorLib.rgbToHex(d[0], d[1], d[2]);
+  $('#picked').innerHTML = `Picked: <span style="display:inline-block; width:14px; height:14px; vertical-align:middle; border:1px solid var(--border); border-radius:3px; background:${hex}"></span> <code style="font-family:ui-monospace,Menlo,monospace; color:var(--text)">${hex}</code> · rgb(${d[0]}, ${d[1]}, ${d[2]}) <button class="btn btn-sm" data-pickhex="${hex}" style="margin-left:6px"><i class="ti ti-copy"></i></button>`;
+  $('#picked').querySelector('[data-pickhex]').addEventListener('click', () => navigator.clipboard.writeText(hex).then(() => toast('Copied')));
+});
+</script>
+
+</body>
+</html>

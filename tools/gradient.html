@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gradient Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-gradienter"></i></div><div>Gradient Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-gradienter"></i></div>
+      <div>
+        <div class="tool-title">Gradient Generator</div>
+        <div class="tool-desc">Linear, radial, conic. Multi-stop. Live CSS code output.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Configure</span></div>
+      <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">Type
+        <select id="type">
+          <option value="linear">Linear</option>
+          <option value="radial">Radial</option>
+          <option value="conic">Conic</option>
+        </select>
+      </label>
+      <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)" id="angle-wrap">Angle
+        <input type="range" id="angle" min="0" max="360" value="135" style="flex:1">
+        <input type="number" id="angle-n" min="0" max="360" value="135" style="width:80px">°
+      </label>
+      <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)" id="shape-wrap" style="display:none">Shape
+        <select id="shape">
+          <option value="circle">Circle</option>
+          <option value="ellipse">Ellipse</option>
+        </select>
+      </label>
+      <div class="divider"></div>
+      <div class="panel-label">
+        <span>Color stops</span>
+        <div class="panel-actions"><button class="btn btn-sm" id="add-stop"><i class="ti ti-plus"></i> Add</button></div>
+      </div>
+      <div id="stops"></div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Presets</span></div>
+      <div id="presets" style="display:flex; flex-wrap:wrap; gap:6px"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label"><span>Preview</span></div>
+      <div id="preview" style="height:340px; border-radius:var(--radius); border:1px solid var(--border)"></div>
+      <div class="divider"></div>
+      <div class="panel-label">
+        <span>CSS code</span>
+        <div class="panel-actions"><button class="btn btn-sm" id="copy-css"><i class="ti ti-copy"></i> Copy</button></div>
+      </div>
+      <pre id="css-out" style="background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:12px; font-size:13px; font-family:ui-monospace,Menlo,monospace; white-space:pre-wrap; color:var(--text); overflow-x:auto"></pre>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.stop-row { display:grid; grid-template-columns: 50px 1fr 70px 30px; gap:8px; align-items:center; margin-bottom:6px }
+.stop-row input[type="color"] { width: 100%; height: 32px; padding: 2px; cursor: pointer; }
+.stop-row input[type="number"] { padding: 6px 8px; font-size: 12px; }
+.preset { width: 60px; height: 36px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; transition: transform .15s }
+.preset:hover { transform: scale(1.1) }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1200); }
+
+let stops = [
+  { color: '#7c6df0', pos: 0 },
+  { color: '#2dd4bf', pos: 100 }
+];
+
+const PRESETS = [
+  { name: 'Purple Dream', stops: [['#7c6df0', 0], ['#a594f7', 100]] },
+  { name: 'Sunset', stops: [['#ff6b6b', 0], ['#feca57', 50], ['#ff9ff3', 100]] },
+  { name: 'Ocean', stops: [['#0ea5e9', 0], ['#06b6d4', 50], ['#10b981', 100]] },
+  { name: 'Aurora', stops: [['#7c6df0', 0], ['#ec4899', 33], ['#f59e0b', 66], ['#10b981', 100]] },
+  { name: 'Fire', stops: [['#7c2d12', 0], ['#ea580c', 50], ['#fbbf24', 100]] },
+  { name: 'Forest', stops: [['#064e3b', 0], ['#10b981', 100]] },
+  { name: 'Candy', stops: [['#f472b6', 0], ['#fb923c', 100]] },
+  { name: 'Midnight', stops: [['#0f172a', 0], ['#7c3aed', 100]] },
+  { name: 'Steel', stops: [['#64748b', 0], ['#cbd5e1', 100]] },
+  { name: 'Mint', stops: [['#a7f3d0', 0], ['#5eead4', 100]] }
+];
+
+function renderStops() {
+  const wrap = $('#stops');
+  wrap.innerHTML = '';
+  stops.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'stop-row';
+    row.innerHTML = `
+      <input type="color" data-c="${i}" value="${s.color}">
+      <input type="range" data-p="${i}" min="0" max="100" value="${s.pos}">
+      <input type="number" data-pn="${i}" min="0" max="100" value="${s.pos}">
+      <button class="btn btn-sm" data-rm="${i}" style="color:var(--red)" ${stops.length <= 2 ? 'disabled' : ''}><i class="ti ti-x"></i></button>
+    `;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('[data-c]').forEach(el => el.addEventListener('input', e => { stops[+el.dataset.c].color = el.value; update(); }));
+  wrap.querySelectorAll('[data-p]').forEach(el => el.addEventListener('input', e => {
+    stops[+el.dataset.p].pos = +el.value;
+    wrap.querySelector(`[data-pn="${el.dataset.p}"]`).value = el.value;
+    update();
+  }));
+  wrap.querySelectorAll('[data-pn]').forEach(el => el.addEventListener('input', e => {
+    stops[+el.dataset.pn].pos = +el.value;
+    wrap.querySelector(`[data-p="${el.dataset.pn}"]`).value = el.value;
+    update();
+  }));
+  wrap.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+    if (stops.length <= 2) return;
+    stops.splice(+b.dataset.rm, 1); renderStops(); update();
+  }));
+}
+
+function update() {
+  const type = $('#type').value;
+  const angle = +$('#angle').value;
+  $('#angle-n').value = angle;
+  const shape = $('#shape').value;
+  $('#angle-wrap').style.display = type === 'radial' ? 'none' : '';
+  $('#shape-wrap').style.display = type === 'radial' ? '' : 'none';
+  const sorted = [...stops].sort((a, b) => a.pos - b.pos);
+  const stopStr = sorted.map(s => `${s.color} ${s.pos}%`).join(', ');
+  let css;
+  if (type === 'linear') css = `linear-gradient(${angle}deg, ${stopStr})`;
+  else if (type === 'radial') css = `radial-gradient(${shape} at center, ${stopStr})`;
+  else css = `conic-gradient(from ${angle}deg at center, ${stopStr})`;
+  $('#preview').style.background = css;
+  $('#css-out').textContent = `background: ${css};`;
+}
+
+$('#type').addEventListener('change', update);
+$('#angle').addEventListener('input', e => { $('#angle-n').value = e.target.value; update(); });
+$('#angle-n').addEventListener('input', e => { $('#angle').value = e.target.value; update(); });
+$('#shape').addEventListener('change', update);
+$('#add-stop').addEventListener('click', () => {
+  const mid = stops.length ? Math.round(stops.reduce((s, x) => s + x.pos, 0) / stops.length) : 50;
+  stops.push({ color: '#ffffff', pos: mid });
+  renderStops(); update();
+});
+$('#copy-css').addEventListener('click', () => navigator.clipboard.writeText($('#css-out').textContent).then(() => toast('CSS copied')));
+
+// presets
+const presetsWrap = $('#presets');
+PRESETS.forEach(p => {
+  const el = document.createElement('div');
+  el.className = 'preset';
+  const stopStr = p.stops.map(s => `${s[0]} ${s[1]}%`).join(', ');
+  el.style.background = `linear-gradient(135deg, ${stopStr})`;
+  el.title = p.name;
+  el.addEventListener('click', () => {
+    stops = p.stops.map(s => ({ color: s[0], pos: s[1] }));
+    renderStops(); update();
+  });
+  presetsWrap.appendChild(el);
+});
+
+renderStops(); update();
+</script>
+
+</body>
+</html>

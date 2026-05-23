@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPA Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-school"></i></div><div>GPA Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-school"></i></div>
+      <div>
+        <div class="tool-title">GPA Calculator</div>
+        <div class="tool-desc">Multi-system (4.0, 5.0, 100-point, ECTS). Add courses across semesters, see cumulative GPA.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:14px; gap:14px">
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+      Grading scale
+      <select id="scale">
+        <option value="4.0">4.0 (US standard)</option>
+        <option value="5.0">5.0 (Azerbaijan)</option>
+        <option value="100">100-point (European)</option>
+        <option value="ects">ECTS letter (A–F)</option>
+      </select>
+    </label>
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+      <input type="checkbox" id="weighted" checked> Weight by credit hours
+    </label>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="add-sem-btn"><i class="ti ti-plus"></i> Add semester</button>
+    <button class="btn btn-sm" id="clear-btn" style="color:var(--red)"><i class="ti ti-trash"></i> Clear all</button>
+  </div>
+
+  <div id="semesters"></div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Cumulative result</span></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Cumulative GPA</div><div class="stat-value" id="cum-gpa" style="color:var(--accent3)">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total credits</div><div class="stat-value" id="cum-credits">0</div></div>
+      <div class="stat-card"><div class="stat-label">Courses</div><div class="stat-value" id="cum-courses">0</div></div>
+      <div class="stat-card"><div class="stat-label">Letter equivalent</div><div class="stat-value" id="cum-letter" style="color:var(--text2)">—</div></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.sem-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+.sem-head { display:flex; align-items:center; gap:10px; margin-bottom:10px }
+.sem-head input { background: transparent; border: none; padding: 2px 4px; font-weight: 600; color: var(--text); font-size: 15px; flex:1; }
+.sem-head input:focus { background: var(--bg2); border-radius: 4px; }
+.course-row { display:grid; grid-template-columns: 1fr 110px 110px 30px; gap:8px; margin-bottom:6px; align-items:center }
+.course-row input, .course-row select { padding: 7px 10px; font-size: 13px; }
+.course-row .rm-btn { background: transparent; border: none; color: var(--text3); cursor: pointer; padding: 4px; }
+.course-row .rm-btn:hover { color: var(--red); }
+.sem-stats { font-size: 12px; color: var(--text3); margin-top: 10px; display:flex; gap:14px; }
+.sem-stats b { color: var(--accent3); font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .course-row { grid-template-columns: 1fr 80px 80px 30px } }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const STORE = 'gpa-v1';
+
+const SCALES = {
+  '4.0': {
+    points: { 'A+': 4.0, 'A': 4.0, 'A-': 3.7, 'B+': 3.3, 'B': 3.0, 'B-': 2.7, 'C+': 2.3, 'C': 2.0, 'C-': 1.7, 'D+': 1.3, 'D': 1.0, 'F': 0.0 },
+    max: 4.0
+  },
+  '5.0': {
+    points: { '5': 5.0, '4': 4.0, '3': 3.0, '2': 2.0 },
+    max: 5.0
+  },
+  '100': {
+    // input is direct number 0-100
+    points: null,
+    max: 100
+  },
+  'ects': {
+    points: { 'A': 4.0, 'B': 3.5, 'C': 3.0, 'D': 2.5, 'E': 2.0, 'FX': 0, 'F': 0 },
+    max: 4.0
+  }
+};
+
+let data = JSON.parse(localStorage.getItem(STORE) || 'null') || {
+  scale: '4.0',
+  weighted: true,
+  semesters: [{ id: id(), name: 'Semester 1', courses: [{ id: id(), name: '', grade: '', credits: 3 }] }]
+};
+
+function id() { return Math.random().toString(36).slice(2, 10); }
+function save() { localStorage.setItem(STORE, JSON.stringify(data)); }
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); }
+
+function gradeOptions(scale) {
+  if (scale === '100') return null;
+  return Object.keys(SCALES[scale].points);
+}
+
+function gradeToPoint(scale, grade) {
+  if (grade === '' || grade == null) return null;
+  if (scale === '100') {
+    const n = parseFloat(grade);
+    if (isNaN(n)) return null;
+    return Math.max(0, Math.min(100, n));
+  }
+  const p = SCALES[scale].points[grade];
+  return typeof p === 'number' ? p : null;
+}
+
+function semStats(sem) {
+  const scale = data.scale;
+  let sumPts = 0, sumCr = 0, count = 0;
+  for (const c of sem.courses) {
+    const pt = gradeToPoint(scale, c.grade);
+    if (pt == null) continue;
+    const cr = data.weighted ? (parseFloat(c.credits) || 0) : 1;
+    sumPts += pt * cr;
+    sumCr += cr;
+    count += 1;
+  }
+  return { gpa: sumCr > 0 ? sumPts / sumCr : null, credits: sumCr, count };
+}
+
+function pointToLetter(scale, gpa) {
+  if (gpa == null) return '—';
+  if (scale === '100') {
+    if (gpa >= 90) return 'A';
+    if (gpa >= 80) return 'B';
+    if (gpa >= 70) return 'C';
+    if (gpa >= 60) return 'D';
+    return 'F';
+  }
+  if (scale === '5.0') {
+    if (gpa >= 4.5) return 'Excellent (5)';
+    if (gpa >= 3.5) return 'Good (4)';
+    if (gpa >= 2.5) return 'Satisfactory (3)';
+    return 'Fail (2)';
+  }
+  if (gpa >= 3.7) return 'A';
+  if (gpa >= 3.3) return 'B+';
+  if (gpa >= 3.0) return 'B';
+  if (gpa >= 2.7) return 'B-';
+  if (gpa >= 2.3) return 'C+';
+  if (gpa >= 2.0) return 'C';
+  if (gpa >= 1.0) return 'D';
+  return 'F';
+}
+
+function render() {
+  const scale = data.scale;
+  const opts = gradeOptions(scale);
+  $('#scale').value = scale;
+  $('#weighted').checked = data.weighted;
+
+  const wrap = $('#semesters');
+  wrap.innerHTML = '';
+  data.semesters.forEach(sem => {
+    const sp = document.createElement('div');
+    sp.className = 'sem-panel';
+    sp.innerHTML = `
+      <div class="sem-head">
+        <input type="text" data-rename="${sem.id}" value="${escapeHtml(sem.name)}">
+        <button class="btn btn-sm" data-add-course="${sem.id}"><i class="ti ti-plus"></i> Course</button>
+        <button class="btn btn-sm" data-del-sem="${sem.id}" style="color:var(--red)" ${data.semesters.length === 1 ? 'disabled' : ''}><i class="ti ti-trash"></i></button>
+      </div>
+      <div class="row" style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; padding:0 4px">
+        <div style="flex:1">Course</div>
+        <div style="width:110px">Grade</div>
+        <div style="width:110px">Credits</div>
+        <div style="width:30px"></div>
+      </div>
+      <div data-courses="${sem.id}"></div>
+      <div class="sem-stats" data-stats="${sem.id}"></div>
+    `;
+    wrap.appendChild(sp);
+    const cWrap = sp.querySelector(`[data-courses="${sem.id}"]`);
+    sem.courses.forEach(course => {
+      const row = document.createElement('div');
+      row.className = 'course-row';
+      const gradeInput = opts
+        ? `<select data-grade="${sem.id}|${course.id}"><option value="">—</option>${opts.map(o => `<option value="${o}" ${course.grade === o ? 'selected' : ''}>${o}</option>`).join('')}</select>`
+        : `<input type="number" data-grade="${sem.id}|${course.id}" placeholder="0–100" min="0" max="100" step="0.1" value="${course.grade}">`;
+      row.innerHTML = `
+        <input type="text" data-name="${sem.id}|${course.id}" placeholder="Course name" value="${escapeHtml(course.name)}">
+        ${gradeInput}
+        <input type="number" data-credits="${sem.id}|${course.id}" min="0" max="20" step="0.5" value="${course.credits}">
+        <button class="rm-btn" data-rm="${sem.id}|${course.id}"><i class="ti ti-x"></i></button>
+      `;
+      cWrap.appendChild(row);
+    });
+    const st = semStats(sem);
+    sp.querySelector(`[data-stats="${sem.id}"]`).innerHTML = `
+      <span>Semester GPA: <b>${st.gpa == null ? '—' : st.gpa.toFixed(2)}</b></span>
+      <span>Credits: <b>${st.credits}</b></span>
+      <span>Courses: <b>${st.count}</b></span>
+    `;
+  });
+
+  // wire events
+  wrap.querySelectorAll('[data-rename]').forEach(el => el.addEventListener('input', () => {
+    const sem = data.semesters.find(s => s.id === el.dataset.rename);
+    sem.name = el.value; save();
+  }));
+  wrap.querySelectorAll('[data-add-course]').forEach(el => el.addEventListener('click', () => {
+    const sem = data.semesters.find(s => s.id === el.dataset.addCourse);
+    sem.courses.push({ id: id(), name: '', grade: '', credits: 3 });
+    save(); render();
+  }));
+  wrap.querySelectorAll('[data-del-sem]').forEach(el => el.addEventListener('click', () => {
+    if (data.semesters.length === 1) return;
+    data.semesters = data.semesters.filter(s => s.id !== el.dataset.delSem);
+    save(); render();
+  }));
+  wrap.querySelectorAll('[data-name]').forEach(el => el.addEventListener('input', () => {
+    const [sid, cid] = el.dataset.name.split('|');
+    const c = data.semesters.find(s => s.id === sid).courses.find(c => c.id === cid);
+    c.name = el.value; save();
+  }));
+  wrap.querySelectorAll('[data-grade]').forEach(el => el.addEventListener('input', () => {
+    const [sid, cid] = el.dataset.grade.split('|');
+    const c = data.semesters.find(s => s.id === sid).courses.find(c => c.id === cid);
+    c.grade = el.value; save(); renderTotals(); renderSemStats();
+  }));
+  wrap.querySelectorAll('[data-credits]').forEach(el => el.addEventListener('input', () => {
+    const [sid, cid] = el.dataset.credits.split('|');
+    const c = data.semesters.find(s => s.id === sid).courses.find(c => c.id === cid);
+    c.credits = parseFloat(el.value) || 0; save(); renderTotals(); renderSemStats();
+  }));
+  wrap.querySelectorAll('[data-rm]').forEach(el => el.addEventListener('click', () => {
+    const [sid, cid] = el.dataset.rm.split('|');
+    const sem = data.semesters.find(s => s.id === sid);
+    sem.courses = sem.courses.filter(c => c.id !== cid);
+    if (sem.courses.length === 0) sem.courses.push({ id: id(), name: '', grade: '', credits: 3 });
+    save(); render();
+  }));
+
+  renderTotals();
+}
+
+function renderSemStats() {
+  data.semesters.forEach(sem => {
+    const el = document.querySelector(`[data-stats="${sem.id}"]`);
+    if (!el) return;
+    const st = semStats(sem);
+    el.innerHTML = `
+      <span>Semester GPA: <b>${st.gpa == null ? '—' : st.gpa.toFixed(2)}</b></span>
+      <span>Credits: <b>${st.credits}</b></span>
+      <span>Courses: <b>${st.count}</b></span>
+    `;
+  });
+}
+
+function renderTotals() {
+  const scale = data.scale;
+  let totPts = 0, totCr = 0, totCount = 0;
+  for (const sem of data.semesters) {
+    for (const c of sem.courses) {
+      const pt = gradeToPoint(scale, c.grade);
+      if (pt == null) continue;
+      const cr = data.weighted ? (parseFloat(c.credits) || 0) : 1;
+      totPts += pt * cr;
+      totCr += cr;
+      totCount += 1;
+    }
+  }
+  const gpa = totCr > 0 ? totPts / totCr : null;
+  $('#cum-gpa').textContent = gpa == null ? '—' : gpa.toFixed(2) + (scale === '100' ? '' : ` / ${SCALES[scale].max}`);
+  $('#cum-credits').textContent = totCr;
+  $('#cum-courses').textContent = totCount;
+  $('#cum-letter').textContent = pointToLetter(scale, gpa);
+}
+
+function escapeHtml(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
+
+$('#scale').addEventListener('change', () => { data.scale = $('#scale').value; save(); render(); });
+$('#weighted').addEventListener('change', () => { data.weighted = $('#weighted').checked; save(); render(); });
+$('#add-sem-btn').addEventListener('click', () => {
+  data.semesters.push({ id: id(), name: `Semester ${data.semesters.length + 1}`, courses: [{ id: id(), name: '', grade: '', credits: 3 }] });
+  save(); render();
+});
+$('#clear-btn').addEventListener('click', () => {
+  if (!confirm('Clear all semesters and courses?')) return;
+  data = { scale: data.scale, weighted: data.weighted, semesters: [{ id: id(), name: 'Semester 1', courses: [{ id: id(), name: '', grade: '', credits: 3 }] }] };
+  save(); render();
+});
+
+render();
+</script>
+
+</body>
+</html>

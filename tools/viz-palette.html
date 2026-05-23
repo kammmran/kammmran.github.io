@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data-viz Palette — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-pie"></i></div><div>Data-viz Palette</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-chart-pie"></i></div>
+      <div>
+        <div class="tool-title">Data-viz Palette</div>
+        <div class="tool-desc">Colorblind-safe palettes for charts, maps, and figures. Sequential, diverging, categorical.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px; gap:14px">
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">Type
+      <select id="type">
+        <option value="categorical">Categorical</option>
+        <option value="sequential">Sequential</option>
+        <option value="diverging">Diverging</option>
+        <option value="cyclic">Cyclic</option>
+      </select>
+    </label>
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">Colors
+      <input type="number" id="n" min="2" max="12" value="6" style="width:80px">
+    </label>
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">Preview as
+      <select id="cb">
+        <option value="normal">Normal vision</option>
+        <option value="deuteranomaly">Deuteranomaly</option>
+        <option value="protanomaly">Protanomaly</option>
+        <option value="tritanomaly">Tritanomaly</option>
+        <option value="deuteranopia">Deuteranopia</option>
+        <option value="protanopia">Protanopia</option>
+        <option value="achromatopsia">Achromatopsia</option>
+      </select>
+    </label>
+  </div>
+
+  <div id="palettes"></div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Tips for accessible data viz</span></div>
+    <ul style="font-size:13px; line-height:1.8; color:var(--text2); padding-left:20px">
+      <li><b style="color:var(--text)">Categorical</b> — pick distinct hues. Limit to ~6–8 categories per chart.</li>
+      <li><b style="color:var(--text)">Sequential</b> — one hue, varying lightness. Good for ordered data (e.g. heatmaps).</li>
+      <li><b style="color:var(--text)">Diverging</b> — two hues meeting at a neutral middle. Use when zero (or a midpoint) is meaningful.</li>
+      <li><b style="color:var(--text)">Cyclic</b> — wraps from start to end smoothly. Good for phase, time-of-day, or angles.</li>
+      <li>Avoid jet/rainbow palettes — they're not perceptually uniform and confuse color-blind viewers.</li>
+      <li>Pair color with shape, label, or pattern so charts read in black & white too.</li>
+    </ul>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.palette-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
+.pal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px }
+.pal-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.pal-meta { font-size: 11px; color: var(--text3); }
+.pal-strip { display:flex; height:48px; border-radius: 6px; overflow:hidden; margin-bottom: 8px; cursor: pointer; }
+.pal-strip > div { flex:1; transition: flex .15s; }
+.pal-strip > div:hover { flex: 2; }
+.pal-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px }
+.pal-chart { display:flex; gap:4px; align-items:flex-end; height:60px; padding:6px; background:var(--bg2); border-radius: 6px; margin-top: 8px; }
+.pal-chart .bar { flex:1; border-radius: 3px 3px 0 0; }
+</style>
+
+<script src="../assets/color-lib.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1200); }
+
+// Curated colorblind-safe palettes (ColorBrewer + Okabe-Ito + Viridis-like)
+const PALETTES = {
+  categorical: [
+    { name: 'Okabe-Ito', desc: 'Designed for colorblind accessibility',
+      colors: ['#000000','#E69F00','#56B4E9','#009E73','#F0E442','#0072B2','#D55E00','#CC79A7'] },
+    { name: 'Wong (Nature)', desc: '8 distinguishable colors',
+      colors: ['#000000','#E69F00','#56B4E9','#009E73','#F0E442','#0072B2','#D55E00','#CC79A7'] },
+    { name: 'Tol Bright', desc: 'Bright qualitative scheme',
+      colors: ['#4477AA','#EE6677','#228833','#CCBB44','#66CCEE','#AA3377','#BBBBBB'] },
+    { name: 'Tol Vibrant', desc: 'High contrast qualitative',
+      colors: ['#0077BB','#33BBEE','#009988','#EE7733','#CC3311','#EE3377','#BBBBBB'] },
+    { name: 'Tol Muted', desc: 'Subtle qualitative',
+      colors: ['#332288','#88CCEE','#44AA99','#117733','#999933','#DDCC77','#CC6677','#882255','#AA4499'] },
+    { name: 'ColorBrewer Set2', desc: 'Soft pastels',
+      colors: ['#66c2a5','#fc8d62','#8da0cb','#e78ac3','#a6d854','#ffd92f','#e5c494','#b3b3b3'] },
+    { name: 'ColorBrewer Dark2', desc: 'Strong saturated',
+      colors: ['#1b9e77','#d95f02','#7570b3','#e7298a','#66a61e','#e6ab02','#a6761d','#666666'] },
+    { name: 'Glasbey', desc: 'Many maximally distinct',
+      colors: ['#0000FF','#FF0000','#00BC00','#FFA500','#A020F0','#FF00FF','#00FFFF','#964B00','#000080','#808000','#FFD700','#008B8B'] }
+  ],
+  sequential: [
+    { name: 'Viridis', desc: 'Perceptually uniform; default in matplotlib',
+      colors: ['#440154','#482878','#3e4989','#31688e','#26828e','#1f9e89','#35b779','#6ece58','#b5de2b','#fde725'] },
+    { name: 'Plasma', desc: 'Perceptually uniform; warm',
+      colors: ['#0d0887','#46039f','#7201a8','#9c179e','#bd3786','#d8576b','#ed7953','#fb9f3a','#fdca26','#f0f921'] },
+    { name: 'Inferno', desc: 'Perceptually uniform; deep blacks',
+      colors: ['#000004','#160b39','#420a68','#6a176e','#932667','#bc3754','#dd513a','#f37819','#fca50a','#f6d746'] },
+    { name: 'Cividis', desc: 'Colorblind-optimized',
+      colors: ['#00224e','#123570','#3b496c','#575d6d','#707173','#8a8678','#a59c74','#c3b369','#e1cc55','#fee838'] },
+    { name: 'Magma', desc: 'Black → magenta → cream',
+      colors: ['#000004','#180f3e','#451077','#721f81','#9f2f7f','#cd4071','#f1605d','#fd9669','#feca8d','#fcfdbf'] },
+    { name: 'Blues', desc: 'Single-hue sequential',
+      colors: ['#f7fbff','#deebf7','#c6dbef','#9ecae1','#6baed6','#4292c6','#2171b5','#08519c','#08306b'] },
+    { name: 'Greens', desc: 'Single-hue sequential',
+      colors: ['#f7fcf5','#e5f5e0','#c7e9c0','#a1d99b','#74c476','#41ab5d','#238b45','#006d2c','#00441b'] },
+    { name: 'YlOrRd', desc: 'Yellow → orange → red',
+      colors: ['#ffffcc','#ffeda0','#fed976','#feb24c','#fd8d3c','#fc4e2a','#e31a1c','#bd0026','#800026'] }
+  ],
+  diverging: [
+    { name: 'RdBu', desc: 'Red ↔ Blue, neutral white center',
+      colors: ['#67001f','#b2182b','#d6604d','#f4a582','#fddbc7','#f7f7f7','#d1e5f0','#92c5de','#4393c3','#2166ac','#053061'] },
+    { name: 'BrBG', desc: 'Brown ↔ Blue-green',
+      colors: ['#543005','#8c510a','#bf812d','#dfc27d','#f6e8c3','#f5f5f5','#c7eae5','#80cdc1','#35978f','#01665e','#003c30'] },
+    { name: 'PiYG', desc: 'Pink ↔ Yellow-green',
+      colors: ['#8e0152','#c51b7d','#de77ae','#f1b6da','#fde0ef','#f7f7f7','#e6f5d0','#b8e186','#7fbc41','#4d9221','#276419'] },
+    { name: 'PuOr', desc: 'Purple ↔ Orange',
+      colors: ['#7f3b08','#b35806','#e08214','#fdb863','#fee0b6','#f7f7f7','#d8daeb','#b2abd2','#8073ac','#542788','#2d004b'] },
+    { name: 'Spectral', desc: 'Rainbow-like (less accessible)',
+      colors: ['#9e0142','#d53e4f','#f46d43','#fdae61','#fee08b','#ffffbf','#e6f598','#abdda4','#66c2a5','#3288bd','#5e4fa2'] },
+    { name: 'BWR (warm-cool)', desc: 'Blue ↔ White ↔ Red',
+      colors: ['#053061','#2166ac','#4393c3','#92c5de','#d1e5f0','#ffffff','#fddbc7','#f4a582','#d6604d','#b2182b','#67001f'] }
+  ],
+  cyclic: [
+    { name: 'Twilight', desc: 'For phase/angular data',
+      colors: ['#e2d9e2','#9eb6d8','#6a91d0','#5b5fa1','#4b3461','#3c0f55','#5a1976','#a73690','#d774a8','#f6c1c9','#f6e0e0','#e2d9e2'] },
+    { name: 'HSV cycle', desc: 'Full hue circle',
+      colors: ['#ff0000','#ff8000','#ffff00','#80ff00','#00ff00','#00ff80','#00ffff','#0080ff','#0000ff','#8000ff','#ff00ff','#ff0080'] }
+  ]
+};
+
+function interpolate(palette, n) {
+  if (n <= 1) return [palette[0]];
+  if (palette.length === n) return palette;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1) * (palette.length - 1);
+    const lo = Math.floor(t), hi = Math.ceil(t);
+    const f = t - lo;
+    if (lo === hi) { out.push(palette[lo]); continue; }
+    const a = ColorLib.hexToRgb(palette[lo]);
+    const b = ColorLib.hexToRgb(palette[hi]);
+    out.push(ColorLib.rgbToHex(
+      Math.round(a.r + (b.r - a.r) * f),
+      Math.round(a.g + (b.g - a.g) * f),
+      Math.round(a.b + (b.b - a.b) * f)
+    ));
+  }
+  return out;
+}
+
+function simulate(hex, type) {
+  if (type === 'normal') return hex;
+  const c = ColorLib.hexToRgb(hex);
+  const s = ColorLib.simulateCb(c.r, c.g, c.b, type);
+  return ColorLib.rgbToHex(s.r, s.g, s.b);
+}
+
+function render() {
+  const type = $('#type').value;
+  const n = +$('#n').value;
+  const cb = $('#cb').value;
+  const list = PALETTES[type];
+  $('#palettes').innerHTML = list.map((p, idx) => {
+    const colors = interpolate(p.colors, type === 'categorical' ? Math.min(n, p.colors.length) : n);
+    const display = colors.map(c => simulate(c, cb));
+    return `
+      <div class="palette-card">
+        <div class="pal-head">
+          <div>
+            <div class="pal-name">${p.name}</div>
+            <div class="pal-meta">${p.desc}</div>
+          </div>
+          <div class="pal-actions">
+            <button class="btn btn-sm" data-copy-hex="${idx}"><i class="ti ti-copy"></i> Hex list</button>
+            <button class="btn btn-sm" data-copy-css="${idx}"><i class="ti ti-copy"></i> CSS array</button>
+            <button class="btn btn-sm" data-copy-js="${idx}"><i class="ti ti-copy"></i> JS array</button>
+          </div>
+        </div>
+        <div class="pal-strip">
+          ${display.map((c, i) => `<div style="background:${c}" title="${colors[i]}"></div>`).join('')}
+        </div>
+        <div class="pal-chart">
+          ${display.map((c, i) => {
+            const h = 20 + (i * 53 % 70);
+            return `<div class="bar" style="background:${c}; height:${h}%"></div>`;
+          }).join('')}
+        </div>
+        <input type="hidden" data-hexes-${idx}="${colors.join(',')}">
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('[data-copy-hex]').forEach(b => b.addEventListener('click', () => {
+    const idx = +b.dataset.copyHex;
+    const colors = interpolate(list[idx].colors, type === 'categorical' ? Math.min(n, list[idx].colors.length) : n);
+    navigator.clipboard.writeText(colors.join('\n')).then(() => toast('Copied'));
+  }));
+  document.querySelectorAll('[data-copy-css]').forEach(b => b.addEventListener('click', () => {
+    const idx = +b.dataset.copyCss;
+    const colors = interpolate(list[idx].colors, type === 'categorical' ? Math.min(n, list[idx].colors.length) : n);
+    const css = colors.map((c, i) => `  --c${i+1}: ${c};`).join('\n');
+    navigator.clipboard.writeText(`:root {\n${css}\n}`).then(() => toast('CSS copied'));
+  }));
+  document.querySelectorAll('[data-copy-js]').forEach(b => b.addEventListener('click', () => {
+    const idx = +b.dataset.copyJs;
+    const colors = interpolate(list[idx].colors, type === 'categorical' ? Math.min(n, list[idx].colors.length) : n);
+    navigator.clipboard.writeText(`const palette = ${JSON.stringify(colors)};`).then(() => toast('JS copied'));
+  }));
+}
+
+['#type','#n','#cb'].forEach(s => $(s).addEventListener('input', render));
+render();
+</script>
+
+</body>
+</html>

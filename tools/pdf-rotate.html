@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Rotate — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-rotate-clockwise-2"></i></div><div>PDF Rotate</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-rotate-clockwise-2"></i></div>
+      <div>
+        <div class="tool-title">PDF Rotate</div>
+        <div class="tool-desc">Rotate every page or selected pages 90°, 180°, 270°. File never leaves your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace single">
+    <div class="panel">
+      <div class="dropzone" id="drop">
+        <i class="ti ti-file-upload"></i>
+        <div class="dropzone-title">Drop a PDF, or click to choose</div>
+        <div class="dropzone-hint">Then rotate individual pages or use the bulk buttons.</div>
+        <input type="file" id="file" accept="application/pdf" hidden>
+      </div>
+
+      <div class="row" style="margin-top:14px; gap:8px; flex-wrap:wrap" id="actions" style="display:none">
+        <button class="btn btn-sm" id="rot-all-left" disabled><i class="ti ti-rotate"></i> All −90°</button>
+        <button class="btn btn-sm" id="rot-all-right" disabled><i class="ti ti-rotate-clockwise"></i> All +90°</button>
+        <button class="btn btn-sm" id="rot-all-180" disabled><i class="ti ti-flip-vertical"></i> All 180°</button>
+        <button class="btn btn-sm" id="reset-rot" disabled><i class="ti ti-refresh"></i> Reset</button>
+        <span class="spacer"></span>
+        <button class="btn btn-primary" id="save-btn" disabled><i class="ti ti-download"></i> Save rotated PDF</button>
+      </div>
+
+      <div id="thumbs" class="thumbs"></div>
+
+      <div class="row" style="margin-top:10px">
+        <span id="status" class="muted" style="font-size:13px"></span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<style>
+.thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 14px; }
+.thumb { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; text-align: center; position: relative; }
+.thumb canvas { background: white; border-radius: 4px; max-width: 100%; height: auto; transition: transform .25s; }
+.thumb .page-num { font-size: 11px; color: var(--text3); margin-top: 6px; }
+.thumb .rot-controls { display: flex; gap: 4px; justify-content: center; margin-top: 6px; }
+.thumb .rot-controls button { padding: 3px 6px; font-size: 11px; }
+.thumb .badge { position: absolute; top: 4px; right: 6px; background: var(--accent); color: white; padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const drop = $('#drop'), fileInput = $('#file');
+const thumbs = $('#thumbs'), status = $('#status');
+const allLeftBtn = $('#rot-all-left'), allRightBtn = $('#rot-all-right'), all180Btn = $('#rot-all-180');
+const resetBtn = $('#reset-rot'), saveBtn = $('#save-btn');
+
+let pdfBytes = null;     // original file bytes
+let pdfDoc = null;       // pdfjs doc for rendering
+let rotations = [];      // per-page additive rotation (0/90/180/270)
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); handle(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => handle(e.target.files[0]));
+
+async function handle(file) {
+  if (!file || file.type !== 'application/pdf') return;
+  status.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Loading…';
+  pdfBytes = await file.arrayBuffer();
+  // wait for pdfjs to load
+  if (!window.pdfjsLib) await new Promise(r => setTimeout(r, 300));
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes.slice(0) }).promise;
+  rotations = new Array(pdfDoc.numPages).fill(0);
+  await renderAll();
+  [allLeftBtn, allRightBtn, all180Btn, resetBtn, saveBtn].forEach(b => b.disabled = false);
+  status.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> ${pdfDoc.numPages} page${pdfDoc.numPages === 1 ? '' : 's'} loaded`;
+}
+
+async function renderAll() {
+  thumbs.innerHTML = '';
+  for (let i = 1; i <= pdfDoc.numPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 1 });
+    const scale = 120 / viewport.width;
+    const v = page.getViewport({ scale });
+    const t = document.createElement('div');
+    t.className = 'thumb';
+    t.innerHTML = `
+      <span class="badge" data-deg="${i}">${rotations[i-1]}°</span>
+      <canvas data-pg="${i}" width="${v.width}" height="${v.height}" style="transform:rotate(${rotations[i-1]}deg)"></canvas>
+      <div class="page-num">Page ${i}</div>
+      <div class="rot-controls">
+        <button class="btn" data-l="${i}" title="−90°"><i class="ti ti-rotate"></i></button>
+        <button class="btn" data-r180="${i}" title="180°"><i class="ti ti-refresh"></i></button>
+        <button class="btn" data-r="${i}" title="+90°"><i class="ti ti-rotate-clockwise"></i></button>
+      </div>
+    `;
+    thumbs.appendChild(t);
+    const canvas = t.querySelector('canvas');
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: v }).promise;
+  }
+  thumbs.querySelectorAll('[data-l]').forEach(b => b.addEventListener('click', () => rotPage(+b.dataset.l, -90)));
+  thumbs.querySelectorAll('[data-r]').forEach(b => b.addEventListener('click', () => rotPage(+b.dataset.r, 90)));
+  thumbs.querySelectorAll('[data-r180]').forEach(b => b.addEventListener('click', () => rotPage(+b.dataset.r180, 180)));
+}
+
+function rotPage(idx, delta) {
+  const i = idx - 1;
+  rotations[i] = (((rotations[i] + delta) % 360) + 360) % 360;
+  const cv = thumbs.querySelector(`canvas[data-pg="${idx}"]`);
+  const badge = thumbs.querySelector(`.badge[data-deg="${idx}"]`);
+  if (cv) cv.style.transform = `rotate(${rotations[i]}deg)`;
+  if (badge) badge.textContent = rotations[i] + '°';
+}
+
+allLeftBtn.addEventListener('click', () => rotations.forEach((_, i) => rotPage(i + 1, -90)));
+allRightBtn.addEventListener('click', () => rotations.forEach((_, i) => rotPage(i + 1, 90)));
+all180Btn.addEventListener('click', () => rotations.forEach((_, i) => rotPage(i + 1, 180)));
+resetBtn.addEventListener('click', () => {
+  rotations.forEach((r, i) => { if (r !== 0) rotPage(i + 1, -r); });
+});
+
+saveBtn.addEventListener('click', async () => {
+  saveBtn.disabled = true;
+  status.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Saving…';
+  try {
+    const { PDFDocument, degrees } = PDFLib;
+    const doc = await PDFDocument.load(pdfBytes.slice(0));
+    const pages = doc.getPages();
+    pages.forEach((page, i) => {
+      if (rotations[i]) {
+        const cur = page.getRotation().angle;
+        page.setRotation(degrees((cur + rotations[i]) % 360));
+      }
+    });
+    const out = await doc.save();
+    const blob = new Blob([out], { type: 'application/pdf' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'rotated.pdf';
+    a.click();
+    status.innerHTML = '<i class="ti ti-circle-check" style="color:var(--green)"></i> Saved';
+  } catch (e) {
+    status.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+  }
+  saveBtn.disabled = false;
+});
+</script>
+
+</body>
+</html>

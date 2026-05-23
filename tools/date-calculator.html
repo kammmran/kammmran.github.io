@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Date Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-calendar-stats"></i></div><div>Date Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-calendar-stats"></i></div>
+      <div>
+        <div class="tool-title">Date Calculator</div>
+        <div class="tool-desc">Days between dates, add/subtract intervals, age, working-days, countdowns.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="diff">Between dates</button>
+    <button class="tab" data-mode="add">Add / subtract</button>
+    <button class="tab" data-mode="age">Age</button>
+    <button class="tab" data-mode="workdays">Working days</button>
+    <button class="tab" data-mode="countdown">Countdown</button>
+  </div>
+
+  <!-- DIFFERENCE -->
+  <section id="diff-panel">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Two dates</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">From <input type="date" id="d-from"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">To <input type="date" id="d-to"></label>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)"><input type="checkbox" id="d-incl" checked> Include end date</label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Difference</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Days</div><div class="stat-value" id="d-days">—</div></div>
+          <div class="stat-card"><div class="stat-label">Weeks</div><div class="stat-value" id="d-weeks">—</div></div>
+          <div class="stat-card"><div class="stat-label">Months</div><div class="stat-value" id="d-months">—</div></div>
+          <div class="stat-card"><div class="stat-label">Years</div><div class="stat-value" id="d-years">—</div></div>
+          <div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value" id="d-hours">—</div></div>
+          <div class="stat-card"><div class="stat-label">Y · M · D</div><div class="stat-value" id="d-ymd" style="font-size:14px">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADD / SUBTRACT -->
+  <section id="add-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Starting date + interval</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">Start <input type="date" id="a-from"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">
+          Operation
+          <select id="a-op">
+            <option value="add">Add</option>
+            <option value="sub">Subtract</option>
+          </select>
+        </label>
+        <div class="row" style="gap:8px; margin-bottom:10px">
+          <input type="number" id="a-years" placeholder="Years" value="0" style="width:90px">
+          <input type="number" id="a-months" placeholder="Months" value="0" style="width:90px">
+          <input type="number" id="a-weeks" placeholder="Weeks" value="0" style="width:90px">
+          <input type="number" id="a-days" placeholder="Days" value="0" style="width:90px">
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Result</span></div>
+        <div style="font-size:32px; font-weight:700; color:var(--accent3); text-align:center; padding:18px 0" id="a-result">—</div>
+        <div class="muted" style="text-align:center; font-size:13px" id="a-weekday"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AGE -->
+  <section id="age-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Birth date</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">Born <input type="date" id="ag-from"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">As of <input type="date" id="ag-to"></label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Age</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Years</div><div class="stat-value" id="ag-y">—</div></div>
+          <div class="stat-card"><div class="stat-label">Months</div><div class="stat-value" id="ag-m">—</div></div>
+          <div class="stat-card"><div class="stat-label">Days</div><div class="stat-value" id="ag-d">—</div></div>
+          <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="ag-td">—</div></div>
+          <div class="stat-card"><div class="stat-label">Total weeks</div><div class="stat-value" id="ag-tw">—</div></div>
+          <div class="stat-card"><div class="stat-label">Next birthday in</div><div class="stat-value" id="ag-next" style="font-size:14px">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKING DAYS -->
+  <section id="workdays-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Date range</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">From <input type="date" id="w-from"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:13px; color:var(--text2)">To <input type="date" id="w-to"></label>
+        <div class="panel-label" style="margin-top:6px"><span>Treat as weekend</span></div>
+        <div class="row" style="gap:14px; flex-wrap:wrap">
+          <label class="row" style="gap:4px; font-size:13px"><input type="checkbox" class="wknd" data-day="0" checked> Sun</label>
+          <label class="row" style="gap:4px; font-size:13px"><input type="checkbox" class="wknd" data-day="1"> Mon</label>
+          <label class="row" style="gap:4px; font-size:13px"><input type="checkbox" class="wknd" data-day="2"> Tue</label>
+          <label class="row" style="gap:4px; font-size:13px"><input type="checkbox" class="wknd" data-day="3"> Wed</label>
+          <label class="row" style="gap:4px; font-size:13px"><input type="checkbox" class="wknd" data-day="4"> Thu</label>
+          <label class="row" style="gap:4px; font-size:13px"><input type="checkbox" class="wknd" data-day="5"> Fri</label>
+          <label class="row" style="gap:4px; font-size:13px"><input type="checkbox" class="wknd" data-day="6" checked> Sat</label>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Counts</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="w-total">—</div></div>
+          <div class="stat-card"><div class="stat-label">Working days</div><div class="stat-value" id="w-work" style="color:var(--green)">—</div></div>
+          <div class="stat-card"><div class="stat-label">Weekend days</div><div class="stat-value" id="w-weekend" style="color:var(--text2)">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COUNTDOWN -->
+  <section id="countdown-panel" style="display:none">
+    <div class="panel">
+      <div class="panel-label"><span>Target moment</span></div>
+      <div class="row" style="gap:8px; margin-bottom:14px">
+        <input type="text" id="c-label" placeholder="What's coming up?" style="flex:1">
+        <input type="date" id="c-date">
+        <input type="time" id="c-time" value="00:00">
+      </div>
+      <div style="text-align:center; padding:24px 0">
+        <div id="c-label-out" style="font-size:14px; color:var(--text2); margin-bottom:10px">—</div>
+        <div id="c-display" style="font-size:42px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent3)">—</div>
+        <div id="c-detail" class="muted" style="font-size:13px; margin-top:8px"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const today = () => new Date().toISOString().slice(0,10);
+const DAY = 86400000;
+
+// === Diff ===
+$('#d-from').value = today();
+$('#d-to').value = today();
+function computeDiff() {
+  const f = new Date($('#d-from').value);
+  const t = new Date($('#d-to').value);
+  if (isNaN(f) || isNaN(t)) return;
+  const incl = $('#d-incl').checked;
+  const ms = t - f;
+  const days = Math.round(ms / DAY) + (incl ? (ms >= 0 ? 1 : -1) : 0);
+  $('#d-days').textContent = days.toLocaleString();
+  $('#d-weeks').textContent = (days / 7).toFixed(2);
+  $('#d-months').textContent = (days / 30.4375).toFixed(2);
+  $('#d-years').textContent = (days / 365.25).toFixed(3);
+  $('#d-hours').textContent = (days * 24).toLocaleString();
+  // ymd breakdown (calendar-aware)
+  let a = f, b = t;
+  let neg = false;
+  if (a > b) { [a, b] = [b, a]; neg = true; }
+  let y = b.getFullYear() - a.getFullYear();
+  let m = b.getMonth() - a.getMonth();
+  let d = b.getDate() - a.getDate();
+  if (d < 0) { m -= 1; const prev = new Date(b.getFullYear(), b.getMonth(), 0); d += prev.getDate(); }
+  if (m < 0) { y -= 1; m += 12; }
+  $('#d-ymd').textContent = (neg ? '−' : '') + `${y}y ${m}m ${d}d`;
+}
+['#d-from','#d-to','#d-incl'].forEach(s => $(s).addEventListener('input', computeDiff));
+
+// === Add / sub ===
+$('#a-from').value = today();
+function computeAdd() {
+  const base = new Date($('#a-from').value);
+  if (isNaN(base)) return;
+  const sign = $('#a-op').value === 'sub' ? -1 : 1;
+  const y = (parseInt($('#a-years').value) || 0) * sign;
+  const m = (parseInt($('#a-months').value) || 0) * sign;
+  const w = (parseInt($('#a-weeks').value) || 0) * sign;
+  const d = (parseInt($('#a-days').value) || 0) * sign;
+  const r = new Date(base);
+  r.setFullYear(r.getFullYear() + y);
+  r.setMonth(r.getMonth() + m);
+  r.setDate(r.getDate() + w * 7 + d);
+  $('#a-result').textContent = r.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  $('#a-weekday').textContent = r.toLocaleDateString(undefined, { weekday: 'long' });
+}
+['#a-from','#a-op','#a-years','#a-months','#a-weeks','#a-days'].forEach(s => $(s).addEventListener('input', computeAdd));
+
+// === Age ===
+$('#ag-from').value = '2000-01-01';
+$('#ag-to').value = today();
+function computeAge() {
+  const a = new Date($('#ag-from').value);
+  const b = new Date($('#ag-to').value);
+  if (isNaN(a) || isNaN(b)) return;
+  let y = b.getFullYear() - a.getFullYear();
+  let m = b.getMonth() - a.getMonth();
+  let d = b.getDate() - a.getDate();
+  if (d < 0) { m -= 1; const prev = new Date(b.getFullYear(), b.getMonth(), 0); d += prev.getDate(); }
+  if (m < 0) { y -= 1; m += 12; }
+  $('#ag-y').textContent = y;
+  $('#ag-m').textContent = m;
+  $('#ag-d').textContent = d;
+  const td = Math.round((b - a) / DAY);
+  $('#ag-td').textContent = td.toLocaleString();
+  $('#ag-tw').textContent = Math.floor(td / 7).toLocaleString();
+  // next birthday from b
+  const nextBd = new Date(b.getFullYear(), a.getMonth(), a.getDate());
+  if (nextBd < b) nextBd.setFullYear(b.getFullYear() + 1);
+  const nDays = Math.ceil((nextBd - b) / DAY);
+  $('#ag-next').textContent = nDays + ' day' + (nDays === 1 ? '' : 's');
+}
+['#ag-from','#ag-to'].forEach(s => $(s).addEventListener('input', computeAge));
+
+// === Working days ===
+$('#w-from').value = today();
+$('#w-to').value = today();
+function computeWork() {
+  const f = new Date($('#w-from').value);
+  const t = new Date($('#w-to').value);
+  if (isNaN(f) || isNaN(t)) return;
+  const wkndDays = Array.from(document.querySelectorAll('.wknd:checked')).map(c => +c.dataset.day);
+  let total = 0, work = 0, wknd = 0;
+  let cur = new Date(f);
+  while (cur <= t) {
+    total += 1;
+    if (wkndDays.includes(cur.getDay())) wknd += 1; else work += 1;
+    cur.setDate(cur.getDate() + 1);
+  }
+  if (f > t) { total = work = wknd = 0; }
+  $('#w-total').textContent = total;
+  $('#w-work').textContent = work;
+  $('#w-weekend').textContent = wknd;
+}
+['#w-from','#w-to'].forEach(s => $(s).addEventListener('input', computeWork));
+document.querySelectorAll('.wknd').forEach(c => c.addEventListener('change', computeWork));
+
+// === Countdown ===
+$('#c-date').value = today();
+let countdownInt = null;
+function computeCountdown() {
+  const label = $('#c-label').value || 'Target';
+  const date = $('#c-date').value;
+  const time = $('#c-time').value || '00:00';
+  if (!date) return;
+  const target = new Date(`${date}T${time}:00`);
+  if (isNaN(target)) return;
+  const now = Date.now();
+  const diff = target - now;
+  $('#c-label-out').textContent = label;
+  if (diff < 0) {
+    $('#c-display').textContent = 'Passed';
+    $('#c-display').style.color = 'var(--text3)';
+    $('#c-detail').textContent = target.toLocaleString();
+    return;
+  }
+  $('#c-display').style.color = 'var(--accent3)';
+  const d = Math.floor(diff / DAY);
+  const h = Math.floor((diff % DAY) / 3_600_000);
+  const m = Math.floor((diff % 3_600_000) / 60_000);
+  const s = Math.floor((diff % 60_000) / 1000);
+  $('#c-display').textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  $('#c-detail').textContent = target.toLocaleString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+['#c-label','#c-date','#c-time'].forEach(s => $(s).addEventListener('input', computeCountdown));
+
+// tabs
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  ['diff','add','age','workdays','countdown'].forEach(m => {
+    $('#' + m + '-panel').style.display = t.dataset.mode === m ? '' : 'none';
+  });
+  if (t.dataset.mode === 'countdown') {
+    computeCountdown();
+    if (countdownInt) clearInterval(countdownInt);
+    countdownInt = setInterval(computeCountdown, 1000);
+  } else if (countdownInt) {
+    clearInterval(countdownInt); countdownInt = null;
+  }
+}));
+
+computeDiff(); computeAdd(); computeAge(); computeWork();
+</script>
+
+</body>
+</html>

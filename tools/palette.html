@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palette Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-palette"></i></div><div>Palette Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-palette"></i></div>
+      <div>
+        <div class="tool-title">Palette Generator</div>
+        <div class="tool-desc">Color harmonies, tints, shades, tones. Export CSS, JSON, or Tailwind.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row" style="gap:10px">
+      <label class="row" style="gap:8px; font-size:13px; color:var(--text2)">Base color
+        <input type="color" id="base" value="#7c6df0" style="width:50px; height:36px; padding:2px; cursor:pointer">
+        <input type="text" id="base-hex" value="#7c6df0" style="width:100px; font-family:ui-monospace,Menlo,monospace">
+      </label>
+      <button class="btn btn-sm" id="random-btn"><i class="ti ti-dice"></i> Random</button>
+      <span class="spacer"></span>
+      <button class="btn btn-sm" id="copy-css"><i class="ti ti-copy"></i> CSS vars</button>
+      <button class="btn btn-sm" id="copy-json"><i class="ti ti-copy"></i> JSON</button>
+      <button class="btn btn-sm" id="copy-tw"><i class="ti ti-copy"></i> Tailwind</button>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Color harmonies</span></div>
+    <div id="harmonies"></div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Tints, shades, tones, scale</span></div>
+    <div id="scales"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.harmony { margin-bottom: 16px; }
+.harmony-label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; display:flex; justify-content:space-between; align-items:center; }
+.harmony-row { display: grid; gap: 4px; }
+.swatch { padding: 14px 10px; border-radius: var(--radius-sm); cursor: pointer; transition: transform .15s; font-family: ui-monospace,Menlo,monospace; font-size: 12px; display:flex; align-items:center; justify-content:space-between; gap:6px }
+.swatch:hover { transform: translateY(-2px); }
+.swatch .lbl { font-weight: 600; }
+.swatch .copy { background:transparent; border:none; color:inherit; opacity:0.6; cursor:pointer; padding:2px 4px; }
+.swatch .copy:hover { opacity:1; }
+.scale-row { display: flex; gap: 4px; margin-bottom: 12px; }
+.scale-row .swatch { flex:1; padding: 18px 6px; flex-direction: column; gap: 2px; text-align: center; font-size: 11px; }
+.scale-row .swatch .step { opacity: 0.6; font-size: 10px; }
+</style>
+
+<script src="../assets/color-lib.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1200); }
+
+function textColor(r, g, b) {
+  return ColorLib.relativeLuminance(r, g, b) > 0.5 ? '#000' : '#fff';
+}
+
+function makeSwatch(rgb, label) {
+  const hex = ColorLib.rgbToHex(rgb.r, rgb.g, rgb.b);
+  const tc = textColor(rgb.r, rgb.g, rgb.b);
+  return `<div class="swatch" style="background:${hex}; color:${tc}">
+    <span class="lbl">${label || hex}</span>
+    <button class="copy" data-copy="${hex}"><i class="ti ti-copy"></i></button>
+  </div>`;
+}
+
+function rot(hsl, deg) { return { ...hsl, h: ((hsl.h + deg) % 360 + 360) % 360 }; }
+
+const HARMONIES = [
+  { key: 'complementary', name: 'Complementary', shifts: [0, 180] },
+  { key: 'analogous', name: 'Analogous', shifts: [-30, 0, 30] },
+  { key: 'triadic', name: 'Triadic', shifts: [0, 120, 240] },
+  { key: 'tetradic', name: 'Tetradic / Square', shifts: [0, 90, 180, 270] },
+  { key: 'splitcomp', name: 'Split-complementary', shifts: [0, 150, 210] },
+  { key: 'monochrome', name: 'Monochromatic', shifts: 'mono' },
+  { key: 'compound', name: 'Compound', shifts: [0, 30, 180, 210] }
+];
+
+let currentPalette = {};
+
+function render(baseRgb) {
+  const baseHsl = ColorLib.rgbToHsl(baseRgb.r, baseRgb.g, baseRgb.b);
+  const harmHtml = HARMONIES.map(h => {
+    let colors;
+    if (h.shifts === 'mono') {
+      colors = [10, 30, 50, baseHsl.l, 80, 90].map(l => ColorLib.hslToRgb(baseHsl.h, baseHsl.s, l));
+    } else {
+      colors = h.shifts.map(s => {
+        const hsl = rot(baseHsl, s);
+        return ColorLib.hslToRgb(hsl.h, hsl.s, hsl.l);
+      });
+    }
+    currentPalette[h.key] = colors.map(c => ColorLib.rgbToHex(c.r, c.g, c.b));
+    return `
+      <div class="harmony">
+        <div class="harmony-label">
+          <span>${h.name}</span>
+          <span style="text-transform:none; letter-spacing:0; font-size:11px">${colors.length} colors</span>
+        </div>
+        <div class="harmony-row" style="grid-template-columns: repeat(${colors.length}, 1fr)">
+          ${colors.map(c => makeSwatch(c)).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+  $('#harmonies').innerHTML = harmHtml;
+
+  // tints (mix with white) / shades (mix with black) / tones (mix with gray) / scale (lightness ramp)
+  function tint(c, f) { return { r: c.r + (255 - c.r) * f, g: c.g + (255 - c.g) * f, b: c.b + (255 - c.b) * f }; }
+  function shade(c, f) { return { r: c.r * (1 - f), g: c.g * (1 - f), b: c.b * (1 - f) }; }
+  function tone(c, f) { return { r: c.r + (128 - c.r) * f, g: c.g + (128 - c.g) * f, b: c.b + (128 - c.b) * f }; }
+
+  const steps = [0.9, 0.7, 0.5, 0.3, 0.1, 0];
+  const tints = steps.map(s => tint(baseRgb, s));
+  const shades = [0, 0.1, 0.3, 0.5, 0.7, 0.9].map(s => shade(baseRgb, s));
+  const tones = steps.map(s => tone(baseRgb, s));
+  const scale = [95, 90, 80, 65, 50, 35, 25, 15, 10].map(l => ColorLib.hslToRgb(baseHsl.h, baseHsl.s, l));
+  const scaleNames = ['50','100','200','300','400','500','600','700','800'];
+
+  currentPalette.tints = tints.map(c => ColorLib.rgbToHex(c.r, c.g, c.b));
+  currentPalette.shades = shades.map(c => ColorLib.rgbToHex(c.r, c.g, c.b));
+  currentPalette.tones = tones.map(c => ColorLib.rgbToHex(c.r, c.g, c.b));
+  currentPalette.scale = Object.fromEntries(scale.map((c, i) => [scaleNames[i], ColorLib.rgbToHex(c.r, c.g, c.b)]));
+
+  $('#scales').innerHTML = `
+    <div style="font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px">Tints (mix with white)</div>
+    <div class="scale-row">${tints.map(c => makeSwatch(c)).join('')}</div>
+    <div style="font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px">Shades (mix with black)</div>
+    <div class="scale-row">${shades.map(c => makeSwatch(c)).join('')}</div>
+    <div style="font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px">Tones (mix with gray)</div>
+    <div class="scale-row">${tones.map(c => makeSwatch(c)).join('')}</div>
+    <div style="font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px">Tailwind-style scale (50–800)</div>
+    <div class="scale-row">${scale.map((c, i) => {
+      const hex = ColorLib.rgbToHex(c.r, c.g, c.b);
+      const tc = textColor(c.r, c.g, c.b);
+      return `<div class="swatch" style="background:${hex}; color:${tc}">
+        <span class="lbl">${hex}</span>
+        <span class="step">${scaleNames[i]}</span>
+      </div>`;
+    }).join('')}</div>
+  `;
+
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(b.dataset.copy).then(() => toast(b.dataset.copy + ' copied'));
+  }));
+}
+
+function update(hex) {
+  const rgb = ColorLib.hexToRgb(hex);
+  if (!rgb) return;
+  $('#base').value = ColorLib.rgbToHex(rgb.r, rgb.g, rgb.b);
+  $('#base-hex').value = $('#base').value;
+  render(rgb);
+}
+
+$('#base').addEventListener('input', e => update(e.target.value));
+$('#base-hex').addEventListener('input', e => {
+  const v = e.target.value.trim();
+  if (/^#?[0-9a-f]{3,8}$/i.test(v)) update(v.startsWith('#') ? v : '#' + v);
+});
+$('#random-btn').addEventListener('click', () => {
+  const hex = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+  update(hex);
+});
+
+$('#copy-css').addEventListener('click', () => {
+  const out = [];
+  out.push(':root {');
+  for (const [k, v] of Object.entries(currentPalette.scale)) out.push(`  --color-${k}: ${v};`);
+  ['complementary','analogous','triadic','tetradic'].forEach(h => {
+    currentPalette[h].forEach((hex, i) => out.push(`  --${h}-${i+1}: ${hex};`));
+  });
+  out.push('}');
+  navigator.clipboard.writeText(out.join('\n')).then(() => toast('CSS copied'));
+});
+$('#copy-json').addEventListener('click', () => {
+  navigator.clipboard.writeText(JSON.stringify(currentPalette, null, 2)).then(() => toast('JSON copied'));
+});
+$('#copy-tw').addEventListener('click', () => {
+  const tw = `// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        brand: ${JSON.stringify(currentPalette.scale, null, 10).replace(/\n/g, '\n        ')}
+      }
+    }
+  }
+}`;
+  navigator.clipboard.writeText(tw).then(() => toast('Tailwind config copied'));
+});
+
+update('#7c6df0');
+</script>
+
+</body>
+</html>

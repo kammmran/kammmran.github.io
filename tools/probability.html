@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Probability & Distributions — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-bell-curve"></i></div><div>Probability</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-chart-bell-curve"></i></div>
+      <div>
+        <div class="tool-title">Probability & Distributions</div>
+        <div class="tool-desc">Combinatorics + normal, binomial, Poisson, t-distribution. PDF, CDF, p-values.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="combi">Combinatorics</button>
+    <button class="tab" data-mode="normal">Normal (Z)</button>
+    <button class="tab" data-mode="binom">Binomial</button>
+    <button class="tab" data-mode="poisson">Poisson</button>
+    <button class="tab" data-mode="t">t-distribution</button>
+  </div>
+
+  <!-- COMBI -->
+  <section id="combi-panel">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>n and k</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">n <input type="number" id="cm-n" value="10" min="0" max="170" style="width:120px"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">k <input type="number" id="cm-k" value="3" min="0" max="170" style="width:120px"></label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Results</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Factorial n!</div><div class="stat-value" id="cm-fact" style="font-size:14px">—</div></div>
+          <div class="stat-card"><div class="stat-label">Permutations P(n,k)</div><div class="stat-value" id="cm-perm">—</div></div>
+          <div class="stat-card"><div class="stat-label">Combinations C(n,k)</div><div class="stat-value" id="cm-comb" style="color:var(--accent3)">—</div></div>
+          <div class="stat-card"><div class="stat-label">Multinomial 2ⁿ</div><div class="stat-value" id="cm-pow">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NORMAL -->
+  <section id="normal-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Parameters</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">μ (mean) <input type="number" id="n-mu" value="0" step="any" style="width:100px"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">σ (std dev) <input type="number" id="n-sd" value="1" step="any" min="0.0001" style="width:100px"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">x <input type="number" id="n-x" value="1.96" step="any" style="width:100px"></label>
+        <div class="divider"></div>
+        <div class="panel-label"><span>Inverse: probability → x</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">P(X &lt; x) = <input type="number" id="n-p" value="0.975" step="0.001" min="0" max="1" style="width:100px"></label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Results</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Z-score</div><div class="stat-value" id="n-z">—</div></div>
+          <div class="stat-card"><div class="stat-label">PDF f(x)</div><div class="stat-value" id="n-pdf">—</div></div>
+          <div class="stat-card"><div class="stat-label">P(X &lt; x)</div><div class="stat-value" id="n-cdf">—</div></div>
+          <div class="stat-card"><div class="stat-label">P(X &gt; x)</div><div class="stat-value" id="n-sf">—</div></div>
+          <div class="stat-card"><div class="stat-label">Two-tail p</div><div class="stat-value" id="n-tail">—</div></div>
+          <div class="stat-card"><div class="stat-label">Inverse x at p</div><div class="stat-value" id="n-inv" style="color:var(--accent3)">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BINOMIAL -->
+  <section id="binom-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>X ~ Binomial(n, p)</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">Trials n <input type="number" id="b-n" value="20" min="1" max="500" style="width:100px"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">Prob p <input type="number" id="b-p" value="0.5" step="0.001" min="0" max="1" style="width:100px"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">k successes <input type="number" id="b-k" value="10" min="0" max="500" style="width:100px"></label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Results</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">P(X = k)</div><div class="stat-value" id="b-pmf" style="color:var(--accent3)">—</div></div>
+          <div class="stat-card"><div class="stat-label">P(X ≤ k)</div><div class="stat-value" id="b-cdf">—</div></div>
+          <div class="stat-card"><div class="stat-label">P(X ≥ k)</div><div class="stat-value" id="b-sf">—</div></div>
+          <div class="stat-card"><div class="stat-label">Mean (np)</div><div class="stat-value" id="b-mean">—</div></div>
+          <div class="stat-card"><div class="stat-label">Std σ</div><div class="stat-value" id="b-sd">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- POISSON -->
+  <section id="poisson-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>X ~ Poisson(λ)</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">λ (rate) <input type="number" id="p-lam" value="3" step="0.1" min="0" style="width:100px"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">k events <input type="number" id="p-k" value="2" min="0" style="width:100px"></label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Results</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">P(X = k)</div><div class="stat-value" id="p-pmf" style="color:var(--accent3)">—</div></div>
+          <div class="stat-card"><div class="stat-label">P(X ≤ k)</div><div class="stat-value" id="p-cdf">—</div></div>
+          <div class="stat-card"><div class="stat-label">P(X ≥ k)</div><div class="stat-value" id="p-sf">—</div></div>
+          <div class="stat-card"><div class="stat-label">Mean = λ</div><div class="stat-value" id="p-mean">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- T -->
+  <section id="t-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>t-distribution</span></div>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">df (degrees of freedom) <input type="number" id="t-df" value="20" min="1" style="width:100px"></label>
+        <label class="row" style="gap:8px; margin-bottom:10px; font-size:14px; color:var(--text2)">t statistic <input type="number" id="t-x" value="2.086" step="any" style="width:100px"></label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Results</span></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">PDF f(t)</div><div class="stat-value" id="t-pdf">—</div></div>
+          <div class="stat-card"><div class="stat-label">One-tail p</div><div class="stat-value" id="t-1">—</div></div>
+          <div class="stat-card"><div class="stat-label">Two-tail p</div><div class="stat-value" id="t-2" style="color:var(--accent3)">—</div></div>
+          <div class="stat-card"><div class="stat-label">P(T &lt; t)</div><div class="stat-value" id="t-cdf">—</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+function fmt(n, d = 6) {
+  if (!isFinite(n)) return '—';
+  if (n === 0) return '0';
+  if (Math.abs(n) < 0.0001 || Math.abs(n) > 1e9) return n.toExponential(d - 1);
+  return parseFloat(n.toFixed(d)).toString();
+}
+
+// === Math helpers ===
+function logFact(n) {
+  if (n < 0) return NaN;
+  if (n < 2) return 0;
+  let s = 0;
+  for (let i = 2; i <= n; i++) s += Math.log(i);
+  return s;
+}
+function logBinom(n, k) {
+  if (k < 0 || k > n) return -Infinity;
+  return logFact(n) - logFact(k) - logFact(n - k);
+}
+function fact(n) {
+  if (n > 170) return Infinity;
+  let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+}
+function perm(n, k) {
+  if (k < 0 || k > n) return 0;
+  let r = 1; for (let i = 0; i < k; i++) r *= (n - i); return r;
+}
+function combo(n, k) {
+  if (k < 0 || k > n) return 0;
+  if (k > n - k) k = n - k;
+  let r = 1;
+  for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1);
+  return Math.round(r);
+}
+
+// === Normal ===
+function normPdf(x, mu, sd) { return Math.exp(-0.5 * ((x - mu) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI)); }
+function erf(x) {
+  // Abramowitz & Stegun 7.1.26
+  const sign = Math.sign(x); x = Math.abs(x);
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429, p=0.3275911;
+  const t = 1 / (1 + p * x);
+  const y = 1 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+  return sign * y;
+}
+function normCdf(x, mu, sd) { return 0.5 * (1 + erf((x - mu) / (sd * Math.sqrt(2)))); }
+function normInv(p) {
+  // Beasley–Springer–Moro
+  if (p <= 0 || p >= 1) return NaN;
+  const a = [-39.6968302866538, 220.946098424521, -275.928510446969, 138.357751867269, -30.6647980661472, 2.50662827745924];
+  const b = [-54.4760987982241, 161.585836858041, -155.698979859887, 66.8013118877197, -13.2806815528857];
+  const c = [-0.00778489400243029, -0.322396458041136, -2.40075827716184, -2.54973253934373, 4.37466414146497, 2.93816398269878];
+  const d = [0.00778469570904146, 0.32246712907004, 2.445134137143, 3.75440866190742];
+  const pLow = 0.02425, pHigh = 1 - pLow;
+  let q, r, x;
+  if (p < pLow) { q = Math.sqrt(-2 * Math.log(p)); x = (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  else if (p <= pHigh) { q = p - 0.5; r = q*q; x = (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1); }
+  else { q = Math.sqrt(-2 * Math.log(1 - p)); x = -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1); }
+  return x;
+}
+
+// === t-distribution (Gauss continued fraction / regularized incomplete beta) ===
+function lgamma(z) {
+  const g = 7;
+  const c = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI / Math.sin(Math.PI * z)) - lgamma(1 - z);
+  z -= 1;
+  let x = c[0];
+  for (let i = 1; i < g + 2; i++) x += c[i] / (z + i);
+  const t = z + g + 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+}
+function regIncBeta(x, a, b) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+  const lnPre = lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x);
+  function contFrac() {
+    const eps = 1e-12;
+    let bm = 1, az = 1, am = 1, bz = 1 - (a + b) * x / (a + 1), bzz, azz, em, tem;
+    let qab = a + b, qap = a + 1, qam = a - 1;
+    for (let m = 1; m <= 200; m++) {
+      em = m; tem = em + em;
+      let d = em * (b - em) * x / ((qam + tem) * (a + tem));
+      azz = az + d * am; bzz = bz + d * bm;
+      d = -(a + em) * (qab + em) * x / ((a + tem) * (qap + tem));
+      let app = azz + d * az; let bpp = bzz + d * bz;
+      am = azz / bpp; bm = bzz / bpp; az = app / bpp; bz = 1;
+      if (Math.abs(az - am) < eps * Math.abs(az)) return az;
+    }
+    return az;
+  }
+  if (x < (a + 1) / (a + b + 2)) return Math.exp(lnPre) * contFrac() / a;
+  return 1 - Math.exp(lnPre) * (function() {
+    const a2 = b, b2 = a, x2 = 1 - x;
+    const lnPre2 = lgamma(a2 + b2) - lgamma(a2) - lgamma(b2) + a2 * Math.log(x2) + b2 * Math.log(1 - x2);
+    let bm = 1, az = 1, am = 1, bz = 1 - (a2 + b2) * x2 / (a2 + 1), azz, bzz, em, tem;
+    let qab = a2 + b2, qap = a2 + 1, qam = a2 - 1;
+    for (let m = 1; m <= 200; m++) {
+      em = m; tem = em + em;
+      let d = em * (b2 - em) * x2 / ((qam + tem) * (a2 + tem));
+      azz = az + d * am; bzz = bz + d * bm;
+      d = -(a2 + em) * (qab + em) * x2 / ((a2 + tem) * (qap + tem));
+      let app = azz + d * az; let bpp = bzz + d * bz;
+      am = azz / bpp; bm = bzz / bpp; az = app / bpp; bz = 1;
+      if (Math.abs(az - am) < 1e-12 * Math.abs(az)) break;
+    }
+    return Math.exp(lnPre2) * az / a2;
+  })();
+}
+function tCdf(t, df) {
+  const x = df / (df + t * t);
+  const p = 0.5 * regIncBeta(x, df / 2, 0.5);
+  return t < 0 ? p : 1 - p;
+}
+function tPdf(t, df) {
+  return Math.exp(lgamma((df + 1) / 2) - lgamma(df / 2)) / Math.sqrt(df * Math.PI) * Math.pow(1 + t*t/df, -(df+1)/2);
+}
+
+// === Compute handlers ===
+function computeCombi() {
+  const n = +$('#cm-n').value, k = +$('#cm-k').value;
+  $('#cm-fact').textContent = n > 170 ? 'too large' : fmt(fact(n), 0);
+  $('#cm-perm').textContent = fmt(perm(n, k), 0);
+  $('#cm-comb').textContent = fmt(combo(n, k), 0);
+  $('#cm-pow').textContent = n > 53 ? 'too large' : fmt(Math.pow(2, n), 0);
+}
+function computeNormal() {
+  const mu = +$('#n-mu').value, sd = +$('#n-sd').value, x = +$('#n-x').value;
+  const p = +$('#n-p').value;
+  if (sd <= 0) return;
+  const z = (x - mu) / sd;
+  $('#n-z').textContent = fmt(z);
+  $('#n-pdf').textContent = fmt(normPdf(x, mu, sd));
+  $('#n-cdf').textContent = fmt(normCdf(x, mu, sd));
+  $('#n-sf').textContent = fmt(1 - normCdf(x, mu, sd));
+  $('#n-tail').textContent = fmt(2 * (1 - normCdf(Math.abs(z), 0, 1)));
+  $('#n-inv').textContent = (p > 0 && p < 1) ? fmt(mu + sd * normInv(p)) : '—';
+}
+function computeBinom() {
+  const n = +$('#b-n').value, p = +$('#b-p').value, k = +$('#b-k').value;
+  if (p < 0 || p > 1 || n < 0) return;
+  const pmf = k >= 0 && k <= n ? Math.exp(logBinom(n, k) + k * Math.log(p || 1) + (n - k) * Math.log(1 - p || 1)) : 0;
+  let cdf = 0;
+  for (let i = 0; i <= Math.min(k, n); i++) {
+    cdf += Math.exp(logBinom(n, i) + i * Math.log(p || 1) + (n - i) * Math.log(1 - p || 1));
+  }
+  $('#b-pmf').textContent = fmt(pmf);
+  $('#b-cdf').textContent = fmt(cdf);
+  $('#b-sf').textContent = fmt(1 - cdf + pmf);
+  $('#b-mean').textContent = fmt(n * p);
+  $('#b-sd').textContent = fmt(Math.sqrt(n * p * (1 - p)));
+}
+function computePoisson() {
+  const lam = +$('#p-lam').value, k = +$('#p-k').value;
+  if (lam < 0 || k < 0) return;
+  const pmf = Math.exp(-lam + k * Math.log(lam || 1) - logFact(k));
+  let cdf = 0;
+  for (let i = 0; i <= k; i++) cdf += Math.exp(-lam + i * Math.log(lam || 1) - logFact(i));
+  $('#p-pmf').textContent = fmt(pmf);
+  $('#p-cdf').textContent = fmt(cdf);
+  $('#p-sf').textContent = fmt(1 - cdf + pmf);
+  $('#p-mean').textContent = fmt(lam);
+}
+function computeT() {
+  const df = +$('#t-df').value, x = +$('#t-x').value;
+  if (df < 1) return;
+  const cdf = tCdf(x, df);
+  const oneTail = x >= 0 ? 1 - cdf : cdf;
+  $('#t-pdf').textContent = fmt(tPdf(x, df));
+  $('#t-1').textContent = fmt(oneTail);
+  $('#t-2').textContent = fmt(2 * oneTail);
+  $('#t-cdf').textContent = fmt(cdf);
+}
+
+['#cm-n','#cm-k'].forEach(s => $(s).addEventListener('input', computeCombi));
+['#n-mu','#n-sd','#n-x','#n-p'].forEach(s => $(s).addEventListener('input', computeNormal));
+['#b-n','#b-p','#b-k'].forEach(s => $(s).addEventListener('input', computeBinom));
+['#p-lam','#p-k'].forEach(s => $(s).addEventListener('input', computePoisson));
+['#t-df','#t-x'].forEach(s => $(s).addEventListener('input', computeT));
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  ['combi','normal','binom','poisson','t'].forEach(m => {
+    $('#' + m + '-panel').style.display = t.dataset.mode === m ? '' : 'none';
+  });
+}));
+
+computeCombi(); computeNormal(); computeBinom(); computePoisson(); computeT();
+</script>
+
+</body>
+</html>

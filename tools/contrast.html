@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contrast Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-contrast"></i></div><div>Contrast Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-contrast"></i></div>
+      <div>
+        <div class="tool-title">WCAG Contrast Checker</div>
+        <div class="tool-desc">Check foreground vs background for accessibility. AA / AAA pass-fail at every text size.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Colors</span></div>
+      <label class="row" style="gap:10px; margin-bottom:12px; font-size:13px; color:var(--text2)">Foreground
+        <input type="color" id="fg" value="#ffffff" style="width:60px; height:38px; padding:2px">
+        <input type="text" id="fg-hex" value="#ffffff" style="width:120px; font-family:ui-monospace,Menlo,monospace">
+      </label>
+      <label class="row" style="gap:10px; margin-bottom:12px; font-size:13px; color:var(--text2)">Background
+        <input type="color" id="bg" value="#7c6df0" style="width:60px; height:38px; padding:2px">
+        <input type="text" id="bg-hex" value="#7c6df0" style="width:120px; font-family:ui-monospace,Menlo,monospace">
+      </label>
+      <div class="row" style="gap:8px; margin-bottom:14px">
+        <button class="btn btn-sm" id="swap-btn"><i class="ti ti-arrows-up-down"></i> Swap</button>
+        <button class="btn btn-sm" id="random-bg"><i class="ti ti-dice"></i> Random BG</button>
+      </div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Suggestions</span></div>
+      <div class="muted" style="font-size:12px; margin-bottom:8px">Closest accessible foregrounds (AA normal-text)</div>
+      <div id="suggestions" style="display:flex; gap:6px; flex-wrap:wrap"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Live preview</span></div>
+      <div id="preview" style="padding:20px; border-radius:var(--radius); border:1px solid var(--border); min-height:200px">
+        <div style="font-size:32px; font-weight:700; margin-bottom:8px">Large heading text</div>
+        <div style="font-size:18px; font-weight:600; margin-bottom:8px">Subheading text 18pt</div>
+        <div style="font-size:14px; line-height:1.6">Normal body text at 14px. The quick brown fox jumps over the lazy dog. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.</div>
+        <div style="font-size:12px; line-height:1.6; margin-top:8px">Small text at 12px should still be readable for most users.</div>
+      </div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Contrast ratio</span></div>
+      <div style="font-size:48px; font-weight:700; font-variant-numeric:tabular-nums; text-align:center; padding:14px 0" id="ratio-display">—</div>
+      <div id="grade-grid" class="stat-grid"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>WCAG quick reference</span></div>
+    <div style="font-size:13px; line-height:1.7; color:var(--text2)">
+      <div><b style="color:var(--text)">AA</b> · Normal text: ≥ 4.5:1 · Large text (18pt+, or 14pt bold): ≥ 3:1 · UI components & graphics: ≥ 3:1</div>
+      <div><b style="color:var(--text)">AAA</b> · Normal text: ≥ 7:1 · Large text: ≥ 4.5:1 · (Required for AAA conformance)</div>
+    </div>
+  </div>
+</main>
+
+<style>
+.grade-cell { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--bg2); border: 1px solid var(--border); text-align: center; }
+.grade-cell.pass { border-color: var(--green); color: var(--green); }
+.grade-cell.fail { border-color: var(--red); color: var(--red); }
+.grade-cell .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 2px; }
+.grade-cell .v { font-size: 18px; font-weight: 600; }
+.sug-chip { width:36px; height:36px; border-radius:6px; cursor:pointer; border:2px solid var(--border); transition: transform .15s }
+.sug-chip:hover { transform: scale(1.1) }
+</style>
+
+<script src="../assets/color-lib.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+
+function update() {
+  const fgHex = $('#fg').value;
+  const bgHex = $('#bg').value;
+  $('#fg-hex').value = fgHex;
+  $('#bg-hex').value = bgHex;
+  const fg = ColorLib.hexToRgb(fgHex);
+  const bg = ColorLib.hexToRgb(bgHex);
+  if (!fg || !bg) return;
+  const ratio = ColorLib.contrastRatio(fg, bg);
+
+  // preview
+  const p = $('#preview');
+  p.style.background = bgHex;
+  p.style.color = fgHex;
+
+  $('#ratio-display').textContent = ratio.toFixed(2) + ' : 1';
+  $('#ratio-display').style.color = ratio >= 7 ? 'var(--green)' : ratio >= 4.5 ? 'var(--blue)' : ratio >= 3 ? 'var(--amber)' : 'var(--red)';
+
+  const grades = [
+    ['Normal AA', ratio >= 4.5],
+    ['Normal AAA', ratio >= 7],
+    ['Large AA', ratio >= 3],
+    ['Large AAA', ratio >= 4.5],
+    ['UI / graphics', ratio >= 3]
+  ];
+  $('#grade-grid').innerHTML = grades.map(([l, ok]) => `
+    <div class="grade-cell ${ok ? 'pass' : 'fail'}">
+      <div class="lbl">${l}</div>
+      <div class="v"><i class="ti ti-${ok ? 'circle-check' : 'circle-x'}"></i> ${ok ? 'Pass' : 'Fail'}</div>
+    </div>
+  `).join('');
+
+  // suggestions: walk lightness of fg until ratio passes 4.5
+  const fgHsl = ColorLib.rgbToHsl(fg.r, fg.g, fg.b);
+  const sugs = [];
+  // light version (white-ish) and dark version (black-ish) variants
+  for (const lShift of [-40, -20, 0, 20, 40, 60, 80, 100]) {
+    const l = ColorLib.clamp(lShift, 0, 100);
+    const r = ColorLib.hslToRgb(fgHsl.h, fgHsl.s, l);
+    const ratio2 = ColorLib.contrastRatio(r, bg);
+    if (ratio2 >= 4.5) sugs.push({ hex: ColorLib.rgbToHex(r.r, r.g, r.b), ratio: ratio2 });
+  }
+  // dedupe by hex
+  const uniq = [...new Map(sugs.map(s => [s.hex, s])).values()].slice(0, 8);
+  $('#suggestions').innerHTML = uniq.length
+    ? uniq.map(s => `<div class="sug-chip" style="background:${s.hex}" title="${s.hex} · ${s.ratio.toFixed(2)}:1" data-pick="${s.hex}"></div>`).join('')
+    : '<span class="muted">No matching lightness — try a different hue.</span>';
+  $('#suggestions').querySelectorAll('[data-pick]').forEach(el => el.addEventListener('click', () => {
+    $('#fg').value = el.dataset.pick;
+    update();
+  }));
+}
+
+['#fg','#bg'].forEach(s => $(s).addEventListener('input', update));
+['#fg-hex','#bg-hex'].forEach(s => $(s).addEventListener('input', e => {
+  const v = e.target.value.trim();
+  if (/^#?[0-9a-f]{3,8}$/i.test(v)) {
+    $(s.replace('-hex', '')).value = v.startsWith('#') ? v : '#' + v;
+    update();
+  }
+}));
+$('#swap-btn').addEventListener('click', () => {
+  const f = $('#fg').value;
+  $('#fg').value = $('#bg').value;
+  $('#bg').value = f;
+  update();
+});
+$('#random-bg').addEventListener('click', () => {
+  $('#bg').value = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+  update();
+});
+
+update();
+</script>
+
+</body>
+</html>

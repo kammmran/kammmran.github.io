@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISBN Lookup — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-barcode"></i></div><div>ISBN Lookup</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-barcode"></i></div>
+      <div>
+        <div class="tool-title">ISBN Lookup</div>
+        <div class="tool-desc">Paste an ISBN, get a formatted citation. Powered by OpenLibrary.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="margin-bottom:12px">
+      <input id="isbn" type="text" placeholder="9780262033848  (with or without hyphens)" style="flex:1; min-width:260px">
+      <select id="style">
+        <option value="apa">APA 7</option>
+        <option value="mla">MLA 9</option>
+        <option value="chicago">Chicago</option>
+        <option value="harvard">Harvard</option>
+        <option value="bibtex">BibTeX</option>
+      </select>
+      <button class="btn btn-primary" id="lookup-btn"><i class="ti ti-search"></i> Lookup</button>
+    </div>
+    <div id="status" class="muted" style="font-size:13px; margin-bottom:10px"></div>
+    <div class="workspace">
+      <div class="panel" style="background:var(--bg2)">
+        <div class="panel-label"><span>Book metadata</span></div>
+        <div id="meta" class="muted" style="font-size:13px">No book loaded yet.</div>
+      </div>
+      <div class="panel" style="background:var(--bg2)">
+        <div class="panel-label">
+          <span>Citation</span>
+          <div class="panel-actions">
+            <button class="btn btn-sm" id="copy-btn" disabled><i class="ti ti-copy"></i> Copy</button>
+          </div>
+        </div>
+        <div class="output-box empty" id="output">Citation will appear here.</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <span class="spacer"></span>
+      <span class="muted" style="font-size:12px">Try: <code style="color:var(--accent3)">9780262033848</code> (CLRS) or <code style="color:var(--accent3)">9780140449136</code> (Crime & Punishment)</span>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.meta-row { display:flex; gap:10px; padding:6px 0; border-bottom:1px solid var(--border); font-size:13px }
+.meta-row:last-child { border-bottom: none }
+.meta-row b { color: var(--text3); width: 100px; flex-shrink: 0; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; font-size: 11px; padding-top: 2px }
+.meta-row span { color: var(--text) }
+.book-cover { max-width: 120px; border-radius: 6px; margin-bottom: 10px }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const input = $('#isbn');
+const styleSel = $('#style');
+const statusEl = $('#status');
+const metaEl = $('#meta');
+const out = $('#output');
+const copyBtn = $('#copy-btn');
+
+let lastBook = null;
+let lastText = '';
+
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); }
+function cleanIsbn(s) { return (s || '').replace(/[-\s]/g, '').trim(); }
+
+async function fetchBook(isbn) {
+  // OpenLibrary "books" jscmd=data returns enriched metadata
+  const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${encodeURIComponent(isbn)}&jscmd=data&format=json`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('OpenLibrary error ' + r.status);
+  const data = await r.json();
+  const key = `ISBN:${isbn}`;
+  if (!data[key]) throw new Error('No book found for that ISBN.');
+  return data[key];
+}
+
+function formatAuthors(authors, style) {
+  if (!authors || !authors.length) return '';
+  const names = authors.map(a => a.name || '').filter(Boolean);
+  if (style === 'apa' || style === 'harvard') {
+    // Family, F. M.
+    const fmt = n => {
+      const parts = n.split(/\s+/);
+      const family = parts.pop();
+      const initials = parts.map(p => p[0] + '.').join(' ');
+      return `${family}, ${initials}`.trim();
+    };
+    const a = names.map(fmt);
+    if (a.length === 1) return a[0];
+    if (a.length === 2) return a.join(', & ');
+    return a.slice(0, -1).join(', ') + ', & ' + a[a.length - 1];
+  }
+  if (style === 'mla' || style === 'chicago') {
+    const fmt = (n, i) => {
+      if (i === 0) {
+        const parts = n.split(/\s+/);
+        const family = parts.pop();
+        return `${family}, ${parts.join(' ')}`.trim();
+      }
+      return n;
+    };
+    const a = names.map(fmt);
+    if (a.length === 1) return a[0];
+    if (a.length === 2) return a.join(', and ');
+    return a.slice(0, -1).join(', ') + ', and ' + a[a.length - 1];
+  }
+  return names.join(' and ');
+}
+
+function format(book, style) {
+  const title = book.title || '';
+  const subtitle = book.subtitle || '';
+  const authors = formatAuthors(book.authors, style);
+  const year = (book.publish_date || '').match(/\d{4}/)?.[0] || '';
+  const publisher = (book.publishers && book.publishers[0] && book.publishers[0].name) || '';
+  const place = (book.publish_places && book.publish_places[0] && book.publish_places[0].name) || '';
+  const isbn = (book.identifiers && (book.identifiers.isbn_13?.[0] || book.identifiers.isbn_10?.[0])) || '';
+  const fullTitle = subtitle ? `${title}: ${subtitle}` : title;
+
+  if (style === 'apa') {
+    let s = '';
+    if (authors) s += authors + ' ';
+    if (year) s += `(${year}). `;
+    if (fullTitle) s += `<em>${fullTitle}</em>. `;
+    if (publisher) s += publisher + '.';
+    return s.trim();
+  }
+  if (style === 'mla') {
+    let s = '';
+    if (authors) s += authors + '. ';
+    if (fullTitle) s += `<em>${fullTitle}</em>. `;
+    if (publisher) s += publisher + ', ';
+    if (year) s += year + '.';
+    return s.trim();
+  }
+  if (style === 'chicago') {
+    let s = '';
+    if (authors) s += authors + '. ';
+    if (fullTitle) s += `<em>${fullTitle}</em>. `;
+    if (place) s += place + ': ';
+    if (publisher) s += publisher + ', ';
+    if (year) s += year + '.';
+    return s.trim();
+  }
+  if (style === 'harvard') {
+    let s = '';
+    if (authors) s += authors + ' ';
+    if (year) s += `(${year}) `;
+    if (fullTitle) s += `<em>${fullTitle}</em>. `;
+    if (place) s += place + ': ';
+    if (publisher) s += publisher + '.';
+    return s.trim();
+  }
+  if (style === 'bibtex') {
+    const first = (book.authors?.[0]?.name || 'unknown').split(/\s+/).pop().toLowerCase().replace(/[^a-z]/g,'');
+    const key = first + (year || '');
+    const authorsBib = (book.authors || []).map(a => a.name).join(' and ');
+    return `@book{${key},
+  author    = {${authorsBib}},
+  title     = {${title}${subtitle ? ': ' + subtitle : ''}},
+  year      = {${year}},
+  publisher = {${publisher}},
+  address   = {${place}},
+  isbn      = {${isbn}}
+}`;
+  }
+  return '';
+}
+
+function escapeHtml(s) { return (s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+function renderMeta(book) {
+  const cover = book.cover?.medium || book.cover?.large || book.cover?.small;
+  const authors = (book.authors || []).map(a => a.name).join(', ');
+  const subjects = (book.subjects || []).slice(0, 5).map(s => s.name).join(' · ');
+  metaEl.innerHTML = `
+    ${cover ? `<img src="${cover}" class="book-cover" alt="cover">` : ''}
+    <div class="meta-row"><b>Title</b><span>${escapeHtml(book.title || '—')}${book.subtitle ? '<br><small style="color:var(--text2)">' + escapeHtml(book.subtitle) + '</small>' : ''}</span></div>
+    <div class="meta-row"><b>Authors</b><span>${escapeHtml(authors || '—')}</span></div>
+    <div class="meta-row"><b>Published</b><span>${escapeHtml(book.publish_date || '—')}</span></div>
+    <div class="meta-row"><b>Publisher</b><span>${escapeHtml((book.publishers || []).map(p => p.name).join(', ') || '—')}</span></div>
+    <div class="meta-row"><b>Pages</b><span>${book.number_of_pages || '—'}</span></div>
+    ${subjects ? `<div class="meta-row"><b>Subjects</b><span>${escapeHtml(subjects)}</span></div>` : ''}
+    ${book.url ? `<div class="meta-row"><b>OpenLibrary</b><span><a href="${book.url}" target="_blank" rel="noopener" style="color:var(--accent3)">${escapeHtml(book.url)} <i class="ti ti-external-link"></i></a></span></div>` : ''}
+  `;
+}
+
+async function lookup() {
+  const isbn = cleanIsbn(input.value);
+  if (!/^\d{9,13}[Xx]?$/.test(isbn)) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.innerHTML = '<i class="ti ti-alert-circle"></i> Enter a valid ISBN (10 or 13 digits).';
+    return;
+  }
+  statusEl.style.color = '';
+  statusEl.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Looking up…';
+  metaEl.textContent = 'Loading…';
+  out.classList.add('empty');
+  out.textContent = 'Loading…';
+  copyBtn.disabled = true;
+  try {
+    const book = await fetchBook(isbn);
+    lastBook = book;
+    renderMeta(book);
+    const fmt = format(book, styleSel.value);
+    lastText = fmt;
+    out.classList.remove('empty');
+    if (styleSel.value === 'bibtex') {
+      out.innerHTML = `<pre style="white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:13px;margin:0">${fmt.replace(/</g,'&lt;')}</pre>`;
+    } else {
+      out.innerHTML = fmt;
+    }
+    statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Found: ${escapeHtml(book.title || '')}`;
+    copyBtn.disabled = false;
+  } catch (err) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.innerHTML = `<i class="ti ti-alert-circle"></i> ${err.message}`;
+    metaEl.textContent = 'No data.';
+    out.classList.add('empty');
+    out.textContent = 'No result.';
+  }
+}
+
+$('#lookup-btn').addEventListener('click', lookup);
+input.addEventListener('keydown', e => { if (e.key === 'Enter') lookup(); });
+styleSel.addEventListener('change', () => { if (lastBook) lookup(); });
+copyBtn.addEventListener('click', () => {
+  const tmp = document.createElement('div'); tmp.innerHTML = out.innerHTML;
+  navigator.clipboard.writeText(tmp.innerText || lastText).then(() => toast('Copied'));
+});
+</script>
+
+</body>
+</html>

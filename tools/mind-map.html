@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mind Map — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-share-3"></i></div><div>Mind Map</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1300px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-share-3"></i></div>
+      <div>
+        <div class="tool-title">Mind Map</div>
+        <div class="tool-desc">Brainstorm visually. Click a node to add a child. Drag to position. Export PNG or JSON.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px; gap:10px">
+    <button class="btn btn-sm" id="add-child"><i class="ti ti-plus"></i> Add child to selected</button>
+    <button class="btn btn-sm" id="del-node" style="color:var(--red)"><i class="ti ti-trash"></i> Delete selected</button>
+    <button class="btn btn-sm" id="autolayout"><i class="ti ti-binary-tree"></i> Auto-layout</button>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="reset-view"><i class="ti ti-focus-2"></i> Center view</button>
+    <button class="btn btn-sm" id="export-png"><i class="ti ti-download"></i> PNG</button>
+    <button class="btn btn-sm" id="export-json"><i class="ti ti-download"></i> JSON</button>
+    <button class="btn btn-sm" id="import-json"><i class="ti ti-upload"></i> Import</button>
+    <input type="file" id="import-file" accept="application/json,.json" style="display:none">
+    <button class="btn btn-sm" id="clear-btn" style="color:var(--red)"><i class="ti ti-trash"></i> Clear</button>
+  </div>
+
+  <div class="panel" style="padding:0; min-height:600px; overflow:hidden; position:relative">
+    <canvas id="canvas" style="display:block; width:100%; height:600px; cursor:grab"></canvas>
+    <div class="muted" style="position:absolute; bottom:8px; left:12px; font-size:11px; pointer-events:none">
+      Double-click empty space: add root · Click node: select · Double-click node: rename · Drag node: move · Drag empty: pan · Scroll: zoom · Enter: rename selected · Tab: add child
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const STORE = 'mindmap-v1';
+
+const cvs = $('#canvas');
+const ctx = cvs.getContext('2d');
+const dpr = window.devicePixelRatio || 1;
+
+function resize() {
+  const r = cvs.getBoundingClientRect();
+  cvs.width = r.width * dpr; cvs.height = r.height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+window.addEventListener('resize', resize);
+
+let state = JSON.parse(localStorage.getItem(STORE) || 'null') || {
+  nodes: [{ id: 'root', text: 'Central topic', x: 0, y: 0, parent: null, color: 'accent' }],
+  view: { x: 0, y: 0, scale: 1 }
+};
+let selected = 'root';
+let drag = null;
+let pan = null;
+
+function save() { localStorage.setItem(STORE, JSON.stringify(state)); }
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); }
+function uid() { return 'n' + Math.random().toString(36).slice(2, 8); }
+
+const COLORS = {
+  accent: { bg: '#7c6df0', border: '#a594f7', text: '#fff' },
+  teal: { bg: '#2dd4bf', border: '#5ee9d8', text: '#0f0f13' },
+  pink: { bg: '#f472b6', border: '#f8a4cf', text: '#0f0f13' },
+  green: { bg: '#4ade80', border: '#7ce8a5', text: '#0f0f13' },
+  amber: { bg: '#fbbf24', border: '#fcd35e', text: '#0f0f13' },
+  blue: { bg: '#60a5fa', border: '#8fc1fb', text: '#0f0f13' },
+  red: { bg: '#f87171', border: '#fa9d9d', text: '#0f0f13' }
+};
+const COLOR_KEYS = Object.keys(COLORS);
+
+function nodeColor(node) {
+  if (node.color && COLORS[node.color]) return COLORS[node.color];
+  return COLORS.accent;
+}
+
+function worldToScreen(x, y) {
+  const r = cvs.getBoundingClientRect();
+  return { x: (x + state.view.x) * state.view.scale + r.width / 2, y: (y + state.view.y) * state.view.scale + r.height / 2 };
+}
+function screenToWorld(sx, sy) {
+  const r = cvs.getBoundingClientRect();
+  return { x: (sx - r.width / 2) / state.view.scale - state.view.x, y: (sy - r.height / 2) / state.view.scale - state.view.y };
+}
+
+function measureNode(n) {
+  const fontSize = 14;
+  ctx.font = `${fontSize}px -apple-system, sans-serif`;
+  const lines = (n.text || ' ').split('\n');
+  let w = 0;
+  lines.forEach(l => { w = Math.max(w, ctx.measureText(l).width); });
+  const padX = 14, padY = 10;
+  return { w: Math.min(220, Math.max(70, w + padX * 2)), h: lines.length * 20 + padY * 2 };
+}
+
+function findNode(id) { return state.nodes.find(n => n.id === id); }
+function children(id) { return state.nodes.filter(n => n.parent === id); }
+function descendants(id) {
+  const out = [];
+  function walk(i) { children(i).forEach(c => { out.push(c); walk(c.id); }); }
+  walk(id);
+  return out;
+}
+
+function draw() {
+  const r = cvs.getBoundingClientRect();
+  ctx.clearRect(0, 0, r.width, r.height);
+  // background dots
+  ctx.fillStyle = 'rgba(255,255,255,0.025)';
+  const grid = 30 * state.view.scale;
+  const ox = ((state.view.x * state.view.scale) % grid + grid) % grid;
+  const oy = ((state.view.y * state.view.scale) % grid + grid) % grid;
+  for (let x = ox; x < r.width; x += grid) {
+    for (let y = oy; y < r.height; y += grid) {
+      ctx.beginPath(); ctx.arc(x, y, 1, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // edges
+  ctx.lineWidth = 1.5 * state.view.scale;
+  state.nodes.forEach(n => {
+    if (!n.parent) return;
+    const p = findNode(n.parent); if (!p) return;
+    const ps = worldToScreen(p.x, p.y);
+    const ns = worldToScreen(n.x, n.y);
+    const col = nodeColor(n);
+    ctx.strokeStyle = col.bg + '88';
+    ctx.beginPath();
+    ctx.moveTo(ps.x, ps.y);
+    // bezier curve
+    const dx = (ns.x - ps.x) * 0.5;
+    ctx.bezierCurveTo(ps.x + dx, ps.y, ns.x - dx, ns.y, ns.x, ns.y);
+    ctx.stroke();
+  });
+
+  // nodes
+  ctx.font = `${14 * state.view.scale}px -apple-system, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  state.nodes.forEach(n => {
+    const s = worldToScreen(n.x, n.y);
+    const m = measureNode(n);
+    const w = m.w * state.view.scale, h = m.h * state.view.scale;
+    const col = nodeColor(n);
+    ctx.fillStyle = col.bg;
+    ctx.strokeStyle = n.id === selected ? '#fff' : col.border;
+    ctx.lineWidth = (n.id === selected ? 3 : 1.5) * state.view.scale;
+    roundRect(s.x - w/2, s.y - h/2, w, h, 8 * state.view.scale);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = col.text;
+    const lines = (n.text || ' ').split('\n');
+    lines.forEach((l, i) => ctx.fillText(l, s.x, s.y + (i - (lines.length-1)/2) * 18 * state.view.scale));
+  });
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function nodeAt(sx, sy) {
+  for (let i = state.nodes.length - 1; i >= 0; i--) {
+    const n = state.nodes[i];
+    const s = worldToScreen(n.x, n.y);
+    const m = measureNode(n);
+    const w = m.w * state.view.scale / 2, h = m.h * state.view.scale / 2;
+    if (Math.abs(sx - s.x) <= w && Math.abs(sy - s.y) <= h) return n;
+  }
+  return null;
+}
+
+function addChild(parentId, text = 'New idea') {
+  const parent = findNode(parentId);
+  const px = parent ? parent.x : 0;
+  const py = parent ? parent.y : 0;
+  // offset by sibling count
+  const sibs = children(parentId);
+  const angle = sibs.length * 0.5;
+  const dist = 180;
+  const n = {
+    id: uid(),
+    text,
+    x: px + dist * Math.cos(angle),
+    y: py + dist * Math.sin(angle) + sibs.length * 40 - 40,
+    parent: parentId,
+    color: COLOR_KEYS[(sibs.length + 1) % COLOR_KEYS.length]
+  };
+  state.nodes.push(n);
+  selected = n.id;
+  save(); draw();
+  return n;
+}
+
+function deleteNode(id) {
+  if (id === 'root' && state.nodes.length === 1) return;
+  const desc = descendants(id);
+  const ids = new Set([id, ...desc.map(d => d.id)]);
+  state.nodes = state.nodes.filter(n => !ids.has(n.id));
+  if (!state.nodes.length) state.nodes.push({ id: 'root', text: 'Central topic', x: 0, y: 0, parent: null, color: 'accent' });
+  selected = state.nodes[0].id;
+  save(); draw();
+}
+
+function renameSelected() {
+  const n = findNode(selected);
+  if (!n) return;
+  const t = prompt('Node text:', n.text);
+  if (t != null) { n.text = t; save(); draw(); }
+}
+
+// === Interaction ===
+cvs.addEventListener('mousedown', e => {
+  const r = cvs.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  const n = nodeAt(sx, sy);
+  if (n) {
+    selected = n.id;
+    drag = { id: n.id, dx: 0, dy: 0, sx, sy, moved: false };
+  } else {
+    pan = { sx, sy, ox: state.view.x, oy: state.view.y };
+    cvs.style.cursor = 'grabbing';
+  }
+  draw();
+});
+cvs.addEventListener('mousemove', e => {
+  const r = cvs.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  if (drag) {
+    const dx = (sx - drag.sx) / state.view.scale;
+    const dy = (sy - drag.sy) / state.view.scale;
+    if (Math.abs(sx - drag.sx) > 3 || Math.abs(sy - drag.sy) > 3) drag.moved = true;
+    const n = findNode(drag.id);
+    n.x += dx;
+    n.y += dy;
+    drag.sx = sx; drag.sy = sy;
+    draw();
+  } else if (pan) {
+    state.view.x = pan.ox + (sx - pan.sx) / state.view.scale;
+    state.view.y = pan.oy + (sy - pan.sy) / state.view.scale;
+    draw();
+  }
+});
+cvs.addEventListener('mouseup', () => { if (drag && drag.moved) save(); drag = null; pan = null; cvs.style.cursor = 'grab'; });
+cvs.addEventListener('mouseleave', () => { drag = null; pan = null; cvs.style.cursor = 'grab'; });
+
+cvs.addEventListener('dblclick', e => {
+  const r = cvs.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  const n = nodeAt(sx, sy);
+  if (n) { selected = n.id; renameSelected(); }
+  else {
+    const w = screenToWorld(sx, sy);
+    const root = state.nodes.find(x => x.parent === null);
+    const newNode = { id: uid(), text: 'New node', x: w.x, y: w.y, parent: root?.id || null, color: 'teal' };
+    state.nodes.push(newNode); selected = newNode.id; save(); draw();
+  }
+});
+
+cvs.addEventListener('wheel', e => {
+  e.preventDefault();
+  const r = cvs.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  const before = screenToWorld(sx, sy);
+  state.view.scale *= (e.deltaY < 0 ? 1.1 : 0.9);
+  state.view.scale = Math.max(0.2, Math.min(3, state.view.scale));
+  const after = screenToWorld(sx, sy);
+  state.view.x += after.x - before.x;
+  state.view.y += after.y - before.y;
+  save(); draw();
+}, { passive: false });
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'Tab') { e.preventDefault(); addChild(selected); }
+  else if (e.key === 'Enter') { e.preventDefault(); renameSelected(); }
+  else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); deleteNode(selected); }
+});
+
+// === Auto-layout (radial tree) ===
+function autoLayout() {
+  const root = state.nodes.find(n => n.parent === null);
+  if (!root) return;
+  root.x = 0; root.y = 0;
+  function layout(id, startAngle, endAngle, depth) {
+    const kids = children(id);
+    if (!kids.length) return;
+    const ringR = 180 + depth * 160;
+    const span = endAngle - startAngle;
+    kids.forEach((k, i) => {
+      const a = startAngle + span * (i + 0.5) / kids.length;
+      k.x = ringR * Math.cos(a);
+      k.y = ringR * Math.sin(a);
+      layout(k.id, a - span / (kids.length * 2), a + span / (kids.length * 2), depth + 1);
+    });
+  }
+  layout(root.id, -Math.PI, Math.PI, 0);
+  save(); draw();
+}
+
+// === Buttons ===
+$('#add-child').addEventListener('click', () => { addChild(selected); });
+$('#del-node').addEventListener('click', () => { deleteNode(selected); });
+$('#autolayout').addEventListener('click', autoLayout);
+$('#reset-view').addEventListener('click', () => { state.view = { x: 0, y: 0, scale: 1 }; save(); draw(); });
+$('#export-json').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'mindmap.json'; a.click();
+});
+$('#export-png').addEventListener('click', () => {
+  // Render with white background for export
+  const tmp = document.createElement('canvas');
+  tmp.width = cvs.width; tmp.height = cvs.height;
+  const t = tmp.getContext('2d');
+  t.fillStyle = '#0f0f13'; t.fillRect(0, 0, tmp.width, tmp.height);
+  t.drawImage(cvs, 0, 0);
+  tmp.toBlob(b => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'mindmap.png'; a.click();
+  });
+});
+$('#import-json').addEventListener('click', () => $('#import-file').click());
+$('#import-file').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (!data.nodes || !Array.isArray(data.nodes)) throw new Error('Not a mindmap file');
+    state = data;
+    if (!state.view) state.view = { x: 0, y: 0, scale: 1 };
+    selected = state.nodes[0]?.id;
+    save(); draw();
+    toast('Imported');
+  } catch (err) { toast('Invalid file: ' + err.message); }
+  e.target.value = '';
+});
+$('#clear-btn').addEventListener('click', () => {
+  if (!confirm('Clear the entire map?')) return;
+  state = { nodes: [{ id: 'root', text: 'Central topic', x: 0, y: 0, parent: null, color: 'accent' }], view: { x: 0, y: 0, scale: 1 } };
+  selected = 'root';
+  save(); draw();
+});
+
+resize();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deadline Tracker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-calendar-due"></i></div><div>Deadline Tracker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-calendar-due"></i></div>
+      <div>
+        <div class="tool-title">Deadline Tracker</div>
+        <div class="tool-desc">Assignments, exams, paper submissions. Color-coded countdowns. Lives in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="panel-label"><span>Add a task</span></div>
+    <div class="row" style="gap:8px">
+      <input type="text" id="t-title" placeholder="Task name (e.g. Essay draft)" style="flex:2; min-width:200px">
+      <input type="text" id="t-course" placeholder="Course / project" style="flex:1; min-width:140px">
+      <input type="date" id="t-date" style="width:150px">
+      <input type="time" id="t-time" style="width:110px" value="23:59">
+      <select id="t-prio" style="width:110px">
+        <option value="low">Low</option>
+        <option value="med" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+      <button class="btn btn-primary" id="add-btn"><i class="ti ti-plus"></i> Add</button>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label">
+      <span>Your tasks (<span id="count">0</span>)</span>
+      <div class="panel-actions">
+        <select id="filter">
+          <option value="all">All</option>
+          <option value="open">Open only</option>
+          <option value="done">Completed</option>
+          <option value="overdue">Overdue</option>
+          <option value="week">This week</option>
+        </select>
+        <select id="sort">
+          <option value="date">Soonest first</option>
+          <option value="date-desc">Latest first</option>
+          <option value="prio">Priority</option>
+          <option value="added">Recently added</option>
+        </select>
+        <button class="btn btn-sm" id="export-btn"><i class="ti ti-download"></i> Export JSON</button>
+        <button class="btn btn-sm" id="clear-done-btn" style="color:var(--red)"><i class="ti ti-trash"></i> Clear done</button>
+      </div>
+    </div>
+    <div id="list" class="muted" style="font-size:14px">No tasks yet. Add one above.</div>
+  </div>
+
+  <div class="workspace" style="margin-top:16px">
+    <div class="panel">
+      <div class="panel-label"><span>Stats</span></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value" id="s-open">0</div></div>
+        <div class="stat-card"><div class="stat-label">Due today</div><div class="stat-value" id="s-today" style="color:var(--amber)">0</div></div>
+        <div class="stat-card"><div class="stat-label">Overdue</div><div class="stat-value" id="s-overdue" style="color:var(--red)">0</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" id="s-done" style="color:var(--green)">0</div></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Next up</span></div>
+      <div id="next-up" class="muted" style="font-size:13px">Nothing scheduled.</div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.task-row { display:flex; gap:10px; padding:12px 14px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:8px; align-items:center }
+.task-row.done { opacity: .55; }
+.task-row.done .t-title { text-decoration: line-through; }
+.task-row.overdue { border-left: 3px solid var(--red); }
+.task-row.urgent { border-left: 3px solid var(--amber); }
+.task-row.upcoming { border-left: 3px solid var(--blue); }
+.t-check { width: 18px; height: 18px; border: 2px solid var(--border2); border-radius: 4px; cursor: pointer; flex-shrink: 0; display:flex; align-items:center; justify-content:center; transition: all .15s; }
+.t-check.checked { background: var(--green); border-color: var(--green); color: white; }
+.t-check.checked::after { content: '✓'; font-size: 12px; }
+.t-body { flex:1; min-width: 0; }
+.t-title { font-weight: 600; color: var(--text); font-size: 14px; margin-bottom: 2px; word-wrap: break-word; }
+.t-meta { font-size: 12px; color: var(--text3); display: flex; gap: 10px; flex-wrap: wrap; align-items:center }
+.t-meta b { color: var(--text2); font-weight: 500; }
+.prio-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
+.prio-low { background: rgba(96,165,250,0.12); color: var(--blue); }
+.prio-med { background: rgba(251,191,36,0.12); color: var(--amber); }
+.prio-high { background: rgba(248,113,113,0.12); color: var(--red); }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const STORE = 'deadlines-v1';
+const DAY = 86400000;
+
+let tasks = JSON.parse(localStorage.getItem(STORE) || '[]');
+function save() { localStorage.setItem(STORE, JSON.stringify(tasks)); }
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); }
+
+// default date = today
+$('#t-date').value = new Date().toISOString().slice(0,10);
+
+function dueTs(t) {
+  if (!t.date) return Infinity;
+  return new Date(t.date + 'T' + (t.time || '23:59') + ':00').getTime();
+}
+
+function fmtDue(t) {
+  if (!t.date) return '—';
+  const ts = dueTs(t);
+  const now = Date.now();
+  const diff = ts - now;
+  const abs = Math.abs(diff);
+  const day = Math.floor(abs / DAY);
+  const hour = Math.floor((abs % DAY) / 3_600_000);
+  const min = Math.floor((abs % 3_600_000) / 60_000);
+  let rel;
+  if (abs < 60_000) rel = 'now';
+  else if (abs < 3_600_000) rel = min + 'm';
+  else if (abs < DAY) rel = hour + 'h ' + min + 'm';
+  else rel = day + 'd ' + hour + 'h';
+  const dateStr = new Date(t.date + 'T' + (t.time || '23:59')).toLocaleString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return diff < 0 ? `<span style="color:var(--red)">${rel} overdue</span> · ${dateStr}` : `in ${rel} · ${dateStr}`;
+}
+
+function classify(t) {
+  if (t.done) return 'done';
+  if (!t.date) return '';
+  const diff = dueTs(t) - Date.now();
+  if (diff < 0) return 'overdue';
+  if (diff < DAY * 2) return 'urgent';
+  if (diff < DAY * 7) return 'upcoming';
+  return '';
+}
+
+function sorted(arr) {
+  const sortBy = $('#sort').value;
+  const a = [...arr];
+  const prioRank = { high: 0, med: 1, low: 2 };
+  if (sortBy === 'date') return a.sort((x, y) => dueTs(x) - dueTs(y));
+  if (sortBy === 'date-desc') return a.sort((x, y) => dueTs(y) - dueTs(x));
+  if (sortBy === 'prio') return a.sort((x, y) => (prioRank[x.prio]||1) - (prioRank[y.prio]||1) || dueTs(x) - dueTs(y));
+  return a.sort((x, y) => (y.added||0) - (x.added||0));
+}
+
+function filtered(arr) {
+  const f = $('#filter').value;
+  if (f === 'all') return arr;
+  if (f === 'open') return arr.filter(t => !t.done);
+  if (f === 'done') return arr.filter(t => t.done);
+  if (f === 'overdue') return arr.filter(t => !t.done && t.date && dueTs(t) < Date.now());
+  if (f === 'week') return arr.filter(t => !t.done && t.date && dueTs(t) < Date.now() + DAY*7);
+  return arr;
+}
+
+function render() {
+  $('#count').textContent = tasks.length;
+  const list = $('#list');
+  const shown = sorted(filtered(tasks));
+  if (!tasks.length) { list.innerHTML = 'No tasks yet. Add one above.'; }
+  else if (!shown.length) { list.innerHTML = '<span class="muted">No tasks match this filter.</span>'; }
+  else {
+    list.innerHTML = shown.map(t => `
+      <div class="task-row ${t.done ? 'done' : classify(t)}" data-id="${t.id}">
+        <div class="t-check ${t.done ? 'checked' : ''}" data-check="${t.id}"></div>
+        <div class="t-body">
+          <div class="t-title">${escapeHtml(t.title)}</div>
+          <div class="t-meta">
+            ${t.course ? `<b>${escapeHtml(t.course)}</b>` : ''}
+            <span><i class="ti ti-clock"></i> ${fmtDue(t)}</span>
+            <span class="prio-chip prio-${t.prio || 'med'}">${(t.prio || 'med').toUpperCase()}</span>
+          </div>
+        </div>
+        <button class="btn btn-sm" data-edit="${t.id}"><i class="ti ti-pencil"></i></button>
+        <button class="btn btn-sm" data-rm="${t.id}" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+      </div>
+    `).join('');
+    list.querySelectorAll('[data-check]').forEach(b => b.addEventListener('click', () => {
+      const t = tasks.find(x => x.id === b.dataset.check);
+      t.done = !t.done; save(); render();
+    }));
+    list.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+      tasks = tasks.filter(x => x.id !== b.dataset.rm); save(); render();
+    }));
+    list.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => {
+      const t = tasks.find(x => x.id === b.dataset.edit);
+      const newTitle = prompt('Task name:', t.title);
+      if (newTitle != null) { t.title = newTitle; save(); render(); }
+    }));
+  }
+
+  // stats
+  const now = Date.now();
+  $('#s-open').textContent = tasks.filter(t => !t.done).length;
+  $('#s-today').textContent = tasks.filter(t => !t.done && t.date && new Date(t.date).toDateString() === new Date().toDateString()).length;
+  $('#s-overdue').textContent = tasks.filter(t => !t.done && t.date && dueTs(t) < now).length;
+  $('#s-done').textContent = tasks.filter(t => t.done).length;
+
+  const nextUp = sorted(tasks.filter(t => !t.done && t.date)).slice(0, 3);
+  if (!nextUp.length) {
+    $('#next-up').textContent = 'Nothing scheduled.';
+  } else {
+    $('#next-up').innerHTML = nextUp.map(t => `
+      <div style="padding:6px 0; border-bottom:1px solid var(--border)">
+        <b style="color:var(--text)">${escapeHtml(t.title)}</b><br>
+        <span style="font-size:12px">${fmtDue(t)}</span>
+      </div>
+    `).join('');
+  }
+}
+
+function escapeHtml(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
+
+$('#add-btn').addEventListener('click', () => {
+  const title = $('#t-title').value.trim();
+  if (!title) { toast('Title required'); return; }
+  tasks.push({
+    id: uid(),
+    title,
+    course: $('#t-course').value.trim(),
+    date: $('#t-date').value,
+    time: $('#t-time').value,
+    prio: $('#t-prio').value,
+    done: false,
+    added: Date.now()
+  });
+  save();
+  $('#t-title').value = '';
+  $('#t-course').value = '';
+  $('#t-title').focus();
+  render();
+  toast('Task added');
+});
+
+$('#t-title').addEventListener('keydown', e => { if (e.key === 'Enter') $('#add-btn').click(); });
+$('#filter').addEventListener('change', render);
+$('#sort').addEventListener('change', render);
+$('#clear-done-btn').addEventListener('click', () => {
+  const n = tasks.filter(t => t.done).length;
+  if (!n) return;
+  if (!confirm(`Remove ${n} completed task${n === 1 ? '' : 's'}?`)) return;
+  tasks = tasks.filter(t => !t.done);
+  save(); render();
+});
+$('#export-btn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'deadlines.json'; a.click();
+});
+
+// re-render every minute to keep countdowns fresh
+setInterval(render, 60_000);
+render();
+</script>
+
+</body>
+</html>

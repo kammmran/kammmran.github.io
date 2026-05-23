@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equation Solver — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-math-x-divide-y"></i></div><div>Equation Solver</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-math-x-divide-y"></i></div>
+      <div>
+        <div class="tool-title">Equation Solver</div>
+        <div class="tool-desc">Linear, quadratic, and 2×2 / 3×3 systems. Step-by-step working.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="linear">Linear (ax + b = 0)</button>
+    <button class="tab" data-mode="quad">Quadratic (ax² + bx + c = 0)</button>
+    <button class="tab" data-mode="sys2">System 2×2</button>
+    <button class="tab" data-mode="sys3">System 3×3</button>
+  </div>
+
+  <!-- LINEAR -->
+  <section id="linear-panel">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Coefficients</span></div>
+        <div class="row" style="gap:10px; margin-bottom:8px">
+          <label class="row" style="gap:6px; font-size:14px; color:var(--text2)">a <input type="number" id="L-a" value="2" step="any" style="width:100px"></label>
+          <span style="color:var(--text2)">x +</span>
+          <label class="row" style="gap:6px; font-size:14px; color:var(--text2)">b <input type="number" id="L-b" value="-6" step="any" style="width:100px"></label>
+          <span style="color:var(--text2)">= 0</span>
+        </div>
+        <div id="L-eq" style="font-size:20px; padding:14px; background:var(--bg2); border-radius:var(--radius-sm); text-align:center"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Solution</span></div>
+        <div id="L-out" style="font-size:14px; line-height:1.7"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUADRATIC -->
+  <section id="quad-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Coefficients</span></div>
+        <div class="row" style="gap:10px; margin-bottom:8px">
+          <label class="row" style="gap:6px; font-size:14px; color:var(--text2)">a <input type="number" id="Q-a" value="1" step="any" style="width:100px"></label>
+          <label class="row" style="gap:6px; font-size:14px; color:var(--text2)">b <input type="number" id="Q-b" value="-5" step="any" style="width:100px"></label>
+          <label class="row" style="gap:6px; font-size:14px; color:var(--text2)">c <input type="number" id="Q-c" value="6" step="any" style="width:100px"></label>
+        </div>
+        <div id="Q-eq" style="font-size:20px; padding:14px; background:var(--bg2); border-radius:var(--radius-sm); text-align:center"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Solution</span></div>
+        <div id="Q-out" style="font-size:14px; line-height:1.7"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2x2 -->
+  <section id="sys2-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>System (Cramer's rule)</span></div>
+        <div class="sys-grid">
+          <input type="number" id="S2-a1" value="2" step="any"> x +
+          <input type="number" id="S2-b1" value="3" step="any"> y =
+          <input type="number" id="S2-c1" value="13" step="any">
+        </div>
+        <div class="sys-grid">
+          <input type="number" id="S2-a2" value="4" step="any"> x +
+          <input type="number" id="S2-b2" value="-1" step="any"> y =
+          <input type="number" id="S2-c2" value="5" step="any">
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Solution</span></div>
+        <div id="S2-out" style="font-size:14px; line-height:1.7"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3x3 -->
+  <section id="sys3-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>System (Gaussian elimination)</span></div>
+        <div class="sys-grid">
+          <input type="number" id="S3-a1" value="2" step="any"> x +
+          <input type="number" id="S3-b1" value="1" step="any"> y +
+          <input type="number" id="S3-c1" value="-1" step="any"> z =
+          <input type="number" id="S3-d1" value="8" step="any">
+        </div>
+        <div class="sys-grid">
+          <input type="number" id="S3-a2" value="-3" step="any"> x +
+          <input type="number" id="S3-b2" value="-1" step="any"> y +
+          <input type="number" id="S3-c2" value="2" step="any"> z =
+          <input type="number" id="S3-d2" value="-11" step="any">
+        </div>
+        <div class="sys-grid">
+          <input type="number" id="S3-a3" value="-2" step="any"> x +
+          <input type="number" id="S3-b3" value="1" step="any"> y +
+          <input type="number" id="S3-c3" value="2" step="any"> z =
+          <input type="number" id="S3-d3" value="-3" step="any">
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>Solution</span></div>
+        <div id="S3-out" style="font-size:14px; line-height:1.7"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<style>
+.sys-grid { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; font-size: 14px; color: var(--text2); flex-wrap: wrap; }
+.sys-grid input { width: 80px; padding: 6px 8px; font-size: 13px; }
+.step { padding: 8px 12px; background: var(--bg2); border-radius: var(--radius-sm); margin: 6px 0; border-left: 3px solid var(--accent); }
+.step b { color: var(--accent3); }
+.root { font-size: 22px; color: var(--accent3); font-weight: 600; padding: 8px 0; }
+.complex { color: var(--amber); }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const fmt = n => Number.isInteger(n) ? n.toString() : parseFloat(n.toFixed(6)).toString();
+
+function rEq(id, latex) {
+  try { katex.render(latex, $(id), { throwOnError: false }); }
+  catch (e) { $(id).textContent = latex; }
+}
+
+// === LINEAR ===
+function solveLinear() {
+  const a = parseFloat($('#L-a').value);
+  const b = parseFloat($('#L-b').value);
+  rEq('#L-eq', `${a}x ${b >= 0 ? '+' : '-'} ${Math.abs(b)} = 0`);
+  if (isNaN(a) || isNaN(b)) { $('#L-out').innerHTML = '<span class="muted">Fill both coefficients.</span>'; return; }
+  if (a === 0) {
+    $('#L-out').innerHTML = b === 0
+      ? '<div class="step"><b>Identity:</b> any x satisfies 0 = 0.</div>'
+      : '<div class="step"><b>No solution:</b> contradictory (' + b + ' ≠ 0).</div>';
+    return;
+  }
+  const x = -b / a;
+  $('#L-out').innerHTML = `
+    <div class="step">Isolate x: <b>${a}x = ${-b}</b></div>
+    <div class="step">Divide both sides by ${a}: <b>x = ${-b} / ${a}</b></div>
+    <div class="root">x = ${fmt(x)}</div>
+  `;
+}
+
+// === QUADRATIC ===
+function solveQuad() {
+  const a = parseFloat($('#Q-a').value);
+  const b = parseFloat($('#Q-b').value);
+  const c = parseFloat($('#Q-c').value);
+  rEq('#Q-eq', `${a}x^2 ${b >= 0 ? '+' : '-'} ${Math.abs(b)}x ${c >= 0 ? '+' : '-'} ${Math.abs(c)} = 0`);
+  if (isNaN(a) || isNaN(b) || isNaN(c)) { $('#Q-out').innerHTML = '<span class="muted">Fill all coefficients.</span>'; return; }
+  if (a === 0) {
+    // linear fallback
+    if (b === 0) {
+      $('#Q-out').innerHTML = c === 0 ? '<div class="step">All x are solutions.</div>' : '<div class="step">No solution.</div>';
+      return;
+    }
+    const x = -c / b;
+    $('#Q-out').innerHTML = `<div class="step">a = 0 → reduces to linear ${b}x + ${c} = 0</div><div class="root">x = ${fmt(x)}</div>`;
+    return;
+  }
+  const D = b * b - 4 * a * c;
+  let html = `
+    <div class="step">Discriminant: <b>Δ = b² − 4ac = ${b}² − 4·${a}·${c} = ${fmt(D)}</b></div>
+  `;
+  if (D > 0) {
+    const x1 = (-b + Math.sqrt(D)) / (2 * a);
+    const x2 = (-b - Math.sqrt(D)) / (2 * a);
+    html += `<div class="step">Δ > 0 → two distinct real roots</div>`;
+    html += `<div class="root">x₁ = (−b + √Δ) / (2a) = ${fmt(x1)}</div>`;
+    html += `<div class="root">x₂ = (−b − √Δ) / (2a) = ${fmt(x2)}</div>`;
+  } else if (D === 0) {
+    const x = -b / (2 * a);
+    html += `<div class="step">Δ = 0 → one repeated root</div>`;
+    html += `<div class="root">x = −b / (2a) = ${fmt(x)}</div>`;
+  } else {
+    const re = -b / (2 * a);
+    const im = Math.sqrt(-D) / (2 * a);
+    html += `<div class="step">Δ < 0 → two complex conjugate roots</div>`;
+    html += `<div class="root complex">x₁ = ${fmt(re)} + ${fmt(im)}i</div>`;
+    html += `<div class="root complex">x₂ = ${fmt(re)} − ${fmt(im)}i</div>`;
+  }
+  // Vertex form
+  const vx = -b / (2 * a);
+  const vy = a * vx * vx + b * vx + c;
+  html += `<div class="divider"></div><div class="step">Vertex: (${fmt(vx)}, ${fmt(vy)}) · Opens ${a > 0 ? 'upward' : 'downward'}</div>`;
+  $('#Q-out').innerHTML = html;
+}
+
+// === 2x2 ===
+function solveSys2() {
+  const a1 = +$('#S2-a1').value, b1 = +$('#S2-b1').value, c1 = +$('#S2-c1').value;
+  const a2 = +$('#S2-a2').value, b2 = +$('#S2-b2').value, c2 = +$('#S2-c2').value;
+  if ([a1,b1,c1,a2,b2,c2].some(isNaN)) { $('#S2-out').innerHTML = '<span class="muted">Fill all coefficients.</span>'; return; }
+  const D = a1 * b2 - a2 * b1;
+  const Dx = c1 * b2 - c2 * b1;
+  const Dy = a1 * c2 - a2 * c1;
+  let html = `
+    <div class="step">D = |a₁ b₁; a₂ b₂| = ${a1}·${b2} − ${a2}·${b1} = <b>${fmt(D)}</b></div>
+    <div class="step">D<sub>x</sub> = ${fmt(Dx)} · D<sub>y</sub> = ${fmt(Dy)}</div>
+  `;
+  if (D === 0) {
+    if (Dx === 0 && Dy === 0) html += '<div class="step complex">D = 0 → infinite solutions (dependent system).</div>';
+    else html += '<div class="step complex">D = 0 → no unique solution (inconsistent or dependent).</div>';
+  } else {
+    html += `<div class="root">x = D<sub>x</sub> / D = ${fmt(Dx / D)}</div>`;
+    html += `<div class="root">y = D<sub>y</sub> / D = ${fmt(Dy / D)}</div>`;
+  }
+  $('#S2-out').innerHTML = html;
+}
+
+// === 3x3 (Gauss-Jordan) ===
+function solveSys3() {
+  const M = [
+    [+$('#S3-a1').value, +$('#S3-b1').value, +$('#S3-c1').value, +$('#S3-d1').value],
+    [+$('#S3-a2').value, +$('#S3-b2').value, +$('#S3-c2').value, +$('#S3-d2').value],
+    [+$('#S3-a3').value, +$('#S3-b3').value, +$('#S3-c3').value, +$('#S3-d3').value]
+  ];
+  if (M.flat().some(isNaN)) { $('#S3-out').innerHTML = '<span class="muted">Fill all coefficients.</span>'; return; }
+  const n = 3;
+  const steps = [];
+  steps.push(matStep('Augmented matrix', M));
+  for (let i = 0; i < n; i++) {
+    // pivot
+    let pivot = i;
+    for (let k = i + 1; k < n; k++) if (Math.abs(M[k][i]) > Math.abs(M[pivot][i])) pivot = k;
+    if (Math.abs(M[pivot][i]) < 1e-12) {
+      $('#S3-out').innerHTML = steps.join('') + '<div class="step complex">Singular matrix — no unique solution.</div>';
+      return;
+    }
+    if (pivot !== i) { [M[i], M[pivot]] = [M[pivot], M[i]]; steps.push(matStep(`Swap row ${i+1} ↔ row ${pivot+1}`, M)); }
+    const p = M[i][i];
+    if (p !== 1) {
+      for (let j = 0; j <= n; j++) M[i][j] /= p;
+      steps.push(matStep(`Divide row ${i+1} by ${fmt(p)}`, M));
+    }
+    for (let k = 0; k < n; k++) {
+      if (k === i) continue;
+      const f = M[k][i];
+      if (f === 0) continue;
+      for (let j = 0; j <= n; j++) M[k][j] -= f * M[i][j];
+      steps.push(matStep(`R${k+1} ← R${k+1} − (${fmt(f)})·R${i+1}`, M));
+    }
+  }
+  const html = steps.join('') + `
+    <div class="root">x = ${fmt(M[0][3])}</div>
+    <div class="root">y = ${fmt(M[1][3])}</div>
+    <div class="root">z = ${fmt(M[2][3])}</div>
+  `;
+  $('#S3-out').innerHTML = html;
+}
+function matStep(label, M) {
+  const rows = M.map(r => r.map(v => fmt(v).padStart(6)).join('  ')).join('<br>');
+  return `<div class="step"><b>${label}</b><br><pre style="font-family:ui-monospace,Menlo,monospace; font-size:12px; margin:6px 0; color:var(--text)">${rows}</pre></div>`;
+}
+
+// === Wire up ===
+['#L-a','#L-b'].forEach(s => $(s).addEventListener('input', solveLinear));
+['#Q-a','#Q-b','#Q-c'].forEach(s => $(s).addEventListener('input', solveQuad));
+['#S2-a1','#S2-b1','#S2-c1','#S2-a2','#S2-b2','#S2-c2'].forEach(s => $(s).addEventListener('input', solveSys2));
+['#S3-a1','#S3-b1','#S3-c1','#S3-d1','#S3-a2','#S3-b2','#S3-c2','#S3-d2','#S3-a3','#S3-b3','#S3-c3','#S3-d3'].forEach(s => $(s).addEventListener('input', solveSys3));
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  ['linear','quad','sys2','sys3'].forEach(m => {
+    $('#' + m + '-panel').style.display = t.dataset.mode === m ? '' : 'none';
+  });
+}));
+
+solveLinear(); solveQuad(); solveSys2(); solveSys3();
+</script>
+
+</body>
+</html>

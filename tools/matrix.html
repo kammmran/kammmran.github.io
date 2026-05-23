@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matrix Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-table"></i></div><div>Matrix Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-table"></i></div>
+      <div>
+        <div class="tool-title">Matrix Calculator</div>
+        <div class="tool-desc">Add, multiply, transpose, determinant, inverse, trace, rank. Up to 6×6.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px; gap:14px">
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">Operation
+      <select id="op">
+        <optgroup label="Two matrices">
+          <option value="add">A + B</option>
+          <option value="sub">A − B</option>
+          <option value="mul">A × B</option>
+        </optgroup>
+        <optgroup label="On A">
+          <option value="transpose">Transpose Aᵀ</option>
+          <option value="det">Determinant det(A)</option>
+          <option value="inv">Inverse A⁻¹</option>
+          <option value="trace">Trace tr(A)</option>
+          <option value="rank">Rank</option>
+          <option value="scalar">Scalar k · A</option>
+          <option value="pow">Power Aⁿ</option>
+        </optgroup>
+      </select>
+    </label>
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)" id="scalar-wrap" style="display:none">k <input type="number" id="scalar" value="2" step="any" style="width:80px"></label>
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)" id="pow-wrap" style="display:none">n <input type="number" id="pow" value="2" min="0" max="10" step="1" style="width:80px"></label>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="sample-btn"><i class="ti ti-sparkles"></i> Sample</button>
+    <button class="btn btn-sm" id="clear-btn" style="color:var(--red)"><i class="ti ti-eraser"></i> Clear</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Matrix A</span>
+        <div class="panel-actions">
+          <label class="row" style="gap:4px; font-size:12px; color:var(--text2)">Rows <input type="number" id="A-r" min="1" max="6" value="3" style="width:60px; padding:4px 6px; font-size:12px"></label>
+          <label class="row" style="gap:4px; font-size:12px; color:var(--text2)">Cols <input type="number" id="A-c" min="1" max="6" value="3" style="width:60px; padding:4px 6px; font-size:12px"></label>
+        </div>
+      </div>
+      <div id="A-grid" class="mat-grid"></div>
+    </div>
+    <div class="panel" id="B-panel">
+      <div class="panel-label">
+        <span>Matrix B</span>
+        <div class="panel-actions">
+          <label class="row" style="gap:4px; font-size:12px; color:var(--text2)">Rows <input type="number" id="B-r" min="1" max="6" value="3" style="width:60px; padding:4px 6px; font-size:12px"></label>
+          <label class="row" style="gap:4px; font-size:12px; color:var(--text2)">Cols <input type="number" id="B-c" min="1" max="6" value="3" style="width:60px; padding:4px 6px; font-size:12px"></label>
+        </div>
+      </div>
+      <div id="B-grid" class="mat-grid"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Result</span></div>
+    <div id="result" class="output-box" style="min-height:120px; font-family:ui-monospace,Menlo,monospace; font-size:14px; white-space:pre"></div>
+  </div>
+</main>
+
+<style>
+.mat-grid { display: grid; gap: 4px; }
+.mat-grid input { padding: 6px 8px; font-size: 13px; text-align: center; font-family: ui-monospace,Menlo,monospace; }
+.scalar-out { font-size: 28px; color: var(--accent3); font-weight: 600; text-align: center; padding: 12px; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+
+function buildGrid(prefix) {
+  const r = +$('#' + prefix + '-r').value;
+  const c = +$('#' + prefix + '-c').value;
+  const grid = $('#' + prefix + '-grid');
+  grid.style.gridTemplateColumns = `repeat(${c}, 1fr)`;
+  // preserve old values when reshaping
+  const old = Array.from(grid.querySelectorAll('input')).map(i => i.value);
+  const oldR = grid.dataset.r ? +grid.dataset.r : 0;
+  const oldC = grid.dataset.c ? +grid.dataset.c : 0;
+  grid.innerHTML = '';
+  for (let i = 0; i < r; i++) {
+    for (let j = 0; j < c; j++) {
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.step = 'any';
+      const oi = i * oldC + j;
+      inp.value = (i < oldR && j < oldC && old[oi] !== undefined) ? old[oi] : (i === j ? '1' : '0');
+      inp.addEventListener('input', compute);
+      grid.appendChild(inp);
+    }
+  }
+  grid.dataset.r = r; grid.dataset.c = c;
+}
+
+function readMat(prefix) {
+  const r = +$('#' + prefix + '-r').value;
+  const c = +$('#' + prefix + '-c').value;
+  const inputs = Array.from($('#' + prefix + '-grid').querySelectorAll('input'));
+  const M = [];
+  for (let i = 0; i < r; i++) {
+    const row = [];
+    for (let j = 0; j < c; j++) row.push(parseFloat(inputs[i * c + j].value) || 0);
+    M.push(row);
+  }
+  return M;
+}
+
+function fmt(n) {
+  if (Number.isInteger(n)) return n.toString();
+  return parseFloat(n.toFixed(6)).toString();
+}
+
+function renderMatrix(M) {
+  if (!M || !M.length) return '—';
+  const widths = M[0].map((_, j) => Math.max(...M.map(r => fmt(r[j]).length)));
+  return M.map(r => r.map((v, j) => fmt(v).padStart(widths[j])).join('  ')).join('\n');
+}
+
+function add(A, B, sign = 1) {
+  if (A.length !== B.length || A[0].length !== B[0].length) throw new Error('Dimension mismatch: A and B must be same size for +/−');
+  return A.map((r, i) => r.map((v, j) => v + sign * B[i][j]));
+}
+function mul(A, B) {
+  if (A[0].length !== B.length) throw new Error('Dimension mismatch for A·B: cols(A) must equal rows(B)');
+  const R = Array(A.length).fill(0).map(() => Array(B[0].length).fill(0));
+  for (let i = 0; i < A.length; i++)
+    for (let j = 0; j < B[0].length; j++)
+      for (let k = 0; k < B.length; k++) R[i][j] += A[i][k] * B[k][j];
+  return R;
+}
+function transpose(M) { return M[0].map((_, j) => M.map(r => r[j])); }
+function det(M) {
+  if (M.length !== M[0].length) throw new Error('Determinant requires a square matrix');
+  const n = M.length;
+  const A = M.map(r => r.slice());
+  let d = 1;
+  for (let i = 0; i < n; i++) {
+    let pivot = i;
+    for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[pivot][i])) pivot = k;
+    if (Math.abs(A[pivot][i]) < 1e-12) return 0;
+    if (pivot !== i) { [A[i], A[pivot]] = [A[pivot], A[i]]; d = -d; }
+    d *= A[i][i];
+    for (let k = i + 1; k < n; k++) {
+      const f = A[k][i] / A[i][i];
+      for (let j = i; j < n; j++) A[k][j] -= f * A[i][j];
+    }
+  }
+  return d;
+}
+function inverse(M) {
+  if (M.length !== M[0].length) throw new Error('Inverse requires a square matrix');
+  const n = M.length;
+  const A = M.map((r, i) => [...r, ...Array(n).fill(0).map((_, j) => i === j ? 1 : 0)]);
+  for (let i = 0; i < n; i++) {
+    let pivot = i;
+    for (let k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[pivot][i])) pivot = k;
+    if (Math.abs(A[pivot][i]) < 1e-12) throw new Error('Matrix is singular (non-invertible)');
+    if (pivot !== i) [A[i], A[pivot]] = [A[pivot], A[i]];
+    const p = A[i][i];
+    for (let j = 0; j < 2 * n; j++) A[i][j] /= p;
+    for (let k = 0; k < n; k++) {
+      if (k === i) continue;
+      const f = A[k][i];
+      for (let j = 0; j < 2 * n; j++) A[k][j] -= f * A[i][j];
+    }
+  }
+  return A.map(r => r.slice(n));
+}
+function trace(M) {
+  if (M.length !== M[0].length) throw new Error('Trace requires a square matrix');
+  let t = 0;
+  for (let i = 0; i < M.length; i++) t += M[i][i];
+  return t;
+}
+function rank(M) {
+  const A = M.map(r => r.slice());
+  const rows = A.length, cols = A[0].length;
+  let r = 0;
+  const used = new Array(rows).fill(false);
+  for (let c = 0; c < cols && r < rows; c++) {
+    let pivot = -1;
+    for (let i = 0; i < rows; i++) if (!used[i] && Math.abs(A[i][c]) > 1e-10) { pivot = i; break; }
+    if (pivot === -1) continue;
+    used[pivot] = true;
+    for (let i = 0; i < rows; i++) {
+      if (i === pivot || Math.abs(A[i][c]) < 1e-12) continue;
+      const f = A[i][c] / A[pivot][c];
+      for (let j = c; j < cols; j++) A[i][j] -= f * A[pivot][j];
+    }
+    r += 1;
+  }
+  return r;
+}
+function scalar(M, k) { return M.map(r => r.map(v => v * k)); }
+function power(M, n) {
+  if (M.length !== M[0].length) throw new Error('Power requires a square matrix');
+  if (n < 0) return power(inverse(M), -n);
+  if (n === 0) return M.map((r, i) => r.map((_, j) => i === j ? 1 : 0));
+  let R = M;
+  for (let i = 1; i < n; i++) R = mul(R, M);
+  return R;
+}
+
+function compute() {
+  const op = $('#op').value;
+  const out = $('#result');
+  try {
+    const A = readMat('A');
+    let R;
+    if (op === 'add') R = add(A, readMat('B'));
+    else if (op === 'sub') R = add(A, readMat('B'), -1);
+    else if (op === 'mul') R = mul(A, readMat('B'));
+    else if (op === 'transpose') R = transpose(A);
+    else if (op === 'det') { out.innerHTML = `<div class="scalar-out">det(A) = ${fmt(det(A))}</div>`; return; }
+    else if (op === 'trace') { out.innerHTML = `<div class="scalar-out">tr(A) = ${fmt(trace(A))}</div>`; return; }
+    else if (op === 'rank') { out.innerHTML = `<div class="scalar-out">rank(A) = ${rank(A)}</div>`; return; }
+    else if (op === 'inv') R = inverse(A);
+    else if (op === 'scalar') R = scalar(A, parseFloat($('#scalar').value) || 0);
+    else if (op === 'pow') R = power(A, parseInt($('#pow').value) || 1);
+    out.textContent = renderMatrix(R);
+    out.style.color = 'var(--text)';
+  } catch (e) {
+    out.innerHTML = `<div style="color:var(--red); padding:14px"><i class="ti ti-alert-circle"></i> ${e.message}</div>`;
+  }
+}
+
+function showHideB() {
+  const op = $('#op').value;
+  const twoMatrix = ['add','sub','mul'].includes(op);
+  $('#B-panel').style.display = twoMatrix ? '' : 'none';
+  $('#scalar-wrap').style.display = op === 'scalar' ? '' : 'none';
+  $('#pow-wrap').style.display = op === 'pow' ? '' : 'none';
+  compute();
+}
+
+['#A-r','#A-c'].forEach(s => $(s).addEventListener('change', () => { buildGrid('A'); compute(); }));
+['#B-r','#B-c'].forEach(s => $(s).addEventListener('change', () => { buildGrid('B'); compute(); }));
+$('#op').addEventListener('change', showHideB);
+$('#scalar').addEventListener('input', compute);
+$('#pow').addEventListener('input', compute);
+$('#sample-btn').addEventListener('click', () => {
+  $('#A-r').value = 3; $('#A-c').value = 3;
+  $('#B-r').value = 3; $('#B-c').value = 3;
+  buildGrid('A'); buildGrid('B');
+  const aVals = [[1,2,3],[0,1,4],[5,6,0]];
+  const bVals = [[1,0,0],[0,2,0],[0,0,3]];
+  Array.from($('#A-grid').querySelectorAll('input')).forEach((inp, i) => inp.value = aVals[Math.floor(i/3)][i%3]);
+  Array.from($('#B-grid').querySelectorAll('input')).forEach((inp, i) => inp.value = bVals[Math.floor(i/3)][i%3]);
+  compute();
+});
+$('#clear-btn').addEventListener('click', () => {
+  document.querySelectorAll('.mat-grid input').forEach(i => i.value = '0');
+  compute();
+});
+
+buildGrid('A'); buildGrid('B'); showHideB();
+</script>
+
+</body>
+</html>

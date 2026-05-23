@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Blindness Simulator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-eye-check"></i></div><div>Colorblind Simulator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1300px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-eye-check"></i></div>
+      <div>
+        <div class="tool-title">Color Blindness Simulator</div>
+        <div class="tool-desc">Preview a color or image as seen with 8 types of color vision deficiency.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="color">Single color</button>
+    <button class="tab" data-mode="image">Image</button>
+  </div>
+
+  <!-- COLOR -->
+  <section id="color-panel">
+    <div class="panel">
+      <div class="row" style="gap:10px; margin-bottom:14px">
+        <label class="row" style="gap:10px; font-size:13px; color:var(--text2)">Color
+          <input type="color" id="c-pick" value="#7c6df0" style="width:60px; height:38px; padding:2px">
+          <input type="text" id="c-hex" value="#7c6df0" style="width:120px; font-family:ui-monospace,Menlo,monospace">
+        </label>
+      </div>
+      <div id="grid" class="cb-grid"></div>
+    </div>
+  </section>
+
+  <!-- IMAGE -->
+  <section id="image-panel" style="display:none">
+    <div class="panel">
+      <div class="dropzone" id="drop">
+        <i class="ti ti-photo-up"></i>
+        <div class="dropzone-title">Drop an image or click to choose</div>
+        <div class="dropzone-hint">PNG, JPG, GIF, WebP — stays on your device.</div>
+        <input type="file" id="file" accept="image/*" hidden>
+      </div>
+      <div id="img-grid" class="img-grid" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>About</span></div>
+    <div style="font-size:13px; line-height:1.7; color:var(--text2)">
+      Roughly <b style="color:var(--text)">8% of men</b> and <b style="color:var(--text)">0.5% of women</b> have some form of color vision deficiency. The most common is red–green (deuteranomaly/protanomaly). Use this tool to check whether your design — chart, slide, or interface — still communicates without color, and consider pairing color with shape, label, or pattern.
+    </div>
+  </div>
+</main>
+
+<canvas id="hidden" style="display:none"></canvas>
+
+<style>
+.cb-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:10px }
+.cb-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; }
+.cb-card .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+.cb-card .swatch { height: 80px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; display:flex; align-items:flex-end; padding:6px; color: rgba(255,255,255,0.9); mix-blend-mode: difference; font-family: ui-monospace,Menlo,monospace; font-size: 12px; }
+.cb-card .desc { font-size: 11px; color: var(--text3); }
+.img-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:10px }
+.img-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; }
+.img-card .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; display:flex; justify-content:space-between }
+.img-card canvas { width: 100%; height: auto; border-radius: 4px; }
+</style>
+
+<script src="../assets/color-lib.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+
+const TYPES = [
+  ['normal', 'Normal vision', 'Baseline reference'],
+  ['protanomaly', 'Protanomaly', 'Reduced red — common (~1% males)'],
+  ['protanopia', 'Protanopia', 'No red receptors (~1% males)'],
+  ['deuteranomaly', 'Deuteranomaly', 'Reduced green — most common (~5% males)'],
+  ['deuteranopia', 'Deuteranopia', 'No green receptors (~1% males)'],
+  ['tritanomaly', 'Tritanomaly', 'Reduced blue — rare'],
+  ['tritanopia', 'Tritanopia', 'No blue receptors — rare'],
+  ['achromatomaly', 'Achromatomaly', 'Partial color loss'],
+  ['achromatopsia', 'Achromatopsia', 'Total color blindness — very rare']
+];
+
+function renderColor() {
+  const hex = $('#c-pick').value;
+  $('#c-hex').value = hex;
+  const rgb = ColorLib.hexToRgb(hex);
+  if (!rgb) return;
+  $('#grid').innerHTML = TYPES.map(([t, name, desc]) => {
+    const c = t === 'normal' ? rgb : ColorLib.simulateCb(rgb.r, rgb.g, rgb.b, t);
+    const cHex = ColorLib.rgbToHex(c.r, c.g, c.b);
+    return `<div class="cb-card">
+      <div class="lbl">${name}</div>
+      <div class="swatch" style="background:${cHex}; mix-blend-mode:normal; color:${ColorLib.relativeLuminance(c.r,c.g,c.b) > 0.5 ? '#000' : '#fff'}">${cHex}</div>
+      <div class="desc">${desc}</div>
+    </div>`;
+  }).join('');
+}
+
+['#c-pick','#c-hex'].forEach(s => $(s).addEventListener('input', () => {
+  if (s === '#c-hex') {
+    const v = $('#c-hex').value.trim();
+    if (/^#?[0-9a-f]{3,8}$/i.test(v)) $('#c-pick').value = v.startsWith('#') ? v : '#' + v;
+  }
+  renderColor();
+}));
+
+// === IMAGE ===
+const drop = $('#drop'), fileInput = $('#file');
+const cvs = $('#hidden'), ctx = cvs.getContext('2d', { willReadFrequently: true });
+let imageData = null;
+
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('drag'); loadImage(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => loadImage(e.target.files[0]));
+
+function loadImage(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    const max = 400;
+    const ratio = Math.min(max / img.width, max / img.height, 1);
+    const w = Math.floor(img.width * ratio), h = Math.floor(img.height * ratio);
+    cvs.width = w; cvs.height = h;
+    ctx.drawImage(img, 0, 0, w, h);
+    imageData = ctx.getImageData(0, 0, w, h);
+    renderImage();
+  };
+  img.src = url;
+}
+
+function renderImage() {
+  if (!imageData) return;
+  $('#img-grid').innerHTML = TYPES.map(([t, name]) =>
+    `<div class="img-card">
+      <div class="lbl"><span>${name}</span></div>
+      <canvas data-cb="${t}" width="${imageData.width}" height="${imageData.height}"></canvas>
+    </div>`
+  ).join('');
+  TYPES.forEach(([t]) => {
+    const cv = $(`canvas[data-cb="${t}"]`);
+    const ct = cv.getContext('2d');
+    if (t === 'normal') { ct.putImageData(imageData, 0, 0); return; }
+    const out = ct.createImageData(imageData.width, imageData.height);
+    const d = imageData.data, o = out.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const c = ColorLib.simulateCb(d[i], d[i+1], d[i+2], t);
+      o[i] = c.r; o[i+1] = c.g; o[i+2] = c.b; o[i+3] = d[i+3];
+    }
+    ct.putImageData(out, 0, 0);
+  });
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $('#color-panel').style.display = t.dataset.mode === 'color' ? '' : 'none';
+  $('#image-panel').style.display = t.dataset.mode === 'image' ? '' : 'none';
+}));
+
+renderColor();
+</script>
+
+</body>
+</html>

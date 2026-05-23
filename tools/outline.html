@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outline Builder — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-list-tree"></i></div><div>Outline Builder</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-list-tree"></i></div>
+      <div>
+        <div class="tool-title">Outline Builder</div>
+        <div class="tool-desc">Plan an essay, paper, or talk. Auto-numbered hierarchy with keyboard shortcuts.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:12px; gap:14px">
+    <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+      Numbering
+      <select id="num-style">
+        <option value="legal">Legal (1, 1.1, 1.1.1)</option>
+        <option value="roman">Mixed (I, A, 1, a)</option>
+        <option value="bullets">Bullets only</option>
+        <option value="none">None</option>
+      </select>
+    </label>
+    <span class="spacer"></span>
+    <button class="btn btn-sm" id="add-btn"><i class="ti ti-plus"></i> Add item</button>
+    <button class="btn btn-sm" id="copy-md"><i class="ti ti-copy"></i> Copy Markdown</button>
+    <button class="btn btn-sm" id="copy-text"><i class="ti ti-copy"></i> Copy text</button>
+    <button class="btn btn-sm" id="export-html"><i class="ti ti-download"></i> HTML</button>
+    <button class="btn btn-sm" id="clear-btn" style="color:var(--red)"><i class="ti ti-trash"></i> Clear</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Outline</span>
+        <span class="muted" style="text-transform:none; letter-spacing:0; font-size:11px; font-weight:400">Tab = indent · Shift+Tab = outdent · Enter = new · Alt+↑↓ = move</span>
+      </div>
+      <div id="items"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Preview</span>
+        <span id="counts" class="muted" style="text-transform:none; letter-spacing:0; font-size:11px; font-weight:400"></span>
+      </div>
+      <div id="preview" class="output-box" style="font-size:14px; line-height:1.7"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.ol-row { display:flex; gap:8px; align-items:center; margin-bottom:4px; }
+.ol-row input { padding: 7px 10px; font-size: 14px; flex:1; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.ol-row input:focus { border-color: var(--accent); }
+.ol-num { font-size: 12px; color: var(--text3); width: 60px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.ol-actions { display: flex; gap: 2px; opacity: 0; transition: opacity .15s; }
+.ol-row:hover .ol-actions { opacity: 1; }
+.ol-actions button { padding: 4px 6px; font-size: 11px; background: transparent; border: none; color: var(--text3); cursor: pointer; border-radius: 4px; }
+.ol-actions button:hover { background: var(--surface2); color: var(--text); }
+#preview ul, #preview ol { padding-left: 24px; margin: 4px 0; }
+#preview li { margin: 4px 0; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const STORE = 'outline-v1';
+
+let items = JSON.parse(localStorage.getItem(STORE) || 'null') || [
+  { id: uid(), text: 'Introduction', depth: 0 },
+  { id: uid(), text: 'Background', depth: 1 },
+  { id: uid(), text: 'Research question', depth: 1 },
+  { id: uid(), text: 'Methods', depth: 0 },
+  { id: uid(), text: 'Results', depth: 0 },
+  { id: uid(), text: 'Discussion', depth: 0 },
+  { id: uid(), text: 'Conclusion', depth: 0 }
+];
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
+function save() { localStorage.setItem(STORE, JSON.stringify(items)); }
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500); }
+function escapeHtml(s) { return (s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+function numberLabel(idx) {
+  // returns a label per item depending on numbering style
+  const style = $('#num-style').value;
+  if (style === 'none' || style === 'bullets') return '';
+  const counters = []; // counter per depth
+  for (let i = 0; i <= idx; i++) {
+    const d = items[i].depth;
+    counters[d] = (counters[d] || 0) + 1;
+    counters.length = d + 1;
+  }
+  if (style === 'legal') return counters.join('.') + '.';
+  // roman: I, A, 1, a, i, A, ...
+  const formatters = [
+    n => toRoman(n).toUpperCase() + '.',
+    n => String.fromCharCode(64 + ((n - 1) % 26) + 1) + '.',
+    n => n + '.',
+    n => String.fromCharCode(96 + ((n - 1) % 26) + 1) + '.',
+    n => toRoman(n).toLowerCase() + '.',
+  ];
+  const depth = items[idx].depth;
+  const cnt = counters[depth];
+  return (formatters[depth] || (n => n + '.'))(cnt);
+}
+
+function toRoman(n) {
+  if (n <= 0) return '';
+  const map = [['M',1000],['CM',900],['D',500],['CD',400],['C',100],['XC',90],['L',50],['XL',40],['X',10],['IX',9],['V',5],['IV',4],['I',1]];
+  let r = '';
+  for (const [s, v] of map) { while (n >= v) { r += s; n -= v; } }
+  return r;
+}
+
+function render() {
+  const wrap = $('#items');
+  wrap.innerHTML = '';
+  items.forEach((it, i) => {
+    const row = document.createElement('div');
+    row.className = 'ol-row';
+    row.style.paddingLeft = (it.depth * 20) + 'px';
+    row.innerHTML = `
+      <span class="ol-num">${numberLabel(i)}</span>
+      <input type="text" data-id="${it.id}" value="${escapeHtml(it.text)}" placeholder="…">
+      <div class="ol-actions">
+        <button data-up="${it.id}" title="Move up">↑</button>
+        <button data-down="${it.id}" title="Move down">↓</button>
+        <button data-out="${it.id}" title="Outdent">←</button>
+        <button data-in="${it.id}" title="Indent">→</button>
+        <button data-rm="${it.id}" title="Delete" style="color:var(--red)">×</button>
+      </div>
+    `;
+    wrap.appendChild(row);
+  });
+  wireRow();
+  renderPreview();
+}
+
+function wireRow() {
+  document.querySelectorAll('[data-id]').forEach(inp => {
+    inp.addEventListener('input', () => {
+      const it = items.find(x => x.id === inp.dataset.id);
+      it.text = inp.value; save(); renderPreview();
+    });
+    inp.addEventListener('keydown', e => {
+      const idx = items.findIndex(x => x.id === inp.dataset.id);
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        if (e.shiftKey) outdent(idx);
+        else indent(idx);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        const newIt = { id: uid(), text: '', depth: items[idx].depth };
+        items.splice(idx + 1, 0, newIt);
+        save(); render();
+        setTimeout(() => { const el = document.querySelector(`[data-id="${newIt.id}"]`); if (el) el.focus(); }, 0);
+      } else if (e.altKey && e.key === 'ArrowUp') {
+        e.preventDefault(); moveUp(idx);
+      } else if (e.altKey && e.key === 'ArrowDown') {
+        e.preventDefault(); moveDown(idx);
+      } else if (e.key === 'Backspace' && inp.value === '' && items.length > 1) {
+        e.preventDefault();
+        const prevIt = items[idx - 1];
+        items.splice(idx, 1);
+        save(); render();
+        if (prevIt) setTimeout(() => { const el = document.querySelector(`[data-id="${prevIt.id}"]`); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+      }
+    });
+  });
+  document.querySelectorAll('[data-up]').forEach(b => b.addEventListener('click', () => moveUp(items.findIndex(x => x.id === b.dataset.up))));
+  document.querySelectorAll('[data-down]').forEach(b => b.addEventListener('click', () => moveDown(items.findIndex(x => x.id === b.dataset.down))));
+  document.querySelectorAll('[data-in]').forEach(b => b.addEventListener('click', () => indent(items.findIndex(x => x.id === b.dataset.in))));
+  document.querySelectorAll('[data-out]').forEach(b => b.addEventListener('click', () => outdent(items.findIndex(x => x.id === b.dataset.out))));
+  document.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.rm;
+    items = items.filter(x => x.id !== id);
+    if (!items.length) items.push({ id: uid(), text: '', depth: 0 });
+    save(); render();
+  }));
+}
+
+function indent(idx) {
+  if (idx <= 0) return;
+  const maxDepth = items[idx - 1].depth + 1;
+  if (items[idx].depth < maxDepth && items[idx].depth < 4) {
+    items[idx].depth += 1;
+    save(); render();
+    setTimeout(() => { const el = document.querySelector(`[data-id="${items[idx].id}"]`); if (el) el.focus(); }, 0);
+  }
+}
+function outdent(idx) {
+  if (items[idx].depth > 0) {
+    items[idx].depth -= 1;
+    save(); render();
+    setTimeout(() => { const el = document.querySelector(`[data-id="${items[idx].id}"]`); if (el) el.focus(); }, 0);
+  }
+}
+function moveUp(idx) {
+  if (idx <= 0) return;
+  [items[idx - 1], items[idx]] = [items[idx], items[idx - 1]];
+  save(); render();
+  setTimeout(() => { const el = document.querySelector(`[data-id="${items[idx-1].id}"]`); if (el) el.focus(); }, 0);
+}
+function moveDown(idx) {
+  if (idx >= items.length - 1) return;
+  [items[idx + 1], items[idx]] = [items[idx], items[idx + 1]];
+  save(); render();
+  setTimeout(() => { const el = document.querySelector(`[data-id="${items[idx+1].id}"]`); if (el) el.focus(); }, 0);
+}
+
+function renderPreview() {
+  // Build nested list
+  const style = $('#num-style').value;
+  let html = '';
+  let depth = -1;
+  const stack = [];
+  const useBullets = style === 'bullets' || style === 'none';
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    while (depth < it.depth) {
+      html += useBullets ? '<ul>' : '<ol>';
+      stack.push(useBullets ? 'ul' : 'ol');
+      depth += 1;
+    }
+    while (depth > it.depth) {
+      html += '</' + stack.pop() + '>';
+      depth -= 1;
+    }
+    const label = style === 'none' || style === 'bullets' ? '' : `<span style="color:var(--text3); margin-right:6px">${numberLabel(i)}</span>`;
+    html += `<li>${label}${escapeHtml(it.text || '(empty)')}</li>`;
+  }
+  while (stack.length) html += '</' + stack.pop() + '>';
+  $('#preview').innerHTML = html || '<span class="muted">Empty</span>';
+  const words = items.reduce((s, it) => s + (it.text.trim().split(/\s+/).filter(Boolean).length), 0);
+  $('#counts').textContent = `${items.length} items · ${words} words`;
+}
+
+function toMarkdown() {
+  return items.map(it => '  '.repeat(it.depth) + '- ' + it.text).join('\n');
+}
+function toPlain() {
+  return items.map((it, i) => '  '.repeat(it.depth) + numberLabel(i) + ' ' + it.text).join('\n');
+}
+
+$('#add-btn').addEventListener('click', () => {
+  items.push({ id: uid(), text: '', depth: 0 });
+  save(); render();
+  setTimeout(() => { const el = document.querySelector(`[data-id="${items[items.length-1].id}"]`); if (el) el.focus(); }, 0);
+});
+$('#clear-btn').addEventListener('click', () => {
+  if (!confirm('Clear the entire outline?')) return;
+  items = [{ id: uid(), text: '', depth: 0 }];
+  save(); render();
+});
+$('#num-style').addEventListener('change', render);
+$('#copy-md').addEventListener('click', () => navigator.clipboard.writeText(toMarkdown()).then(() => toast('Markdown copied')));
+$('#copy-text').addEventListener('click', () => navigator.clipboard.writeText(toPlain()).then(() => toast('Text copied')));
+$('#export-html').addEventListener('click', () => {
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Outline</title>
+<style>body{font-family:-apple-system,sans-serif;max-width:760px;margin:2cm auto;padding:0 20px}ol,ul{padding-left:24px}li{margin:6px 0}</style>
+</head><body>${$('#preview').innerHTML}</body></html>`;
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'outline.html'; a.click();
+});
+
+render();
+</script>
+
+</body>
+</html>

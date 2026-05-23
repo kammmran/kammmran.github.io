@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Picker & Converter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-color-picker"></i></div><div>Color Picker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-color-picker"></i></div>
+      <div>
+        <div class="tool-title">Color Picker & Converter</div>
+        <div class="tool-desc">HEX · RGB · HSL · HSV · CMYK · OKLCH. Live conversion. Save favorites.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Pick a color</span></div>
+      <div id="swatch" style="width:100%; height:180px; border-radius:var(--radius); border:1px solid var(--border); margin-bottom:12px; cursor:pointer; transition:background-color .2s; position:relative">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#fff; mix-blend-mode:difference; font-size:13px; font-weight:600; pointer-events:none" id="swatch-label">#7c6df0</div>
+      </div>
+      <input type="color" id="picker" value="#7c6df0" style="width:100%; height:46px; border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; background:var(--bg2); padding:4px">
+      <div class="divider"></div>
+      <div class="panel-label"><span>Sliders</span></div>
+      <div class="slider-row"><label>R</label><input type="range" id="r-r" min="0" max="255" value="124"><input type="number" id="r-rn" min="0" max="255" value="124"></div>
+      <div class="slider-row"><label>G</label><input type="range" id="r-g" min="0" max="255" value="109"><input type="number" id="r-gn" min="0" max="255" value="109"></div>
+      <div class="slider-row"><label>B</label><input type="range" id="r-b" min="0" max="255" value="240"><input type="number" id="r-bn" min="0" max="255" value="240"></div>
+      <div class="divider"></div>
+      <div class="slider-row"><label>H</label><input type="range" id="r-h" min="0" max="360" value="245"><input type="number" id="r-hn" min="0" max="360" value="245"></div>
+      <div class="slider-row"><label>S</label><input type="range" id="r-s" min="0" max="100" value="82"><input type="number" id="r-sn" min="0" max="100" value="82"></div>
+      <div class="slider-row"><label>L</label><input type="range" id="r-l" min="0" max="100" value="68"><input type="number" id="r-ln" min="0" max="100" value="68"></div>
+      <div class="divider"></div>
+      <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">A (alpha) <input type="range" id="r-a" min="0" max="100" value="100" style="flex:1"><input type="number" id="r-an" min="0" max="100" value="100" style="width:70px"></label>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">
+        <span>All formats</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="save-fav"><i class="ti ti-star"></i> Save</button>
+        </div>
+      </div>
+      <div class="fmt-row"><label>HEX</label><input type="text" id="f-hex" readonly><button class="btn btn-sm" data-copy="hex"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>RGB</label><input type="text" id="f-rgb" readonly><button class="btn btn-sm" data-copy="rgb"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>RGBA</label><input type="text" id="f-rgba" readonly><button class="btn btn-sm" data-copy="rgba"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>HSL</label><input type="text" id="f-hsl" readonly><button class="btn btn-sm" data-copy="hsl"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>HSLA</label><input type="text" id="f-hsla" readonly><button class="btn btn-sm" data-copy="hsla"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>HSV</label><input type="text" id="f-hsv" readonly><button class="btn btn-sm" data-copy="hsv"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>CMYK</label><input type="text" id="f-cmyk" readonly><button class="btn btn-sm" data-copy="cmyk"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>OKLCH</label><input type="text" id="f-oklch" readonly><button class="btn btn-sm" data-copy="oklch"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>HWB</label><input type="text" id="f-hwb" readonly><button class="btn btn-sm" data-copy="hwb"><i class="ti ti-copy"></i></button></div>
+      <div class="fmt-row"><label>Closest CSS name</label><input type="text" id="f-name" readonly><button class="btn btn-sm" data-copy="name"><i class="ti ti-copy"></i></button></div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Tints & shades</span></div>
+      <div id="tones" style="display:grid; grid-template-columns:repeat(11, 1fr); gap:3px; height:36px"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label">
+      <span>Favorites</span>
+      <div class="panel-actions">
+        <button class="btn btn-sm" id="clear-favs" style="color:var(--red)"><i class="ti ti-trash"></i> Clear</button>
+      </div>
+    </div>
+    <div id="favs" class="muted" style="font-size:13px">Saved colors appear here.</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.slider-row { display:grid; grid-template-columns: 24px 1fr 70px; gap:8px; align-items:center; margin-bottom:6px; font-size:13px; color:var(--text2) }
+.slider-row label { font-weight:600; color:var(--text) }
+.slider-row input[type="number"] { padding: 6px 8px; font-size: 12px; }
+.fmt-row { display:grid; grid-template-columns: 130px 1fr 36px; gap:8px; align-items:center; margin-bottom:6px }
+.fmt-row label { font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: .5px }
+.fmt-row input { padding: 7px 10px; font-size: 13px; font-family: ui-monospace,Menlo,monospace; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); width:100%; outline:none }
+.tone { border-radius: 4px; cursor: pointer; transition: transform .15s }
+.tone:hover { transform: scale(1.1) }
+.fav-chip { display:inline-flex; align-items:center; gap:8px; padding: 6px 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin: 4px 4px 0 0; cursor: pointer; font-family: ui-monospace,Menlo,monospace; font-size: 12px; }
+.fav-chip:hover { background: var(--surface2) }
+.fav-chip .sw { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border); }
+.fav-chip .x { background: transparent; border: none; color: var(--text3); cursor: pointer; padding: 0 2px; }
+.fav-chip .x:hover { color: var(--red); }
+</style>
+
+<script src="../assets/color-lib.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const STORE = 'color-favs-v1';
+let favs = JSON.parse(localStorage.getItem(STORE) || '[]');
+let alpha = 100;
+
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1200); }
+
+function setColor(rgb, source) {
+  const { r, g, b } = rgb;
+  const hex = ColorLib.rgbToHex(r, g, b);
+  const hsl = ColorLib.rgbToHsl(r, g, b);
+  const hsv = ColorLib.rgbToHsv(r, g, b);
+  const cmyk = ColorLib.rgbToCmyk(r, g, b);
+  const oklch = ColorLib.rgbToOklch(r, g, b);
+  const hwb = ColorLib.rgbToHwb(r, g, b);
+
+  // swatch
+  $('#swatch').style.background = `rgb(${r}, ${g}, ${b})`;
+  $('#swatch-label').textContent = hex;
+
+  // picker
+  if (source !== 'picker') $('#picker').value = hex;
+
+  // sliders
+  if (source !== 'rgb') {
+    $('#r-r').value = r; $('#r-rn').value = r;
+    $('#r-g').value = g; $('#r-gn').value = g;
+    $('#r-b').value = b; $('#r-bn').value = b;
+  }
+  if (source !== 'hsl') {
+    $('#r-h').value = Math.round(hsl.h); $('#r-hn').value = Math.round(hsl.h);
+    $('#r-s').value = Math.round(hsl.s); $('#r-sn').value = Math.round(hsl.s);
+    $('#r-l').value = Math.round(hsl.l); $('#r-ln').value = Math.round(hsl.l);
+  }
+
+  // formats
+  $('#f-hex').value = hex;
+  $('#f-rgb').value = `rgb(${r}, ${g}, ${b})`;
+  $('#f-rgba').value = `rgba(${r}, ${g}, ${b}, ${(alpha/100).toFixed(2)})`;
+  $('#f-hsl').value = `hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)`;
+  $('#f-hsla').value = `hsla(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%, ${(alpha/100).toFixed(2)})`;
+  $('#f-hsv').value = `hsv(${Math.round(hsv.h)}, ${Math.round(hsv.s)}%, ${Math.round(hsv.v)}%)`;
+  $('#f-cmyk').value = `cmyk(${Math.round(cmyk.c)}%, ${Math.round(cmyk.m)}%, ${Math.round(cmyk.y)}%, ${Math.round(cmyk.k)}%)`;
+  $('#f-oklch').value = `oklch(${oklch.l.toFixed(3)} ${oklch.c.toFixed(3)} ${oklch.h.toFixed(1)})`;
+  $('#f-hwb').value = `hwb(${Math.round(hsl.h)} ${Math.round(hwb.w)}% ${Math.round(hwb.b)}%)`;
+  $('#f-name').value = ColorLib.closestName(r, g, b);
+
+  // tones
+  const toneRow = $('#tones'); toneRow.innerHTML = '';
+  for (let i = 0; i <= 10; i++) {
+    const ratio = i / 10;
+    let toneRgb;
+    if (i < 5) {
+      const f = i / 5;
+      toneRgb = { r: Math.round(r + (255 - r) * (1 - f)), g: Math.round(g + (255 - g) * (1 - f)), b: Math.round(b + (255 - b) * (1 - f)) };
+    } else if (i === 5) {
+      toneRgb = { r, g, b };
+    } else {
+      const f = (i - 5) / 5;
+      toneRgb = { r: Math.round(r * (1 - f)), g: Math.round(g * (1 - f)), b: Math.round(b * (1 - f)) };
+    }
+    const sw = document.createElement('div');
+    sw.className = 'tone';
+    sw.style.background = `rgb(${toneRgb.r}, ${toneRgb.g}, ${toneRgb.b})`;
+    sw.title = ColorLib.rgbToHex(toneRgb.r, toneRgb.g, toneRgb.b);
+    sw.addEventListener('click', () => setColor(toneRgb));
+    toneRow.appendChild(sw);
+  }
+}
+
+$('#picker').addEventListener('input', e => { const rgb = ColorLib.hexToRgb(e.target.value); if (rgb) setColor(rgb, 'picker'); });
+['r','g','b'].forEach(ch => {
+  $('#r-' + ch).addEventListener('input', e => {
+    $('#r-' + ch + 'n').value = e.target.value;
+    setColor({ r: +$('#r-r').value, g: +$('#r-g').value, b: +$('#r-b').value }, 'rgb');
+  });
+  $('#r-' + ch + 'n').addEventListener('input', e => {
+    $('#r-' + ch).value = e.target.value;
+    setColor({ r: +$('#r-rn').value, g: +$('#r-gn').value, b: +$('#r-bn').value }, 'rgb');
+  });
+});
+['h','s','l'].forEach(ch => {
+  $('#r-' + ch).addEventListener('input', e => {
+    $('#r-' + ch + 'n').value = e.target.value;
+    const rgb = ColorLib.hslToRgb(+$('#r-h').value, +$('#r-s').value, +$('#r-l').value);
+    setColor(rgb, 'hsl');
+  });
+  $('#r-' + ch + 'n').addEventListener('input', e => {
+    $('#r-' + ch).value = e.target.value;
+    const rgb = ColorLib.hslToRgb(+$('#r-hn').value, +$('#r-sn').value, +$('#r-ln').value);
+    setColor(rgb, 'hsl');
+  });
+});
+$('#r-a').addEventListener('input', e => { alpha = +e.target.value; $('#r-an').value = alpha; setColor({ r: +$('#r-r').value, g: +$('#r-g').value, b: +$('#r-b').value }, 'rgb'); });
+$('#r-an').addEventListener('input', e => { alpha = +e.target.value; $('#r-a').value = alpha; setColor({ r: +$('#r-r').value, g: +$('#r-g').value, b: +$('#r-b').value }, 'rgb'); });
+
+document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+  navigator.clipboard.writeText($('#f-' + b.dataset.copy).value).then(() => toast('Copied'));
+}));
+
+function renderFavs() {
+  if (!favs.length) { $('#favs').innerHTML = 'Saved colors appear here.'; return; }
+  $('#favs').innerHTML = favs.map((c, i) => `
+    <span class="fav-chip" data-pick="${i}">
+      <span class="sw" style="background:${c}"></span>
+      ${c}
+      <button class="x" data-rm="${i}">×</button>
+    </span>
+  `).join('');
+  $('#favs').querySelectorAll('[data-pick]').forEach(el => el.addEventListener('click', e => {
+    if (e.target.dataset.rm) return;
+    const rgb = ColorLib.hexToRgb(favs[+el.dataset.pick]);
+    if (rgb) setColor(rgb);
+  }));
+  $('#favs').querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    favs.splice(+b.dataset.rm, 1);
+    localStorage.setItem(STORE, JSON.stringify(favs));
+    renderFavs();
+  }));
+}
+
+$('#save-fav').addEventListener('click', () => {
+  const hex = $('#f-hex').value;
+  if (favs.includes(hex)) { toast('Already saved'); return; }
+  favs.unshift(hex);
+  favs = favs.slice(0, 32);
+  localStorage.setItem(STORE, JSON.stringify(favs));
+  renderFavs();
+  toast('Saved');
+});
+$('#clear-favs').addEventListener('click', () => {
+  if (!favs.length) return;
+  if (!confirm('Remove all saved colors?')) return;
+  favs = []; localStorage.setItem(STORE, JSON.stringify(favs)); renderFavs();
+});
+
+setColor({ r: 124, g: 109, b: 240 });
+renderFavs();
+</script>
+
+</body>
+</html>

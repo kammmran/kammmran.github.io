@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Color Name Lookup — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-tag"></i></div><div>Color Name Lookup</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-tag"></i></div>
+      <div>
+        <div class="tool-title">Color Name Lookup</div>
+        <div class="tool-desc">Hex → closest CSS name. Name → hex. Browse all 148 named colors.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Hex → name</span></div>
+      <div class="row" style="gap:10px; margin-bottom:14px">
+        <input type="color" id="h-pick" value="#7c6df0" style="width:60px; height:38px; padding:2px">
+        <input type="text" id="h-hex" value="#7c6df0" style="flex:1; font-family:ui-monospace,Menlo,monospace">
+      </div>
+      <div id="h-out" style="font-size:14px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Name → hex</span></div>
+      <input type="search" id="n-input" placeholder="Try: lavender, coral, dodgerblue…" list="name-list" style="margin-bottom:14px">
+      <datalist id="name-list"></datalist>
+      <div id="n-out" style="font-size:14px"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label">
+      <span>All CSS named colors (148)</span>
+      <div class="panel-actions">
+        <input type="search" id="filter" placeholder="Filter…" style="width:180px">
+        <select id="sort-by">
+          <option value="alpha">Alphabetical</option>
+          <option value="hue">By hue</option>
+          <option value="lightness">By lightness</option>
+        </select>
+      </div>
+    </div>
+    <div id="grid" class="name-grid"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.name-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap:6px }
+.name-cell { display:flex; align-items:center; gap:8px; padding:6px 8px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; transition: transform .15s }
+.name-cell:hover { transform: translateY(-1px); border-color: var(--accent); }
+.name-cell .sw { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border); flex-shrink: 0; }
+.name-cell .info { flex:1; min-width:0; }
+.name-cell .name { font-size: 12px; color: var(--text); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+.name-cell .hex { font-size: 11px; color: var(--text3); font-family: ui-monospace,Menlo,monospace; }
+.suggest { display:flex; align-items:center; gap:10px; padding:8px 10px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:pointer; }
+.suggest:hover { background:var(--surface2); }
+.suggest .sw { width: 30px; height: 30px; border-radius: 4px; border: 1px solid var(--border); }
+.suggest .info { flex:1; }
+.suggest b { color: var(--text); font-size: 13px; }
+.suggest small { color: var(--text3); font-size: 11px; font-family: ui-monospace,Menlo,monospace; }
+</style>
+
+<script src="../assets/color-lib.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m) { const t = $('#toast'); $('#toast-msg').textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1200); }
+
+const allEntries = Object.entries(ColorLib.NAMED);
+$('#name-list').innerHTML = allEntries.map(([n]) => `<option value="${n}">`).join('');
+
+function hexToName() {
+  const v = $('#h-hex').value.trim();
+  let hex = v;
+  if (!hex.startsWith('#')) hex = '#' + hex;
+  const rgb = ColorLib.hexToRgb(hex);
+  if (!rgb) { $('#h-out').innerHTML = '<span class="muted">Enter a valid hex.</span>'; return; }
+  // 5 closest by squared euclidean distance
+  const scored = allEntries.map(([name, h]) => {
+    const c = ColorLib.hexToRgb(h);
+    return { name, hex: h, d: (rgb.r - c.r) ** 2 + (rgb.g - c.g) ** 2 + (rgb.b - c.b) ** 2 };
+  }).sort((a, b) => a.d - b.d).slice(0, 6);
+  const exact = scored[0].d === 0;
+  $('#h-out').innerHTML = `
+    <div class="muted" style="font-size:12px; margin-bottom:6px">${exact ? 'Exact match' : 'Closest matches'}</div>
+    ${scored.map((s, i) => `
+      <div class="suggest" data-pick-hex="${s.hex}">
+        <div class="sw" style="background:${s.hex}"></div>
+        <div class="info">
+          <b>${s.name}</b><br>
+          <small>${s.hex} · Δ ${Math.round(Math.sqrt(s.d))}${i === 0 ? (exact ? ' (exact)' : '') : ''}</small>
+        </div>
+      </div>
+    `).join('')}
+  `;
+  $('#h-out').querySelectorAll('[data-pick-hex]').forEach(el => el.addEventListener('click', () => {
+    navigator.clipboard.writeText(el.dataset.pickHex).then(() => toast(el.dataset.pickHex + ' copied'));
+  }));
+}
+
+function nameToHex() {
+  const v = $('#n-input').value.trim().toLowerCase();
+  if (!v) { $('#n-out').innerHTML = '<span class="muted">Start typing a CSS color name.</span>'; return; }
+  if (ColorLib.NAMED[v]) {
+    const hex = ColorLib.NAMED[v];
+    const c = ColorLib.hexToRgb(hex);
+    const hsl = ColorLib.rgbToHsl(c.r, c.g, c.b);
+    $('#n-out').innerHTML = `
+      <div style="background:${hex}; height:80px; border-radius:var(--radius-sm); border:1px solid var(--border); margin-bottom:12px"></div>
+      <div style="font-family:ui-monospace,Menlo,monospace; font-size:13px; line-height:1.8">
+        <div><b style="color:var(--text)">${v}</b></div>
+        <div><b style="color:var(--text3)">HEX</b> ${hex} <button class="btn btn-sm" data-copy="${hex}" style="margin-left:4px"><i class="ti ti-copy"></i></button></div>
+        <div><b style="color:var(--text3)">RGB</b> rgb(${c.r}, ${c.g}, ${c.b})</div>
+        <div><b style="color:var(--text3)">HSL</b> hsl(${Math.round(hsl.h)}, ${Math.round(hsl.s)}%, ${Math.round(hsl.l)}%)</div>
+      </div>
+    `;
+    $('#n-out').querySelector('[data-copy]').addEventListener('click', () => navigator.clipboard.writeText(hex).then(() => toast('Copied')));
+  } else {
+    // partial matches
+    const matches = allEntries.filter(([n]) => n.includes(v)).slice(0, 8);
+    if (!matches.length) { $('#n-out').innerHTML = '<span class="muted">No CSS name contains that text.</span>'; return; }
+    $('#n-out').innerHTML = matches.map(([n, h]) => `
+      <div class="suggest" data-set-name="${n}">
+        <div class="sw" style="background:${h}"></div>
+        <div class="info"><b>${n}</b><br><small>${h}</small></div>
+      </div>
+    `).join('');
+    $('#n-out').querySelectorAll('[data-set-name]').forEach(el => el.addEventListener('click', () => {
+      $('#n-input').value = el.dataset.setName;
+      nameToHex();
+    }));
+  }
+}
+
+function renderGrid() {
+  const q = $('#filter').value.trim().toLowerCase();
+  const sort = $('#sort-by').value;
+  let arr = allEntries.filter(([n]) => !q || n.includes(q));
+  if (sort === 'hue') {
+    arr = arr.map(([n, h]) => {
+      const c = ColorLib.hexToRgb(h);
+      const hsl = ColorLib.rgbToHsl(c.r, c.g, c.b);
+      return [n, h, hsl];
+    }).sort((a, b) => (a[2].s < 5 ? 1000 : 0) - (b[2].s < 5 ? 1000 : 0) || a[2].h - b[2].h).map(x => [x[0], x[1]]);
+  } else if (sort === 'lightness') {
+    arr = arr.map(([n, h]) => {
+      const c = ColorLib.hexToRgb(h);
+      return [n, h, ColorLib.rgbToHsl(c.r, c.g, c.b).l];
+    }).sort((a, b) => a[2] - b[2]).map(x => [x[0], x[1]]);
+  }
+  $('#grid').innerHTML = arr.map(([n, h]) => `
+    <div class="name-cell" data-pick="${h}|${n}">
+      <div class="sw" style="background:${h}"></div>
+      <div class="info">
+        <div class="name">${n}</div>
+        <div class="hex">${h}</div>
+      </div>
+    </div>
+  `).join('');
+  $('#grid').querySelectorAll('[data-pick]').forEach(el => el.addEventListener('click', () => {
+    const [hex, name] = el.dataset.pick.split('|');
+    $('#h-hex').value = hex; $('#h-pick').value = hex; hexToName();
+    $('#n-input').value = name; nameToHex();
+  }));
+}
+
+$('#h-pick').addEventListener('input', e => { $('#h-hex').value = e.target.value; hexToName(); });
+$('#h-hex').addEventListener('input', e => {
+  let v = e.target.value.trim();
+  if (!v.startsWith('#')) v = '#' + v;
+  if (/^#[0-9a-f]{3,8}$/i.test(v)) $('#h-pick').value = v;
+  hexToName();
+});
+$('#n-input').addEventListener('input', nameToHex);
+$('#filter').addEventListener('input', renderGrid);
+$('#sort-by').addEventListener('change', renderGrid);
+
+hexToName(); nameToHex(); renderGrid();
+</script>
+
+</body>
+</html>

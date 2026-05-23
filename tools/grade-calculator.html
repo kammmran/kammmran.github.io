@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-calculator"></i></div><div>Grade Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-calculator"></i></div>
+      <div>
+        <div class="tool-title">Grade Calculator</div>
+        <div class="tool-desc">Weighted grades by category. Predict: "what do I need on the final to reach X?"</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="current">Current grade</button>
+    <button class="tab" data-mode="final">Final needed</button>
+  </div>
+
+  <!-- CURRENT GRADE -->
+  <section id="current-panel">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Categories</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="add-row"><i class="ti ti-plus"></i> Add row</button>
+          <button class="btn btn-sm" id="clear-rows" style="color:var(--red)"><i class="ti ti-trash"></i> Clear</button>
+        </div>
+      </div>
+      <div class="row" style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:6px; padding:0 4px">
+        <div style="flex:2">Name</div>
+        <div style="width:110px">Score</div>
+        <div style="width:90px">Out of</div>
+        <div style="width:90px">Weight %</div>
+        <div style="width:30px"></div>
+      </div>
+      <div id="rows"></div>
+      <div class="muted" style="font-size:12px; margin-top:8px"><i class="ti ti-info-circle"></i> Weights should add up to 100%. Empty score rows are ignored.</div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-label"><span>Current standing</span></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Weighted score</div><div class="stat-value" id="r-weighted" style="color:var(--accent3)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Weight completed</div><div class="stat-value" id="r-wcomp">0%</div></div>
+        <div class="stat-card"><div class="stat-label">Letter (US)</div><div class="stat-value" id="r-letter">—</div></div>
+        <div class="stat-card"><div class="stat-label">If remaining = 100%</div><div class="stat-value" id="r-best" style="color:var(--green)">—</div></div>
+        <div class="stat-card"><div class="stat-label">If remaining = 0%</div><div class="stat-value" id="r-worst" style="color:var(--red)">—</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL NEEDED -->
+  <section id="final-panel" style="display:none">
+    <div class="workspace">
+      <div class="panel">
+        <div class="panel-label"><span>Your inputs</span></div>
+        <label class="row" style="margin-bottom:10px; gap:8px; font-size:13px; color:var(--text2)">
+          Current grade (%)
+          <input type="number" id="f-current" min="0" max="100" step="0.1" placeholder="e.g. 82" style="width:110px">
+        </label>
+        <label class="row" style="margin-bottom:10px; gap:8px; font-size:13px; color:var(--text2)">
+          Final exam weight (%)
+          <input type="number" id="f-weight" min="0" max="100" step="0.1" value="30" style="width:110px">
+        </label>
+        <label class="row" style="margin-bottom:10px; gap:8px; font-size:13px; color:var(--text2)">
+          Grade you want (%)
+          <input type="number" id="f-target" min="0" max="100" step="0.1" placeholder="e.g. 85" style="width:110px">
+        </label>
+      </div>
+      <div class="panel">
+        <div class="panel-label"><span>You need on the final</span></div>
+        <div id="f-result" style="font-size:48px; font-weight:700; text-align:center; padding:24px 0; color:var(--accent3); font-variant-numeric:tabular-nums">—</div>
+        <div id="f-msg" class="muted" style="text-align:center; font-size:13px"></div>
+        <div class="divider"></div>
+        <div class="panel-label"><span>What different finals get you</span></div>
+        <div id="f-table" style="font-size:13px"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+.grade-row { display:flex; gap:8px; margin-bottom:6px; align-items:center }
+.grade-row input { padding: 7px 10px; font-size: 13px; }
+.grade-row .rm-btn { background: transparent; border: none; color: var(--text3); cursor: pointer; padding: 4px; }
+.grade-row .rm-btn:hover { color: var(--red); }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const STORE = 'gradecalc-v1';
+
+let rows = JSON.parse(localStorage.getItem(STORE) || 'null') || [
+  { name: 'Homework', score: '', max: 100, weight: 20 },
+  { name: 'Quizzes', score: '', max: 100, weight: 20 },
+  { name: 'Midterm', score: '', max: 100, weight: 25 },
+  { name: 'Final', score: '', max: 100, weight: 35 }
+];
+
+function save() { localStorage.setItem(STORE, JSON.stringify(rows)); }
+function letter(p) {
+  if (p == null) return '—';
+  if (p >= 93) return 'A';
+  if (p >= 90) return 'A-';
+  if (p >= 87) return 'B+';
+  if (p >= 83) return 'B';
+  if (p >= 80) return 'B-';
+  if (p >= 77) return 'C+';
+  if (p >= 73) return 'C';
+  if (p >= 70) return 'C-';
+  if (p >= 67) return 'D+';
+  if (p >= 60) return 'D';
+  return 'F';
+}
+
+function renderRows() {
+  const wrap = $('#rows');
+  wrap.innerHTML = '';
+  rows.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'grade-row';
+    row.innerHTML = `
+      <input type="text" data-name="${i}" placeholder="Category" value="${escapeHtml(r.name)}" style="flex:2">
+      <input type="number" data-score="${i}" placeholder="—" value="${r.score}" style="width:110px" step="0.1">
+      <input type="number" data-max="${i}" value="${r.max}" style="width:90px" step="0.1">
+      <input type="number" data-weight="${i}" value="${r.weight}" style="width:90px" step="0.1">
+      <button class="rm-btn" data-rm="${i}"><i class="ti ti-x"></i></button>
+    `;
+    wrap.appendChild(row);
+  });
+  wrap.querySelectorAll('input').forEach(el => el.addEventListener('input', e => {
+    if (el.dataset.name) rows[+el.dataset.name].name = el.value;
+    if (el.dataset.score != null) rows[+el.dataset.score].score = el.value;
+    if (el.dataset.max != null) rows[+el.dataset.max].max = parseFloat(el.value) || 100;
+    if (el.dataset.weight != null) rows[+el.dataset.weight].weight = parseFloat(el.value) || 0;
+    save(); compute();
+  }));
+  wrap.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+    rows.splice(+b.dataset.rm, 1);
+    if (!rows.length) rows.push({ name: '', score: '', max: 100, weight: 0 });
+    save(); renderRows(); compute();
+  }));
+}
+
+function compute() {
+  let weightedSum = 0, weightCompleted = 0, totalWeight = 0;
+  for (const r of rows) {
+    totalWeight += parseFloat(r.weight) || 0;
+    if (r.score === '' || r.score == null || r.score === '') continue;
+    const score = parseFloat(r.score);
+    const max = parseFloat(r.max) || 100;
+    const w = parseFloat(r.weight) || 0;
+    if (isNaN(score) || max <= 0 || w <= 0) continue;
+    const pct = (score / max) * 100;
+    weightedSum += pct * (w / 100);
+    weightCompleted += w;
+  }
+  const current = weightCompleted > 0 ? (weightedSum / weightCompleted) * 100 : null;
+  const remaining = 100 - weightCompleted;
+  const best = (weightedSum + remaining) * 1; // best case if you got 100% on remaining
+  const worst = weightedSum * 1; // worst case: 0 on remaining
+
+  $('#r-weighted').textContent = current == null ? '—' : current.toFixed(2) + '%';
+  $('#r-wcomp').textContent = weightCompleted.toFixed(1) + '%';
+  $('#r-letter').textContent = letter(current);
+  $('#r-best').textContent = remaining > 0 ? best.toFixed(2) + '%' : (current == null ? '—' : current.toFixed(2) + '%');
+  $('#r-worst').textContent = remaining > 0 ? worst.toFixed(2) + '%' : (current == null ? '—' : current.toFixed(2) + '%');
+
+  // warn if weights don't sum to 100
+  if (Math.abs(totalWeight - 100) > 0.01) {
+    $('#r-weighted').textContent += '';
+  }
+}
+
+function computeFinal() {
+  const cur = parseFloat($('#f-current').value);
+  const w = parseFloat($('#f-weight').value);
+  const target = parseFloat($('#f-target').value);
+  const resEl = $('#f-result'), msgEl = $('#f-msg'), tEl = $('#f-table');
+  if (isNaN(cur) || isNaN(w) || isNaN(target)) {
+    resEl.textContent = '—';
+    msgEl.textContent = 'Fill all three fields to calculate.';
+    tEl.innerHTML = '';
+    return;
+  }
+  if (w <= 0 || w > 100) {
+    resEl.textContent = '—'; msgEl.textContent = 'Final weight must be between 0 and 100.';
+    tEl.innerHTML = ''; return;
+  }
+  // current grade represents (100-w)% of total → contributes cur * (100-w)/100
+  // we need: cur * (100-w)/100 + finalScore * w/100 = target
+  const needed = (target - cur * (100 - w) / 100) * 100 / w;
+  resEl.textContent = needed.toFixed(2) + '%';
+  if (needed > 100) {
+    resEl.style.color = 'var(--red)';
+    msgEl.innerHTML = `<i class="ti ti-alert-triangle" style="color:var(--red)"></i> Not reachable — you'd need above 100% on the final.`;
+  } else if (needed <= 0) {
+    resEl.style.color = 'var(--green)';
+    msgEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Even a 0 on the final keeps you at your target.`;
+  } else if (needed < 50) {
+    resEl.style.color = 'var(--green)';
+    msgEl.innerHTML = `<i class="ti ti-mood-smile" style="color:var(--green)"></i> Looking good — should be achievable.`;
+  } else {
+    resEl.style.color = 'var(--accent3)';
+    msgEl.innerHTML = `<i class="ti ti-target" style="color:var(--accent3)"></i> Aim for at least ${Math.ceil(needed)}% on the final.`;
+  }
+  // table of finals → resulting grade
+  const samples = [50, 60, 70, 80, 90, 100];
+  tEl.innerHTML = `
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; margin-bottom:4px">
+      <div>If final =</div><div>Final grade</div><div>Letter</div>
+    </div>
+    ${samples.map(f => {
+      const g = cur * (100 - w) / 100 + f * w / 100;
+      return `<div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; padding:5px 0; border-top:1px solid var(--border)">
+        <div>${f}%</div><div><b>${g.toFixed(1)}%</b></div><div style="color:var(--text2)">${letter(g)}</div>
+      </div>`;
+    }).join('')}
+  `;
+}
+
+function escapeHtml(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]); }
+
+$('#add-row').addEventListener('click', () => { rows.push({ name: '', score: '', max: 100, weight: 0 }); save(); renderRows(); compute(); });
+$('#clear-rows').addEventListener('click', () => { if (!confirm('Clear all rows?')) return; rows = [{ name: '', score: '', max: 100, weight: 0 }]; save(); renderRows(); compute(); });
+['#f-current','#f-weight','#f-target'].forEach(s => $(s).addEventListener('input', computeFinal));
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $('#current-panel').style.display = t.dataset.mode === 'current' ? '' : 'none';
+  $('#final-panel').style.display = t.dataset.mode === 'final' ? '' : 'none';
+}));
+
+renderRows(); compute(); computeFinal();
+</script>
+
+</body>
+</html>
