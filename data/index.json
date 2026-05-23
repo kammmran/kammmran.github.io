@@ -2,6 +2,12 @@
 
     {
     "type": "project",
+    "title": "Academy — Tools for Students & Researchers",
+    "file": "data/projects/academy.md",
+    "date": "2026-05-23"
+  },
+  {
+    "type": "project",
     "title": "Mapology",
     "file": "data/projects/mapology.md",
     "date": "2026-02-20"
