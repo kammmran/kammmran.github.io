@@ -16,13 +16,18 @@ document.addEventListener("DOMContentLoaded", () => {
             // Fetch all markdown files based on the index
             const promises = indexData.map(item =>
                 fetch(item.file)
-                    .then(res => res.text())
+                    .then(res => res.ok ? res.text() : Promise.reject(new Error(`${res.status} ${item.file}`)))
                     .then(content => ({ ...item, content }))
+                    .catch(err => {
+                        console.error('Skipping', item.file, err);
+                        return null;
+                    })
             );
 
             return Promise.all(promises);
         })
-        .then(data => {
+        .then(results => {
+            const data = results.filter(Boolean);
             const blogContainer = document.getElementById('blog-container');
             if (blogContainer) {
                 const posts = data.filter(d => d.type === 'post');

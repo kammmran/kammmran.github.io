@@ -36,3 +36,7 @@ js/firebase-config.example.js
 *.md
 !data/podcasts/*.md
 !data/podcasts/**/*.md
+!data/projects/*.md
+!data/projects/**/*.md
+!data/posts/*.md
+!data/posts/**/*.md
