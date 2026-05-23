@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keyword Extractor — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-tags"></i></div><div>Keyword Extractor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-tags"></i></div>
+      <div>
+        <div class="tool-title">Keyword Extractor</div>
+        <div class="tool-desc">Top single-word and two-word phrases ranked by frequency.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Your text</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="paste-btn"><i class="ti ti-clipboard"></i> Paste</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="text" placeholder="Paste an abstract, article, or notes…"></textarea>
+      <div class="row" style="margin-top:10px">
+        <label style="font-size:13px; color:var(--text2)">Show top
+          <input type="number" id="topn" value="15" min="5" max="50" style="width:70px; margin:0 6px">
+          terms
+        </label>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2); margin-left:auto">
+          <input type="checkbox" id="bigrams" checked> Bigrams
+        </label>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+          <input type="checkbox" id="trigrams"> Trigrams
+        </label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <select id="sort">
+          <option value="freq">Sort: by frequency</option>
+          <option value="alpha">Sort: alphabetical</option>
+          <option value="len">Sort: by length</option>
+        </select>
+        <span class="spacer"></span>
+        <button class="btn btn-sm" id="copy-csv"><i class="ti ti-copy"></i> Copy CSV</button>
+        <button class="btn btn-sm" id="copy-list"><i class="ti ti-copy"></i> Copy list</button>
+        <button class="btn btn-sm" id="dl-csv"><i class="ti ti-download"></i> .csv</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Keywords</span></div>
+      <div id="keywords" class="muted" style="font-size:13px">Enter text on the left.</div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>2-word phrases</span></div>
+      <div id="phrases" class="muted" style="font-size:13px"></div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>3-word phrases</span></div>
+      <div id="trigrams-out" class="muted" style="font-size:13px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<script>
+const STOP = new Set("a about above after again against all am an and any are aren as at be because been before being below between both but by can cannot could could couldn did didn do does doesn doing don down during each few for from further had hadn has hasn have haven having he her here hers herself him himself his how i if in into is isn it its itself just let ll me might more most mustn my myself need no nor not now of off on once only or other ought our ours ourselves out over own re s same shan she should shouldn so some such t than that the their theirs them themselves then there these they this those through to too under until up very was wasn we were weren what when where which while who whom why will with won would wouldn y you your yours yourself yourselves also however therefore thus much many one two three our using used use can may also via per".split(/\s+/));
+
+const text = document.getElementById('text');
+const kwEl = document.getElementById('keywords');
+const phEl = document.getElementById('phrases');
+const trigramOut = document.getElementById('trigrams-out');
+const topN = document.getElementById('topn');
+const bg = document.getElementById('bigrams');
+const tg = document.getElementById('trigrams');
+const sortSel = document.getElementById('sort');
+let lastResult = { keywords: [], bigrams: [], trigrams: [] };
+
+function toast(m) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = m;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function sortRows(rows) {
+  const s = sortSel.value;
+  const arr = [...rows];
+  if (s === 'freq') return arr.sort((a,b) => b[1] - a[1]);
+  if (s === 'alpha') return arr.sort((a,b) => a[0].localeCompare(b[0]));
+  return arr.sort((a,b) => b[0].length - a[0].length);
+}
+
+function tokens(t) {
+  return (t.toLowerCase().match(/[a-z][a-z'-]{2,}/g) || []).filter(w => !STOP.has(w));
+}
+
+function freq(arr) {
+  const m = new Map();
+  for (const x of arr) m.set(x, (m.get(x) || 0) + 1);
+  return [...m.entries()].sort((a,b) => b[1] - a[1]);
+}
+
+function render() {
+  const t = text.value;
+  if (!t.trim()) {
+    kwEl.innerHTML = '<span class="muted">Enter text on the left.</span>';
+    phEl.innerHTML = ''; trigramOut.innerHTML = '';
+    lastResult = { keywords: [], bigrams: [], trigrams: [] };
+    return;
+  }
+  const n = Math.max(5, Math.min(50, +topN.value || 15));
+  const toks = tokens(t);
+  const top = sortRows(freq(toks).slice(0, n));
+  lastResult.keywords = top;
+  const max = top.length ? Math.max(...top.map(r => r[1])) : 1;
+  kwEl.innerHTML = top.map(([w, c]) => {
+    const op = 0.35 + 0.65 * (c / max);
+    return `<span class="chip accent" style="margin:2px 4px 2px 0; opacity:${op}"><b>${w}</b> <span style="opacity:.7">${c}</span></span>`;
+  }).join('') || '<span class="muted">No keywords found.</span>';
+
+  const fullToks = (t.toLowerCase().match(/[a-z][a-z'-]{2,}/g) || []);
+
+  if (bg.checked) {
+    const bigrams = [];
+    for (let i = 0; i < fullToks.length - 1; i++) {
+      const a = fullToks[i], b = fullToks[i+1];
+      if (STOP.has(a) || STOP.has(b)) continue;
+      bigrams.push(a + ' ' + b);
+    }
+    const topBg = sortRows(freq(bigrams).filter(([_, c]) => c > 1).slice(0, n));
+    lastResult.bigrams = topBg;
+    if (topBg.length) {
+      const maxB = Math.max(...topBg.map(r => r[1]));
+      phEl.innerHTML = topBg.map(([w, c]) => {
+        const op = 0.35 + 0.65 * (c / maxB);
+        return `<span class="chip teal" style="margin:2px 4px 2px 0; opacity:${op}"><b>${w}</b> <span style="opacity:.7">${c}</span></span>`;
+      }).join('');
+    } else {
+      phEl.innerHTML = '<span class="muted">No repeating bigrams.</span>';
+    }
+  } else {
+    phEl.innerHTML = '<span class="muted">Bigrams disabled.</span>';
+    lastResult.bigrams = [];
+  }
+
+  if (tg.checked) {
+    const trigrams = [];
+    for (let i = 0; i < fullToks.length - 2; i++) {
+      const a = fullToks[i], b = fullToks[i+1], c = fullToks[i+2];
+      if (STOP.has(a) || STOP.has(c)) continue;
+      trigrams.push(a + ' ' + b + ' ' + c);
+    }
+    const topTg = sortRows(freq(trigrams).filter(([_, c]) => c > 1).slice(0, n));
+    lastResult.trigrams = topTg;
+    if (topTg.length) {
+      const maxT = Math.max(...topTg.map(r => r[1]));
+      trigramOut.innerHTML = topTg.map(([w, c]) => {
+        const op = 0.35 + 0.65 * (c / maxT);
+        return `<span class="chip" style="margin:2px 4px 2px 0; opacity:${op}; background:rgba(244,114,182,0.15); color:var(--pink); border-color:rgba(244,114,182,0.3)"><b>${w}</b> <span style="opacity:.7">${c}</span></span>`;
+      }).join('');
+    } else {
+      trigramOut.innerHTML = '<span class="muted">No repeating trigrams.</span>';
+    }
+  } else {
+    trigramOut.innerHTML = '<span class="muted">Trigrams disabled.</span>';
+    lastResult.trigrams = [];
+  }
+}
+
+function buildCsv() {
+  const lines = ['term,count,type'];
+  for (const [w,c] of lastResult.keywords) lines.push(`${w},${c},keyword`);
+  for (const [w,c] of lastResult.bigrams)  lines.push(`"${w}",${c},bigram`);
+  for (const [w,c] of lastResult.trigrams) lines.push(`"${w}",${c},trigram`);
+  return lines.join('\n');
+}
+
+document.getElementById('copy-csv').addEventListener('click', () => {
+  navigator.clipboard.writeText(buildCsv()); toast('CSV copied');
+});
+document.getElementById('copy-list').addEventListener('click', () => {
+  const all = [...lastResult.keywords, ...lastResult.bigrams, ...lastResult.trigrams].map(r => r[0]);
+  navigator.clipboard.writeText(all.join(', ')); toast('List copied');
+});
+document.getElementById('dl-csv').addEventListener('click', () => {
+  const blob = new Blob([buildCsv()], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'keywords.csv'; a.click();
+});
+
+text.addEventListener('input', render);
+topN.addEventListener('input', render);
+bg.addEventListener('change', render);
+tg.addEventListener('change', render);
+sortSel.addEventListener('change', render);
+document.getElementById('clear-btn').addEventListener('click', () => { text.value = ''; render(); text.focus(); });
+document.getElementById('paste-btn').addEventListener('click', async () => {
+  try { text.value = await navigator.clipboard.readText(); render(); } catch(e) {}
+});
+render();
+</script>
+
+</body>
+</html>

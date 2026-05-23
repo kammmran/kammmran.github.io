@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Utilities — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-text-recognition"></i></div><div>Text Utilities</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-text-recognition"></i></div>
+      <div>
+        <div class="tool-title">Text Utilities</div>
+        <div class="tool-desc">Change case, clean whitespace, find & replace — keep transforms reversible.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-tab="case">Case</button>
+    <button class="tab" data-tab="whitespace">Whitespace</button>
+    <button class="tab" data-tab="replace">Find & Replace</button>
+    <button class="tab" data-tab="sort">Sort & Dedupe</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Input</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="paste-btn"><i class="ti ti-clipboard"></i> Paste</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="Paste text here…"></textarea>
+
+      <div id="controls-case" class="controls" style="margin-top:12px">
+        <div class="row">
+          <button class="btn" data-case="upper">UPPER</button>
+          <button class="btn" data-case="lower">lower</button>
+          <button class="btn" data-case="title">Title Case</button>
+          <button class="btn" data-case="sentence">Sentence case</button>
+          <button class="btn" data-case="invert">iNVERT</button>
+          <button class="btn" data-case="camel">camelCase</button>
+          <button class="btn" data-case="snake">snake_case</button>
+          <button class="btn" data-case="kebab">kebab-case</button>
+        </div>
+      </div>
+
+      <div id="controls-whitespace" class="controls" style="display:none; margin-top:12px">
+        <div class="row">
+          <button class="btn" data-ws="trim">Trim ends</button>
+          <button class="btn" data-ws="collapse">Collapse spaces</button>
+          <button class="btn" data-ws="rmblank">Remove blank lines</button>
+          <button class="btn" data-ws="rmline">Strip line breaks</button>
+          <button class="btn" data-ws="tabsToSpace">Tabs → spaces</button>
+        </div>
+      </div>
+
+      <div id="controls-replace" class="controls" style="display:none; margin-top:12px">
+        <div class="row">
+          <input type="text" id="find" placeholder="Find…" style="flex:1; min-width:140px">
+          <input type="text" id="replace" placeholder="Replace with…" style="flex:1; min-width:140px">
+        </div>
+        <div class="row" style="margin-top:8px">
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2)"><input type="checkbox" id="regex"> Regex</label>
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2)"><input type="checkbox" id="caseSens"> Case-sensitive</label>
+          <button class="btn btn-primary" id="do-replace"><i class="ti ti-replace"></i> Replace all</button>
+        </div>
+      </div>
+
+      <div id="controls-sort" class="controls" style="display:none; margin-top:12px">
+        <div class="row">
+          <button class="btn" data-sort="asc">Sort A→Z</button>
+          <button class="btn" data-sort="desc">Sort Z→A</button>
+          <button class="btn" data-sort="dedupe">Remove duplicates</button>
+          <button class="btn" data-sort="reverse">Reverse lines</button>
+          <button class="btn" data-sort="shuffle">Shuffle</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">
+        <span>Output</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-btn"><i class="ti ti-copy"></i> Copy</button>
+          <button class="btn btn-sm" id="swap-btn"><i class="ti ti-arrows-exchange"></i> Move to input</button>
+        </div>
+      </div>
+      <textarea id="output" placeholder="Result will appear here…" readonly></textarea>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<script>
+const input = document.getElementById('input');
+const output = document.getElementById('output');
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+function setOut(s) { output.value = s; }
+
+// Tabs
+document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  document.querySelectorAll('.controls').forEach(c => c.style.display = 'none');
+  document.getElementById('controls-' + b.dataset.tab).style.display = '';
+}));
+
+// Case
+document.querySelectorAll('[data-case]').forEach(b => b.addEventListener('click', () => {
+  const t = input.value;
+  let r = t;
+  switch (b.dataset.case) {
+    case 'upper': r = t.toUpperCase(); break;
+    case 'lower': r = t.toLowerCase(); break;
+    case 'title': r = t.replace(/\w\S*/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase()); break;
+    case 'sentence': r = t.toLowerCase().replace(/(^\s*|[.!?]\s+)([a-z])/g, (m,p,c) => p + c.toUpperCase()); break;
+    case 'invert': r = [...t].map(c => c === c.toUpperCase() ? c.toLowerCase() : c.toUpperCase()).join(''); break;
+    case 'camel': r = t.toLowerCase().replace(/[^a-z0-9]+(.)/g, (m,c) => c.toUpperCase()).replace(/^[A-Z]/, c => c.toLowerCase()); break;
+    case 'snake': r = t.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''); break;
+    case 'kebab': r = t.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); break;
+  }
+  setOut(r);
+}));
+
+// Whitespace
+document.querySelectorAll('[data-ws]').forEach(b => b.addEventListener('click', () => {
+  const t = input.value;
+  let r = t;
+  switch (b.dataset.ws) {
+    case 'trim': r = t.split('\n').map(l => l.trim()).join('\n').trim(); break;
+    case 'collapse': r = t.replace(/[ \t]+/g, ' '); break;
+    case 'rmblank': r = t.split('\n').filter(l => l.trim() !== '').join('\n'); break;
+    case 'rmline': r = t.replace(/\s*\n+\s*/g, ' ').trim(); break;
+    case 'tabsToSpace': r = t.replace(/\t/g, '  '); break;
+  }
+  setOut(r);
+}));
+
+// Replace
+document.getElementById('do-replace').addEventListener('click', () => {
+  const find = document.getElementById('find').value;
+  const repl = document.getElementById('replace').value;
+  const isRe = document.getElementById('regex').checked;
+  const cs = document.getElementById('caseSens').checked;
+  if (!find) { setOut(input.value); return; }
+  try {
+    const flags = 'g' + (cs ? '' : 'i');
+    const re = isRe ? new RegExp(find, flags) : new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+    setOut(input.value.replace(re, repl));
+  } catch (e) { setOut('Regex error: ' + e.message); }
+});
+
+// Sort
+document.querySelectorAll('[data-sort]').forEach(b => b.addEventListener('click', () => {
+  const lines = input.value.split('\n');
+  let r;
+  switch (b.dataset.sort) {
+    case 'asc': r = [...lines].sort((a,b) => a.localeCompare(b)); break;
+    case 'desc': r = [...lines].sort((a,b) => b.localeCompare(a)); break;
+    case 'dedupe': { const seen = new Set(); r = lines.filter(l => !seen.has(l) && seen.add(l)); break; }
+    case 'reverse': r = [...lines].reverse(); break;
+    case 'shuffle': r = [...lines]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i+1)); [r[i], r[j]] = [r[j], r[i]]; } break;
+  }
+  setOut(r.join('\n'));
+}));
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  if (!output.value) return;
+  navigator.clipboard.writeText(output.value).then(() => toast('Copied'));
+});
+document.getElementById('swap-btn').addEventListener('click', () => { input.value = output.value; setOut(''); });
+document.getElementById('clear-btn').addEventListener('click', () => { input.value = ''; setOut(''); });
+document.getElementById('paste-btn').addEventListener('click', async () => {
+  try { input.value = await navigator.clipboard.readText(); } catch(e) {}
+});
+</script>
+
+</body>
+</html>

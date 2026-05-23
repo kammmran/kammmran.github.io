@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF to Text — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs" type="module"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-text"></i></div><div>PDF to Text</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-file-text"></i></div>
+      <div>
+        <div class="tool-title">PDF to Text</div>
+        <div class="tool-desc">Extract selectable text from a PDF. For scanned PDFs (images), use the OCR tool instead.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>PDF</span></div>
+      <div class="dropzone" id="drop">
+        <i class="ti ti-file-upload"></i>
+        <div class="dropzone-title" id="drop-title">Drop a PDF here, or click to choose</div>
+        <div class="dropzone-hint" id="drop-hint">Pages are processed locally.</div>
+        <input type="file" id="file" accept="application/pdf" hidden>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+          <input type="checkbox" id="layout" checked> Preserve line breaks
+        </label>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+          <input type="checkbox" id="page-headers" checked> Insert page markers
+        </label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1">
+          <div class="panel-label"><span>Pages (optional)</span></div>
+          <input type="text" id="ranges" placeholder="e.g. 1-3,5 — leave empty for all">
+        </div>
+      </div>
+      <div id="progress-wrap" style="margin-top:10px; display:none">
+        <div style="height:6px; background:var(--bg2); border-radius:3px; overflow:hidden; border:1px solid var(--border)">
+          <div id="progress-bar" style="height:100%; background:var(--accent); width:0%; transition:width .2s"></div>
+        </div>
+        <div id="progress-label" class="muted" style="font-size:12px; margin-top:4px"></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="run-btn" disabled><i class="ti ti-file-text"></i> Extract text</button>
+        <span class="spacer"></span>
+        <span id="status" class="muted" style="font-size:13px"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Text</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-btn" disabled><i class="ti ti-copy"></i> Copy</button>
+          <button class="btn btn-sm" id="dl-btn" disabled><i class="ti ti-download"></i> .txt</button>
+        </div>
+      </div>
+      <textarea id="output" readonly placeholder="Extracted text will appear here…"></textarea>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<script type="module">
+import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+
+const drop = document.getElementById('drop');
+const file = document.getElementById('file');
+const runBtn = document.getElementById('run-btn');
+const output = document.getElementById('output');
+const statusEl = document.getElementById('status');
+const dropTitle = document.getElementById('drop-title');
+const dropHint = document.getElementById('drop-hint');
+const progWrap = document.getElementById('progress-wrap');
+const progBar = document.getElementById('progress-bar');
+const progLabel = document.getElementById('progress-label');
+const copyBtn = document.getElementById('copy-btn');
+const dlBtn = document.getElementById('dl-btn');
+
+let currentBytes = null, currentName = '', pageCount = 0;
+
+drop.addEventListener('click', () => file.click());
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+drop.addEventListener('drop', e => { if (e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+file.addEventListener('change', e => { if (e.target.files[0]) handle(e.target.files[0]); });
+
+async function handle(f) {
+  if (!f.type.includes('pdf') && !f.name.toLowerCase().endsWith('.pdf')) {
+    statusEl.innerHTML = '<span style="color:var(--red)">Not a PDF.</span>';
+    return;
+  }
+  currentName = f.name.replace(/\.pdf$/i, '');
+  currentBytes = new Uint8Array(await f.arrayBuffer());
+  const doc = await pdfjsLib.getDocument({ data: currentBytes.slice() }).promise;
+  pageCount = doc.numPages;
+  dropTitle.textContent = f.name;
+  dropHint.textContent = `${pageCount} page${pageCount > 1 ? 's' : ''} loaded.`;
+  runBtn.disabled = false;
+  statusEl.textContent = '';
+}
+
+function parseRanges(s, max) {
+  if (!s.trim()) return Array.from({length:max}, (_,i) => i+1);
+  const out = []; const seen = new Set();
+  for (const p of s.split(',').map(x => x.trim()).filter(Boolean)) {
+    const m = p.match(/^(\d+)(?:-(\d+))?$/);
+    if (!m) throw new Error('Invalid range: ' + p);
+    const a = +m[1], b = m[2] ? +m[2] : a;
+    const [lo, hi] = a <= b ? [a, b] : [b, a];
+    for (let i = lo; i <= hi; i++) if (i >= 1 && i <= max && !seen.has(i)) { seen.add(i); out.push(i); }
+  }
+  return out;
+}
+
+runBtn.addEventListener('click', async () => {
+  runBtn.disabled = true;
+  output.value = ''; copyBtn.disabled = true; dlBtn.disabled = true;
+  progWrap.style.display = 'block';
+  progBar.style.width = '0%';
+  statusEl.textContent = 'Extracting…';
+  try {
+    const pages = parseRanges(document.getElementById('ranges').value, pageCount);
+    const layout = document.getElementById('layout').checked;
+    const headers = document.getElementById('page-headers').checked;
+    const doc = await pdfjsLib.getDocument({ data: currentBytes.slice() }).promise;
+    let result = '';
+    for (let idx = 0; idx < pages.length; idx++) {
+      const p = pages[idx];
+      const page = await doc.getPage(p);
+      const tc = await page.getTextContent();
+      let pageText = '';
+      if (layout) {
+        let lastY = null;
+        for (const it of tc.items) {
+          const y = it.transform[5];
+          if (lastY !== null && Math.abs(y - lastY) > 2) pageText += '\n';
+          pageText += it.str + (it.hasEOL ? '\n' : '');
+          lastY = y;
+        }
+      } else {
+        pageText = tc.items.map(i => i.str).join(' ');
+      }
+      if (headers) result += `\n— page ${p} —\n`;
+      result += pageText.trim() + '\n\n';
+      progBar.style.width = ((idx+1)/pages.length * 100) + '%';
+      progLabel.textContent = `Page ${p} (${idx+1}/${pages.length})`;
+    }
+    output.value = result.trim();
+    statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> ${pages.length} page${pages.length>1?'s':''} extracted.`;
+    copyBtn.disabled = !output.value; dlBtn.disabled = !output.value;
+  } catch (e) {
+    statusEl.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+  } finally {
+    runBtn.disabled = false;
+    setTimeout(() => progWrap.style.display = 'none', 600);
+  }
+});
+
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(output.value).then(() => {
+    const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
+  });
+});
+dlBtn.addEventListener('click', () => {
+  const blob = new Blob([output.value], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `${currentName}.txt`; a.click();
+});
+</script>
+
+</body>
+</html>

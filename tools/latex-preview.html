@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LaTeX Preview — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-math-function"></i></div><div>LaTeX Preview</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-math-function"></i></div>
+      <div>
+        <div class="tool-title">LaTeX Preview</div>
+        <div class="tool-desc">Live KaTeX rendering with image export, document mode, and a snippet library.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="equation">Equation</button>
+    <button class="tab" data-mode="document">Document (mixed text)</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>LaTeX source</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-btn"><i class="ti ti-copy"></i> Copy</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="src" placeholder="\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}">\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}</textarea>
+      <div class="row" style="margin-top:10px">
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+          <input type="checkbox" id="display" checked> Display mode (larger)
+        </label>
+        <span class="spacer"></span>
+        <span class="muted" id="hint" style="font-size:12px">In document mode, wrap math in <code>$…$</code> or <code>$$…$$</code></span>
+      </div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Snippets</span></div>
+      <div class="row" style="gap:6px; flex-wrap:wrap" id="snippets"></div>
+      <div class="divider"></div>
+      <div class="panel-label">
+        <span>Recent</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="clear-history"><i class="ti ti-trash"></i> Clear</button>
+        </div>
+      </div>
+      <div id="history" style="font-size:13px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Rendered</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="png-btn"><i class="ti ti-download"></i> PNG</button>
+          <button class="btn btn-sm" id="html-btn"><i class="ti ti-download"></i> HTML</button>
+          <button class="btn btn-sm" id="print-btn"><i class="ti ti-printer"></i> Print</button>
+        </div>
+      </div>
+      <div id="preview" class="output-box" style="font-size:18px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; padding:24px"></div>
+      <div id="err" style="color:var(--red); font-size:13px; margin-top:8px; min-height:18px"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px; min-height:auto">
+    <div class="panel-label"><span>Quick reference</span></div>
+    <div class="stat-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr))">
+      <div class="stat-card"><div class="stat-label">Fraction</div><div style="font-family:monospace; font-size:13px">\frac{a}{b}</div></div>
+      <div class="stat-card"><div class="stat-label">Square root</div><div style="font-family:monospace; font-size:13px">\sqrt{x}</div></div>
+      <div class="stat-card"><div class="stat-label">Superscript</div><div style="font-family:monospace; font-size:13px">x^{2}</div></div>
+      <div class="stat-card"><div class="stat-label">Subscript</div><div style="font-family:monospace; font-size:13px">x_{i}</div></div>
+      <div class="stat-card"><div class="stat-label">Greek</div><div style="font-family:monospace; font-size:13px">\alpha \beta \pi</div></div>
+      <div class="stat-card"><div class="stat-label">Sum / Product</div><div style="font-family:monospace; font-size:13px">\sum \prod</div></div>
+      <div class="stat-card"><div class="stat-label">Integral</div><div style="font-family:monospace; font-size:13px">\int_a^b</div></div>
+      <div class="stat-card"><div class="stat-label">Limit</div><div style="font-family:monospace; font-size:13px">\lim_{x \to 0}</div></div>
+      <div class="stat-card"><div class="stat-label">Matrix</div><div style="font-family:monospace; font-size:13px">\begin{pmatrix}…\end{pmatrix}</div></div>
+      <div class="stat-card"><div class="stat-label">Cases</div><div style="font-family:monospace; font-size:13px">\begin{cases}…\end{cases}</div></div>
+      <div class="stat-card"><div class="stat-label">Vector</div><div style="font-family:monospace; font-size:13px">\vec{v}</div></div>
+      <div class="stat-card"><div class="stat-label">Bold</div><div style="font-family:monospace; font-size:13px">\mathbf{x}</div></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<script>
+const src = document.getElementById('src');
+const preview = document.getElementById('preview');
+const err = document.getElementById('err');
+const display = document.getElementById('display');
+const histEl = document.getElementById('history');
+
+const SNIPPETS = [
+  { l: '∑', s: '\\sum_{i=1}^{n} x_i' },
+  { l: '∫', s: '\\int_0^{\\infty} e^{-x^2}\\, dx' },
+  { l: '∂', s: '\\frac{\\partial f}{\\partial x}' },
+  { l: 'lim', s: '\\lim_{x \\to 0} \\frac{\\sin x}{x}' },
+  { l: '√', s: '\\sqrt[n]{x}' },
+  { l: '[ ]', s: '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}' },
+  { l: '{', s: '\\begin{cases} x & \\text{if } x \\ge 0 \\\\ -x & \\text{otherwise} \\end{cases}' },
+  { l: 'α', s: '\\alpha \\beta \\gamma \\delta \\epsilon' },
+  { l: '→', s: 'f: A \\to B' },
+  { l: '∇', s: '\\nabla \\cdot \\vec{F}' },
+];
+
+const snipEl = document.getElementById('snippets');
+snipEl.innerHTML = SNIPPETS.map(s => `<button class="btn btn-sm" data-snip="${s.s.replace(/"/g,'&quot;')}">${s.l}</button>`).join('');
+snipEl.querySelectorAll('[data-snip]').forEach(b => b.addEventListener('click', () => {
+  const t = b.dataset.snip;
+  const a = src.selectionStart, c = src.selectionEnd;
+  src.value = src.value.slice(0, a) + t + src.value.slice(c);
+  src.focus();
+  src.selectionStart = a; src.selectionEnd = a + t.length;
+  render();
+}));
+
+let mode = 'equation';
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  if (mode === 'document') {
+    if (!src.value.includes('$')) src.value = "The quadratic formula is\n$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\n\nFor any value $a \\neq 0$, this gives the roots of $ax^2 + bx + c = 0$.";
+  }
+  render();
+}));
+
+function renderDocument() {
+  preview.style.display = 'block';
+  preview.style.textAlign = 'left';
+  preview.style.lineHeight = '1.7';
+  preview.style.fontSize = '15px';
+  preview.style.fontFamily = "'Inter', sans-serif";
+  preview.innerHTML = escapeHtml(src.value).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
+  preview.innerHTML = '<p>' + preview.innerHTML + '</p>';
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(preview, {
+        delimiters: [
+          { left: '$$', right: '$$', display: true },
+          { left: '$', right: '$', display: false },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '\\[', right: '\\]', display: true },
+        ],
+        throwOnError: false,
+      });
+      err.textContent = '';
+    } catch (e) { err.textContent = e.message; }
+  }
+}
+
+function renderEquation() {
+  preview.style.display = 'flex';
+  preview.style.textAlign = 'center';
+  preview.style.fontFamily = '';
+  preview.style.fontSize = '20px';
+  err.textContent = '';
+  try {
+    katex.render(src.value, preview, { displayMode: display.checked, throwOnError: true });
+  } catch (e) {
+    preview.innerHTML = '<span class="muted" style="font-style:italic">Invalid LaTeX</span>';
+    err.textContent = e.message;
+  }
+}
+
+function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+function render() {
+  if (!window.katex) { setTimeout(render, 60); return; }
+  if (mode === 'document') renderDocument(); else renderEquation();
+  saveHistory();
+}
+
+let pending;
+function debounced() { clearTimeout(pending); pending = setTimeout(render, 80); }
+
+src.addEventListener('input', debounced);
+display.addEventListener('change', render);
+
+function saveHistory() {
+  const v = src.value.trim();
+  if (!v) return;
+  let h = JSON.parse(localStorage.getItem('latex-history') || '[]');
+  h = h.filter(x => x !== v);
+  h.unshift(v);
+  h = h.slice(0, 12);
+  localStorage.setItem('latex-history', JSON.stringify(h));
+  renderHistory();
+}
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem('latex-history') || '[]');
+  if (!h.length) { histEl.innerHTML = '<span class="muted">No history yet.</span>'; return; }
+  histEl.innerHTML = h.slice(0, 8).map((item, i) => {
+    const short = item.length > 50 ? item.slice(0, 50) + '…' : item;
+    return `<div class="row" style="padding:5px 0; border-bottom:1px solid var(--border); gap:8px">
+      <code style="flex:1; font-size:12px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${escapeHtml(short)}</code>
+      <button class="btn btn-sm" data-load="${i}">Load</button>
+    </div>`;
+  }).join('');
+  histEl.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => {
+    const h = JSON.parse(localStorage.getItem('latex-history') || '[]');
+    src.value = h[+b.dataset.load];
+    render();
+  }));
+}
+document.getElementById('clear-history').addEventListener('click', () => {
+  localStorage.removeItem('latex-history'); renderHistory();
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(src.value).then(() => {
+    const t = document.getElementById('toast'); document.getElementById('toast-msg').textContent='Source copied';
+    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
+  });
+});
+document.getElementById('clear-btn').addEventListener('click', () => { src.value = ''; render(); });
+
+document.getElementById('png-btn').addEventListener('click', async () => {
+  if (!window.html2canvas) { err.textContent = 'Library loading…'; return; }
+  const canvas = await html2canvas(preview, { backgroundColor: '#ffffff', scale: 2 });
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png'); a.download = 'equation.png'; a.click();
+});
+
+document.getElementById('html-btn').addEventListener('click', () => {
+  const katexCss = document.querySelector('link[href*="katex"]').href;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Equation</title>
+<link rel="stylesheet" href="${katexCss}">
+<style>body{font-family:-apple-system,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.65}</style>
+</head><body>${preview.innerHTML}</body></html>`;
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'equation.html'; a.click();
+});
+
+document.getElementById('print-btn').addEventListener('click', () => {
+  const katexCss = document.querySelector('link[href*="katex"]').href;
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>Print</title>
+<link rel="stylesheet" href="${katexCss}">
+<style>body{font-family:-apple-system,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.65;color:#000}</style>
+</head><body>${preview.innerHTML}<scr` + `ipt>setTimeout(()=>window.print(),300)</scr` + `ipt></body></html>`);
+  w.document.close();
+});
+
+renderHistory();
+function start() { if (window.katex) render(); else setTimeout(start, 60); }
+start();
+</script>
+
+</body>
+</html>

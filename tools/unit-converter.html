@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit Converter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrows-exchange-2"></i></div><div>Unit Converter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-arrows-exchange-2"></i></div>
+      <div>
+        <div class="tool-title">Unit Converter</div>
+        <div class="tool-desc">Convert between common units across categories — instantly.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="cat-tabs"></div>
+
+  <div class="workspace" style="grid-template-columns: 1fr 1fr">
+    <div class="panel">
+      <div class="panel-label"><span>From</span></div>
+      <input type="number" id="fromVal" value="1" step="any">
+      <select id="fromU" style="margin-top:10px; width:100%"></select>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>To</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="swap-btn"><i class="ti ti-arrows-exchange"></i> Swap</button>
+        </div>
+      </div>
+      <input type="text" id="toVal" readonly style="font-size:18px; font-weight:600">
+      <select id="toU" style="margin-top:10px; width:100%"></select>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px; min-height:auto">
+    <div class="panel-label"><span>Common conversions</span></div>
+    <div class="stat-grid" id="common"></div>
+  </div>
+</main>
+
+<script>
+// All factors relative to base unit (factor multiplies to get base, divides to leave base)
+const cats = {
+  length: {
+    label: 'Length', icon: 'ti-ruler', base: 'm',
+    units: {
+      mm: { name: 'Millimeter (mm)', f: 0.001 },
+      cm: { name: 'Centimeter (cm)', f: 0.01 },
+      m:  { name: 'Meter (m)',       f: 1 },
+      km: { name: 'Kilometer (km)',  f: 1000 },
+      in: { name: 'Inch (in)',       f: 0.0254 },
+      ft: { name: 'Foot (ft)',       f: 0.3048 },
+      yd: { name: 'Yard (yd)',       f: 0.9144 },
+      mi: { name: 'Mile (mi)',       f: 1609.344 },
+      nmi:{ name: 'Nautical mile',   f: 1852 },
+    }
+  },
+  mass: {
+    label: 'Mass', icon: 'ti-weight', base: 'kg',
+    units: {
+      mg: { name: 'Milligram (mg)', f: 0.000001 },
+      g:  { name: 'Gram (g)',       f: 0.001 },
+      kg: { name: 'Kilogram (kg)',  f: 1 },
+      t:  { name: 'Tonne (t)',      f: 1000 },
+      oz: { name: 'Ounce (oz)',     f: 0.0283495 },
+      lb: { name: 'Pound (lb)',     f: 0.453592 },
+      st: { name: 'Stone (st)',     f: 6.35029 },
+    }
+  },
+  time: {
+    label: 'Time', icon: 'ti-clock', base: 's',
+    units: {
+      ms: { name: 'Millisecond (ms)', f: 0.001 },
+      s:  { name: 'Second (s)',  f: 1 },
+      min:{ name: 'Minute',      f: 60 },
+      h:  { name: 'Hour',        f: 3600 },
+      d:  { name: 'Day',         f: 86400 },
+      wk: { name: 'Week',        f: 604800 },
+      yr: { name: 'Year (365.25d)', f: 31557600 },
+    }
+  },
+  temperature: {
+    label: 'Temperature', icon: 'ti-temperature', base: 'C',
+    units: {
+      C: { name: 'Celsius (°C)' },
+      F: { name: 'Fahrenheit (°F)' },
+      K: { name: 'Kelvin (K)' },
+    },
+    custom: true
+  },
+  data: {
+    label: 'Data', icon: 'ti-database', base: 'B',
+    units: {
+      B:   { name: 'Byte (B)',     f: 1 },
+      KB:  { name: 'Kilobyte (KB)',f: 1024 },
+      MB:  { name: 'Megabyte (MB)',f: 1024**2 },
+      GB:  { name: 'Gigabyte (GB)',f: 1024**3 },
+      TB:  { name: 'Terabyte (TB)',f: 1024**4 },
+      PB:  { name: 'Petabyte (PB)',f: 1024**5 },
+      bit: { name: 'Bit',          f: 0.125 },
+    }
+  },
+  energy: {
+    label: 'Energy', icon: 'ti-bolt', base: 'J',
+    units: {
+      J:    { name: 'Joule (J)',       f: 1 },
+      kJ:   { name: 'Kilojoule (kJ)',  f: 1000 },
+      cal:  { name: 'Calorie (cal)',   f: 4.184 },
+      kcal: { name: 'Kilocalorie',     f: 4184 },
+      Wh:   { name: 'Watt-hour (Wh)',  f: 3600 },
+      kWh:  { name: 'Kilowatt-hour',   f: 3.6e6 },
+      eV:   { name: 'Electronvolt',    f: 1.602176634e-19 },
+    }
+  },
+  pressure: {
+    label: 'Pressure', icon: 'ti-gauge', base: 'Pa',
+    units: {
+      Pa:   { name: 'Pascal (Pa)',     f: 1 },
+      kPa:  { name: 'Kilopascal',      f: 1000 },
+      bar:  { name: 'Bar',             f: 1e5 },
+      atm:  { name: 'Atmosphere',      f: 101325 },
+      mmHg: { name: 'mmHg / Torr',     f: 133.322 },
+      psi:  { name: 'psi',             f: 6894.76 },
+    }
+  },
+  area: {
+    label: 'Area', icon: 'ti-square', base: 'm2',
+    units: {
+      mm2: { name: 'mm²',      f: 1e-6 },
+      cm2: { name: 'cm²',      f: 1e-4 },
+      m2:  { name: 'm²',       f: 1 },
+      ha:  { name: 'Hectare',  f: 10000 },
+      km2: { name: 'km²',      f: 1e6 },
+      in2: { name: 'in²',      f: 0.00064516 },
+      ft2: { name: 'ft²',      f: 0.092903 },
+      yd2: { name: 'yd²',      f: 0.836127 },
+      acre:{ name: 'Acre',     f: 4046.86 },
+      mi2: { name: 'mi²',      f: 2589988.11 },
+    }
+  },
+  volume: {
+    label: 'Volume', icon: 'ti-cube', base: 'L',
+    units: {
+      ml:   { name: 'Milliliter (mL)', f: 0.001 },
+      L:    { name: 'Liter (L)',       f: 1 },
+      m3:   { name: 'Cubic meter (m³)',f: 1000 },
+      tsp:  { name: 'Teaspoon (US)',   f: 0.00492892 },
+      tbsp: { name: 'Tablespoon (US)', f: 0.0147868 },
+      cup:  { name: 'Cup (US)',        f: 0.236588 },
+      pt:   { name: 'Pint (US)',       f: 0.473176 },
+      qt:   { name: 'Quart (US)',      f: 0.946353 },
+      gal:  { name: 'Gallon (US)',     f: 3.78541 },
+      gal_uk:{ name: 'Gallon (UK)',    f: 4.54609 },
+      floz: { name: 'Fluid ounce (US)',f: 0.0295735 },
+      in3:  { name: 'in³',             f: 0.0163871 },
+      ft3:  { name: 'ft³',             f: 28.3168 },
+    }
+  },
+  speed: {
+    label: 'Speed', icon: 'ti-gauge', base: 'mps',
+    units: {
+      mps:  { name: 'Meter/second (m/s)', f: 1 },
+      kmh:  { name: 'Kilometer/hour (km/h)', f: 1/3.6 },
+      mph:  { name: 'Mile/hour (mph)',    f: 0.44704 },
+      fps:  { name: 'Foot/second (ft/s)', f: 0.3048 },
+      knot: { name: 'Knot',               f: 0.514444 },
+      mach: { name: 'Mach (sea level)',   f: 343 },
+    }
+  },
+  angle: {
+    label: 'Angle', icon: 'ti-angle', base: 'rad',
+    units: {
+      rad: { name: 'Radian',  f: 1 },
+      deg: { name: 'Degree',  f: Math.PI / 180 },
+      grad:{ name: 'Gradian', f: Math.PI / 200 },
+      turn:{ name: 'Turn',    f: 2 * Math.PI },
+      arcmin:{ name: 'Arcminute', f: Math.PI / 10800 },
+      arcsec:{ name: 'Arcsecond', f: Math.PI / 648000 },
+    }
+  },
+  frequency: {
+    label: 'Frequency', icon: 'ti-wave-sine', base: 'Hz',
+    units: {
+      Hz:  { name: 'Hertz (Hz)',     f: 1 },
+      kHz: { name: 'Kilohertz',      f: 1e3 },
+      MHz: { name: 'Megahertz',      f: 1e6 },
+      GHz: { name: 'Gigahertz',      f: 1e9 },
+      rpm: { name: 'RPM',            f: 1/60 },
+    }
+  },
+  power: {
+    label: 'Power', icon: 'ti-bolt', base: 'W',
+    units: {
+      mW: { name: 'Milliwatt',  f: 0.001 },
+      W:  { name: 'Watt (W)',   f: 1 },
+      kW: { name: 'Kilowatt',   f: 1000 },
+      MW: { name: 'Megawatt',   f: 1e6 },
+      hp: { name: 'Horsepower', f: 745.7 },
+      BTUh:{name:'BTU/hour',    f: 0.293071 },
+    }
+  },
+};
+
+const tabsEl = document.getElementById('cat-tabs');
+const fromU = document.getElementById('fromU');
+const toU = document.getElementById('toU');
+const fromVal = document.getElementById('fromVal');
+const toVal = document.getElementById('toVal');
+const common = document.getElementById('common');
+
+let currentCat = 'length';
+
+Object.keys(cats).forEach((k, i) => {
+  const b = document.createElement('button');
+  b.className = 'tab' + (i === 0 ? ' active' : '');
+  b.innerHTML = `<i class="ti ${cats[k].icon}" style="margin-right:4px"></i>${cats[k].label}`;
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#cat-tabs .tab').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    setCategory(k);
+  });
+  tabsEl.appendChild(b);
+});
+
+function tempConvert(v, from, to) {
+  let c;
+  if (from === 'C') c = v;
+  else if (from === 'F') c = (v - 32) * 5/9;
+  else c = v - 273.15;
+  if (to === 'C') return c;
+  if (to === 'F') return c * 9/5 + 32;
+  return c + 273.15;
+}
+
+function convert(v, from, to, cat) {
+  if (cat === 'temperature') return tempConvert(v, from, to);
+  const u = cats[cat].units;
+  return v * u[from].f / u[to].f;
+}
+
+function fmt(n) {
+  if (!isFinite(n)) return '—';
+  if (n === 0) return '0';
+  const abs = Math.abs(n);
+  if (abs >= 1e9 || abs < 1e-4) return n.toExponential(6);
+  return parseFloat(n.toPrecision(8)).toString();
+}
+
+function setCategory(cat) {
+  currentCat = cat;
+  const units = cats[cat].units;
+  const keys = Object.keys(units);
+  fromU.innerHTML = keys.map(k => `<option value="${k}">${units[k].name}</option>`).join('');
+  toU.innerHTML = keys.map(k => `<option value="${k}">${units[k].name}</option>`).join('');
+  fromU.value = keys[0];
+  toU.value = keys[1] || keys[0];
+  fromVal.value = 1;
+  update();
+  renderCommon();
+}
+
+function update() {
+  const v = parseFloat(fromVal.value);
+  if (isNaN(v)) { toVal.value = ''; return; }
+  toVal.value = fmt(convert(v, fromU.value, toU.value, currentCat));
+}
+
+function renderCommon() {
+  const presets = {
+    length: [[1,'km','m'], [1,'mi','km'], [1,'ft','m'], [1,'in','cm']],
+    mass: [[1,'kg','lb'], [1,'lb','kg'], [1,'oz','g']],
+    time: [[1,'h','min'], [1,'d','h'], [1,'yr','d']],
+    temperature: [[0,'C','F'], [100,'C','F'], [32,'F','C'], [0,'C','K']],
+    data: [[1,'GB','MB'], [1,'TB','GB'], [1,'MB','KB']],
+    energy: [[1,'kcal','kJ'], [1,'kWh','J']],
+    pressure: [[1,'atm','kPa'], [1,'bar','psi']],
+    area: [[1,'acre','m2'], [1,'ha','acre'], [1,'mi2','km2']],
+    volume: [[1,'gal','L'], [1,'cup','ml'], [1,'L','floz']],
+    speed: [[100,'kmh','mph'], [60,'mph','kmh'], [1,'mach','kmh']],
+    angle: [[180,'deg','rad'], [1,'turn','deg'], [90,'deg','grad']],
+    frequency: [[1,'GHz','MHz'], [1,'kHz','Hz'], [60,'rpm','Hz']],
+    power: [[1,'hp','W'], [1,'kW','hp']],
+  };
+  const list = presets[currentCat] || [];
+  const u = cats[currentCat].units;
+  common.innerHTML = list.map(([v,a,b]) => `
+    <div class="stat-card">
+      <div class="stat-label">${v} ${a} = </div>
+      <div class="stat-value" style="font-size:14px">${fmt(convert(v,a,b,currentCat))} ${b}</div>
+    </div>
+  `).join('');
+}
+
+fromU.addEventListener('change', update);
+toU.addEventListener('change', update);
+fromVal.addEventListener('input', update);
+document.getElementById('swap-btn').addEventListener('click', () => {
+  const a = fromU.value;
+  fromU.value = toU.value;
+  toU.value = a;
+  update();
+});
+
+setCategory('length');
+</script>
+
+</body>
+</html>

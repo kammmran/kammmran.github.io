@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Merge — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-stack"></i></div><div>PDF Merge</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-file-stack"></i></div>
+      <div>
+        <div class="tool-title">PDF Merge</div>
+        <div class="tool-desc">Combine PDFs into one file. All processing happens locally in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace single">
+    <div class="panel">
+      <div class="dropzone" id="drop">
+        <i class="ti ti-file-upload"></i>
+        <div class="dropzone-title">Drop PDFs here, or click to choose</div>
+        <div class="dropzone-hint">You can add more files later. Drag rows to reorder.</div>
+        <input type="file" id="file" accept="application/pdf" multiple hidden>
+      </div>
+
+      <div id="list" style="margin-top:14px"></div>
+
+      <div class="row" style="margin-top:14px">
+        <button class="btn btn-primary" id="merge-btn" disabled><i class="ti ti-stack"></i> Merge & download</button>
+        <button class="btn" id="clear-btn" disabled><i class="ti ti-trash"></i> Clear all</button>
+        <span class="spacer"></span>
+        <span id="status" class="muted" style="font-size:13px"></span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<style>
+  .file-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:6px; cursor:grab; }
+  .file-row.drag { opacity: .4; }
+  .file-row .grip { color: var(--text3); cursor: grab; }
+  .file-row .name { flex:1; font-size:14px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .file-row .meta { color: var(--text3); font-size:12px; }
+  .file-row .x { background:none; border:none; color:var(--text3); cursor:pointer; padding:4px; }
+  .file-row .x:hover { color: var(--red); }
+</style>
+
+<script>
+const drop = document.getElementById('drop');
+const file = document.getElementById('file');
+const list = document.getElementById('list');
+const mergeBtn = document.getElementById('merge-btn');
+const clearBtn = document.getElementById('clear-btn');
+const statusEl = document.getElementById('status');
+
+let files = [];
+
+function pretty(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/1024/1024).toFixed(1) + ' MB';
+}
+
+function render() {
+  list.innerHTML = files.map((f, i) => `
+    <div class="file-row" draggable="true" data-i="${i}">
+      <i class="ti ti-grip-vertical grip"></i>
+      <i class="ti ti-file-type-pdf" style="color:var(--red)"></i>
+      <span class="name">${f.name}</span>
+      <span class="meta">${pretty(f.size)}</span>
+      <button class="x" data-rm="${i}"><i class="ti ti-x"></i></button>
+    </div>
+  `).join('');
+  mergeBtn.disabled = files.length < 1;
+  clearBtn.disabled = files.length === 0;
+
+  list.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    files.splice(+b.dataset.rm, 1);
+    render();
+  }));
+
+  let dragI = null;
+  list.querySelectorAll('.file-row').forEach(row => {
+    row.addEventListener('dragstart', () => { dragI = +row.dataset.i; row.classList.add('drag'); });
+    row.addEventListener('dragend', () => row.classList.remove('drag'));
+    row.addEventListener('dragover', e => e.preventDefault());
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const overI = +row.dataset.i;
+      if (dragI == null || dragI === overI) return;
+      const [moved] = files.splice(dragI, 1);
+      files.splice(overI, 0, moved);
+      render();
+    });
+  });
+}
+
+function addFiles(fs) {
+  for (const f of fs) {
+    if (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) files.push(f);
+  }
+  render();
+}
+
+drop.addEventListener('click', () => file.click());
+file.addEventListener('change', e => addFiles(e.target.files));
+;['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+;['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+
+clearBtn.addEventListener('click', () => { files = []; render(); statusEl.textContent = ''; });
+
+mergeBtn.addEventListener('click', async () => {
+  if (!window.PDFLib) { statusEl.textContent = 'Library loading…'; return; }
+  mergeBtn.disabled = true;
+  statusEl.textContent = 'Merging…';
+  try {
+    const out = await PDFLib.PDFDocument.create();
+    for (const f of files) {
+      const bytes = await f.arrayBuffer();
+      const src = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+      const pages = await out.copyPages(src, src.getPageIndices());
+      pages.forEach(p => out.addPage(p));
+    }
+    const bytes = await out.save();
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'merged.pdf'; a.click();
+    URL.revokeObjectURL(url);
+    statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Done — merged ${files.length} file${files.length>1?'s':''}.`;
+  } catch (e) {
+    statusEl.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+  } finally {
+    mergeBtn.disabled = false;
+  }
+});
+
+render();
+</script>
+
+</body>
+</html>

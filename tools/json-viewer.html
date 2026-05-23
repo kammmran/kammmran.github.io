@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JSON / CSV Viewer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-braces"></i></div><div>JSON / CSV Viewer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-braces"></i></div>
+      <div>
+        <div class="tool-title">JSON / CSV Viewer</div>
+        <div class="tool-desc">Format, validate, and convert between JSON and CSV. Browse nested data as a tree.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="json">JSON</button>
+    <button class="tab" data-mode="csv">CSV</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Input</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="paste-btn"><i class="ti ti-clipboard"></i> Paste</button>
+          <button class="btn btn-sm" id="sample-btn"><i class="ti ti-sparkles"></i> Sample</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="Paste JSON or CSV…"></textarea>
+      <div class="row" style="margin-top:10px">
+        <select id="indent">
+          <option value="2">2 spaces</option>
+          <option value="4">4 spaces</option>
+          <option value="tab">Tab</option>
+          <option value="0">Minify</option>
+        </select>
+        <button class="btn" id="format-btn"><i class="ti ti-text-wrap"></i> Format</button>
+        <button class="btn" id="convert-btn"><i class="ti ti-arrows-exchange"></i> Convert</button>
+        <span class="spacer"></span>
+        <span id="status" class="muted" style="font-size:13px"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Output</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="tree-btn"><i class="ti ti-list-tree"></i> Tree</button>
+          <button class="btn btn-sm" id="text-btn"><i class="ti ti-align-left"></i> Text</button>
+          <button class="btn btn-sm" id="copy-btn"><i class="ti ti-copy"></i> Copy</button>
+        </div>
+      </div>
+      <div id="text-view" class="output-box" style="font-family:ui-monospace,Menlo,monospace; font-size:13px; white-space:pre"></div>
+      <div id="tree-view" class="output-box" style="font-family:ui-monospace,Menlo,monospace; font-size:13px; display:none"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px; min-height:auto">
+    <div class="panel-label"><span>Info</span></div>
+    <div class="stat-grid" id="info"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<style>
+  .json-key { color: var(--accent3); }
+  .json-string { color: var(--green); }
+  .json-number { color: var(--amber); }
+  .json-bool { color: var(--pink); }
+  .json-null { color: var(--red); }
+  .tree-node { padding-left: 16px; }
+  .tree-toggle { cursor: pointer; color: var(--text3); user-select: none; }
+  .tree-toggle:hover { color: var(--text); }
+  .tree-collapsed > .tree-children { display: none; }
+</style>
+
+<script>
+const input = document.getElementById('input');
+const textView = document.getElementById('text-view');
+const treeView = document.getElementById('tree-view');
+const statusEl = document.getElementById('status');
+const infoEl = document.getElementById('info');
+const indentSel = document.getElementById('indent');
+
+let mode = 'json';
+let parsed = null;
+
+function toast(m) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = m;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function indentStr() {
+  const v = indentSel.value;
+  if (v === 'tab') return '\t';
+  if (v === '0') return undefined;
+  return ' '.repeat(+v);
+}
+
+function setStatus(text, color) {
+  statusEl.innerHTML = text;
+  statusEl.style.color = color || '';
+}
+
+// CSV parsing (handles quoted fields)
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (c === '"') inQuotes = false;
+      else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c === '\r') {}
+      else field += c;
+    }
+  }
+  if (field || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function csvToObjects(rows) {
+  if (!rows.length) return [];
+  const headers = rows[0];
+  return rows.slice(1).filter(r => r.some(c => c !== '')).map(r => {
+    const o = {};
+    headers.forEach((h, i) => { o[h] = r[i] ?? ''; });
+    return o;
+  });
+}
+
+function objectsToCsv(arr) {
+  if (!arr.length) return '';
+  const headers = [...new Set(arr.flatMap(o => Object.keys(o)))];
+  const escape = v => {
+    const s = v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  return [headers.join(','), ...arr.map(o => headers.map(h => escape(o[h])).join(','))].join('\n');
+}
+
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
+function highlightJson(s) {
+  return escapeHtml(s).replace(/("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+\.?\d*([eE][+\-]?\d+)?)/g, m => {
+    let cls = 'json-number';
+    if (/^"/.test(m)) cls = /:$/.test(m) ? 'json-key' : 'json-string';
+    else if (/true|false/.test(m)) cls = 'json-bool';
+    else if (/null/.test(m)) cls = 'json-null';
+    return `<span class="${cls}">${m}</span>`;
+  });
+}
+
+function buildTree(value, key) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tree-node';
+  if (value === null) {
+    wrap.innerHTML = `${key !== undefined ? `<span class="json-key">"${key}"</span>: ` : ''}<span class="json-null">null</span>`;
+  } else if (typeof value !== 'object') {
+    const cls = typeof value === 'string' ? 'json-string' : typeof value === 'number' ? 'json-number' : 'json-bool';
+    const val = typeof value === 'string' ? `"${escapeHtml(value)}"` : value;
+    wrap.innerHTML = `${key !== undefined ? `<span class="json-key">"${escapeHtml(String(key))}"</span>: ` : ''}<span class="${cls}">${val}</span>`;
+  } else {
+    const isArr = Array.isArray(value);
+    const keys = Object.keys(value);
+    const head = document.createElement('div');
+    head.className = 'tree-toggle';
+    head.innerHTML = `<i class="ti ti-chevron-down"></i> ${key !== undefined ? `<span class="json-key">"${escapeHtml(String(key))}"</span>: ` : ''}${isArr ? '[' : '{'} <span class="muted">${keys.length} item${keys.length!==1?'s':''}</span> ${isArr ? ']' : '}'}`;
+    wrap.appendChild(head);
+    const children = document.createElement('div');
+    children.className = 'tree-children';
+    for (const k of keys) children.appendChild(buildTree(value[k], isArr ? k : k));
+    wrap.appendChild(children);
+    head.addEventListener('click', () => {
+      wrap.classList.toggle('tree-collapsed');
+      head.querySelector('i').className = wrap.classList.contains('tree-collapsed') ? 'ti ti-chevron-right' : 'ti ti-chevron-down';
+    });
+  }
+  return wrap;
+}
+
+function showInfo(data) {
+  let totalKeys = 0, depth = 0, arrays = 0, objs = 0;
+  function walk(v, d) {
+    depth = Math.max(depth, d);
+    if (Array.isArray(v)) { arrays++; v.forEach(x => walk(x, d+1)); }
+    else if (v && typeof v === 'object') { objs++; for (const k in v) { totalKeys++; walk(v[k], d+1); } }
+  }
+  walk(data, 0);
+  const size = new Blob([JSON.stringify(data)]).size;
+  const items = [
+    ['Type', Array.isArray(data) ? 'Array' : typeof data],
+    ['Keys', totalKeys],
+    ['Objects', objs],
+    ['Arrays', arrays],
+    ['Max depth', depth],
+    ['Size', size < 1024 ? size + ' B' : (size/1024).toFixed(1) + ' KB'],
+  ];
+  infoEl.innerHTML = items.map(([k,v]) =>
+    `<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value" style="font-size:15px">${v}</div></div>`
+  ).join('');
+}
+
+function format() {
+  const text = input.value.trim();
+  if (!text) { setStatus(''); textView.textContent = ''; treeView.innerHTML = ''; infoEl.innerHTML = ''; return; }
+  try {
+    if (mode === 'json') {
+      parsed = JSON.parse(text);
+      const ind = indentStr();
+      const formatted = ind === undefined ? JSON.stringify(parsed) : JSON.stringify(parsed, null, ind);
+      textView.innerHTML = highlightJson(formatted);
+      treeView.innerHTML = '';
+      treeView.appendChild(buildTree(parsed));
+      setStatus(`<i class="ti ti-circle-check" style="color:var(--green)"></i> Valid JSON`, 'var(--green)');
+      showInfo(parsed);
+    } else {
+      const rows = parseCsv(text);
+      parsed = csvToObjects(rows);
+      const ind = indentStr() || '';
+      const formatted = JSON.stringify(parsed, null, ind);
+      textView.innerHTML = highlightJson(formatted);
+      treeView.innerHTML = '';
+      treeView.appendChild(buildTree(parsed));
+      setStatus(`<i class="ti ti-circle-check" style="color:var(--green)"></i> Parsed ${parsed.length} row${parsed.length!==1?'s':''} × ${rows[0]?.length||0} columns`, 'var(--green)');
+      showInfo(parsed);
+    }
+  } catch (e) {
+    setStatus(`<i class="ti ti-alert-circle"></i> ${e.message}`, 'var(--red)');
+    textView.textContent = '';
+    treeView.innerHTML = '';
+    infoEl.innerHTML = '';
+  }
+}
+
+function convert() {
+  if (!parsed) return format(), null;
+  if (mode === 'json') {
+    if (!Array.isArray(parsed)) { setStatus('To convert to CSV, the JSON must be an array of objects.', 'var(--red)'); return; }
+    input.value = objectsToCsv(parsed);
+    setMode('csv');
+  } else {
+    input.value = JSON.stringify(parsed, null, +indentSel.value || 2);
+    setMode('json');
+  }
+  format();
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => { setMode(t.dataset.mode); format(); }));
+document.getElementById('format-btn').addEventListener('click', format);
+document.getElementById('convert-btn').addEventListener('click', convert);
+indentSel.addEventListener('change', format);
+input.addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(format, 200); });
+
+document.getElementById('tree-btn').addEventListener('click', () => { textView.style.display = 'none'; treeView.style.display = ''; });
+document.getElementById('text-btn').addEventListener('click', () => { textView.style.display = ''; treeView.style.display = 'none'; });
+document.getElementById('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(textView.textContent || textView.innerText).then(() => toast('Copied'));
+});
+
+document.getElementById('paste-btn').addEventListener('click', async () => { try { input.value = await navigator.clipboard.readText(); format(); } catch(e){} });
+document.getElementById('clear-btn').addEventListener('click', () => { input.value = ''; format(); });
+document.getElementById('sample-btn').addEventListener('click', () => {
+  if (mode === 'json') {
+    input.value = JSON.stringify([
+      {id:1, name:"Ada Lovelace", year:1815, fields:["math","cs"]},
+      {id:2, name:"Marie Curie", year:1867, fields:["physics","chemistry"]},
+      {id:3, name:"Alan Turing", year:1912, fields:["math","cs","cryptography"]}
+    ], null, 2);
+  } else {
+    input.value = "id,name,year\n1,Ada Lovelace,1815\n2,Marie Curie,1867\n3,Alan Turing,1912";
+  }
+  format();
+});
+</script>
+
+</body>
+</html>

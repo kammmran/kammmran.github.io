@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Readability — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-bar"></i></div><div>Readability</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-chart-bar"></i></div>
+      <div>
+        <div class="tool-title">Readability</div>
+        <div class="tool-desc">Six readability indices, sentence-level analysis, and a difficulty heatmap.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Your text</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="sample-btn"><i class="ti ti-sparkles"></i> Sample</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="text" placeholder="Paste an excerpt to analyze (at least a few sentences)…"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Scores</span></div>
+      <div class="stat-grid" id="scores"></div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Interpretation</span></div>
+      <div id="interp" class="muted" style="font-size:14px; line-height:1.6">Enter text on the left to see scores.</div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Difficulty by sentence</span></div>
+    <div id="heatmap" style="font-size:14px; line-height:1.85"></div>
+    <div class="row" style="margin-top:14px; gap:12px; font-size:12px; color:var(--text2)">
+      <span><span style="display:inline-block; width:12px; height:12px; background:rgba(74,222,128,0.25); border-radius:3px; vertical-align:middle"></span> easy</span>
+      <span><span style="display:inline-block; width:12px; height:12px; background:rgba(251,191,36,0.25); border-radius:3px; vertical-align:middle"></span> moderate</span>
+      <span><span style="display:inline-block; width:12px; height:12px; background:rgba(244,114,182,0.25); border-radius:3px; vertical-align:middle"></span> difficult</span>
+      <span><span style="display:inline-block; width:12px; height:12px; background:rgba(248,113,113,0.25); border-radius:3px; vertical-align:middle"></span> very difficult</span>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Hardest sentences</span></div>
+    <div id="worst" class="muted" style="font-size:14px; line-height:1.6">No data.</div>
+  </div>
+</main>
+
+<script>
+const text = document.getElementById('text');
+const scoresEl = document.getElementById('scores');
+const interp = document.getElementById('interp');
+const heatmap = document.getElementById('heatmap');
+const worstEl = document.getElementById('worst');
+
+function syllables(word) {
+  word = word.toLowerCase().replace(/[^a-z]/g, '');
+  if (!word) return 0;
+  if (word.length <= 3) return 1;
+  word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+  word = word.replace(/^y/, '');
+  const m = word.match(/[aeiouy]{1,2}/g);
+  return m ? m.length : 1;
+}
+
+function splitSentences(t) {
+  return (t.match(/[^.!?]+[.!?]+/g) || (t.trim() ? [t.trim()] : []));
+}
+
+function analyzeChunk(t) {
+  const words = t.match(/\b[\w'-]+\b/g) || [];
+  const sents = splitSentences(t);
+  const wordCount = words.length;
+  const sentCount = Math.max(1, sents.length);
+  let syl = 0, complex = 0, poly = 0, chars = 0;
+  for (const w of words) {
+    const s = syllables(w);
+    syl += s;
+    chars += w.length;
+    if (s >= 3) { complex++; poly++; }
+  }
+  if (!wordCount) return null;
+  const ASL = wordCount / sentCount;
+  const ASW = syl / wordCount;
+  const charPerW = chars / wordCount;
+
+  const flesch = 206.835 - 1.015 * ASL - 84.6 * ASW;
+  const fkGrade = 0.39 * ASL + 11.8 * ASW - 15.59;
+  const fog = 0.4 * (ASL + 100 * (complex / wordCount));
+  const smog = 1.0430 * Math.sqrt(poly * (30 / sentCount)) + 3.1291;
+  const colemanLiau = 0.0588 * (charPerW * 100) - 0.296 * (sentCount / wordCount * 100) - 15.8;
+  const ari = 4.71 * charPerW + 0.5 * ASL - 21.43;
+  // average grade level
+  const avgGrade = (fkGrade + fog + smog + colemanLiau + ari) / 5;
+
+  return {
+    wordCount, sentCount, syl, ASL, ASW,
+    flesch: Math.max(0, Math.min(120, flesch)),
+    fkGrade: Math.max(0, fkGrade),
+    fog: Math.max(0, fog),
+    smog: Math.max(0, smog),
+    colemanLiau: Math.max(0, colemanLiau),
+    ari: Math.max(0, ari),
+    avgGrade: Math.max(0, avgGrade),
+  };
+}
+
+function fleschLabel(s) {
+  if (s >= 90) return ['Very easy', '5th grade', 'var(--green)'];
+  if (s >= 80) return ['Easy', '6th grade', 'var(--green)'];
+  if (s >= 70) return ['Fairly easy', '7th grade', 'var(--teal)'];
+  if (s >= 60) return ['Plain English', '8–9th grade', 'var(--teal)'];
+  if (s >= 50) return ['Fairly difficult', '10–12th grade', 'var(--amber)'];
+  if (s >= 30) return ['Difficult', 'College', 'var(--amber)'];
+  return ['Very difficult', 'College graduate', 'var(--red)'];
+}
+
+function bandColor(flesch) {
+  if (flesch >= 70) return 'rgba(74,222,128,0.18)';
+  if (flesch >= 50) return 'rgba(251,191,36,0.20)';
+  if (flesch >= 30) return 'rgba(244,114,182,0.20)';
+  return 'rgba(248,113,113,0.22)';
+}
+
+function render() {
+  const t = text.value;
+  const r = analyzeChunk(t);
+  if (!r) {
+    scoresEl.innerHTML = '';
+    interp.innerHTML = '<span class="muted">Enter at least a sentence to see scores.</span>';
+    heatmap.innerHTML = '';
+    worstEl.innerHTML = '';
+    return;
+  }
+  const [label, level, color] = fleschLabel(r.flesch);
+  scoresEl.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Flesch Ease</div><div class="stat-value" style="color:${color}">${r.flesch.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">FK Grade</div><div class="stat-value">${r.fkGrade.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">Gunning Fog</div><div class="stat-value">${r.fog.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">SMOG</div><div class="stat-value">${r.smog.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">Coleman–Liau</div><div class="stat-value">${r.colemanLiau.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">ARI</div><div class="stat-value">${r.ari.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg grade</div><div class="stat-value">${r.avgGrade.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">Words</div><div class="stat-value">${r.wordCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Sentences</div><div class="stat-value">${r.sentCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg sent length</div><div class="stat-value">${r.ASL.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">Syllables/word</div><div class="stat-value">${r.ASW.toFixed(2)}</div></div>
+  `;
+  interp.innerHTML = `
+    <p style="margin-bottom:10px"><b style="color:${color}">${label}</b> · readers around <b>${level}</b> can comfortably read this. Estimated grade level <b>${r.avgGrade.toFixed(1)}</b>.</p>
+    <p class="muted">Higher Flesch = easier. Target <b>60+</b> for general readers, <b>50+</b> for academic prose, <b>30+</b> is acceptable for technical writing.</p>
+  `;
+
+  // Sentence-level heatmap
+  const sents = splitSentences(t);
+  const sentScored = sents.map(s => {
+    const sr = analyzeChunk(s.trim() + '.');
+    return { text: s.trim(), score: sr ? sr.flesch : 60, grade: sr ? sr.fkGrade : 0, words: sr ? sr.wordCount : 0 };
+  });
+  heatmap.innerHTML = sentScored.map(s =>
+    `<span style="background:${bandColor(s.score)}; padding:2px 4px; border-radius:3px; margin-right:4px">${escapeHtml(s.text)}</span>`
+  ).join(' ');
+
+  // worst sentences
+  const sortedWorst = [...sentScored].filter(s => s.words >= 5).sort((a,b) => a.score - b.score).slice(0, 5);
+  if (!sortedWorst.length) {
+    worstEl.innerHTML = '<span class="muted">Not enough long sentences.</span>';
+  } else {
+    worstEl.innerHTML = sortedWorst.map((s, i) =>
+      `<div style="padding:8px 0; border-bottom:1px solid var(--border)">
+        <div class="row" style="gap:8px; margin-bottom:4px">
+          <span class="chip" style="background:${bandColor(s.score)}; color:var(--text)">#${i+1}</span>
+          <span class="muted" style="font-size:12px">Flesch ${s.score.toFixed(0)} · grade ${s.grade.toFixed(1)} · ${s.words} words</span>
+        </div>
+        <div>${escapeHtml(s.text)}</div>
+      </div>`
+    ).join('');
+  }
+}
+
+function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+document.getElementById('clear-btn').addEventListener('click', () => { text.value = ''; render(); text.focus(); });
+document.getElementById('sample-btn').addEventListener('click', () => {
+  text.value = "The methodology employed in this investigation comprises a multifaceted analytical framework, incorporating both quantitative and qualitative paradigms to elucidate the underlying mechanisms governing observed phenomena. Researchers systematically aggregated data from heterogeneous sources, subsequently subjecting the corpus to rigorous statistical interrogation. Simple sentences help readability. Long, convoluted constructions burden the reader. Aim for clarity above all else.";
+  render();
+});
+
+text.addEventListener('input', render);
+render();
+</script>
+
+</body>
+</html>

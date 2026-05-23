@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-qrcode"></i></div><div>QR Code</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-qrcode"></i></div>
+      <div>
+        <div class="tool-title">QR Code Generator</div>
+        <div class="tool-desc">Encode links, text, Wi-Fi, contact info, and more. Download as PNG or SVG.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Content</span></div>
+      <div class="tabs" style="margin-bottom:10px">
+        <button class="tab active" data-type="text">Text / URL</button>
+        <button class="tab" data-type="wifi">Wi-Fi</button>
+        <button class="tab" data-type="contact">Contact</button>
+        <button class="tab" data-type="email">Email</button>
+        <button class="tab" data-type="sms">SMS</button>
+      </div>
+
+      <div id="form-text" class="form-panel">
+        <textarea id="text" placeholder="https://example.com or any text…" style="min-height:140px">https://github.com</textarea>
+      </div>
+
+      <div id="form-wifi" class="form-panel" style="display:none">
+        <div class="panel-label" style="margin-top:6px"><span>Network name (SSID)</span></div>
+        <input type="text" id="wifi-ssid" placeholder="MyNetwork">
+        <div class="panel-label" style="margin-top:10px"><span>Password</span></div>
+        <input type="text" id="wifi-pass" placeholder="••••••••">
+        <div class="row" style="margin-top:10px; gap:10px">
+          <div style="flex:1">
+            <div class="panel-label"><span>Security</span></div>
+            <select id="wifi-sec" style="width:100%">
+              <option value="WPA">WPA / WPA2</option>
+              <option value="WEP">WEP</option>
+              <option value="nopass">None (open)</option>
+            </select>
+          </div>
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2); align-self:flex-end; padding-bottom:8px">
+            <input type="checkbox" id="wifi-hidden"> Hidden network
+          </label>
+        </div>
+      </div>
+
+      <div id="form-contact" class="form-panel" style="display:none">
+        <div class="row" style="gap:8px">
+          <div style="flex:1; min-width:140px"><div class="panel-label"><span>Name</span></div><input id="c-name" type="text" placeholder="Jane Doe"></div>
+          <div style="flex:1; min-width:140px"><div class="panel-label"><span>Organization</span></div><input id="c-org" type="text"></div>
+        </div>
+        <div class="row" style="gap:8px; margin-top:10px">
+          <div style="flex:1; min-width:140px"><div class="panel-label"><span>Phone</span></div><input id="c-phone" type="text"></div>
+          <div style="flex:1; min-width:140px"><div class="panel-label"><span>Email</span></div><input id="c-email" type="text"></div>
+        </div>
+        <div class="panel-label" style="margin-top:10px"><span>Website</span></div>
+        <input id="c-web" type="text">
+      </div>
+
+      <div id="form-email" class="form-panel" style="display:none">
+        <div class="panel-label" style="margin-top:6px"><span>To</span></div>
+        <input id="e-to" type="text" placeholder="someone@example.com">
+        <div class="panel-label" style="margin-top:10px"><span>Subject</span></div>
+        <input id="e-subj" type="text">
+        <div class="panel-label" style="margin-top:10px"><span>Body</span></div>
+        <textarea id="e-body" style="min-height:80px"></textarea>
+      </div>
+
+      <div id="form-sms" class="form-panel" style="display:none">
+        <div class="panel-label" style="margin-top:6px"><span>Phone number</span></div>
+        <input id="s-phone" type="text" placeholder="+1234567890">
+        <div class="panel-label" style="margin-top:10px"><span>Message (optional)</span></div>
+        <textarea id="s-body" style="min-height:80px"></textarea>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <div style="flex:1">
+          <div class="panel-label"><span>Size: <span id="size-val">320</span>px</span></div>
+          <input type="range" id="size" min="200" max="800" step="20" value="320" style="width:100%">
+        </div>
+        <div style="flex:1">
+          <div class="panel-label"><span>Error correction</span></div>
+          <select id="ec" style="width:100%">
+            <option value="L">L (low, 7%)</option>
+            <option value="M" selected>M (medium, 15%)</option>
+            <option value="Q">Q (quartile, 25%)</option>
+            <option value="H">H (high, 30%)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div style="flex:1">
+          <div class="panel-label"><span>Foreground</span></div>
+          <input type="color" id="fg" value="#000000" style="width:100%; height:38px; border-radius:8px; background:var(--bg2); border:1px solid var(--border)">
+        </div>
+        <div style="flex:1">
+          <div class="panel-label"><span>Background</span></div>
+          <input type="color" id="bg" value="#ffffff" style="width:100%; height:38px; border-radius:8px; background:var(--bg2); border:1px solid var(--border)">
+        </div>
+        <div style="flex:0 0 auto">
+          <div class="panel-label"><span>Margin</span></div>
+          <input type="number" id="margin" value="2" min="0" max="10" style="width:80px">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" style="align-items:center; justify-content:center">
+      <div class="panel-label" style="width:100%"><span>QR Code</span></div>
+      <div id="qr-wrap" style="background:#fff; padding:16px; border-radius:var(--radius); display:flex; align-items:center; justify-content:center; flex:1; min-height:280px">
+        <canvas id="canvas" width="320" height="320"></canvas>
+      </div>
+      <div class="row" style="margin-top:12px; width:100%">
+        <button class="btn" id="png-btn"><i class="ti ti-download"></i> PNG</button>
+        <button class="btn" id="svg-btn"><i class="ti ti-download"></i> SVG</button>
+        <button class="btn" id="copy-btn"><i class="ti ti-copy"></i> Copy image</button>
+        <span class="spacer"></span>
+        <span id="info" class="muted" style="font-size:12px"></span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const info = document.getElementById('info');
+
+function escapeWifi(s) { return (s || '').replace(/([\\;,":])/g, '\\$1'); }
+
+function getContent() {
+  const type = document.querySelector('.tab.active').dataset.type;
+  if (type === 'text') return document.getElementById('text').value;
+  if (type === 'wifi') {
+    const s = document.getElementById('wifi-sec').value;
+    const ssid = escapeWifi(document.getElementById('wifi-ssid').value);
+    const pass = escapeWifi(document.getElementById('wifi-pass').value);
+    const hidden = document.getElementById('wifi-hidden').checked;
+    if (!ssid) return '';
+    return `WIFI:T:${s};S:${ssid};${s === 'nopass' ? '' : 'P:' + pass + ';'}${hidden ? 'H:true;' : ''};`;
+  }
+  if (type === 'contact') {
+    const n = document.getElementById('c-name').value;
+    const org = document.getElementById('c-org').value;
+    const ph = document.getElementById('c-phone').value;
+    const em = document.getElementById('c-email').value;
+    const web = document.getElementById('c-web').value;
+    if (!n && !ph && !em) return '';
+    return `BEGIN:VCARD\nVERSION:3.0\nFN:${n}\n${org ? 'ORG:'+org+'\n' : ''}${ph ? 'TEL:'+ph+'\n' : ''}${em ? 'EMAIL:'+em+'\n' : ''}${web ? 'URL:'+web+'\n' : ''}END:VCARD`;
+  }
+  if (type === 'email') {
+    const to = document.getElementById('e-to').value;
+    const subj = document.getElementById('e-subj').value;
+    const body = document.getElementById('e-body').value;
+    if (!to) return '';
+    const params = [];
+    if (subj) params.push('subject=' + encodeURIComponent(subj));
+    if (body) params.push('body=' + encodeURIComponent(body));
+    return `mailto:${to}${params.length ? '?' + params.join('&') : ''}`;
+  }
+  if (type === 'sms') {
+    const phone = document.getElementById('s-phone').value;
+    const body = document.getElementById('s-body').value;
+    if (!phone) return '';
+    return `SMSTO:${phone}:${body}`;
+  }
+  return '';
+}
+
+function buildQR(text, ec) {
+  // qrcode-generator: typeNumber 0 = auto. errorCorrectionLevel 'L'|'M'|'Q'|'H'.
+  // Try increasing type number until it fits.
+  for (let type = 1; type <= 40; type++) {
+    try {
+      const qr = qrcode(type, ec);
+      qr.addData(text);
+      qr.make();
+      return qr;
+    } catch (e) { /* too big for this type, try larger */ }
+  }
+  throw new Error('Content is too long for a QR code.');
+}
+
+function drawCanvas(qr, size, fg, bg, margin) {
+  const count = qr.getModuleCount();
+  const total = count + margin * 2;
+  const cell = Math.floor(size / total);
+  const realSize = cell * total;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = realSize * dpr;
+  canvas.height = realSize * dpr;
+  canvas.style.width = realSize + 'px';
+  canvas.style.height = realSize + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, realSize, realSize);
+  ctx.fillStyle = fg;
+  for (let r = 0; r < count; r++) {
+    for (let c = 0; c < count; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect((c + margin) * cell, (r + margin) * cell, cell, cell);
+      }
+    }
+  }
+  return { count, cell, realSize };
+}
+
+function buildSvg(qr, fg, bg, margin) {
+  const count = qr.getModuleCount();
+  const total = count + margin * 2;
+  let path = '';
+  for (let r = 0; r < count; r++) {
+    for (let c = 0; c < count; c++) {
+      if (qr.isDark(r, c)) {
+        path += `M${c + margin},${r + margin}h1v1h-1z`;
+      }
+    }
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${total} ${total}" shape-rendering="crispEdges">
+  <rect width="${total}" height="${total}" fill="${bg}"/>
+  <path d="${path}" fill="${fg}"/>
+</svg>`;
+}
+
+function render() {
+  if (typeof qrcode !== 'function') {
+    info.innerHTML = '<span style="color:var(--red)">QR library failed to load. Check your connection and reload.</span>';
+    return;
+  }
+  const text = getContent();
+  document.getElementById('size-val').textContent = document.getElementById('size').value;
+  if (!text.trim()) {
+    info.textContent = 'Fill in content to generate a QR code.';
+    const ctx = canvas.getContext('2d');
+    canvas.width = 320; canvas.height = 320;
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 320, 320);
+    return;
+  }
+  const size = +document.getElementById('size').value;
+  const ec = document.getElementById('ec').value;
+  const fg = document.getElementById('fg').value;
+  const bg = document.getElementById('bg').value;
+  const margin = Math.max(0, +document.getElementById('margin').value || 0);
+  try {
+    const qr = buildQR(text, ec);
+    const meta = drawCanvas(qr, size, fg, bg, margin);
+    info.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> ${text.length} chars · ${meta.count}×${meta.count} modules · ${meta.realSize}px`;
+  } catch (e) {
+    info.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+  }
+}
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.form-panel').forEach(p => p.style.display = 'none');
+  document.getElementById('form-' + t.dataset.type).style.display = '';
+  render();
+}));
+
+// Wire all controls
+['input', 'change'].forEach(ev => {
+  document.querySelectorAll('input, select, textarea').forEach(el => el.addEventListener(ev, render));
+});
+
+document.getElementById('png-btn').addEventListener('click', () => {
+  const url = canvas.toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = url; a.download = 'qrcode.png'; a.click();
+});
+
+document.getElementById('svg-btn').addEventListener('click', () => {
+  const text = getContent();
+  if (!text.trim()) return;
+  const ec = document.getElementById('ec').value;
+  const fg = document.getElementById('fg').value;
+  const bg = document.getElementById('bg').value;
+  const margin = Math.max(0, +document.getElementById('margin').value || 0);
+  try {
+    const qr = buildQR(text, ec);
+    const svg = buildSvg(qr, fg, bg, margin);
+    const blob = new Blob([svg], { type: 'image/svg+xml' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'qrcode.svg'; a.click();
+  } catch (e) {
+    info.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+  }
+});
+
+document.getElementById('copy-btn').addEventListener('click', async () => {
+  try {
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      toast('Image copied');
+    }, 'image/png');
+  } catch (e) {
+    toast('Copy not supported — use PNG download');
+  }
+});
+
+// Initial render
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', render);
+} else {
+  render();
+}
+</script>
+
+</body>
+</html>

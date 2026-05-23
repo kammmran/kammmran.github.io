@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diff Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-git-compare"></i></div><div>Diff Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1300px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-git-compare"></i></div>
+      <div>
+        <div class="tool-title">Diff Checker</div>
+        <div class="tool-desc">Compare two pieces of text — see what was added, removed, and changed.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-gran="line">By line</button>
+    <button class="tab" data-gran="word">By word</button>
+    <button class="tab" data-gran="char">By character</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Original (A)</span></div>
+      <textarea id="a" placeholder="Paste original text…"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Changed (B)</span></div>
+      <textarea id="b" placeholder="Paste new version…"></textarea>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label">
+      <span>Diff</span>
+      <div class="panel-actions" id="counts"></div>
+    </div>
+    <div id="diff" class="output-box" style="font-family:ui-monospace,Menlo,monospace; font-size:13px; line-height:1.55"></div>
+  </div>
+</main>
+
+<style>
+  .diff-add { background: rgba(74,222,128,0.15); color: var(--green); }
+  .diff-del { background: rgba(248,113,113,0.15); color: var(--red); text-decoration: line-through; text-decoration-color: rgba(248,113,113,0.5); }
+  .diff-line-add { background: rgba(74,222,128,0.08); border-left: 2px solid var(--green); padding-left: 8px; }
+  .diff-line-del { background: rgba(248,113,113,0.08); border-left: 2px solid var(--red); padding-left: 8px; }
+  .diff-line-eq  { padding-left: 10px; color: var(--text2); }
+</style>
+
+<script>
+let granularity = 'line';
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  granularity = t.dataset.gran;
+  run();
+}));
+
+// LCS-based diff
+function diff(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length:m+1}, () => new Uint32Array(n+1));
+  for (let i = m-1; i >= 0; i--) {
+    for (let j = n-1; j >= 0; j--) {
+      dp[i][j] = a[i] === b[j] ? dp[i+1][j+1] + 1 : Math.max(dp[i+1][j], dp[i][j+1]);
+    }
+  }
+  const ops = [];
+  let i = 0, j = 0;
+  while (i < m && j < n) {
+    if (a[i] === b[j]) { ops.push(['=', a[i]]); i++; j++; }
+    else if (dp[i+1][j] >= dp[i][j+1]) { ops.push(['-', a[i]]); i++; }
+    else { ops.push(['+', b[j]]); j++; }
+  }
+  while (i < m) ops.push(['-', a[i++]]);
+  while (j < n) ops.push(['+', b[j++]]);
+  return ops;
+}
+
+function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+function run() {
+  const a = document.getElementById('a').value;
+  const b = document.getElementById('b').value;
+  const diffEl = document.getElementById('diff');
+  const countsEl = document.getElementById('counts');
+
+  if (!a && !b) {
+    diffEl.innerHTML = '<span class="muted">Enter text on both sides to compare.</span>';
+    countsEl.innerHTML = '';
+    return;
+  }
+
+  let units1, units2;
+  if (granularity === 'line') { units1 = a.split('\n'); units2 = b.split('\n'); }
+  else if (granularity === 'word') { units1 = a.split(/(\s+)/); units2 = b.split(/(\s+)/); }
+  else { units1 = [...a]; units2 = [...b]; }
+
+  const ops = diff(units1, units2);
+  let adds = 0, dels = 0;
+  const html = ops.map(([op, val]) => {
+    if (op === '=') {
+      if (granularity === 'line') return `<div class="diff-line-eq">${escapeHtml(val) || '&nbsp;'}</div>`;
+      return escapeHtml(val);
+    }
+    if (op === '+') {
+      adds++;
+      if (granularity === 'line') return `<div class="diff-line-add"><b>+</b> ${escapeHtml(val) || '&nbsp;'}</div>`;
+      return `<span class="diff-add">${escapeHtml(val)}</span>`;
+    }
+    dels++;
+    if (granularity === 'line') return `<div class="diff-line-del"><b>−</b> ${escapeHtml(val) || '&nbsp;'}</div>`;
+    return `<span class="diff-del">${escapeHtml(val)}</span>`;
+  }).join('');
+
+  diffEl.innerHTML = html || '<span class="muted">No differences.</span>';
+  countsEl.innerHTML = `<span class="chip" style="background:rgba(74,222,128,0.15); color:var(--green); border-color:rgba(74,222,128,0.3)">+${adds}</span>
+                       <span class="chip" style="background:rgba(248,113,113,0.15); color:var(--red); border-color:rgba(248,113,113,0.3)">−${dels}</span>`;
+}
+
+['a','b'].forEach(id => document.getElementById(id).addEventListener('input', () => { clearTimeout(window._t); window._t = setTimeout(run, 150); }));
+run();
+</script>
+
+</body>
+</html>

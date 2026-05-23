@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Random Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-dice"></i></div><div>Random Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-dice"></i></div>
+      <div>
+        <div class="tool-title">Random Generator</div>
+        <div class="tool-desc">Lorem ipsum, UUIDs, passwords, numbers, and picks — generate what you need.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tool="lorem">Lorem ipsum</button>
+    <button class="tab" data-tool="uuid">UUID</button>
+    <button class="tab" data-tool="password">Password</button>
+    <button class="tab" data-tool="number">Number</button>
+    <button class="tab" data-tool="pick">Pick from list</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Options</span></div>
+
+      <div id="opts-lorem">
+        <div class="row" style="margin-bottom:10px">
+          <select id="lorem-unit">
+            <option value="words">Words</option>
+            <option value="sentences" selected>Sentences</option>
+            <option value="paragraphs">Paragraphs</option>
+          </select>
+          <input type="number" id="lorem-n" value="5" min="1" max="200" style="width:90px">
+        </div>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+          <input type="checkbox" id="lorem-start" checked> Start with "Lorem ipsum dolor sit amet…"
+        </label>
+      </div>
+
+      <div id="opts-uuid" style="display:none">
+        <div class="row" style="margin-bottom:10px">
+          <select id="uuid-ver">
+            <option value="4">v4 (random)</option>
+            <option value="7">v7 (timestamp)</option>
+            <option value="nano">Nano ID (21 chars)</option>
+          </select>
+          <input type="number" id="uuid-n" value="5" min="1" max="200" style="width:90px">
+        </div>
+      </div>
+
+      <div id="opts-password" style="display:none">
+        <div class="panel-label"><span>Length: <span id="pw-len-val">16</span></span></div>
+        <input type="range" id="pw-len" min="6" max="64" value="16" style="width:100%">
+        <div style="margin-top:10px">
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2); margin-bottom:4px"><input type="checkbox" id="pw-upper" checked> Uppercase (A-Z)</label>
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2); margin-bottom:4px"><input type="checkbox" id="pw-lower" checked> Lowercase (a-z)</label>
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2); margin-bottom:4px"><input type="checkbox" id="pw-digit" checked> Numbers (0-9)</label>
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2); margin-bottom:4px"><input type="checkbox" id="pw-sym" checked> Symbols (!@#…)</label>
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2); margin-bottom:4px"><input type="checkbox" id="pw-noambig"> Avoid ambiguous (Il1O0)</label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <span class="muted" style="font-size:13px">Count:</span>
+          <input type="number" id="pw-n" value="5" min="1" max="50" style="width:90px">
+        </div>
+        <div id="pw-strength" style="margin-top:10px; font-size:13px"></div>
+      </div>
+
+      <div id="opts-number" style="display:none">
+        <div class="row" style="gap:8px">
+          <div style="flex:1"><div class="panel-label"><span>Min</span></div><input type="number" id="num-min" value="1"></div>
+          <div style="flex:1"><div class="panel-label"><span>Max</span></div><input type="number" id="num-max" value="100"></div>
+        </div>
+        <div class="row" style="margin-top:10px; gap:8px">
+          <div style="flex:1"><div class="panel-label"><span>How many</span></div><input type="number" id="num-n" value="10" min="1" max="10000"></div>
+          <div style="flex:1"><div class="panel-label"><span>Decimals</span></div><input type="number" id="num-dec" value="0" min="0" max="10"></div>
+        </div>
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2); margin-top:10px">
+          <input type="checkbox" id="num-unique"> Unique only
+        </label>
+      </div>
+
+      <div id="opts-pick" style="display:none">
+        <div class="panel-label"><span>Your list (one per line)</span></div>
+        <textarea id="pick-list" placeholder="Apple&#10;Banana&#10;Cherry&#10;Date" style="min-height:140px">Heads
+Tails</textarea>
+        <div class="row" style="margin-top:10px">
+          <span class="muted" style="font-size:13px">Pick</span>
+          <input type="number" id="pick-n" value="1" min="1" max="100" style="width:80px">
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2)"><input type="checkbox" id="pick-uniq"> Without replacement</label>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <button class="btn btn-primary" id="gen-btn"><i class="ti ti-refresh"></i> Generate</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label">
+        <span>Result</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-btn"><i class="ti ti-copy"></i> Copy</button>
+        </div>
+      </div>
+      <textarea id="output" readonly style="font-family:ui-monospace,Menlo,monospace; font-size:13px; line-height:1.7"></textarea>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<script>
+const LOREM_WORDS = "lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et magna aliqua enim ad minim veniam quis nostrud exercitation ullamco laboris nisi aliquip ex ea commodo consequat duis aute irure in reprehenderit voluptate velit esse cillum eu fugiat nulla pariatur excepteur sint occaecat cupidatat non proident sunt culpa qui officia deserunt mollit anim id est laborum vivamus sagittis lacus vel augue laoreet rutrum faucibus aliquam erat volutpat morbi pellentesque sapien nec urna ornare vehicula".split(' ');
+let activeTool = 'lorem';
+
+function tabClick(t) {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  activeTool = t.dataset.tool;
+  ['lorem','uuid','password','number','pick'].forEach(k =>
+    document.getElementById('opts-' + k).style.display = (k === activeTool ? '' : 'none')
+  );
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => tabClick(t)));
+
+function rnd(min, max) { return min + (max - min) * Math.random(); }
+function rndInt(min, max) { return Math.floor(rnd(min, max + 1)); }
+function shuffled(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=rndInt(0,i);[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+function genLorem() {
+  const unit = document.getElementById('lorem-unit').value;
+  const n = Math.max(1, +document.getElementById('lorem-n').value);
+  const startStandard = document.getElementById('lorem-start').checked;
+  const word = () => LOREM_WORDS[rndInt(0, LOREM_WORDS.length - 1)];
+  const sentence = (first) => {
+    const len = rndInt(8, 18);
+    const ws = [];
+    for (let i = 0; i < len; i++) ws.push(word());
+    let s = ws.join(' ');
+    if (first && startStandard) s = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, ' + s;
+    s = s.charAt(0).toUpperCase() + s.slice(1) + '.';
+    return s;
+  };
+  if (unit === 'words') {
+    const ws = [];
+    for (let i = 0; i < n; i++) ws.push(word());
+    let r = ws.join(' ');
+    if (startStandard) r = 'Lorem ipsum dolor sit amet ' + r;
+    return r;
+  }
+  if (unit === 'sentences') {
+    const arr = [];
+    for (let i = 0; i < n; i++) arr.push(sentence(i === 0));
+    return arr.join(' ');
+  }
+  const paras = [];
+  for (let p = 0; p < n; p++) {
+    const numS = rndInt(3, 6);
+    const arr = [];
+    for (let i = 0; i < numS; i++) arr.push(sentence(p === 0 && i === 0));
+    paras.push(arr.join(' '));
+  }
+  return paras.join('\n\n');
+}
+
+function genUuid() {
+  const ver = document.getElementById('uuid-ver').value;
+  const n = Math.max(1, +document.getElementById('uuid-n').value);
+  const out = [];
+  const hex = (b) => b.toString(16).padStart(2,'0');
+  for (let i = 0; i < n; i++) {
+    if (ver === '4') {
+      const a = crypto.getRandomValues(new Uint8Array(16));
+      a[6] = (a[6] & 0x0f) | 0x40;
+      a[8] = (a[8] & 0x3f) | 0x80;
+      const h = [...a].map(hex).join('');
+      out.push(`${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`);
+    } else if (ver === '7') {
+      const ts = Date.now();
+      const a = crypto.getRandomValues(new Uint8Array(16));
+      a[0] = (ts / 2**40) & 0xff;
+      a[1] = (ts / 2**32) & 0xff;
+      a[2] = (ts / 2**24) & 0xff;
+      a[3] = (ts / 2**16) & 0xff;
+      a[4] = (ts / 2**8) & 0xff;
+      a[5] = ts & 0xff;
+      a[6] = (a[6] & 0x0f) | 0x70;
+      a[8] = (a[8] & 0x3f) | 0x80;
+      const h = [...a].map(hex).join('');
+      out.push(`${h.slice(0,8)}-${h.slice(8,12)}-${h.slice(12,16)}-${h.slice(16,20)}-${h.slice(20)}`);
+    } else {
+      const alph = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-';
+      const buf = crypto.getRandomValues(new Uint8Array(21));
+      out.push([...buf].map(b => alph[b & 63]).join(''));
+    }
+  }
+  return out.join('\n');
+}
+
+function genPassword() {
+  const len = +document.getElementById('pw-len').value;
+  const n = Math.max(1, +document.getElementById('pw-n').value);
+  let pool = '';
+  if (document.getElementById('pw-upper').checked) pool += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if (document.getElementById('pw-lower').checked) pool += 'abcdefghijklmnopqrstuvwxyz';
+  if (document.getElementById('pw-digit').checked) pool += '0123456789';
+  if (document.getElementById('pw-sym').checked) pool += '!@#$%^&*()-_=+[]{};:,.?/';
+  if (document.getElementById('pw-noambig').checked) pool = pool.replace(/[Il1O0]/g, '');
+  if (!pool) return 'Pick at least one character set.';
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const buf = crypto.getRandomValues(new Uint32Array(len));
+    out.push([...buf].map(x => pool[x % pool.length]).join(''));
+  }
+  const entropy = Math.round(len * Math.log2(pool.length));
+  const label = entropy < 40 ? 'Weak' : entropy < 60 ? 'OK' : entropy < 80 ? 'Strong' : 'Very strong';
+  const color = entropy < 40 ? 'var(--red)' : entropy < 60 ? 'var(--amber)' : 'var(--green)';
+  document.getElementById('pw-strength').innerHTML = `<span style="color:${color}">● ${label}</span> · ~${entropy} bits entropy`;
+  return out.join('\n');
+}
+
+function genNumber() {
+  const min = +document.getElementById('num-min').value;
+  const max = +document.getElementById('num-max').value;
+  const n = Math.max(1, +document.getElementById('num-n').value);
+  const dec = Math.max(0, Math.min(10, +document.getElementById('num-dec').value));
+  const uniq = document.getElementById('num-unique').checked;
+  if (max < min) return 'Max must be ≥ min.';
+  if (dec === 0 && uniq && (max - min + 1) < n) return `Range too small for ${n} unique integers.`;
+  const out = [];
+  const seen = new Set();
+  let safety = n * 50;
+  while (out.length < n && safety-- > 0) {
+    let v = rnd(min, max + (dec === 0 ? 1 : 0));
+    v = dec === 0 ? Math.floor(v) : parseFloat(v.toFixed(dec));
+    if (uniq && seen.has(v)) continue;
+    seen.add(v); out.push(v);
+  }
+  return out.join('\n');
+}
+
+function genPick() {
+  const items = document.getElementById('pick-list').value.split('\n').map(x => x.trim()).filter(Boolean);
+  if (!items.length) return 'Add items to the list first.';
+  const n = Math.max(1, +document.getElementById('pick-n').value);
+  const uniq = document.getElementById('pick-uniq').checked;
+  if (uniq && n > items.length) return `Only ${items.length} items — can't pick ${n} unique.`;
+  const out = [];
+  if (uniq) {
+    const s = shuffled(items);
+    for (let i = 0; i < n; i++) out.push(s[i]);
+  } else {
+    for (let i = 0; i < n; i++) out.push(items[rndInt(0, items.length - 1)]);
+  }
+  return out.join('\n');
+}
+
+document.getElementById('pw-len').addEventListener('input', e => document.getElementById('pw-len-val').textContent = e.target.value);
+
+document.getElementById('gen-btn').addEventListener('click', () => {
+  const fns = { lorem: genLorem, uuid: genUuid, password: genPassword, number: genNumber, pick: genPick };
+  document.getElementById('output').value = fns[activeTool]();
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const o = document.getElementById('output');
+  if (!o.value) return;
+  navigator.clipboard.writeText(o.value);
+  const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
+});
+
+document.getElementById('gen-btn').click();
+</script>
+
+</body>
+</html>

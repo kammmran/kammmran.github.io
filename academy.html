@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academy — tools for students & researchers</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">
+    <div class="logo-icon"><i class="ti ti-book-2"></i></div>
+    <div>Academy<span class="brand"> Tools</span></div>
+  </div>
+  <div class="search-wrap">
+    <i class="ti ti-search"></i>
+    <input id="search" class="search-input" type="search" placeholder="Search tools…" autocomplete="off">
+  </div>
+  <div style="width:120px"></div>
+</header>
+
+<section class="hub-hero">
+  <h1>Everything you need to <span>research, write & cite</span></h1>
+  <p>A simple, modern hub of free academic tools. No accounts. No tracking. Runs entirely in your browser.</p>
+</section>
+
+<main id="categories">
+
+  <section class="category" data-cat="citations">
+    <div class="category-header">
+      <div class="category-title">Citations & references</div>
+      <div class="category-count">2 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="citeflow_app.html" data-name="citeflow citation converter generator apa mla chicago harvard ieee bibtex">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-quote"></i></div>
+        <div class="tile-name">CiteFlow</div>
+        <div class="tile-desc">Convert citations between 13+ styles — APA, MLA, Chicago, Harvard, IEEE, BibTeX & more.</div>
+      </a>
+      <a class="tile" href="tools/doi-lookup.html" data-name="doi lookup crossref reference metadata">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-link"></i></div>
+        <div class="tile-name">DOI Lookup</div>
+        <div class="tile-desc">Paste a DOI, get a formatted citation in APA, MLA, or Chicago. Powered by CrossRef.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="writing">
+    <div class="category-header">
+      <div class="category-title">Writing helpers</div>
+      <div class="category-count">5 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/word-counter.html" data-name="word counter character sentence paragraph reading time density compare">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-text-size"></i></div>
+        <div class="tile-name">Word Counter</div>
+        <div class="tile-desc">Live counts, density, top words, longest words & A/B compare mode.</div>
+      </a>
+      <a class="tile" href="tools/readability.html" data-name="readability flesch kincaid gunning fog smog coleman liau ari grade level heatmap">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-chart-bar"></i></div>
+        <div class="tile-name">Readability</div>
+        <div class="tile-desc">6 readability indices with sentence heatmap and hardest-sentence finder.</div>
+      </a>
+      <a class="tile" href="tools/markdown.html" data-name="markdown editor preview github gfm export html pdf">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-markdown"></i></div>
+        <div class="tile-name">Markdown Editor</div>
+        <div class="tile-desc">Write Markdown with live preview, GFM tables, and export to HTML or PDF.</div>
+      </a>
+      <a class="tile" href="tools/text-utils.html" data-name="text case converter uppercase lowercase title sentence camel snake kebab whitespace find replace">
+        <div class="tile-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-text-recognition"></i></div>
+        <div class="tile-name">Text Utilities</div>
+        <div class="tile-desc">Case, whitespace, find & replace, sort & dedupe — fast text transforms.</div>
+      </a>
+      <a class="tile" href="tools/diff.html" data-name="diff checker compare text difference">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-git-compare"></i></div>
+        <div class="tile-name">Diff Checker</div>
+        <div class="tile-desc">Compare two texts line-by-line, word-by-word, or character-by-character.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="research">
+    <div class="category-header">
+      <div class="category-title">Research helpers</div>
+      <div class="category-count">2 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/keyword-extractor.html" data-name="keyword extractor frequency tf bigram topic">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-tags"></i></div>
+        <div class="tile-name">Keyword Extractor</div>
+        <div class="tile-desc">Paste any text, get the top keywords and phrases ranked by frequency.</div>
+      </a>
+      <a class="tile" href="tools/lit-search.html" data-name="literature search scholar arxiv pubmed semantic openalex connected papers">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-binoculars"></i></div>
+        <div class="tile-name">Literature Search</div>
+        <div class="tile-desc">One query → Google Scholar, arXiv, Semantic Scholar, PubMed, OpenAlex & more.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="math">
+    <div class="category-header">
+      <div class="category-title">Math & data</div>
+      <div class="category-count">4 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/latex-preview.html" data-name="latex math equation katex preview render formula document mode export png">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-math-function"></i></div>
+        <div class="tile-name">LaTeX Preview</div>
+        <div class="tile-desc">Live KaTeX with document mode, image export, snippets, and history.</div>
+      </a>
+      <a class="tile" href="tools/unit-converter.html" data-name="unit converter length mass weight temperature time digital storage energy pressure area volume speed angle frequency power">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-arrows-exchange-2"></i></div>
+        <div class="tile-name">Unit Converter</div>
+        <div class="tile-desc">13 categories — length, mass, area, volume, speed, energy & more.</div>
+      </a>
+      <a class="tile" href="tools/statistics.html" data-name="statistics mean median mode standard deviation variance quartiles correlation regression scatter">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-chart-histogram"></i></div>
+        <div class="tile-name">Statistics</div>
+        <div class="tile-desc">Full summary, histogram, correlation, regression and scatter plot.</div>
+      </a>
+      <a class="tile" href="tools/json-viewer.html" data-name="json csv yaml viewer formatter validator tree converter">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-braces"></i></div>
+        <div class="tile-name">JSON / CSV Viewer</div>
+        <div class="tile-desc">Format, validate, and convert between JSON and CSV. Browse as a tree.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="pdf">
+    <div class="category-header">
+      <div class="category-title">PDF & files</div>
+      <div class="category-count">4 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/pdf-merge.html" data-name="pdf merge combine join">
+        <div class="tile-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-file-stack"></i></div>
+        <div class="tile-name">PDF Merge</div>
+        <div class="tile-desc">Combine multiple PDFs into one. Drag, drop, reorder — everything stays on your device.</div>
+      </a>
+      <a class="tile" href="tools/pdf-split.html" data-name="pdf split extract pages range">
+        <div class="tile-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-scissors"></i></div>
+        <div class="tile-name">PDF Split</div>
+        <div class="tile-desc">Extract specific pages from a PDF — supports ranges like 1-3,5,7-9.</div>
+      </a>
+      <a class="tile" href="tools/pdf-to-text.html" data-name="pdf to text extract content selectable">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-file-text"></i></div>
+        <div class="tile-name">PDF to Text</div>
+        <div class="tile-desc">Extract selectable text from PDFs page-by-page. For scanned PDFs use OCR.</div>
+      </a>
+      <a class="tile" href="tools/ocr.html" data-name="ocr image text recognition tesseract scan">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-scan"></i></div>
+        <div class="tile-name">Image OCR</div>
+        <div class="tile-desc">Extract text from images and screenshots. 8 languages supported.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="utilities">
+    <div class="category-header">
+      <div class="category-title">Utilities</div>
+      <div class="category-count">4 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/regex.html" data-name="regex regular expression pattern test match replace">
+        <div class="tile-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-regex"></i></div>
+        <div class="tile-name">Regex Tester</div>
+        <div class="tile-desc">Build JavaScript regex with live highlighting, capture groups, and replace.</div>
+      </a>
+      <a class="tile" href="tools/hash-encode.html" data-name="hash encode base64 url html entities hex sha md5 rot13 binary">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-shield-lock"></i></div>
+        <div class="tile-name">Hash & Encode</div>
+        <div class="tile-desc">Base64, URL, HTML entities, hex, SHA hashes — encode anything fast.</div>
+      </a>
+      <a class="tile" href="tools/qr.html" data-name="qr code generator wifi vcard contact link url">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-qrcode"></i></div>
+        <div class="tile-name">QR Code</div>
+        <div class="tile-desc">Encode URLs, Wi-Fi, or contact cards. Customize colors and export PNG/SVG.</div>
+      </a>
+      <a class="tile" href="tools/random.html" data-name="random lorem ipsum uuid password number generator pick">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-dice"></i></div>
+        <div class="tile-name">Random Generator</div>
+        <div class="tile-desc">Lorem ipsum, UUIDs, secure passwords, numbers, and random picks.</div>
+      </a>
+    </div>
+  </section>
+
+  <div class="no-results" id="no-results">No tools match your search.</div>
+
+</main>
+
+<footer class="hub-footer">
+  Made for students & researchers · No accounts, no tracking · All tools run in your browser
+</footer>
+
+<script>
+  const search = document.getElementById('search');
+  const tiles = Array.from(document.querySelectorAll('.tile'));
+  const categories = Array.from(document.querySelectorAll('.category'));
+  const noResults = document.getElementById('no-results');
+
+  search.addEventListener('input', () => {
+    const q = search.value.trim().toLowerCase();
+    let anyVisible = false;
+    tiles.forEach(t => {
+      const hay = (t.dataset.name + ' ' + t.querySelector('.tile-name').textContent + ' ' + t.querySelector('.tile-desc').textContent).toLowerCase();
+      const match = !q || hay.includes(q);
+      t.classList.toggle('hidden', !match);
+      if (match) anyVisible = true;
+    });
+    categories.forEach(c => {
+      const visibleInCat = c.querySelectorAll('.tile:not(.hidden)').length;
+      c.style.display = visibleInCat ? '' : 'none';
+    });
+    noResults.classList.toggle('show', !anyVisible);
+  });
+
+  // Keyboard: '/' focuses search
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement !== search) {
+      e.preventDefault();
+      search.focus();
+    }
+    if (e.key === 'Escape' && document.activeElement === search) {
+      search.value = '';
+      search.dispatchEvent(new Event('input'));
+      search.blur();
+    }
+  });
+</script>
+
+</body>
+</html>

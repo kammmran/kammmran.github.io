@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regex Tester — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-regex"></i></div><div>Regex Tester</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-regex"></i></div>
+      <div>
+        <div class="tool-title">Regex Tester</div>
+        <div class="tool-desc">Build and test JavaScript regular expressions with live highlighting and replace.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto; margin-bottom:16px">
+    <div class="panel-label"><span>Pattern</span></div>
+    <div class="row" style="gap:6px">
+      <span class="muted" style="font-family:ui-monospace,Menlo,monospace; font-size:18px">/</span>
+      <input type="text" id="pattern" placeholder="\b[A-Z]\w+\b" style="flex:1; font-family:ui-monospace,Menlo,monospace; min-width:200px">
+      <span class="muted" style="font-family:ui-monospace,Menlo,monospace; font-size:18px">/</span>
+      <input type="text" id="flags" value="gi" style="width:70px; font-family:ui-monospace,Menlo,monospace">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label class="row" style="gap:5px; font-size:12px; color:var(--text2)"><input type="checkbox" data-flag="g" checked> g — global</label>
+      <label class="row" style="gap:5px; font-size:12px; color:var(--text2)"><input type="checkbox" data-flag="i" checked> i — case-insensitive</label>
+      <label class="row" style="gap:5px; font-size:12px; color:var(--text2)"><input type="checkbox" data-flag="m"> m — multiline</label>
+      <label class="row" style="gap:5px; font-size:12px; color:var(--text2)"><input type="checkbox" data-flag="s"> s — dotall</label>
+      <label class="row" style="gap:5px; font-size:12px; color:var(--text2)"><input type="checkbox" data-flag="u"> u — unicode</label>
+      <span class="spacer"></span>
+      <span id="status" class="muted" style="font-size:13px"></span>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Test string</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="sample-btn"><i class="ti ti-sparkles"></i> Sample</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="text" placeholder="Paste text here to test against the pattern…"></textarea>
+      <div class="panel-label" style="margin-top:14px"><span>Replace with</span></div>
+      <input type="text" id="replace" placeholder="Use $1, $2 for groups…" style="font-family:ui-monospace,Menlo,monospace">
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Highlighted</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-result"><i class="ti ti-copy"></i> Copy replaced</button>
+        </div>
+      </div>
+      <div id="highlighted" class="output-box" style="font-family:ui-monospace,Menlo,monospace; font-size:13px; white-space:pre-wrap"></div>
+      <div class="panel-label" style="margin-top:14px"><span>Replaced output</span></div>
+      <div id="replaced" class="output-box" style="font-family:ui-monospace,Menlo,monospace; font-size:13px; white-space:pre-wrap; min-height:80px"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px; min-height:auto">
+    <div class="panel-label"><span>Matches</span></div>
+    <div id="matches" class="muted" style="font-size:13px">No matches yet.</div>
+  </div>
+
+  <div class="panel" style="margin-top:16px; min-height:auto">
+    <div class="panel-label"><span>Cheat sheet</span></div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fill, minmax(180px, 1fr))">
+      <div class="stat-card"><div class="stat-label">Any digit</div><div style="font-family:monospace; font-size:13px">\d</div></div>
+      <div class="stat-card"><div class="stat-label">Word char</div><div style="font-family:monospace; font-size:13px">\w</div></div>
+      <div class="stat-card"><div class="stat-label">Whitespace</div><div style="font-family:monospace; font-size:13px">\s</div></div>
+      <div class="stat-card"><div class="stat-label">Word boundary</div><div style="font-family:monospace; font-size:13px">\b</div></div>
+      <div class="stat-card"><div class="stat-label">Start / end</div><div style="font-family:monospace; font-size:13px">^ $</div></div>
+      <div class="stat-card"><div class="stat-label">0 or more</div><div style="font-family:monospace; font-size:13px">*</div></div>
+      <div class="stat-card"><div class="stat-label">1 or more</div><div style="font-family:monospace; font-size:13px">+</div></div>
+      <div class="stat-card"><div class="stat-label">Optional</div><div style="font-family:monospace; font-size:13px">?</div></div>
+      <div class="stat-card"><div class="stat-label">N to M</div><div style="font-family:monospace; font-size:13px">{n,m}</div></div>
+      <div class="stat-card"><div class="stat-label">Char class</div><div style="font-family:monospace; font-size:13px">[a-z]</div></div>
+      <div class="stat-card"><div class="stat-label">Group</div><div style="font-family:monospace; font-size:13px">(…)</div></div>
+      <div class="stat-card"><div class="stat-label">Or</div><div style="font-family:monospace; font-size:13px">a|b</div></div>
+    </div>
+  </div>
+</main>
+
+<style>
+  mark.hl { background: rgba(124,109,240,.4); color: var(--text); border-radius: 3px; padding: 0 1px; }
+</style>
+
+<script>
+const pattern = document.getElementById('pattern');
+const flags = document.getElementById('flags');
+const text = document.getElementById('text');
+const replace = document.getElementById('replace');
+const highlighted = document.getElementById('highlighted');
+const replaced = document.getElementById('replaced');
+const matchesEl = document.getElementById('matches');
+const statusEl = document.getElementById('status');
+
+function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+function syncFlags() {
+  const set = new Set(flags.value);
+  document.querySelectorAll('[data-flag]').forEach(c => c.checked = set.has(c.dataset.flag));
+}
+document.querySelectorAll('[data-flag]').forEach(cb => cb.addEventListener('change', () => {
+  let f = flags.value.split('').filter(x => x !== cb.dataset.flag);
+  if (cb.checked) f.push(cb.dataset.flag);
+  flags.value = [...new Set(f)].join('');
+  run();
+}));
+
+function run() {
+  syncFlags();
+  if (!pattern.value) {
+    highlighted.textContent = text.value;
+    replaced.textContent = '';
+    matchesEl.innerHTML = 'Enter a pattern to test.';
+    statusEl.textContent = '';
+    return;
+  }
+  let re;
+  try {
+    re = new RegExp(pattern.value, flags.value);
+  } catch (e) {
+    statusEl.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+    highlighted.textContent = text.value;
+    replaced.textContent = '';
+    matchesEl.innerHTML = '';
+    return;
+  }
+  const t = text.value;
+  const isGlobal = re.flags.includes('g');
+  const matches = [];
+  if (isGlobal) {
+    let m;
+    const safetyMax = 10000;
+    let i = 0;
+    while ((m = re.exec(t)) && i++ < safetyMax) {
+      matches.push({ index: m.index, match: m[0], groups: m.slice(1), full: m });
+      if (m.index === re.lastIndex) re.lastIndex++;
+    }
+  } else {
+    const m = re.exec(t);
+    if (m) matches.push({ index: m.index, match: m[0], groups: m.slice(1), full: m });
+  }
+
+  // Highlighted output
+  let html = '', last = 0;
+  for (const m of matches) {
+    html += escapeHtml(t.slice(last, m.index)) + '<mark class="hl">' + escapeHtml(m.match) + '</mark>';
+    last = m.index + m.match.length;
+  }
+  html += escapeHtml(t.slice(last));
+  highlighted.innerHTML = html || '<span class="muted">No text.</span>';
+
+  // Replaced
+  try {
+    replaced.textContent = t.replace(new RegExp(pattern.value, flags.value), replace.value);
+  } catch(e) { replaced.textContent = ''; }
+
+  // Match list
+  if (!matches.length) {
+    matchesEl.innerHTML = '<span class="muted">No matches.</span>';
+  } else {
+    matchesEl.innerHTML = matches.slice(0, 200).map((m, i) =>
+      `<div style="padding:6px 0; border-bottom:1px solid var(--border)">
+        <span class="chip accent">#${i+1}</span>
+        <code style="margin-left:8px">${escapeHtml(m.match)}</code>
+        <span class="muted" style="margin-left:8px; font-size:12px">at ${m.index}</span>
+        ${m.groups.length ? `<div style="margin-top:4px; padding-left:8px; font-size:12px; color:var(--text2)">
+          Groups: ${m.groups.map((g,gi) => `<span class="chip" style="margin-right:4px"><b>$${gi+1}</b> = ${g === undefined ? '—' : `<code>${escapeHtml(g)}</code>`}</span>`).join('')}
+        </div>` : ''}
+      </div>`
+    ).join('') + (matches.length > 200 ? `<div class="muted" style="padding-top:6px">…${matches.length - 200} more matches not shown.</div>` : '');
+  }
+
+  statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> ${matches.length} match${matches.length===1?'':'es'}`;
+}
+
+[pattern, flags, text, replace].forEach(el => el.addEventListener('input', run));
+
+document.getElementById('sample-btn').addEventListener('click', () => {
+  pattern.value = '\\b([A-Z][a-z]+)\\s+([A-Z][a-z]+)\\b';
+  flags.value = 'g';
+  text.value = "Ada Lovelace worked with Charles Babbage. Marie Curie won two Nobel prizes. Alan Turing built the bombe.";
+  replace.value = '$2 $1';
+  run();
+});
+document.getElementById('clear-btn').addEventListener('click', () => { text.value = ''; run(); });
+document.getElementById('copy-result').addEventListener('click', () => {
+  navigator.clipboard.writeText(replaced.textContent);
+});
+
+run();
+</script>
+
+</body>
+</html>

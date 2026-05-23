@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image OCR — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js" defer></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-scan"></i></div><div>Image OCR</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-scan"></i></div>
+      <div>
+        <div class="tool-title">Image OCR</div>
+        <div class="tool-desc">Extract text from images and screenshots. Runs locally — first language download ~10 MB.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Image</span>
+        <div class="panel-actions">
+          <select id="lang">
+            <option value="eng">English</option>
+            <option value="spa">Spanish</option>
+            <option value="fra">French</option>
+            <option value="deu">German</option>
+            <option value="rus">Russian</option>
+            <option value="ita">Italian</option>
+            <option value="por">Portuguese</option>
+            <option value="chi_sim">Chinese (simplified)</option>
+          </select>
+        </div>
+      </div>
+      <div class="dropzone" id="drop">
+        <i class="ti ti-photo-up"></i>
+        <div class="dropzone-title">Drop image, click to choose, or paste from clipboard</div>
+        <div class="dropzone-hint">PNG, JPG, BMP, WEBP.</div>
+        <input type="file" id="file" accept="image/*" hidden>
+      </div>
+      <img id="preview" style="max-width:100%; margin-top:12px; border-radius:var(--radius-sm); border:1px solid var(--border); display:none">
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-primary" id="run-btn" disabled><i class="ti ti-scan"></i> Extract text</button>
+        <span class="spacer"></span>
+        <span id="status" class="muted" style="font-size:13px"></span>
+      </div>
+      <div id="progress-wrap" style="margin-top:10px; display:none">
+        <div style="height:6px; background:var(--bg2); border-radius:3px; overflow:hidden; border:1px solid var(--border)">
+          <div id="progress-bar" style="height:100%; background:var(--accent); width:0%; transition:width .2s"></div>
+        </div>
+        <div id="progress-label" class="muted" style="font-size:12px; margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Extracted text</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-btn" disabled><i class="ti ti-copy"></i> Copy</button>
+          <button class="btn btn-sm" id="dl-btn" disabled><i class="ti ti-download"></i> .txt</button>
+        </div>
+      </div>
+      <textarea id="output" placeholder="Result will appear here…" readonly style="flex:1"></textarea>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
+
+<script>
+const drop = document.getElementById('drop');
+const file = document.getElementById('file');
+const preview = document.getElementById('preview');
+const runBtn = document.getElementById('run-btn');
+const output = document.getElementById('output');
+const statusEl = document.getElementById('status');
+const progressWrap = document.getElementById('progress-wrap');
+const progressBar = document.getElementById('progress-bar');
+const progressLabel = document.getElementById('progress-label');
+const copyBtn = document.getElementById('copy-btn');
+const dlBtn = document.getElementById('dl-btn');
+
+let currentImage = null;
+
+function setImage(f) {
+  currentImage = f;
+  const url = URL.createObjectURL(f);
+  preview.src = url;
+  preview.style.display = 'block';
+  runBtn.disabled = false;
+  statusEl.textContent = f.name + ' loaded.';
+}
+
+drop.addEventListener('click', () => file.click());
+file.addEventListener('change', e => { if (e.target.files[0]) setImage(e.target.files[0]); });
+;['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+;['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f && f.type.startsWith('image/')) setImage(f); });
+
+document.addEventListener('paste', e => {
+  for (const item of e.clipboardData.items) {
+    if (item.type.startsWith('image/')) {
+      setImage(item.getAsFile());
+      return;
+    }
+  }
+});
+
+runBtn.addEventListener('click', async () => {
+  if (!currentImage || !window.Tesseract) { statusEl.textContent = 'Library still loading…'; return; }
+  runBtn.disabled = true;
+  output.value = '';
+  copyBtn.disabled = true; dlBtn.disabled = true;
+  progressWrap.style.display = 'block';
+  statusEl.textContent = 'Running OCR…';
+  const lang = document.getElementById('lang').value;
+  try {
+    const { data } = await Tesseract.recognize(currentImage, lang, {
+      logger: m => {
+        if (m.status) progressLabel.textContent = m.status + (m.progress ? ` (${Math.round(m.progress*100)}%)` : '');
+        if (typeof m.progress === 'number') progressBar.style.width = (m.progress * 100) + '%';
+      }
+    });
+    output.value = data.text.trim();
+    statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Done.`;
+    copyBtn.disabled = !output.value;
+    dlBtn.disabled = !output.value;
+  } catch (e) {
+    statusEl.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
+  } finally {
+    runBtn.disabled = false;
+    setTimeout(() => progressWrap.style.display = 'none', 600);
+  }
+});
+
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard.writeText(output.value).then(() => {
+    const t = document.getElementById('toast'); t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1500);
+  });
+});
+
+dlBtn.addEventListener('click', () => {
+  const blob = new Blob([output.value], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ocr.txt'; a.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+
+</body>
+</html>

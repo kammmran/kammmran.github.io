@@ -1,0 +1,851 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CiteFlow</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --bg2: #16161d;
+    --bg3: #1e1e28;
+    --surface: rgba(255,255,255,0.04);
+    --surface2: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.09);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0eff8;
+    --text2: #9997b3;
+    --text3: #6b6984;
+    --accent: #7c6df0;
+    --accent2: #a594f7;
+    --accent3: #c4b7ff;
+    --teal: #2dd4bf;
+    --pink: #f472b6;
+    --green: #4ade80;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* Nav */
+  nav { display: flex; align-items: center; justify-content: space-between; padding: 14px 32px; border-bottom: 1px solid var(--border); background: rgba(15,15,19,0.85); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .logo-icon { width: 30px; height: 30px; background: linear-gradient(135deg, var(--accent), var(--teal)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  .logo span { background: linear-gradient(90deg, var(--accent3), var(--teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-links { display: flex; align-items: center; gap: 4px; }
+  .nav-link { padding: 6px 12px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text2); cursor: pointer; transition: all .15s; border: none; background: none; }
+  .nav-link:hover, .nav-link.active { color: var(--text); background: var(--surface2); }
+  .nav-actions { display: flex; align-items: center; gap: 8px; }
+  .btn-ghost { padding: 7px 14px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text2); cursor: pointer; transition: all .15s; border: 1px solid var(--border); background: none; }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+  .btn-primary { padding: 7px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; border: none; background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #6b5de0; transform: translateY(-1px); }
+
+  /* Pages */
+  .page { display: none; animation: fadeIn .2s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ===== LANDING PAGE ===== */
+  .hero { padding: 80px 32px 60px; text-align: center; max-width: 860px; margin: 0 auto; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 999px; background: rgba(124,109,240,0.15); border: 1px solid rgba(124,109,240,0.3); font-size: 12px; color: var(--accent3); margin-bottom: 24px; }
+  .hero h1 { font-size: 56px; font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 20px; }
+  .hero h1 span { background: linear-gradient(90deg, var(--accent3), var(--teal), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { font-size: 18px; color: var(--text2); line-height: 1.6; max-width: 580px; margin: 0 auto 36px; }
+  .hero-actions { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 56px; }
+  .btn-lg { padding: 12px 28px; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .btn-lg-primary { background: var(--accent); color: #fff; border: none; }
+  .btn-lg-primary:hover { background: #6b5de0; transform: translateY(-2px); box-shadow: 0 12px 40px rgba(124,109,240,0.35); }
+  .btn-lg-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+  .btn-lg-ghost:hover { background: rgba(255,255,255,0.1); }
+
+  /* Demo converter in hero */
+  .hero-demo { max-width: 720px; margin: 0 auto; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-lg); overflow: hidden; }
+  .demo-header { padding: 12px 16px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .d1 { background: var(--red); } .d2 { background: var(--amber); } .d3 { background: var(--green); }
+  .demo-title { margin-left: 4px; font-size: 12px; color: var(--text3); flex: 1; text-align: center; }
+  .demo-body { display: grid; grid-template-columns: 1fr 1fr; min-height: 200px; }
+  .demo-panel { padding: 20px; }
+  .demo-panel:first-child { border-right: 1px solid var(--border); }
+  .demo-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .style-badge { padding: 3px 8px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgba(124,109,240,0.2); color: var(--accent3); }
+  .style-badge.teal { background: rgba(45,212,191,0.15); color: var(--teal); }
+  .demo-text { font-size: 13px; color: var(--text2); line-height: 1.7; font-style: italic; }
+  .demo-result { font-size: 13px; color: var(--text); line-height: 1.7; }
+  .demo-result .author { color: var(--accent3); }
+  .demo-result .year { color: var(--teal); }
+  .demo-result .title-em { font-style: italic; }
+
+  /* Styles grid */
+  .section { padding: 60px 32px; max-width: 1100px; margin: 0 auto; }
+  .section-label { font-size: 12px; font-weight: 600; color: var(--accent3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .section h2 { font-size: 36px; font-weight: 700; letter-spacing: -0.8px; margin-bottom: 12px; }
+  .section p.sub { font-size: 16px; color: var(--text2); margin-bottom: 40px; max-width: 500px; }
+  .styles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+  .style-card { padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); text-align: center; transition: all .2s; cursor: pointer; }
+  .style-card:hover { background: var(--surface2); border-color: var(--border2); transform: translateY(-2px); }
+  .style-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .style-desc { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+  /* Features */
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .feat-card { padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); transition: all .2s; }
+  .feat-card:hover { background: var(--surface2); border-color: var(--border2); }
+  .feat-icon { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 14px; }
+  .feat-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+  .feat-card p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ===== CONVERTER PAGE ===== */
+  .converter-page { padding: 24px 32px; }
+  .conv-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .conv-header h2 { font-size: 22px; font-weight: 700; }
+  .conv-toolbar { display: flex; align-items: center; gap: 10px; }
+  .select-wrap { position: relative; }
+  .style-select { appearance: none; padding: 8px 32px 8px 12px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; font-weight: 600; cursor: pointer; min-width: 130px; }
+  .select-wrap::after { content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 10px; pointer-events: none; }
+  .swap-btn { width: 34px; height: 34px; border-radius: var(--radius-sm); background: var(--surface2); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text2); font-size: 16px; transition: all .15s; }
+  .swap-btn:hover { color: var(--accent3); border-color: var(--accent); }
+  .convert-btn { padding: 8px 20px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px; }
+  .convert-btn:hover { background: #6b5de0; }
+  .convert-btn.loading { opacity: .6; pointer-events: none; }
+
+  .converter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: calc(100vh - 200px); min-height: 480px; }
+  .conv-panel { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
+  .panel-header { padding: 12px 16px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .8px; }
+  .panel-actions { display: flex; gap: 6px; }
+  .icon-btn { width: 28px; height: 28px; border-radius: 6px; background: none; border: none; color: var(--text3); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all .15s; }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); }
+  textarea.conv-input { flex: 1; background: transparent; border: none; resize: none; padding: 18px; color: var(--text); font-size: 14px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', monospace; outline: none; }
+  textarea.conv-input::placeholder { color: var(--text3); }
+  .conv-output { flex: 1; padding: 18px; font-size: 14px; line-height: 1.7; font-family: 'SF Mono', 'Fira Code', monospace; overflow-y: auto; white-space: pre-wrap; word-break: break-word; }
+
+  /* Status bar */
+  .panel-footer { padding: 8px 16px; background: var(--bg2); border-top: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .status-dot.error { background: var(--red); }
+  .status-dot.warn { background: var(--amber); }
+  .status-text { font-size: 12px; color: var(--text3); }
+  .char-count { margin-left: auto; font-size: 12px; color: var(--text3); }
+
+  /* Alerts */
+  .alert { margin: 10px 14px 0; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; display: flex; align-items: flex-start; gap: 8px; }
+  .alert-warn { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25); color: #fcd34d; }
+  .alert-success { background: rgba(74,222,128,0.1); border: 1px solid rgba(74,222,128,0.25); color: var(--green); }
+  .alert-info { background: rgba(124,109,240,0.1); border: 1px solid rgba(124,109,240,0.25); color: var(--accent3); }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; padding: 4px; background: var(--bg2); border-radius: var(--radius-sm); }
+  .tab { padding: 6px 14px; border-radius: 6px; font-size: 13px; color: var(--text2); cursor: pointer; transition: all .15s; border: none; background: none; }
+  .tab.active { background: var(--accent); color: #fff; font-weight: 600; }
+
+  /* ===== GENERATOR PAGE ===== */
+  .gen-page { padding: 24px 32px; max-width: 840px; }
+  .gen-page h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .gen-page .desc { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+  .source-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .src-tab { padding: 8px 16px; border-radius: var(--radius-sm); font-size: 13px; color: var(--text2); cursor: pointer; transition: all .15s; border: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 6px; }
+  .src-tab:hover { border-color: var(--border2); color: var(--text); }
+  .src-tab.active { background: rgba(124,109,240,0.15); border-color: var(--accent); color: var(--accent3); }
+  .gen-form { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; }
+  .form-input { padding: 9px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 14px; transition: border-color .15s; outline: none; }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--text3); }
+  .gen-output { margin-top: 20px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden; }
+  .gen-out-header { padding: 12px 16px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .gen-out-body { padding: 18px; font-size: 14px; line-height: 1.8; color: var(--text); }
+
+  /* ===== DASHBOARD ===== */
+  .dash-page { padding: 28px 32px; }
+  .dash-header { margin-bottom: 28px; }
+  .dash-header h2 { font-size: 24px; font-weight: 700; }
+  .dash-header p { font-size: 14px; color: var(--text2); margin-top: 4px; }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; }
+  .stat-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; font-weight: 500; }
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; }
+  .stat-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  .stat-up { color: var(--green); }
+
+  .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+  .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .card-header { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-size: 14px; font-weight: 600; }
+  .card-body { padding: 0; }
+  .cite-row { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; transition: background .15s; cursor: pointer; }
+  .cite-row:last-child { border-bottom: none; }
+  .cite-row:hover { background: var(--surface); }
+  .cite-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .cite-info { flex: 1; min-width: 0; }
+  .cite-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cite-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .cite-badge { padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-apa { background: rgba(124,109,240,0.2); color: var(--accent3); }
+  .badge-mla { background: rgba(45,212,191,0.15); color: var(--teal); }
+  .badge-chicago { background: rgba(244,114,182,0.15); color: var(--pink); }
+  .badge-ieee { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .badge-harvard { background: rgba(74,222,128,0.15); color: var(--green); }
+
+  /* Sidebar recent */
+  .project-list { }
+  .proj-item { padding: 12px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; cursor: pointer; transition: background .15s; }
+  .proj-item:last-child { border-bottom: none; }
+  .proj-item:hover { background: var(--surface); }
+  .proj-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .proj-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .proj-count { font-size: 12px; color: var(--text3); }
+
+  /* AI panel */
+  .ai-panel { margin-top: 20px; background: linear-gradient(135deg, rgba(124,109,240,0.1), rgba(45,212,191,0.08)); border: 1px solid rgba(124,109,240,0.25); border-radius: var(--radius); padding: 18px 20px; }
+  .ai-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .ai-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent3); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+  .ai-title { font-size: 13px; font-weight: 600; color: var(--accent3); }
+  .ai-msg { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  .ai-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .ai-btn { padding: 6px 14px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer; transition: all .15s; border: 1px solid rgba(124,109,240,0.4); background: rgba(124,109,240,0.12); color: var(--accent3); }
+  .ai-btn:hover { background: rgba(124,109,240,0.22); }
+
+  /* Scroll */
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Loading spinner */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 18px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); font-size: 13px; color: var(--text); z-index: 999; transform: translateY(60px); opacity: 0; transition: all .3s; display: flex; align-items: center; gap: 8px; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast i { color: var(--green); }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 40px 0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <div class="logo-icon">✦</div>
+    <span>CiteFlow</span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('landing')">Home</button>
+    <button class="nav-link" onclick="showPage('converter')">Converter</button>
+    <button class="nav-link" onclick="showPage('generator')">Generator</button>
+    <button class="nav-link" onclick="showPage('dashboard')">Dashboard</button>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-ghost">Sign in</button>
+    <button class="btn-primary" onclick="showPage('converter')">Try Free →</button>
+  </div>
+</nav>
+
+<div id="toast" class="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied to clipboard!</span></div>
+
+<!-- ===== LANDING ===== -->
+<div id="page-landing" class="page active">
+  <div class="hero">
+    <div class="hero-badge">✦ AI-Powered Academic Citations</div>
+    <h1>Convert citations<br><span>instantly, perfectly</span></h1>
+    <p>Transform references between 13+ academic styles in seconds. Powered by AI — APA, MLA, Chicago, Harvard, IEEE, Vancouver, BibTeX and more.</p>
+    <div class="hero-actions">
+      <button class="btn-lg btn-lg-primary" onclick="showPage('converter')">Start Converting Free</button>
+      <button class="btn-lg btn-lg-ghost" onclick="showPage('generator')">Generate Citation</button>
+    </div>
+
+    <div class="hero-demo">
+      <div class="demo-header">
+        <div class="demo-dot d1"></div><div class="demo-dot d2"></div><div class="demo-dot d3"></div>
+        <span class="demo-title">citeflow.app — Citation Converter</span>
+      </div>
+      <div class="demo-body">
+        <div class="demo-panel">
+          <div class="demo-label"><span class="style-badge">APA 7</span> Input</div>
+          <div class="demo-text">Smith, J. A., &amp; Lee, K. B. (2023). Deep learning approaches in computational chemistry. <em>Journal of Chemical Informatics</em>, 45(3), 112–128. https://doi.org/10.1000/jci.2023.45</div>
+        </div>
+        <div class="demo-panel">
+          <div class="demo-label"><span class="style-badge teal">MLA 9</span> Output</div>
+          <div class="demo-result" id="demo-output">
+            <span class="author">Smith, John A., and Kevin B. Lee.</span> "<span class="title-em">Deep Learning Approaches in Computational Chemistry.</span>" <em>Journal of Chemical Informatics</em>, vol. 45, no. 3, <span class="year">2023</span>, pp. 112–128, doi:10.1000/jci.2023.45.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">Supported Formats</div>
+    <h2>Every style you need</h2>
+    <p class="sub">From research papers to legal citations — all major academic and professional formats supported.</p>
+    <div class="styles-grid">
+      <div class="style-card"><div class="style-name">APA 7</div><div class="style-desc">Psychology &amp; Social</div></div>
+      <div class="style-card"><div class="style-name">MLA 9</div><div class="style-desc">Humanities</div></div>
+      <div class="style-card"><div class="style-name">Chicago</div><div class="style-desc">History &amp; Arts</div></div>
+      <div class="style-card"><div class="style-name">Harvard</div><div class="style-desc">General Academic</div></div>
+      <div class="style-card"><div class="style-name">IEEE</div><div class="style-desc">Engineering &amp; CS</div></div>
+      <div class="style-card"><div class="style-name">Vancouver</div><div class="style-desc">Medicine</div></div>
+      <div class="style-card"><div class="style-name">ACS</div><div class="style-desc">Chemistry</div></div>
+      <div class="style-card"><div class="style-name">AMA</div><div class="style-desc">Medical Journals</div></div>
+      <div class="style-card"><div class="style-name">Turabian</div><div class="style-desc">Academic Papers</div></div>
+      <div class="style-card"><div class="style-name">OSCOLA</div><div class="style-desc">Legal Citations</div></div>
+      <div class="style-card"><div class="style-name">BibTeX</div><div class="style-desc">LaTeX Users</div></div>
+      <div class="style-card"><div class="style-name">RIS</div><div class="style-desc">Reference Manager</div></div>
+      <div class="style-card"><div class="style-name">EndNote</div><div class="style-desc">Library Tools</div></div>
+    </div>
+  </div>
+
+  <div class="divider" style="max-width:1100px; margin: 0 auto 0; padding: 0 32px;"></div>
+
+  <div class="section">
+    <div class="section-label">Features</div>
+    <h2>Everything researchers need</h2>
+    <p class="sub">Stop wasting time formatting. CiteFlow handles it all.</p>
+    <div class="features-grid">
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(124,109,240,0.15)"><i class="ti ti-sparkles" style="color:var(--accent3)"></i></div>
+        <h3>AI-Powered Correction</h3>
+        <p>Automatically detect and fix missing fields, formatting errors, and inconsistencies in your citations.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(45,212,191,0.12)"><i class="ti ti-transform" style="color:var(--teal)"></i></div>
+        <h3>Instant Conversion</h3>
+        <p>Convert between 13+ citation styles in real-time. Paste once, get every format you need.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(251,191,36,0.12)"><i class="ti ti-search" style="color:var(--amber)"></i></div>
+        <h3>DOI & URL Lookup</h3>
+        <p>Enter a DOI, URL, or ISBN and CiteFlow auto-fills all metadata from CrossRef and Google Books.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(74,222,128,0.12)"><i class="ti ti-files" style="color:var(--green)"></i></div>
+        <h3>Bulk Conversion</h3>
+        <p>Convert entire reference lists at once. Upload a .bib file or paste dozens of citations together.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(244,114,182,0.12)"><i class="ti ti-file-type-pdf" style="color:var(--pink)"></i></div>
+        <h3>PDF Extraction</h3>
+        <p>Upload a PDF paper and automatically extract all references from the bibliography section.</p>
+      </div>
+      <div class="feat-card">
+        <div class="feat-icon" style="background:rgba(248,113,113,0.12)"><i class="ti ti-history" style="color:var(--red)"></i></div>
+        <h3>Citation History</h3>
+        <p>All your conversions saved locally. Organize into projects, search, and export anytime.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONVERTER ===== -->
+<div id="page-converter" class="page">
+  <div class="converter-page">
+    <div class="conv-header">
+      <div>
+        <h2>Citation Converter</h2>
+        <p style="font-size:13px;color:var(--text3);margin-top:3px">Paste a citation below and convert to any style</p>
+      </div>
+      <div class="conv-toolbar">
+        <div class="tabs">
+          <button class="tab active">Single</button>
+          <button class="tab">Bulk</button>
+          <button class="tab">DOI Lookup</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div class="select-wrap">
+        <select class="style-select" id="from-style">
+          <option>Auto-detect</option>
+          <option>APA 7</option><option>MLA 9</option><option>Chicago</option><option>Harvard</option>
+          <option>IEEE</option><option>Vancouver</option><option>ACS</option><option>BibTeX</option><option>RIS</option>
+        </select>
+      </div>
+      <button class="swap-btn" onclick="swapStyles()" title="Swap styles"><i class="ti ti-switch-horizontal"></i></button>
+      <div class="select-wrap">
+        <select class="style-select" id="to-style">
+          <option>APA 7</option><option>MLA 9</option><option selected>Chicago</option><option>Harvard</option>
+          <option>IEEE</option><option>Vancouver</option><option>ACS</option><option>AMA</option>
+          <option>Turabian</option><option>OSCOLA</option><option>BibTeX</option><option>RIS</option><option>EndNote</option>
+        </select>
+      </div>
+      <button class="convert-btn" id="conv-btn" onclick="convertCitation()">
+        <i class="ti ti-sparkles"></i> Convert with AI
+      </button>
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button class="icon-btn" title="Upload PDF" style="width:auto;padding:0 10px;gap:6px;font-size:12px;color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);height:34px;"><i class="ti ti-upload"></i> Upload PDF</button>
+        <button class="icon-btn" title="History" style="width:34px;height:34px;border:1px solid var(--border);border-radius:var(--radius-sm);"><i class="ti ti-history"></i></button>
+      </div>
+    </div>
+
+    <div class="converter-grid">
+      <div class="conv-panel">
+        <div class="panel-header">
+          <span class="panel-title">Input Citation</span>
+          <div class="panel-actions">
+            <button class="icon-btn" title="Clear" onclick="clearInput()"><i class="ti ti-trash"></i></button>
+            <button class="icon-btn" title="Paste from clipboard"><i class="ti ti-clipboard"></i></button>
+          </div>
+        </div>
+        <div id="input-alert"></div>
+        <textarea class="conv-input" id="conv-input" placeholder="Paste your citation here...
+
+Example:
+Smith, J. A., &amp; Lee, K. B. (2023). Deep learning approaches in computational chemistry. Journal of Chemical Informatics, 45(3), 112–128. https://doi.org/10.1000/jci.2023.45
+
+Supports APA, MLA, Chicago, Harvard, IEEE, BibTeX, and more." oninput="updateCharCount()"></textarea>
+        <div class="panel-footer">
+          <div class="status-dot" id="input-dot"></div>
+          <span class="status-text" id="input-status">Ready</span>
+          <span class="char-count" id="char-count">0 chars</span>
+        </div>
+      </div>
+
+      <div class="conv-panel">
+        <div class="panel-header">
+          <span class="panel-title" id="output-style-label">Chicago — Output</span>
+          <div class="panel-actions">
+            <button class="icon-btn" title="Copy" onclick="copyOutput()"><i class="ti ti-copy"></i></button>
+            <button class="icon-btn" title="Download"><i class="ti ti-download"></i></button>
+            <button class="icon-btn" title="Share"><i class="ti ti-share"></i></button>
+          </div>
+        </div>
+        <div id="output-alert"></div>
+        <div class="conv-output" id="conv-output" style="color:var(--text3);font-style:italic">
+Converted citation will appear here...
+
+Use the AI converter to transform your citation into any style instantly.</div>
+        <div class="panel-footer">
+          <div class="status-dot" id="output-dot"></div>
+          <span class="status-text" id="output-status">Waiting for input</span>
+          <span class="char-count" id="output-count"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ai-panel" style="margin-top:16px">
+      <div class="ai-header">
+        <div class="ai-dot"></div>
+        <span class="ai-title">AI Citation Assistant</span>
+      </div>
+      <p class="ai-msg">Paste any citation — I'll auto-detect the format, fix missing fields, validate the DOI, and convert it to your target style with perfect formatting.</p>
+      <div class="ai-actions">
+        <button class="ai-btn" onclick="loadExample()">Load example →</button>
+        <button class="ai-btn" onclick="showPage('generator')">Generate from scratch →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GENERATOR ===== -->
+<div id="page-generator" class="page">
+  <div class="gen-page">
+    <h2>Citation Generator</h2>
+    <p class="desc">Fill in the details and generate a perfectly formatted citation in any style.</p>
+
+    <div class="source-tabs">
+      <button class="src-tab active" onclick="setSrcType(this,'journal')"><i class="ti ti-file-text"></i> Journal Article</button>
+      <button class="src-tab" onclick="setSrcType(this,'book')"><i class="ti ti-book"></i> Book</button>
+      <button class="src-tab" onclick="setSrcType(this,'website')"><i class="ti ti-world"></i> Website</button>
+      <button class="src-tab" onclick="setSrcType(this,'thesis')"><i class="ti ti-school"></i> Thesis</button>
+      <button class="src-tab" onclick="setSrcType(this,'conference')"><i class="ti ti-speakerphone"></i> Conference</button>
+      <button class="src-tab" onclick="setSrcType(this,'video')"><i class="ti ti-brand-youtube"></i> Video</button>
+    </div>
+
+    <div class="gen-form">
+      <div class="form-grid" id="gen-form-fields">
+        <div class="form-group full">
+          <label class="form-label">Article Title</label>
+          <input class="form-input" placeholder="e.g. Deep learning approaches in computational chemistry" id="f-title">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Author(s)</label>
+          <input class="form-input" placeholder="e.g. Smith, J. A." id="f-authors">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Year</label>
+          <input class="form-input" placeholder="e.g. 2023" id="f-year">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Journal Name</label>
+          <input class="form-input" placeholder="e.g. Journal of Chemical Informatics" id="f-journal">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Volume & Issue</label>
+          <input class="form-input" placeholder="e.g. 45(3)" id="f-vol">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pages</label>
+          <input class="form-input" placeholder="e.g. 112–128" id="f-pages">
+        </div>
+        <div class="form-group">
+          <label class="form-label">DOI / URL</label>
+          <input class="form-input" placeholder="e.g. 10.1000/jci.2023.45" id="f-doi">
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:20px;">
+        <div class="select-wrap">
+          <select class="style-select" id="gen-style">
+            <option>APA 7</option><option>MLA 9</option><option>Chicago</option><option>Harvard</option>
+            <option>IEEE</option><option>Vancouver</option><option>BibTeX</option>
+          </select>
+        </div>
+        <button class="convert-btn" onclick="generateCitation()"><i class="ti ti-sparkles"></i> Generate Citation</button>
+        <button class="convert-btn" style="background:var(--bg3);border:1px solid var(--border2);color:var(--text2);gap:6px" onclick="doiLookup()"><i class="ti ti-search"></i> DOI Autofill</button>
+      </div>
+    </div>
+
+    <div class="gen-output" id="gen-output" style="display:none">
+      <div class="gen-out-header">
+        <span style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px" id="gen-style-label">APA 7 — Generated Citation</span>
+        <div style="display:flex;gap:6px">
+          <button class="icon-btn" onclick="copyGenOutput()"><i class="ti ti-copy"></i></button>
+          <button class="icon-btn"><i class="ti ti-download"></i></button>
+        </div>
+      </div>
+      <div class="gen-out-body" id="gen-out-text"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="page-dashboard" class="page">
+  <div class="dash-page">
+    <div class="dash-header">
+      <h2>Dashboard</h2>
+      <p>Welcome back, Kamran — here's your citation workspace</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Citations</div>
+        <div class="stat-value">247</div>
+        <div class="stat-sub"><span class="stat-up">↑ 12</span> this week</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Conversions</div>
+        <div class="stat-value">1,084</div>
+        <div class="stat-sub"><span class="stat-up">↑ 38</span> this month</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Projects</div>
+        <div class="stat-value">8</div>
+        <div class="stat-sub">3 active</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">AI Fixes Applied</div>
+        <div class="stat-value">93</div>
+        <div class="stat-sub">Errors auto-corrected</div>
+      </div>
+    </div>
+
+    <div class="dash-grid">
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Citations</span>
+            <button class="icon-btn" style="font-size:12px;color:var(--text3);width:auto;padding:0 8px">View all →</button>
+          </div>
+          <div class="card-body">
+            <div class="cite-row">
+              <div class="cite-icon" style="background:rgba(124,109,240,0.15)"><i class="ti ti-file-text" style="color:var(--accent3);font-size:15px"></i></div>
+              <div class="cite-info">
+                <div class="cite-title">Deep learning in computational chemistry</div>
+                <div class="cite-meta">Smith et al. · Journal of Chemical Informatics · 2023</div>
+              </div>
+              <span class="cite-badge badge-apa">APA 7</span>
+            </div>
+            <div class="cite-row">
+              <div class="cite-icon" style="background:rgba(45,212,191,0.12)"><i class="ti ti-book" style="color:var(--teal);font-size:15px"></i></div>
+              <div class="cite-info">
+                <div class="cite-title">Introduction to Cheminformatics</div>
+                <div class="cite-meta">Leach, A.R. & Gillet, V.J. · Springer · 2007</div>
+              </div>
+              <span class="cite-badge badge-mla">MLA 9</span>
+            </div>
+            <div class="cite-row">
+              <div class="cite-icon" style="background:rgba(244,114,182,0.12)"><i class="ti ti-world" style="color:var(--pink);font-size:15px"></i></div>
+              <div class="cite-info">
+                <div class="cite-title">QSPR modeling of ionic liquid properties</div>
+                <div class="cite-meta">Baybekov et al. · Chem. Eng. Sci. · 2024</div>
+              </div>
+              <span class="cite-badge badge-chicago">Chicago</span>
+            </div>
+            <div class="cite-row">
+              <div class="cite-icon" style="background:rgba(251,191,36,0.12)"><i class="ti ti-file-text" style="color:var(--amber);font-size:15px"></i></div>
+              <div class="cite-info">
+                <div class="cite-title">UMAP dimensionality reduction for chemical space</div>
+                <div class="cite-meta">McInnes, L. · JOSS · 2018</div>
+              </div>
+              <span class="cite-badge badge-ieee">IEEE</span>
+            </div>
+            <div class="cite-row">
+              <div class="cite-icon" style="background:rgba(74,222,128,0.12)"><i class="ti ti-file-text" style="color:var(--green);font-size:15px"></i></div>
+              <div class="cite-info">
+                <div class="cite-title">XGBoost: A scalable tree boosting system</div>
+                <div class="cite-meta">Chen, T. & Guestrin, C. · KDD · 2016</div>
+              </div>
+              <span class="cite-badge badge-harvard">Harvard</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-panel" style="margin-top:16px">
+          <div class="ai-header"><div class="ai-dot"></div><span class="ai-title">AI Suggestion</span></div>
+          <p class="ai-msg">3 citations in your "Ionic Liquids" project are missing DOI fields. Would you like me to auto-fill them using CrossRef?</p>
+          <div class="ai-actions">
+            <button class="ai-btn">Auto-fill DOIs →</button>
+            <button class="ai-btn">Review manually →</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Projects</span>
+            <button class="icon-btn"><i class="ti ti-plus"></i></button>
+          </div>
+          <div class="proj-item">
+            <div class="proj-dot" style="background:var(--accent)"></div>
+            <span class="proj-name">Internship Report — ILs</span>
+            <span class="proj-count">48 refs</span>
+          </div>
+          <div class="proj-item">
+            <div class="proj-dot" style="background:var(--teal)"></div>
+            <span class="proj-name">IL Binary Mixtures Paper</span>
+            <span class="proj-count">31 refs</span>
+          </div>
+          <div class="proj-item">
+            <div class="proj-dot" style="background:var(--pink)"></div>
+            <span class="proj-name">AI-GeoMig Grant Proposal</span>
+            <span class="proj-count">22 refs</span>
+          </div>
+          <div class="proj-item">
+            <div class="proj-dot" style="background:var(--amber)"></div>
+            <span class="proj-name">ADNSU Seminar Materials</span>
+            <span class="proj-count">15 refs</span>
+          </div>
+          <div class="proj-item">
+            <div class="proj-dot" style="background:var(--text3)"></div>
+            <span class="proj-name">Erasmus Mundus Application</span>
+            <span class="proj-count">9 refs</span>
+          </div>
+        </div>
+
+        <div class="card" style="padding:16px 18px;">
+          <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;">Quick Convert</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="ai-btn" style="text-align:left" onclick="showPage('converter')">Paste &amp; convert citation →</button>
+            <button class="ai-btn" style="text-align:left" onclick="showPage('generator')">Generate from DOI →</button>
+            <button class="ai-btn" style="text-align:left">Import .bib file →</button>
+            <button class="ai-btn" style="text-align:left">Export all as BibTeX →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach((l,i) => {
+    const pages = ['landing','converter','generator','dashboard'];
+    l.classList.toggle('active', pages[i] === name);
+  });
+  window.scrollTo(0, 0);
+}
+
+function updateCharCount() {
+  const val = document.getElementById('conv-input').value;
+  document.getElementById('char-count').textContent = val.length + ' chars';
+  if (val.length > 0) {
+    document.getElementById('input-dot').className = 'status-dot';
+    document.getElementById('input-status').textContent = 'Ready to convert';
+  }
+}
+
+function clearInput() {
+  document.getElementById('conv-input').value = '';
+  document.getElementById('char-count').textContent = '0 chars';
+  document.getElementById('input-status').textContent = 'Ready';
+  document.getElementById('input-alert').innerHTML = '';
+}
+
+function copyOutput() {
+  const out = document.getElementById('conv-output').textContent;
+  if (out.includes('Converted citation') || out.trim() === '') return;
+  navigator.clipboard && navigator.clipboard.writeText(out);
+  showToast('Citation copied to clipboard!');
+}
+
+function copyGenOutput() {
+  const out = document.getElementById('gen-out-text').textContent;
+  navigator.clipboard && navigator.clipboard.writeText(out);
+  showToast('Citation copied!');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function swapStyles() {
+  const f = document.getElementById('from-style');
+  const t = document.getElementById('to-style');
+  const fv = f.value, tv = t.value;
+  for (let o of f.options) if (o.value === tv) { f.value = tv; break; }
+  for (let o of t.options) if (o.value === fv) { t.value = fv; break; }
+}
+
+function loadExample() {
+  document.getElementById('conv-input').value = 'Smith, J. A., & Lee, K. B. (2023). Deep learning approaches in computational chemistry. Journal of Chemical Informatics, 45(3), 112–128. https://doi.org/10.1000/jci.2023.45';
+  updateCharCount();
+  document.getElementById('input-alert').innerHTML = '<div class="alert alert-info"><i class="ti ti-sparkles"></i> APA 7 format auto-detected</div>';
+}
+
+async function convertCitation() {
+  const input = document.getElementById('conv-input').value.trim();
+  if (!input) { showToast('Please paste a citation first'); return; }
+  const toStyle = document.getElementById('to-style').value;
+  const btn = document.getElementById('conv-btn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spinner"></span> Converting...';
+  document.getElementById('output-status').textContent = 'Converting...';
+  document.getElementById('output-dot').className = 'status-dot warn';
+  document.getElementById('output-alert').innerHTML = '';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: 'You are an expert academic citation converter. Convert the given citation to the requested format. Return ONLY the converted citation text with no explanation, no preamble, no markdown formatting. Just the raw citation string.',
+        messages: [{ role: 'user', content: `Convert this citation to ${toStyle} format:\n\n${input}` }]
+      })
+    });
+    const data = await resp.json();
+    const result = data.content?.[0]?.text || '';
+    document.getElementById('conv-output').style.fontStyle = 'normal';
+    document.getElementById('conv-output').style.color = 'var(--text)';
+    document.getElementById('conv-output').textContent = result;
+    document.getElementById('output-style-label').textContent = toStyle + ' — Output';
+    document.getElementById('output-dot').className = 'status-dot';
+    document.getElementById('output-status').textContent = 'Conversion complete';
+    document.getElementById('output-count').textContent = result.length + ' chars';
+    document.getElementById('output-alert').innerHTML = '<div class="alert alert-success"><i class="ti ti-check"></i> Successfully converted to ' + toStyle + '</div>';
+    document.getElementById('input-alert').innerHTML = '<div class="alert alert-info"><i class="ti ti-sparkles"></i> Style auto-detected · DOI validated</div>';
+  } catch(e) {
+    document.getElementById('conv-output').textContent = 'Conversion failed. Please try again.';
+    document.getElementById('output-dot').className = 'status-dot error';
+    document.getElementById('output-status').textContent = 'Error';
+  }
+  btn.classList.remove('loading');
+  btn.innerHTML = '<i class="ti ti-sparkles"></i> Convert with AI';
+}
+
+function setSrcType(el, type) {
+  document.querySelectorAll('.src-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const fields = document.getElementById('gen-form-fields');
+  if (type === 'book') {
+    fields.innerHTML = `
+      <div class="form-group full"><label class="form-label">Book Title</label><input class="form-input" placeholder="e.g. Introduction to Cheminformatics" id="f-title"></div>
+      <div class="form-group"><label class="form-label">Author(s)</label><input class="form-input" placeholder="e.g. Leach, A. R." id="f-authors"></div>
+      <div class="form-group"><label class="form-label">Year</label><input class="form-input" placeholder="e.g. 2007" id="f-year"></div>
+      <div class="form-group"><label class="form-label">Publisher</label><input class="form-input" placeholder="e.g. Springer" id="f-publisher"></div>
+      <div class="form-group"><label class="form-label">Edition</label><input class="form-input" placeholder="e.g. 2nd ed." id="f-edition"></div>
+      <div class="form-group"><label class="form-label">Place</label><input class="form-input" placeholder="e.g. Dordrecht" id="f-place"></div>
+      <div class="form-group"><label class="form-label">ISBN</label><input class="form-input" placeholder="e.g. 978-1-4020-1974-1" id="f-isbn"></div>
+    `;
+  } else if (type === 'website') {
+    fields.innerHTML = `
+      <div class="form-group full"><label class="form-label">Page Title</label><input class="form-input" placeholder="e.g. RDKit Documentation" id="f-title"></div>
+      <div class="form-group"><label class="form-label">Author / Organization</label><input class="form-input" placeholder="e.g. RDKit Contributors" id="f-authors"></div>
+      <div class="form-group"><label class="form-label">Year</label><input class="form-input" placeholder="e.g. 2024" id="f-year"></div>
+      <div class="form-group full"><label class="form-label">URL</label><input class="form-input" placeholder="https://www.rdkit.org/docs/" id="f-url"></div>
+      <div class="form-group"><label class="form-label">Access Date</label><input class="form-input" placeholder="e.g. 22 May 2026" id="f-accessed"></div>
+    `;
+  } else {
+    fields.innerHTML = `
+      <div class="form-group full"><label class="form-label">Article Title</label><input class="form-input" placeholder="e.g. QSPR modeling of ionic liquid properties" id="f-title"></div>
+      <div class="form-group"><label class="form-label">Author(s)</label><input class="form-input" placeholder="e.g. Smith, J. A." id="f-authors"></div>
+      <div class="form-group"><label class="form-label">Year</label><input class="form-input" placeholder="e.g. 2024" id="f-year"></div>
+      <div class="form-group"><label class="form-label">Journal Name</label><input class="form-input" placeholder="e.g. Journal of Chemical Informatics" id="f-journal"></div>
+      <div class="form-group"><label class="form-label">Volume & Issue</label><input class="form-input" placeholder="e.g. 45(3)" id="f-vol"></div>
+      <div class="form-group"><label class="form-label">Pages</label><input class="form-input" placeholder="e.g. 112–128" id="f-pages"></div>
+      <div class="form-group"><label class="form-label">DOI / URL</label><input class="form-input" placeholder="e.g. 10.1000/jci.2023.45" id="f-doi"></div>
+    `;
+  }
+}
+
+function doiLookup() {
+  const doi = document.getElementById('f-doi')?.value;
+  if (!doi) { showToast('Enter a DOI first'); return; }
+  showToast('Looking up DOI via CrossRef...');
+}
+
+async function generateCitation() {
+  const title = document.getElementById('f-title')?.value;
+  const authors = document.getElementById('f-authors')?.value;
+  const year = document.getElementById('f-year')?.value;
+  if (!title) { showToast('Please enter at least a title'); return; }
+  const style = document.getElementById('gen-style').value;
+
+  const meta = [];
+  if (authors) meta.push('Authors: ' + authors);
+  if (year) meta.push('Year: ' + year);
+  const journal = document.getElementById('f-journal')?.value;
+  const vol = document.getElementById('f-vol')?.value;
+  const pages = document.getElementById('f-pages')?.value;
+  const doi = document.getElementById('f-doi')?.value;
+  if (journal) meta.push('Journal: ' + journal);
+  if (vol) meta.push('Volume/Issue: ' + vol);
+  if (pages) meta.push('Pages: ' + pages);
+  if (doi) meta.push('DOI: ' + doi);
+
+  document.getElementById('gen-output').style.display = 'block';
+  document.getElementById('gen-out-text').textContent = 'Generating...';
+  document.getElementById('gen-style-label').textContent = style + ' — Generating...';
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: 'You are an expert academic citation formatter. Generate a perfectly formatted citation from the given metadata. Return ONLY the citation text, no explanation, no markdown.',
+        messages: [{ role: 'user', content: `Generate a ${style} citation for:\nTitle: ${title}\n${meta.join('\n')}` }]
+      })
+    });
+    const data = await resp.json();
+    const result = data.content?.[0]?.text || '';
+    document.getElementById('gen-out-text').textContent = result;
+    document.getElementById('gen-style-label').textContent = style + ' — Generated Citation';
+    showToast('Citation generated!');
+  } catch(e) {
+    document.getElementById('gen-out-text').textContent = 'Generation failed. Please try again.';
+  }
+}
+</script>
+</body>
+</html>

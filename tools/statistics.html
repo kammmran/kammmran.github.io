@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistics — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-histogram"></i></div><div>Statistics</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-chart-histogram"></i></div>
+      <div>
+        <div class="tool-title">Statistics</div>
+        <div class="tool-desc">Summary stats, distribution, and bivariate analysis (correlation, regression, scatter).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="single">Single dataset</button>
+    <button class="tab" data-mode="dual">Two datasets (X vs Y)</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span id="data-label">Data</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="sample-btn"><i class="ti ti-sparkles"></i> Sample</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="data" placeholder="1, 2, 3, 4, 5&#10;or one number per line"></textarea>
+      <div id="data-y-wrap" style="display:none; margin-top:10px">
+        <div class="panel-label"><span>Y values</span></div>
+        <textarea id="data-y" placeholder="Y values, same count as X"></textarea>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+          <input type="checkbox" id="sample-flag"> Treat as sample (n−1 for variance)
+        </label>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span id="summary-label">Summary</span></div>
+      <div class="stat-grid" id="stats"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="viz-panel" style="margin-top:16px">
+    <div class="panel-label"><span id="viz-label">Distribution</span></div>
+    <canvas id="canvas" height="220" style="width:100%; background:var(--bg2); border-radius:var(--radius-sm); border:1px solid var(--border)"></canvas>
+  </div>
+
+  <div class="panel" id="dual-panel" style="display:none; margin-top:16px">
+    <div class="panel-label"><span>Bivariate analysis</span></div>
+    <div class="stat-grid" id="dual-stats"></div>
+    <div id="regression" class="muted" style="margin-top:12px; font-family:ui-monospace,Menlo,monospace; font-size:14px"></div>
+  </div>
+</main>
+
+<script>
+const dataEl = document.getElementById('data');
+const dataY = document.getElementById('data-y');
+const statsEl = document.getElementById('stats');
+const sampleFlag = document.getElementById('sample-flag');
+const canvas = document.getElementById('canvas');
+const dualPanel = document.getElementById('dual-panel');
+const dualStats = document.getElementById('dual-stats');
+const regressionEl = document.getElementById('regression');
+const vizLabel = document.getElementById('viz-label');
+const dataLabel = document.getElementById('data-label');
+const summaryLabel = document.getElementById('summary-label');
+
+let mode = 'single';
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  document.getElementById('data-y-wrap').style.display = mode === 'dual' ? '' : 'none';
+  dualPanel.style.display = mode === 'dual' ? '' : 'none';
+  dataLabel.textContent = mode === 'dual' ? 'X values' : 'Data';
+  summaryLabel.textContent = mode === 'dual' ? 'X summary' : 'Summary';
+  vizLabel.textContent = mode === 'dual' ? 'Scatter plot with regression line' : 'Distribution';
+  render();
+}));
+
+function parse(t) { return t.split(/[\s,]+/).map(x => parseFloat(x)).filter(x => !isNaN(x)); }
+
+function fmt(n) {
+  if (!isFinite(n)) return '—';
+  if (n === 0) return '0';
+  const abs = Math.abs(n);
+  if (abs >= 1e6 || abs < 1e-3) return n.toExponential(4);
+  return parseFloat(n.toPrecision(6)).toString();
+}
+
+function quantile(sorted, p) {
+  const idx = (sorted.length - 1) * p;
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+function compute(arr) {
+  if (!arr.length) return null;
+  const n = arr.length;
+  const sum = arr.reduce((a,b)=>a+b, 0);
+  const mean = sum / n;
+  const sorted = [...arr].sort((a,b)=>a-b);
+  const min = sorted[0], max = sorted[n-1];
+  const median = quantile(sorted, 0.5);
+  const q1 = quantile(sorted, 0.25);
+  const q3 = quantile(sorted, 0.75);
+  const useN = sampleFlag.checked ? Math.max(1, n - 1) : n;
+  const variance = arr.reduce((s,x) => s + (x-mean)**2, 0) / useN;
+  const stdev = Math.sqrt(variance);
+  const counts = new Map();
+  arr.forEach(x => counts.set(x, (counts.get(x)||0)+1));
+  let modeC = 0, modes = [];
+  for (const [k,v] of counts) {
+    if (v > modeC) { modeC = v; modes = [k]; }
+    else if (v === modeC) modes.push(k);
+  }
+  const modeStr = modeC <= 1 ? '—' : modes.slice(0,3).map(fmt).join(', ') + (modes.length > 3 ? '…' : '');
+  // Skewness & kurtosis
+  const m3 = arr.reduce((s,x) => s + (x-mean)**3, 0) / n;
+  const m4 = arr.reduce((s,x) => s + (x-mean)**4, 0) / n;
+  const skew = stdev > 0 ? m3 / stdev**3 : 0;
+  const kurt = stdev > 0 ? m4 / stdev**4 - 3 : 0;
+  // 95% CI (using t≈1.96 for large n)
+  const se = stdev / Math.sqrt(n);
+  const ci = 1.96 * se;
+  return { n, sum, mean, median, mode: modeStr, min, max, range: max - min, q1, q3, iqr: q3 - q1, variance, stdev, sorted, skew, kurt, se, ci };
+}
+
+function bivariate(x, y) {
+  const n = Math.min(x.length, y.length);
+  if (n < 2) return null;
+  const mx = x.slice(0,n).reduce((a,b)=>a+b,0)/n;
+  const my = y.slice(0,n).reduce((a,b)=>a+b,0)/n;
+  let sxx=0, syy=0, sxy=0;
+  for (let i=0;i<n;i++) {
+    const dx = x[i]-mx, dy = y[i]-my;
+    sxx += dx*dx; syy += dy*dy; sxy += dx*dy;
+  }
+  const r = sxy / Math.sqrt(sxx * syy);
+  const slope = sxy / sxx;
+  const intercept = my - slope * mx;
+  // R^2 = r^2
+  const r2 = r * r;
+  // residual stderr of slope
+  let ssr = 0;
+  for (let i = 0; i < n; i++) ssr += (y[i] - (slope*x[i] + intercept))**2;
+  const seSlope = Math.sqrt(ssr / (n-2)) / Math.sqrt(sxx);
+  return { n, mx, my, r, r2, slope, intercept, seSlope };
+}
+
+function render() {
+  const arrX = parse(dataEl.value);
+  if (mode === 'single') {
+    const r = compute(arrX);
+    if (!r) {
+      statsEl.innerHTML = '<div class="muted" style="grid-column:1/-1; padding:20px; text-align:center">Paste numbers to see stats.</div>';
+      drawHist([]); return;
+    }
+    const items = [
+      ['Count', r.n], ['Sum', fmt(r.sum)],
+      ['Mean', fmt(r.mean)], ['Median', fmt(r.median)], ['Mode', r.mode],
+      ['Min', fmt(r.min)], ['Max', fmt(r.max)], ['Range', fmt(r.range)],
+      ['Q1', fmt(r.q1)], ['Q3', fmt(r.q3)], ['IQR', fmt(r.iqr)],
+      ['Variance', fmt(r.variance)], ['Std dev', fmt(r.stdev)],
+      ['SE mean', fmt(r.se)], ['95% CI ±', fmt(r.ci)],
+      ['Skewness', fmt(r.skew)], ['Kurtosis', fmt(r.kurt)],
+    ];
+    statsEl.innerHTML = items.map(([k,v]) =>
+      `<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value">${v}</div></div>`
+    ).join('');
+    drawHist(r.sorted);
+  } else {
+    const arrY = parse(dataY.value);
+    const rX = compute(arrX);
+    const rY = compute(arrY);
+    if (!rX) {
+      statsEl.innerHTML = '<div class="muted" style="grid-column:1/-1; padding:20px; text-align:center">Paste X values.</div>';
+      dualStats.innerHTML = ''; regressionEl.textContent = '';
+      drawScatter([],[],null); return;
+    }
+    const items = [
+      ['n', rX.n], ['Mean', fmt(rX.mean)], ['Std dev', fmt(rX.stdev)],
+      ['Min', fmt(rX.min)], ['Max', fmt(rX.max)], ['Median', fmt(rX.median)],
+    ];
+    statsEl.innerHTML = items.map(([k,v]) =>
+      `<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value">${v}</div></div>`
+    ).join('');
+    const b = bivariate(arrX, arrY);
+    if (!b) {
+      dualStats.innerHTML = '<div class="muted" style="grid-column:1/-1; padding:14px">Add at least 2 (X,Y) pairs.</div>';
+      regressionEl.textContent = '';
+      drawScatter(arrX, arrY, null);
+      return;
+    }
+    const dual = [
+      ['Pearson r', fmt(b.r)],
+      ['R²', fmt(b.r2)],
+      ['Slope', fmt(b.slope)],
+      ['Intercept', fmt(b.intercept)],
+      ['SE slope', fmt(b.seSlope)],
+      ['Pairs', b.n],
+    ];
+    dualStats.innerHTML = dual.map(([k,v]) =>
+      `<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value">${v}</div></div>`
+    ).join('');
+    const sign = b.intercept >= 0 ? '+' : '−';
+    regressionEl.innerHTML = `Regression line: <b>y = ${fmt(b.slope)}·x ${sign} ${fmt(Math.abs(b.intercept))}</b>
+      &nbsp; · &nbsp; ${b.r > 0 ? 'positive' : 'negative'} correlation${Math.abs(b.r) > 0.7 ? ' (strong)' : Math.abs(b.r) > 0.4 ? ' (moderate)' : Math.abs(b.r) > 0.2 ? ' (weak)' : ' (negligible)'}`;
+    drawScatter(arrX, arrY, b);
+  }
+}
+
+function setupCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,w,h);
+  return { ctx, w, h };
+}
+
+function drawHist(arr) {
+  const { ctx, w, h } = setupCanvas();
+  if (arr.length < 2) return;
+  const bins = Math.min(25, Math.max(4, Math.round(Math.sqrt(arr.length))));
+  const min = arr[0], max = arr[arr.length-1];
+  if (min === max) return;
+  const step = (max - min) / bins;
+  const counts = new Array(bins).fill(0);
+  for (const v of arr) {
+    let i = Math.floor((v - min) / step);
+    if (i === bins) i = bins - 1;
+    counts[i]++;
+  }
+  const maxC = Math.max(...counts);
+  const pad = 24;
+  const bw = (w - pad*2) / bins;
+  ctx.fillStyle = '#7c6df0';
+  counts.forEach((c, i) => {
+    const bh = (h - pad*2) * (c / maxC);
+    ctx.fillRect(pad + i*bw + 1, h - pad - bh, bw - 2, bh);
+  });
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.beginPath(); ctx.moveTo(pad, h - pad); ctx.lineTo(w - pad, h - pad); ctx.stroke();
+  ctx.fillStyle = '#6b6984';
+  ctx.font = '11px ui-monospace,Menlo,monospace';
+  ctx.fillText(fmt(min), pad, h - 6);
+  ctx.fillText(fmt(max), w - pad - 50, h - 6);
+}
+
+function drawScatter(xs, ys, reg) {
+  const { ctx, w, h } = setupCanvas();
+  const n = Math.min(xs.length, ys.length);
+  if (n < 1) return;
+  const xmin = Math.min(...xs.slice(0,n)), xmax = Math.max(...xs.slice(0,n));
+  const ymin = Math.min(...ys.slice(0,n)), ymax = Math.max(...ys.slice(0,n));
+  const pad = 30;
+  const xr = xmax - xmin || 1;
+  const yr = ymax - ymin || 1;
+  const xp = v => pad + (v - xmin) / xr * (w - pad*2);
+  const yp = v => (h - pad) - (v - ymin) / yr * (h - pad*2);
+  // axes
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.beginPath();
+  ctx.moveTo(pad, h - pad); ctx.lineTo(w - pad, h - pad);
+  ctx.moveTo(pad, pad); ctx.lineTo(pad, h - pad);
+  ctx.stroke();
+  // regression line
+  if (reg) {
+    ctx.strokeStyle = 'rgba(45,212,191,0.8)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(xp(xmin), yp(reg.slope*xmin + reg.intercept));
+    ctx.lineTo(xp(xmax), yp(reg.slope*xmax + reg.intercept));
+    ctx.stroke();
+  }
+  // points
+  ctx.fillStyle = 'rgba(124,109,240,0.85)';
+  for (let i = 0; i < n; i++) {
+    ctx.beginPath(); ctx.arc(xp(xs[i]), yp(ys[i]), 3.5, 0, Math.PI*2); ctx.fill();
+  }
+  // labels
+  ctx.fillStyle = '#6b6984'; ctx.font = '11px ui-monospace,Menlo,monospace';
+  ctx.fillText(fmt(xmin), pad, h - 8);
+  ctx.fillText(fmt(xmax), w - pad - 40, h - 8);
+  ctx.fillText(fmt(ymax), 4, pad + 4);
+  ctx.fillText(fmt(ymin), 4, h - pad);
+}
+
+[dataEl, dataY, sampleFlag].forEach(el => el.addEventListener('input', render));
+sampleFlag.addEventListener('change', render);
+
+document.getElementById('clear-btn').addEventListener('click', () => { dataEl.value = ''; dataY.value = ''; render(); dataEl.focus(); });
+document.getElementById('sample-btn').addEventListener('click', () => {
+  if (mode === 'single') {
+    const xs = []; for (let i=0;i<50;i++) xs.push(Math.round((Math.random()+Math.random()+Math.random())*333)/10);
+    dataEl.value = xs.join(', ');
+  } else {
+    const xs = [], ys = [];
+    for (let i=0;i<30;i++) { const x = i + Math.random()*2; xs.push(x.toFixed(2)); ys.push((1.4*x + 3 + (Math.random()-0.5)*6).toFixed(2)); }
+    dataEl.value = xs.join(', '); dataY.value = ys.join(', ');
+  }
+  render();
+});
+window.addEventListener('resize', render);
+render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOI Lookup — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-link"></i></div><div>DOI Lookup</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-link"></i></div>
+      <div>
+        <div class="tool-title">DOI Lookup</div>
+        <div class="tool-desc">Build a reference list from DOIs. Sort, restyle, and export in one click.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="single">Single DOI</button>
+    <button class="tab" data-mode="bulk">Bulk import</button>
+  </div>
+
+  <div class="panel" id="single-panel">
+    <div class="row" style="margin-bottom:12px">
+      <input id="doi" type="text" placeholder="10.1038/nature12373  or  https://doi.org/10.1038/nature12373" style="flex:1; min-width:260px">
+      <select id="style">
+        <option value="apa">APA 7</option>
+        <option value="mla">MLA 9</option>
+        <option value="chicago">Chicago</option>
+        <option value="harvard">Harvard</option>
+        <option value="bibtex">BibTeX</option>
+      </select>
+      <button class="btn btn-primary" id="lookup-btn"><i class="ti ti-search"></i> Lookup</button>
+      <button class="btn" id="add-btn" disabled><i class="ti ti-plus"></i> Add to list</button>
+    </div>
+    <div id="status" class="muted" style="font-size:13px; margin-bottom:10px"></div>
+    <div class="output-box empty" id="output">Citation will appear here.</div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn btn-sm" id="copy-btn" disabled><i class="ti ti-copy"></i> Copy</button>
+      <span class="spacer"></span>
+      <span class="muted" style="font-size:12px">Try: <code style="color:var(--accent3)">10.1038/nature12373</code></span>
+    </div>
+  </div>
+
+  <div class="panel" id="bulk-panel" style="display:none">
+    <div class="panel-label"><span>Paste DOIs (one per line)</span></div>
+    <textarea id="bulk-input" placeholder="10.1038/nature12373&#10;10.1126/science.1259855&#10;10.1093/bioinformatics/btab123" style="min-height:160px"></textarea>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-primary" id="bulk-btn"><i class="ti ti-cloud-download"></i> Fetch all</button>
+      <span class="spacer"></span>
+      <span id="bulk-progress" class="muted" style="font-size:13px"></span>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:18px">
+    <div class="panel-label">
+      <span>References (<span id="count">0</span>)</span>
+      <div class="panel-actions">
+        <button class="btn btn-sm" id="copy-all-btn"><i class="ti ti-copy"></i> Copy all</button>
+        <button class="btn btn-sm" id="dl-txt-btn"><i class="ti ti-download"></i> .txt</button>
+        <button class="btn btn-sm" id="dl-bib-btn"><i class="ti ti-download"></i> .bib</button>
+        <button class="btn btn-sm" id="dl-csv-btn"><i class="ti ti-download"></i> .csv</button>
+        <button class="btn btn-sm" id="clear-all-btn"><i class="ti ti-trash"></i> Clear</button>
+      </div>
+    </div>
+    <div class="row" style="margin-bottom:12px">
+      <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+        Style:
+        <select id="list-style">
+          <option value="apa">APA 7</option>
+          <option value="mla">MLA 9</option>
+          <option value="chicago">Chicago</option>
+          <option value="harvard">Harvard</option>
+          <option value="bibtex">BibTeX</option>
+        </select>
+      </label>
+      <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+        Sort:
+        <select id="sort">
+          <option value="added">Added (newest first)</option>
+          <option value="added-asc">Added (oldest first)</option>
+          <option value="year-asc">Year ascending</option>
+          <option value="year-desc">Year descending</option>
+          <option value="author-asc">Author A→Z</option>
+          <option value="author-desc">Author Z→A</option>
+          <option value="title-asc">Title A→Z</option>
+          <option value="title-desc">Title Z→A</option>
+          <option value="journal-asc">Journal A→Z</option>
+        </select>
+      </label>
+      <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+        <input type="checkbox" id="numbered"> Numbered
+      </label>
+      <span class="spacer"></span>
+      <input type="search" id="filter" placeholder="Filter by title/author…" style="width:240px">
+    </div>
+
+    <div id="list" class="muted" style="font-size:14px; line-height:1.7">No references yet. Look up a DOI above and click <b>Add to list</b>.</div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<style>
+  .ref-card { padding: 12px 14px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; }
+  .ref-card .ref-meta { font-size:12px; color: var(--text3); margin-top: 6px; display:flex; gap:10px; flex-wrap:wrap; }
+  .ref-card .ref-actions { margin-top:8px; display:flex; gap:6px; }
+  .ref-card .cite { line-height:1.6 }
+  .ref-num { display:inline-block; color: var(--text3); width: 28px; font-variant-numeric: tabular-nums; }
+</style>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const doiInput = $('#doi');
+const styleSel = $('#style');
+const listStyleSel = $('#list-style');
+const sortSel = $('#sort');
+const statusEl = $('#status');
+const output = $('#output');
+const copyBtn = $('#copy-btn');
+const addBtn = $('#add-btn');
+const listEl = $('#list');
+const filterEl = $('#filter');
+const countEl = $('#count');
+const numbered = $('#numbered');
+
+let lastMessage = null;       // last fetched CrossRef message
+let lastFormatted = '';
+const STORAGE = 'doi-refs';
+let refs = JSON.parse(localStorage.getItem(STORAGE) || '[]');
+
+function toast(msg) {
+  const t = $('#toast');
+  $('#toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function cleanDoi(s) {
+  s = (s || '').trim();
+  const m = s.match(/10\.\d{4,9}\/[^\s]+/i);
+  return m ? m[0] : s;
+}
+
+function authorList(authors, style) {
+  if (!authors || !authors.length) return '';
+  const fmt = (a) => {
+    const given = a.given || '';
+    const family = a.family || a.name || '';
+    if (style === 'apa' || style === 'harvard') {
+      const initials = given.split(/\s+/).filter(Boolean).map(g => g[0] + '.').join(' ');
+      return `${family}, ${initials}`.trim();
+    }
+    if (style === 'mla') return `${family}, ${given}`.trim();
+    if (style === 'chicago') return `${family}, ${given}`.trim();
+    return `${given} ${family}`.trim();
+  };
+  const list = authors.map(fmt);
+  if (list.length === 1) return list[0];
+  if (style === 'apa' || style === 'harvard') {
+    if (list.length === 2) return list.join(', & ');
+    if (list.length <= 20) return list.slice(0, -1).join(', ') + ', & ' + list[list.length - 1];
+    return list.slice(0, 19).join(', ') + ', … ' + list[list.length - 1];
+  }
+  if (list.length === 2) return list.join(', and ');
+  return list.slice(0, -1).join(', ') + ', and ' + list[list.length - 1];
+}
+
+function year(msg) {
+  const dp = msg['published-print'] || msg['published-online'] || msg['issued'] || msg['created'];
+  if (dp && dp['date-parts'] && dp['date-parts'][0]) return dp['date-parts'][0][0];
+  return '';
+}
+
+function format(msg, style) {
+  const title = (msg.title && msg.title[0]) || '';
+  const journal = (msg['container-title'] && msg['container-title'][0]) || '';
+  const vol = msg.volume || '';
+  const iss = msg.issue || '';
+  const pages = msg.page || '';
+  const doi = msg.DOI || '';
+  const y = year(msg);
+  const authors = authorList(msg.author || [], style);
+
+  if (style === 'apa') {
+    let s = '';
+    if (authors) s += authors + ' ';
+    if (y) s += `(${y}). `;
+    if (title) s += title + '. ';
+    if (journal) s += `<em>${journal}</em>`;
+    if (vol) s += `, <em>${vol}</em>`;
+    if (iss) s += `(${iss})`;
+    if (pages) s += `, ${pages}`;
+    s += '. ';
+    if (doi) s += `https://doi.org/${doi}`;
+    return s.trim();
+  }
+  if (style === 'mla') {
+    let s = '';
+    if (authors) s += authors + '. ';
+    if (title) s += `"${title}." `;
+    if (journal) s += `<em>${journal}</em>`;
+    if (vol) s += `, vol. ${vol}`;
+    if (iss) s += `, no. ${iss}`;
+    if (y) s += `, ${y}`;
+    if (pages) s += `, pp. ${pages}`;
+    s += '. ';
+    if (doi) s += `doi:${doi}`;
+    return s.trim();
+  }
+  if (style === 'chicago') {
+    let s = '';
+    if (authors) s += authors + '. ';
+    if (y) s += `${y}. `;
+    if (title) s += `"${title}." `;
+    if (journal) s += `<em>${journal}</em>`;
+    if (vol) s += ` ${vol}`;
+    if (iss) s += `, no. ${iss}`;
+    if (pages) s += `: ${pages}`;
+    s += '. ';
+    if (doi) s += `https://doi.org/${doi}`;
+    return s.trim();
+  }
+  if (style === 'harvard') {
+    let s = '';
+    if (authors) s += authors + ' ';
+    if (y) s += `${y}, `;
+    if (title) s += `'${title}', `;
+    if (journal) s += `<em>${journal}</em>`;
+    if (vol) s += `, vol. ${vol}`;
+    if (iss) s += `, no. ${iss}`;
+    if (pages) s += `, pp. ${pages}`;
+    s += '. ';
+    if (doi) s += `Available at: https://doi.org/${doi}`;
+    return s.trim();
+  }
+  if (style === 'bibtex') {
+    const firstAuthor = ((msg.author || [])[0] || {}).family || 'unknown';
+    const key = `${firstAuthor.toLowerCase().replace(/[^a-z]/g,'')}${y}`;
+    const authorsBib = (msg.author || []).map(a => `${a.family || ''}, ${a.given || ''}`.trim()).join(' and ');
+    return `@article{${key},
+  author  = {${authorsBib}},
+  title   = {${title}},
+  journal = {${journal}},
+  year    = {${y}},
+  volume  = {${vol}},
+  number  = {${iss}},
+  pages   = {${pages}},
+  doi     = {${doi}}
+}`.trim();
+  }
+  return '';
+}
+
+async function fetchDoi(doi) {
+  const r = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+  if (!r.ok) throw new Error('Not found on CrossRef (HTTP ' + r.status + ')');
+  const data = await r.json();
+  return data.message;
+}
+
+async function lookup() {
+  const doi = cleanDoi(doiInput.value);
+  if (!doi || !/^10\.\d{4,9}\/.+/i.test(doi)) {
+    statusEl.textContent = 'Please enter a valid DOI (looks like 10.xxxx/xxxx).';
+    statusEl.style.color = 'var(--red)';
+    return;
+  }
+  statusEl.style.color = '';
+  statusEl.innerHTML = '<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Looking up…';
+  output.classList.add('empty');
+  output.textContent = 'Loading…';
+  copyBtn.disabled = true;
+  addBtn.disabled = true;
+  try {
+    const msg = await fetchDoi(doi);
+    lastMessage = msg;
+    const formatted = format(msg, styleSel.value);
+    lastFormatted = formatted;
+    output.classList.remove('empty');
+    if (styleSel.value === 'bibtex') {
+      output.innerHTML = `<pre style="white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:13px;margin:0">${formatted.replace(/</g,'&lt;')}</pre>`;
+    } else {
+      output.innerHTML = formatted;
+    }
+    statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Found: ${(msg.title && msg.title[0]) || ''}`;
+    copyBtn.disabled = false;
+    addBtn.disabled = false;
+  } catch (err) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.innerHTML = `<i class="ti ti-alert-circle"></i> ${err.message}`;
+    output.classList.add('empty');
+    output.textContent = 'No result.';
+  }
+}
+
+// === List management ===
+function save() { localStorage.setItem(STORAGE, JSON.stringify(refs)); }
+
+function addRef(msg) {
+  const doi = (msg.DOI || '').toLowerCase();
+  if (refs.some(r => (r.DOI || '').toLowerCase() === doi)) {
+    toast('Already in list');
+    return false;
+  }
+  refs.push({ ...msg, _added: Date.now() });
+  save();
+  render();
+  toast('Added to list');
+  return true;
+}
+
+function removeRef(i) {
+  refs.splice(i, 1);
+  save(); render();
+}
+
+function clearAll() {
+  if (!refs.length) return;
+  if (!confirm(`Clear all ${refs.length} references?`)) return;
+  refs = []; save(); render();
+}
+
+function sortRefs(arr) {
+  const v = sortSel.value;
+  const sorted = [...arr];
+  const ay = r => year(r) || 0;
+  const an = r => ((r.author || [])[0]?.family || '').toLowerCase();
+  const at = r => (r.title?.[0] || '').toLowerCase();
+  const aj = r => (r['container-title']?.[0] || '').toLowerCase();
+  const cmp = {
+    'added':       (a,b) => (b._added||0) - (a._added||0),
+    'added-asc':   (a,b) => (a._added||0) - (b._added||0),
+    'year-asc':    (a,b) => ay(a) - ay(b),
+    'year-desc':   (a,b) => ay(b) - ay(a),
+    'author-asc':  (a,b) => an(a).localeCompare(an(b)),
+    'author-desc': (a,b) => an(b).localeCompare(an(a)),
+    'title-asc':   (a,b) => at(a).localeCompare(at(b)),
+    'title-desc':  (a,b) => at(b).localeCompare(at(a)),
+    'journal-asc': (a,b) => aj(a).localeCompare(aj(b)),
+  }[v];
+  return sorted.sort(cmp);
+}
+
+function filterRefs(arr) {
+  const q = filterEl.value.trim().toLowerCase();
+  if (!q) return arr;
+  return arr.filter(r => {
+    const hay = (r.title?.[0] || '') + ' ' +
+                (r.author || []).map(a => (a.given || '') + ' ' + (a.family || '')).join(' ') + ' ' +
+                (r['container-title']?.[0] || '') + ' ' +
+                (r.DOI || '');
+    return hay.toLowerCase().includes(q);
+  });
+}
+
+function render() {
+  countEl.textContent = refs.length;
+  const shown = filterRefs(sortRefs(refs));
+  if (!refs.length) {
+    listEl.innerHTML = 'No references yet. Look up a DOI above and click <b>Add to list</b>.';
+    return;
+  }
+  if (!shown.length) {
+    listEl.innerHTML = '<span class="muted">No references match your filter.</span>';
+    return;
+  }
+  const style = listStyleSel.value;
+  const isNumbered = numbered.checked;
+  listEl.innerHTML = shown.map((r, i) => {
+    const realIdx = refs.indexOf(r);
+    const cite = format(r, style);
+    const title = r.title?.[0] || '(no title)';
+    const y = year(r) || '—';
+    const journal = r['container-title']?.[0] || '';
+    const auth = (r.author || []).slice(0, 3).map(a => (a.family || a.name || '')).join(', ') + ((r.author || []).length > 3 ? ', et al.' : '');
+    const citeHtml = style === 'bibtex'
+      ? `<pre style="white-space:pre-wrap;font-family:ui-monospace,Menlo,monospace;font-size:12px;margin:0">${cite.replace(/</g,'&lt;')}</pre>`
+      : `<div class="cite">${cite}</div>`;
+    return `<div class="ref-card">
+      <div style="display:flex; gap:8px; align-items:flex-start">
+        ${isNumbered ? `<span class="ref-num">${i+1}.</span>` : ''}
+        <div style="flex:1; min-width:0">
+          <div style="font-weight:600; color:var(--text); margin-bottom:2px">${escapeHtml(title)}</div>
+          <div class="ref-meta">
+            <span><i class="ti ti-users" style="vertical-align:middle"></i> ${escapeHtml(auth) || '—'}</span>
+            <span><i class="ti ti-calendar" style="vertical-align:middle"></i> ${y}</span>
+            ${journal ? `<span><i class="ti ti-book" style="vertical-align:middle"></i> ${escapeHtml(journal)}</span>` : ''}
+            ${r.DOI ? `<a href="https://doi.org/${r.DOI}" target="_blank" rel="noopener" style="color:var(--accent3)"><i class="ti ti-external-link" style="vertical-align:middle"></i> ${escapeHtml(r.DOI)}</a>` : ''}
+          </div>
+          <div style="margin-top:8px; padding:8px 10px; background:var(--bg3); border-radius:6px; font-size:13px">
+            ${citeHtml}
+          </div>
+          <div class="ref-actions">
+            <button class="btn btn-sm" data-copy="${realIdx}"><i class="ti ti-copy"></i> Copy</button>
+            <button class="btn btn-sm" data-up="${realIdx}" ${realIdx === 0 ? 'disabled' : ''}><i class="ti ti-arrow-up"></i></button>
+            <button class="btn btn-sm" data-down="${realIdx}" ${realIdx === refs.length-1 ? 'disabled' : ''}><i class="ti ti-arrow-down"></i></button>
+            <span class="spacer"></span>
+            <button class="btn btn-sm" data-rm="${realIdx}" style="color:var(--red)"><i class="ti ti-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  listEl.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => removeRef(+b.dataset.rm)));
+  listEl.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+    const c = format(refs[+b.dataset.copy], style);
+    const tmp = document.createElement('div'); tmp.innerHTML = c;
+    navigator.clipboard.writeText(tmp.innerText || tmp.textContent || c);
+    toast('Citation copied');
+  }));
+  listEl.querySelectorAll('[data-up]').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.up;
+    if (i > 0) { [refs[i-1], refs[i]] = [refs[i], refs[i-1]]; save(); render(); }
+  }));
+  listEl.querySelectorAll('[data-down]').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.down;
+    if (i < refs.length - 1) { [refs[i], refs[i+1]] = [refs[i+1], refs[i]]; save(); render(); }
+  }));
+}
+
+function escapeHtml(s) { return (s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+function plainText() {
+  const style = listStyleSel.value;
+  const isNumbered = numbered.checked;
+  return sortRefs(refs).map((r, i) => {
+    const c = format(r, style);
+    const tmp = document.createElement('div'); tmp.innerHTML = c;
+    const plain = tmp.innerText || tmp.textContent || c;
+    return isNumbered ? `${i+1}. ${plain}` : plain;
+  }).join(style === 'bibtex' ? '\n\n' : '\n\n');
+}
+
+function buildCsv() {
+  const rows = [['Title','Authors','Year','Journal','Volume','Issue','Pages','DOI']];
+  for (const r of sortRefs(refs)) {
+    rows.push([
+      r.title?.[0] || '',
+      (r.author || []).map(a => `${a.family||''}, ${a.given||''}`.trim()).join('; '),
+      year(r) || '',
+      r['container-title']?.[0] || '',
+      r.volume || '',
+      r.issue || '',
+      r.page || '',
+      r.DOI || '',
+    ]);
+  }
+  return rows.map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+}
+
+function dl(name, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+}
+
+// === Bulk import ===
+async function bulkFetch() {
+  const lines = $('#bulk-input').value.split('\n').map(s => cleanDoi(s)).filter(s => /^10\.\d{4,9}\/.+/i.test(s));
+  if (!lines.length) {
+    $('#bulk-progress').innerHTML = '<span style="color:var(--red)">No valid DOIs found.</span>';
+    return;
+  }
+  let ok = 0, dup = 0, fail = 0;
+  for (let i = 0; i < lines.length; i++) {
+    $('#bulk-progress').innerHTML = `<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Fetching ${i+1}/${lines.length} — ${lines[i]}`;
+    try {
+      const msg = await fetchDoi(lines[i]);
+      const doi = (msg.DOI || '').toLowerCase();
+      if (refs.some(r => (r.DOI || '').toLowerCase() === doi)) { dup++; }
+      else { refs.push({ ...msg, _added: Date.now() }); ok++; }
+      save();
+    } catch (e) { fail++; }
+    render();
+    // polite delay for CrossRef
+    await new Promise(r => setTimeout(r, 120));
+  }
+  $('#bulk-progress').innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Done — added ${ok}${dup ? `, ${dup} duplicate${dup>1?'s':''}` : ''}${fail ? `, ${fail} failed` : ''}.`;
+}
+
+// === Wire up ===
+$('#lookup-btn').addEventListener('click', lookup);
+doiInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') lookup(); });
+styleSel.addEventListener('change', () => { if (lastMessage) lookup(); });
+copyBtn.addEventListener('click', () => {
+  const tmp = document.createElement('div'); tmp.innerHTML = output.innerHTML;
+  navigator.clipboard.writeText(tmp.innerText || lastFormatted).then(() => toast('Copied'));
+});
+addBtn.addEventListener('click', () => { if (lastMessage) addRef(lastMessage); });
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $('#single-panel').style.display = t.dataset.mode === 'single' ? '' : 'none';
+  $('#bulk-panel').style.display = t.dataset.mode === 'bulk' ? '' : 'none';
+}));
+
+$('#bulk-btn').addEventListener('click', bulkFetch);
+$('#list-style').addEventListener('change', render);
+$('#sort').addEventListener('change', render);
+$('#numbered').addEventListener('change', render);
+$('#filter').addEventListener('input', render);
+
+$('#copy-all-btn').addEventListener('click', () => {
+  if (!refs.length) return;
+  navigator.clipboard.writeText(plainText()).then(() => toast(`Copied ${refs.length} references`));
+});
+$('#dl-txt-btn').addEventListener('click', () => {
+  if (!refs.length) return;
+  dl('references.txt', plainText(), 'text/plain');
+});
+$('#dl-bib-btn').addEventListener('click', () => {
+  if (!refs.length) return;
+  const content = sortRefs(refs).map(r => format(r, 'bibtex')).join('\n\n');
+  dl('references.bib', content, 'text/x-bibtex');
+});
+$('#dl-csv-btn').addEventListener('click', () => {
+  if (!refs.length) return;
+  dl('references.csv', buildCsv(), 'text/csv');
+});
+$('#clear-all-btn').addEventListener('click', clearAll);
+
+render();
+</script>
+
+<style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+</body>
+</html>

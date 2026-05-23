@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash & Encode — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-shield-lock"></i></div><div>Hash & Encode</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-shield-lock"></i></div>
+      <div>
+        <div class="tool-title">Hash & Encode</div>
+        <div class="tool-desc">Base64, URL encoding, HTML entities, hex, and SHA hashes — all client-side.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Input</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="paste-btn"><i class="ti ti-clipboard"></i> Paste</button>
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="Type or paste text…"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Output</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-btn"><i class="ti ti-copy"></i> Copy</button>
+          <button class="btn btn-sm" id="swap-btn"><i class="ti ti-arrows-exchange"></i> ← Move to input</button>
+        </div>
+      </div>
+      <textarea id="output" placeholder="Result will appear here…" readonly></textarea>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-label"><span>Operations</span></div>
+    <div class="row" style="margin-bottom:8px">
+      <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; width:80px">Base64</div>
+      <button class="btn" data-op="b64enc">Encode</button>
+      <button class="btn" data-op="b64dec">Decode</button>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; width:80px">URL</div>
+      <button class="btn" data-op="urlenc">Encode</button>
+      <button class="btn" data-op="urldec">Decode</button>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; width:80px">HTML</div>
+      <button class="btn" data-op="htmlenc">Encode</button>
+      <button class="btn" data-op="htmldec">Decode</button>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; width:80px">Hex</div>
+      <button class="btn" data-op="hexenc">To hex</button>
+      <button class="btn" data-op="hexdec">From hex</button>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; width:80px">Hash</div>
+      <button class="btn" data-op="sha1">SHA-1</button>
+      <button class="btn" data-op="sha256">SHA-256</button>
+      <button class="btn" data-op="sha384">SHA-384</button>
+      <button class="btn" data-op="sha512">SHA-512</button>
+    </div>
+    <div class="row">
+      <div style="font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.6px; width:80px">Misc</div>
+      <button class="btn" data-op="reverse">Reverse</button>
+      <button class="btn" data-op="binary">To binary</button>
+      <button class="btn" data-op="binarydec">From binary</button>
+      <button class="btn" data-op="rot13">ROT13</button>
+    </div>
+    <div id="status" class="muted" style="font-size:13px; margin-top:10px"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Done</span></div>
+
+<script>
+const input = document.getElementById('input');
+const output = document.getElementById('output');
+const statusEl = document.getElementById('status');
+
+function setOut(s, info) {
+  output.value = s;
+  statusEl.innerHTML = info ? `<i class="ti ti-circle-check" style="color:var(--green)"></i> ${info}` : '';
+}
+function err(m) {
+  output.value = '';
+  statusEl.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${m}`;
+}
+
+const ops = {
+  b64enc: t => btoa(unescape(encodeURIComponent(t))),
+  b64dec: t => decodeURIComponent(escape(atob(t.replace(/\s/g,'')))),
+  urlenc: t => encodeURIComponent(t),
+  urldec: t => decodeURIComponent(t),
+  htmlenc: t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]),
+  htmldec: t => { const d = document.createElement('textarea'); d.innerHTML = t; return d.value; },
+  hexenc: t => [...new TextEncoder().encode(t)].map(b => b.toString(16).padStart(2,'0')).join(' '),
+  hexdec: t => new TextDecoder().decode(new Uint8Array(t.replace(/[^0-9a-f]/gi,'').match(/.{1,2}/g).map(h => parseInt(h,16)))),
+  reverse: t => [...t].reverse().join(''),
+  binary: t => [...new TextEncoder().encode(t)].map(b => b.toString(2).padStart(8,'0')).join(' '),
+  binarydec: t => new TextDecoder().decode(new Uint8Array(t.split(/\s+/).filter(Boolean).map(b => parseInt(b,2)))),
+  rot13: t => t.replace(/[a-z]/gi, c => String.fromCharCode(c.charCodeAt(0) + (c.toLowerCase() < 'n' ? 13 : -13))),
+};
+
+async function hash(alg) {
+  const buf = await crypto.subtle.digest(alg, new TextEncoder().encode(input.value));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+document.querySelectorAll('[data-op]').forEach(b => b.addEventListener('click', async () => {
+  const op = b.dataset.op;
+  try {
+    if (op.startsWith('sha')) {
+      const algMap = { sha1:'SHA-1', sha256:'SHA-256', sha384:'SHA-384', sha512:'SHA-512' };
+      setOut(await hash(algMap[op]), `${algMap[op]} · ${output.value.length / 2} bytes`);
+    } else {
+      setOut(ops[op](input.value), b.textContent.trim());
+    }
+  } catch (e) { err(e.message); }
+}));
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  if (!output.value) return;
+  navigator.clipboard.writeText(output.value);
+  const t = document.getElementById('toast'); document.getElementById('toast-msg').textContent='Copied';
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
+});
+document.getElementById('swap-btn').addEventListener('click', () => { input.value = output.value; output.value = ''; });
+document.getElementById('clear-btn').addEventListener('click', () => { input.value = ''; output.value = ''; statusEl.textContent = ''; });
+document.getElementById('paste-btn').addEventListener('click', async () => { try { input.value = await navigator.clipboard.readText(); } catch(e){} });
+</script>
+
+</body>
+</html>

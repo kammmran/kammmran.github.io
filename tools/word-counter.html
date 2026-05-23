@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Word Counter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-text-size"></i></div><div>Word Counter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-text-size"></i></div>
+      <div>
+        <div class="tool-title">Word Counter</div>
+        <div class="tool-desc">Live counts, top words, density, longest words, and an optional compare mode.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-mode="single">Single text</button>
+    <button class="tab" data-mode="compare">Compare two texts</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span id="lbl-a">Your text</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
+          <button class="btn btn-sm" id="paste-btn"><i class="ti ti-clipboard"></i> Paste</button>
+        </div>
+      </div>
+      <textarea id="text" placeholder="Type or paste your text…"></textarea>
+      <div id="text-b-wrap" style="display:none; margin-top:10px">
+        <div class="panel-label"><span>Text B</span></div>
+        <textarea id="text-b" placeholder="Second text to compare…"></textarea>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+          <input type="number" id="goal" placeholder="Word goal" min="1" max="100000" style="width:130px"> word goal
+        </label>
+      </div>
+      <div id="goal-bar" style="margin-top:8px; display:none">
+        <div style="height:6px; background:var(--bg2); border-radius:3px; overflow:hidden; border:1px solid var(--border)">
+          <div id="goal-fill" style="height:100%; background:var(--accent); width:0%; transition:width .25s"></div>
+        </div>
+        <div id="goal-label" class="muted" style="font-size:12px; margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Counts</span></div>
+      <div class="stat-grid" id="stats"></div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Top words & density</span></div>
+      <div id="top-words" class="muted" style="font-size:13px; line-height:1.9">No data yet.</div>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Longest words</span></div>
+      <div id="longest" class="muted" style="font-size:13px"></div>
+    </div>
+  </div>
+
+  <div id="compare-panel" class="panel" style="margin-top:16px; display:none">
+    <div class="panel-label"><span>Comparison</span></div>
+    <div class="stat-grid" id="compare-stats"></div>
+    <div class="divider"></div>
+    <div class="panel-label"><span>Unique to each</span></div>
+    <div class="row" style="gap:14px; align-items:flex-start">
+      <div style="flex:1">
+        <div class="muted" style="font-size:12px; margin-bottom:6px">Only in <b>A</b></div>
+        <div id="only-a" style="font-size:13px"></div>
+      </div>
+      <div style="flex:1">
+        <div class="muted" style="font-size:12px; margin-bottom:6px">Only in <b>B</b></div>
+        <div id="only-b" style="font-size:13px"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const textEl = document.getElementById('text');
+const textB = document.getElementById('text-b');
+const statsEl = document.getElementById('stats');
+const topEl = document.getElementById('top-words');
+const longestEl = document.getElementById('longest');
+const goalInput = document.getElementById('goal');
+const goalBar = document.getElementById('goal-bar');
+const goalFill = document.getElementById('goal-fill');
+const goalLabel = document.getElementById('goal-label');
+const lblA = document.getElementById('lbl-a');
+const comparePanel = document.getElementById('compare-panel');
+const compareStats = document.getElementById('compare-stats');
+const onlyA = document.getElementById('only-a');
+const onlyB = document.getElementById('only-b');
+
+const STOP = new Set('a about above after again against all am an and any are arent as at be because been before being below between both but by cant cannot could couldnt did didnt do does doesnt doing dont down during each few for from further had hadnt has hasnt have havent having he hed hell hes her here heres hers herself him himself his how hows i id ill im ive if in into is isnt it its itself lets me more most mustnt my myself no nor not of off on once only or other ought our ours ourselves out over own same shant she shed shell shes should shouldnt so some such than that thats the their theirs them themselves then there theres these they theyd theyll theyre theyve this those through to too under until up very was wasnt we wed well were weve what whats when whens where wheres which while who whos whom why whys with wont would wouldnt you youd youll youre youve your yours yourself yourselves'.split(' '));
+
+let mode = 'single';
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  mode = t.dataset.mode;
+  document.getElementById('text-b-wrap').style.display = mode === 'compare' ? '' : 'none';
+  comparePanel.style.display = mode === 'compare' ? '' : 'none';
+  lblA.textContent = mode === 'compare' ? 'Text A' : 'Your text';
+  render();
+}));
+
+function counts(t) {
+  const chars = t.length;
+  const charsNoSpace = t.replace(/\s/g, '').length;
+  const words = (t.match(/\b[\w'-]+\b/g) || []);
+  const sentences = (t.match(/[^.!?]+[.!?]+/g) || (t.trim() ? [t] : [])).length;
+  const paragraphs = t.trim() ? t.trim().split(/\n\s*\n+/).length : 0;
+  const lines = t === '' ? 0 : t.split('\n').length;
+  const readMin = words.length / 250;
+  const speakMin = words.length / 130;
+  const longestList = [...new Set(words.map(w => w.toLowerCase()))]
+    .filter(w => w.length >= 6).sort((a,b) => b.length - a.length).slice(0, 8);
+  return { chars, charsNoSpace, words: words.length, sentences, paragraphs, lines, readMin, speakMin, wordsArr: words, longestList };
+}
+
+function fmtTime(m) {
+  if (m === 0) return '0s';
+  const totalSec = Math.round(m * 60);
+  if (totalSec < 60) return totalSec + 's';
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return sec ? `${min}m ${sec}s` : `${min}m`;
+}
+
+function freqMap(words) {
+  const m = new Map();
+  for (const w of words) {
+    const lw = w.toLowerCase();
+    if (STOP.has(lw) || lw.length < 3) continue;
+    m.set(lw, (m.get(lw) || 0) + 1);
+  }
+  return m;
+}
+
+function render() {
+  const t = textEl.value;
+  const c = counts(t);
+  const items = [
+    ['Words', c.words],
+    ['Characters', c.chars],
+    ['No spaces', c.charsNoSpace],
+    ['Sentences', c.sentences],
+    ['Paragraphs', c.paragraphs],
+    ['Lines', c.lines],
+    ['Reading time', fmtTime(c.readMin)],
+    ['Speaking time', fmtTime(c.speakMin)],
+  ];
+  statsEl.innerHTML = items.map(([k,v]) => `
+    <div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value">${v}</div></div>
+  `).join('');
+
+  // goal bar
+  const goal = parseInt(goalInput.value, 10);
+  if (goal > 0) {
+    goalBar.style.display = '';
+    const pct = Math.min(100, (c.words / goal) * 100);
+    goalFill.style.width = pct + '%';
+    goalFill.style.background = pct >= 100 ? 'var(--green)' : 'var(--accent)';
+    goalLabel.textContent = `${c.words} / ${goal} words · ${pct.toFixed(0)}%${pct >= 100 ? ' — goal reached!' : ''}`;
+  } else {
+    goalBar.style.display = 'none';
+  }
+
+  const fm = freqMap(c.wordsArr);
+  const entries = [...fm.entries()].sort((a,b) => b[1] - a[1]).slice(0, 12);
+  if (!entries.length) {
+    topEl.innerHTML = '<span class="muted">No words yet.</span>';
+  } else {
+    topEl.innerHTML = entries.map(([w,n]) => {
+      const pct = (n / c.words * 100).toFixed(1);
+      return `<span class="chip accent" style="margin:3px 4px 3px 0"><b>${w}</b>&nbsp;<span style="opacity:.7">${n} · ${pct}%</span></span>`;
+    }).join('');
+  }
+
+  // longest
+  if (c.longestList.length) {
+    longestEl.innerHTML = c.longestList.map(w =>
+      `<span class="chip" style="margin:3px 4px 3px 0; background:var(--surface2)"><b>${w}</b> · ${w.length} chars</span>`
+    ).join('');
+  } else {
+    longestEl.innerHTML = '<span class="muted">—</span>';
+  }
+
+  if (mode === 'compare') {
+    const tb = textB.value;
+    const cb = counts(tb);
+    const fmA = freqMap(c.wordsArr);
+    const fmB = freqMap(cb.wordsArr);
+    const setA = new Set(fmA.keys()), setB = new Set(fmB.keys());
+    const shared = [...setA].filter(x => setB.has(x));
+    const uniqueA = [...setA].filter(x => !setB.has(x)).sort((a,b) => fmA.get(b) - fmA.get(a));
+    const uniqueB = [...setB].filter(x => !setA.has(x)).sort((a,b) => fmB.get(b) - fmB.get(a));
+    const jaccard = (shared.length / (setA.size + setB.size - shared.length)) || 0;
+
+    compareStats.innerHTML = [
+      ['Words A', c.words], ['Words B', cb.words], ['Δ words', cb.words - c.words],
+      ['Chars A', c.chars], ['Chars B', cb.chars],
+      ['Unique A', setA.size], ['Unique B', setB.size], ['Shared', shared.length],
+      ['Jaccard similarity', jaccard.toFixed(3)],
+    ].map(([k,v]) =>
+      `<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value">${v}</div></div>`
+    ).join('');
+
+    onlyA.innerHTML = uniqueA.slice(0, 25).map(w => `<span class="chip accent" style="margin:2px 4px 2px 0">${w} <span style="opacity:.7">${fmA.get(w)}</span></span>`).join('') || '<span class="muted">—</span>';
+    onlyB.innerHTML = uniqueB.slice(0, 25).map(w => `<span class="chip teal" style="margin:2px 4px 2px 0">${w} <span style="opacity:.7">${fmB.get(w)}</span></span>`).join('') || '<span class="muted">—</span>';
+  }
+}
+
+textEl.addEventListener('input', render);
+textB.addEventListener('input', render);
+goalInput.addEventListener('input', render);
+document.getElementById('clear-btn').addEventListener('click', () => { textEl.value = ''; textB.value = ''; render(); textEl.focus(); });
+document.getElementById('paste-btn').addEventListener('click', async () => {
+  try { textEl.value = await navigator.clipboard.readText(); render(); } catch(e) {}
+});
+
+render();
+</script>
+
+</body>
+</html>

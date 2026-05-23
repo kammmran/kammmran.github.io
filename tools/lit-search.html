@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Literature Search — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-binoculars"></i></div><div>Literature Search</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-binoculars"></i></div>
+      <div>
+        <div class="tool-title">Literature Search</div>
+        <div class="tool-desc">One query, every major academic search engine in a new tab.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height: auto">
+    <div class="row" style="margin-bottom:8px">
+      <input type="text" id="q" placeholder='Try "transformer attention mechanism" or "CRISPR gene editing"…' style="flex:1; min-width:260px">
+      <button class="btn btn-primary" id="open-all"><i class="ti ti-external-link"></i> Open all</button>
+    </div>
+    <div class="muted" style="font-size:12px">Press Enter on a card to open just that engine.</div>
+  </div>
+
+  <div class="tile-grid" id="grid" style="margin-top:18px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))"></div>
+
+  <div class="panel" style="margin-top:20px; min-height:auto">
+    <div class="panel-label">
+      <span>Recent searches</span>
+      <div class="panel-actions">
+        <button class="btn btn-sm" id="clear-hist"><i class="ti ti-trash"></i> Clear</button>
+      </div>
+    </div>
+    <div id="history" class="muted" style="font-size:13px">No history yet.</div>
+  </div>
+</main>
+
+<script>
+const engines = [
+  { name: 'Google Scholar',   desc: 'Broad academic search across disciplines.',                  icon: 'ti-school',           color: 'var(--blue)',    url: q => `https://scholar.google.com/scholar?q=${q}` },
+  { name: 'arXiv',            desc: 'Preprints in physics, math, CS, biology.',                    icon: 'ti-atom',             color: 'var(--teal)',    url: q => `https://arxiv.org/search/?searchtype=all&query=${q}` },
+  { name: 'Semantic Scholar', desc: 'AI-powered search with citation context.',                    icon: 'ti-brain',            color: 'var(--accent3)', url: q => `https://www.semanticscholar.org/search?q=${q}` },
+  { name: 'PubMed',           desc: 'Biomedical and life sciences literature.',                    icon: 'ti-microscope',       color: 'var(--green)',   url: q => `https://pubmed.ncbi.nlm.nih.gov/?term=${q}` },
+  { name: 'OpenAlex',         desc: 'Open catalog of papers, authors, venues.',                    icon: 'ti-world-search',     color: 'var(--amber)',   url: q => `https://openalex.org/works?search=${q}` },
+  { name: 'Connected Papers', desc: 'Visual graph of related papers.',                              icon: 'ti-affiliate',        color: 'var(--pink)',    url: q => `https://www.connectedpapers.com/search?q=${q}` },
+  { name: 'CORE',             desc: 'Open access research papers worldwide.',                      icon: 'ti-circle-dot',       color: 'var(--accent3)', url: q => `https://core.ac.uk/search?q=${q}` },
+  { name: 'DOAJ',             desc: 'Directory of open access journals.',                          icon: 'ti-book',             color: 'var(--teal)',    url: q => `https://doaj.org/search/articles?source=${encodeURIComponent(JSON.stringify({query:{query_string:{query:decodeURIComponent(q)}}}))}` },
+  { name: 'BASE',             desc: 'Multi-disciplinary OA repositories.',                         icon: 'ti-database-search',  color: 'var(--blue)',    url: q => `https://www.base-search.net/Search/Results?lookfor=${q}` },
+  { name: 'JSTOR',            desc: 'Humanities, social sciences archive.',                        icon: 'ti-library',          color: 'var(--red)',     url: q => `https://www.jstor.org/action/doBasicSearch?Query=${q}` },
+  { name: 'Crossref',         desc: 'Search by DOI and metadata.',                                  icon: 'ti-link',             color: 'var(--green)',   url: q => `https://search.crossref.org/?q=${q}` },
+  { name: 'ResearchGate',     desc: 'Papers and researcher profiles.',                              icon: 'ti-users',            color: 'var(--amber)',   url: q => `https://www.researchgate.net/search/publication?q=${q}` },
+  { name: 'IEEE Xplore',      desc: 'Engineering, computer science, electronics.',                 icon: 'ti-cpu',              color: 'var(--blue)',    url: q => `https://ieeexplore.ieee.org/search/searchresult.jsp?newsearch=true&queryText=${q}` },
+  { name: 'ACM Digital Library', desc: 'Computing & information technology.',                      icon: 'ti-code',             color: 'var(--accent3)', url: q => `https://dl.acm.org/action/doSearch?AllField=${q}` },
+  { name: 'SpringerLink',     desc: 'Journals & books from Springer Nature.',                       icon: 'ti-books',            color: 'var(--teal)',    url: q => `https://link.springer.com/search?query=${q}` },
+  { name: 'ScienceDirect',    desc: 'Elsevier scientific literature.',                              icon: 'ti-flask',            color: 'var(--green)',   url: q => `https://www.sciencedirect.com/search?qs=${q}` },
+  { name: 'Wiley Online',     desc: 'Multi-disciplinary research from Wiley.',                      icon: 'ti-book-2',           color: 'var(--amber)',   url: q => `https://onlinelibrary.wiley.com/action/doSearch?AllField=${q}` },
+  { name: 'The Lens',         desc: 'Patents & scholarly works combined.',                          icon: 'ti-lens',             color: 'var(--pink)',    url: q => `https://www.lens.org/lens/search/scholar/list?q=${q}` },
+  { name: 'Wikipedia',        desc: 'Quick context and references.',                                icon: 'ti-info-circle',      color: 'var(--blue)',    url: q => `https://en.wikipedia.org/wiki/Special:Search?search=${q}` },
+  { name: 'Google Books',     desc: 'Searchable book content & previews.',                          icon: 'ti-book',             color: 'var(--red)',     url: q => `https://www.google.com/search?tbm=bks&q=${q}` },
+];
+
+const grid = document.getElementById('grid');
+grid.innerHTML = engines.map((e, i) => `
+  <a class="tile" data-i="${i}" tabindex="0">
+    <div class="tile-icon" style="background:${e.color}22;color:${e.color}"><i class="ti ${e.icon}"></i></div>
+    <div class="tile-name">${e.name}</div>
+    <div class="tile-desc">${e.desc}</div>
+  </a>
+`).join('');
+
+function saveHistory(q) {
+  let h = JSON.parse(localStorage.getItem('lit-history') || '[]');
+  h = h.filter(x => x !== q);
+  h.unshift(q);
+  h = h.slice(0, 15);
+  localStorage.setItem('lit-history', JSON.stringify(h));
+  renderHistory();
+}
+
+function renderHistory() {
+  const h = JSON.parse(localStorage.getItem('lit-history') || '[]');
+  const el = document.getElementById('history');
+  if (!h.length) { el.innerHTML = '<span class="muted">No history yet.</span>'; return; }
+  el.innerHTML = h.map(q =>
+    `<button class="chip" style="margin:3px 4px 3px 0; cursor:pointer; border:1px solid var(--border)" data-q="${q.replace(/"/g,'&quot;')}">${q.replace(/</g,'&lt;')}</button>`
+  ).join('');
+  el.querySelectorAll('[data-q]').forEach(b => b.addEventListener('click', () => {
+    document.getElementById('q').value = b.dataset.q;
+    document.getElementById('q').focus();
+  }));
+}
+
+document.getElementById('clear-hist').addEventListener('click', () => {
+  localStorage.removeItem('lit-history'); renderHistory();
+});
+
+function openOne(i) {
+  const q = document.getElementById('q').value.trim();
+  if (!q) { document.getElementById('q').focus(); return; }
+  saveHistory(q);
+  window.open(engines[i].url(encodeURIComponent(q)), '_blank', 'noopener');
+}
+
+grid.querySelectorAll('.tile').forEach(t => {
+  t.addEventListener('click', () => openOne(+t.dataset.i));
+  t.addEventListener('keydown', (e) => { if (e.key === 'Enter') openOne(+t.dataset.i); });
+});
+
+document.getElementById('open-all').addEventListener('click', () => {
+  const q = document.getElementById('q').value.trim();
+  if (!q) return;
+  engines.forEach((_, i) => openOne(i));
+});
+
+document.getElementById('q').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') document.getElementById('open-all').click();
+});
+
+renderHistory();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markdown Editor — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js" defer></script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../index.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-markdown"></i></div><div>Markdown Editor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-markdown"></i></div>
+      <div>
+        <div class="tool-title">Markdown Editor</div>
+        <div class="tool-desc">Live preview with GitHub-flavored Markdown. Save, export, and copy as HTML.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Markdown</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" data-ins="**bold**"><b>B</b></button>
+          <button class="btn btn-sm" data-ins="*italic*"><i>I</i></button>
+          <button class="btn btn-sm" data-ins="`code`"><i class="ti ti-code"></i></button>
+          <button class="btn btn-sm" data-ins="[text](url)"><i class="ti ti-link"></i></button>
+          <button class="btn btn-sm" data-ins="\n- item\n- item"><i class="ti ti-list"></i></button>
+          <button class="btn btn-sm" data-ins="\n| col1 | col2 |\n|---|---|\n| a | b |"><i class="ti ti-table"></i></button>
+        </div>
+      </div>
+      <textarea id="src" placeholder="# Hello
+
+Type **markdown** here…
+
+- list item
+- another item
+
+> Blockquote
+
+\`inline code\`
+
+```js
+console.log('hi');
+```"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-sm" id="save-btn"><i class="ti ti-device-floppy"></i> Save (.md)</button>
+        <button class="btn btn-sm" id="load-btn"><i class="ti ti-file-upload"></i> Open</button>
+        <input type="file" id="file" accept=".md,.markdown,.txt" hidden>
+        <span class="spacer"></span>
+        <span class="muted" id="counts" style="font-size:12px"></span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-label">
+        <span>Preview</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm" id="copy-html-btn"><i class="ti ti-copy"></i> Copy HTML</button>
+          <button class="btn btn-sm" id="export-html-btn"><i class="ti ti-download"></i> .html</button>
+          <button class="btn btn-sm" id="print-btn"><i class="ti ti-printer"></i> Print/PDF</button>
+        </div>
+      </div>
+      <div id="preview" class="output-box md-preview"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Saved!</span></div>
+
+<style>
+  .md-preview { padding: 18px 22px; line-height: 1.65; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; }
+  .md-preview h1, .md-preview h2, .md-preview h3, .md-preview h4 { letter-spacing: -.3px; margin: 18px 0 8px; }
+  .md-preview h1 { font-size: 24px; border-bottom: 1px solid var(--border); padding-bottom: 6px; }
+  .md-preview h2 { font-size: 19px; }
+  .md-preview h3 { font-size: 16px; color: var(--text); }
+  .md-preview p { margin: 8px 0; }
+  .md-preview ul, .md-preview ol { margin: 8px 0 8px 24px; }
+  .md-preview li { margin: 3px 0; }
+  .md-preview code { background: var(--bg3); padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  .md-preview pre { background: var(--bg3); padding: 12px 14px; border-radius: 8px; overflow:auto; margin: 10px 0; }
+  .md-preview pre code { background: none; padding: 0; }
+  .md-preview blockquote { border-left: 3px solid var(--accent); padding: 4px 14px; color: var(--text2); margin: 10px 0; }
+  .md-preview a { color: var(--accent3); text-decoration: underline; text-decoration-color: rgba(196,183,255,.4); }
+  .md-preview table { border-collapse: collapse; margin: 10px 0; }
+  .md-preview th, .md-preview td { border: 1px solid var(--border); padding: 6px 10px; }
+  .md-preview th { background: var(--surface); }
+  .md-preview hr { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+  .md-preview img { max-width: 100%; border-radius: 6px; }
+</style>
+
+<script>
+const src = document.getElementById('src');
+const preview = document.getElementById('preview');
+const counts = document.getElementById('counts');
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function render() {
+  if (!window.marked || !window.DOMPurify) { setTimeout(render, 80); return; }
+  marked.setOptions({ breaks: true, gfm: true });
+  const html = DOMPurify.sanitize(marked.parse(src.value || ''));
+  preview.innerHTML = html;
+  const words = (src.value.match(/\b[\w'-]+\b/g) || []).length;
+  counts.textContent = `${src.value.length} chars · ${words} words`;
+  localStorage.setItem('md-draft', src.value);
+}
+
+src.addEventListener('input', render);
+
+// Insert helpers
+document.querySelectorAll('[data-ins]').forEach(b => b.addEventListener('click', () => {
+  const t = b.dataset.ins.replace(/\\n/g, '\n');
+  const s = src.selectionStart, e = src.selectionEnd;
+  src.value = src.value.slice(0, s) + t + src.value.slice(e);
+  src.focus();
+  src.selectionStart = s + t.length;
+  src.selectionEnd = s + t.length;
+  render();
+}));
+
+// Save / load
+document.getElementById('save-btn').addEventListener('click', () => {
+  const blob = new Blob([src.value], { type: 'text/markdown' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'document.md'; a.click();
+});
+document.getElementById('load-btn').addEventListener('click', () => document.getElementById('file').click());
+document.getElementById('file').addEventListener('change', async e => {
+  const f = e.target.files[0]; if (!f) return;
+  src.value = await f.text();
+  render();
+});
+
+document.getElementById('copy-html-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(preview.innerHTML).then(() => toast('HTML copied'));
+});
+
+document.getElementById('export-html-btn').addEventListener('click', () => {
+  const css = `body{font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.65;color:#222}h1,h2,h3{letter-spacing:-.3px}h1{border-bottom:1px solid #ddd;padding-bottom:6px}code{background:#f4f4f6;padding:2px 6px;border-radius:4px;font-size:90%}pre{background:#f4f4f6;padding:12px;border-radius:8px;overflow:auto}blockquote{border-left:3px solid #7c6df0;padding:4px 14px;color:#555;margin:10px 0}table{border-collapse:collapse}th,td{border:1px solid #ddd;padding:6px 10px}th{background:#f4f4f6}`;
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Document</title><style>${css}</style></head><body>${preview.innerHTML}</body></html>`;
+  const blob = new Blob([html], { type: 'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'document.html'; a.click();
+});
+
+document.getElementById('print-btn').addEventListener('click', () => {
+  const w = window.open('', '_blank');
+  const css = `body{font-family:Georgia,serif;max-width:720px;margin:40px auto;padding:0 20px;line-height:1.65;color:#000}h1,h2,h3{font-family:-apple-system,sans-serif;letter-spacing:-.3px}h1{border-bottom:1px solid #999;padding-bottom:6px}code{background:#eee;padding:2px 5px;border-radius:3px;font-size:90%;font-family:ui-monospace,Menlo,monospace}pre{background:#eee;padding:12px;border-radius:6px;overflow:auto;font-family:ui-monospace,Menlo,monospace}blockquote{border-left:3px solid #444;padding-left:12px;color:#555}`;
+  w.document.write(`<!DOCTYPE html><html><head><title>Print</title><style>${css}</style></head><body>${preview.innerHTML}<scr` + `ipt>window.onload=()=>setTimeout(()=>window.print(),200)</scr` + `ipt></body></html>`);
+  w.document.close();
+});
+
+// Restore draft
+const draft = localStorage.getItem('md-draft');
+if (draft) src.value = draft;
+else src.value = "# Welcome to the editor\n\nStart typing **Markdown** on the left — see it rendered on the right.\n\n- Lists\n- *Italic*\n- `code`\n\n> Drafts auto-save to your browser.\n\n| Feature | Status |\n|---------|--------|\n| Save .md | ✓ |\n| Export HTML | ✓ |\n| Print / PDF | ✓ |\n";
+
+function start() {
+  if (window.marked && window.DOMPurify) render();
+  else setTimeout(start, 60);
+}
+start();
+</script>
+
+</body>
+</html>
