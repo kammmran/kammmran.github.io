@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dataset Cleaner — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-wash"></i></div><div>Dataset Cleaner</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1240px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-wash"></i></div>
+      <div>
+        <div class="tool-title">Dataset / CSV Cleaner</div>
+        <div class="tool-desc">Trim whitespace, drop duplicate &amp; empty rows, normalise headers, and profile each column. Export clean CSV.</div>
+      </div>
+    </div>
+    <div class="row"><button class="btn btn-sm btn-ghost" id="sample">Sample</button><button class="btn btn-sm btn-primary" id="clean"><i class="ti ti-sparkles"></i> Clean</button><button class="btn btn-sm" id="dl"><i class="ti ti-download"></i> CSV</button></div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="panel-label"><span>Input CSV</span></div>
+    <textarea id="input" placeholder="Paste CSV data…" style="min-height:160px;font-size:12px"></textarea>
+    <div class="row" style="margin-top:10px;gap:14px">
+      <label class="chk-lbl"><input type="checkbox" id="opt-trim" checked> Trim whitespace</label>
+      <label class="chk-lbl"><input type="checkbox" id="opt-empty" checked> Drop empty rows</label>
+      <label class="chk-lbl"><input type="checkbox" id="opt-dup" checked> Drop duplicate rows</label>
+      <label class="chk-lbl"><input type="checkbox" id="opt-hdr" checked> Normalise headers (snake_case)</label>
+      <label class="chk-lbl"><input type="checkbox" id="opt-blankcol"> Drop all-empty columns</label>
+    </div>
+  </div>
+
+  <div id="report" class="stat-grid" style="margin-top:16px"></div>
+
+  <div class="panel" style="min-height:auto;margin-top:16px;overflow:auto">
+    <div class="panel-label"><span>Column profile</span></div>
+    <table class="dc" id="profile"><thead><tr><th>Column</th><th>Type</th><th>Filled</th><th>Missing</th><th>Unique</th><th>Sample</th></tr></thead><tbody id="prows"></tbody></table>
+  </div>
+
+  <div class="panel" style="min-height:auto;margin-top:16px;overflow:auto">
+    <div class="panel-label"><span>Cleaned preview (first 20 rows)</span></div>
+    <div id="preview" style="overflow:auto"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .chk-lbl{font-size:12px;color:var(--text2);display:inline-flex;align-items:center;gap:6px}
+  .dc{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+  .dc th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:6px 9px;border-bottom:1px solid var(--border)}
+  .dc td{padding:6px 9px;border-bottom:1px solid var(--border)}
+  .ptbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:500px}
+  .ptbl th{background:var(--bg2);text-align:left;padding:6px 9px;border:1px solid var(--border);font-weight:600}
+  .ptbl td{padding:5px 9px;border:1px solid var(--border);font-variant-numeric:tabular-nums}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// minimal CSV parser handling quotes
+function parseCSV(text){
+  const rows=[]; let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){ const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else { if(c==='"') q=true; else if(c===','){ row.push(cur); cur=''; } else if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=''; } else if(c==='\r'){} else cur+=c; }
+  }
+  if(cur!==''||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function toCSV(rows){ return rows.map(r=>r.map(c=>{ c=String(c); return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c; }).join(',')).join('\n'); }
+
+let cleaned=null;
+function clean(){
+  const raw=$('#input').value; if(!raw.trim()){ cleaned=null; $('#report').innerHTML='<div class="muted">Paste CSV to clean.</div>'; $('#prows').innerHTML=''; $('#preview').innerHTML=''; return; }
+  let rows=parseCSV(raw);
+  const before={rows:rows.length};
+  let header=rows[0].slice(); let body=rows.slice(1);
+
+  if($('#opt-trim').checked){ header=header.map(h=>h.trim()); body=body.map(r=>r.map(c=>c.trim())); }
+  if($('#opt-hdr').checked){ header=header.map(h=>h.toLowerCase().replace(/[^\w]+/g,'_').replace(/^_+|_+$/g,'')||'col');
+    const seen={}; header=header.map(h=>{ if(seen[h]){ seen[h]++; return h+'_'+seen[h]; } seen[h]=1; return h; }); }
+
+  let emptyDropped=0;
+  if($('#opt-empty').checked){ const b2=body.filter(r=>r.some(c=>c!=='')); emptyDropped=body.length-b2.length; body=b2; }
+  let dupDropped=0;
+  if($('#opt-dup').checked){ const seen=new Set(); const b2=[]; body.forEach(r=>{ const k=r.join(''); if(!seen.has(k)){ seen.add(k); b2.push(r); } }); dupDropped=body.length-b2.length; body=b2; }
+
+  // drop all-empty columns
+  let colsDropped=0;
+  if($('#opt-blankcol').checked){
+    const keep=header.map((_,c)=>body.some(r=>(r[c]||'')!==''));
+    header=header.filter((_,c)=>keep[c]); body=body.map(r=>r.filter((_,c)=>keep[c])); colsDropped=keep.filter(x=>!x).length;
+  }
+
+  cleaned=[header,...body];
+
+  // report
+  $('#report').innerHTML=[
+    ['Rows in', before.rows-1],
+    ['Rows out', body.length],
+    ['Empty dropped', emptyDropped],
+    ['Duplicates dropped', dupDropped],
+    ['Columns', header.length+(colsDropped?` (−${colsDropped})`:'')],
+  ].map(c=>`<div class="stat-card"><div class="stat-label">${c[0]}</div><div class="stat-value" style="font-size:17px">${c[1]}</div></div>`).join('');
+
+  // profile
+  $('#prows').innerHTML=header.map((h,c)=>{
+    const col=body.map(r=>r[c]||''); const filled=col.filter(v=>v!=='');
+    const nums=filled.filter(v=>v!==''&&Number.isFinite(+v));
+    const dates=filled.filter(v=>/^\d{4}-\d{2}-\d{2}/.test(v)||/^\d{1,2}\/\d{1,2}\/\d{2,4}/.test(v));
+    let type='text'; if(filled.length&&nums.length===filled.length) type='numeric'; else if(filled.length&&dates.length===filled.length) type='date';
+    const uniq=new Set(filled).size;
+    return `<tr><td><b>${esc(h)}</b></td><td>${type}</td><td>${filled.length}</td><td>${col.length-filled.length}</td><td>${uniq}</td><td class="muted">${esc(filled.slice(0,2).join(', '))}</td></tr>`;
+  }).join('');
+
+  // preview
+  const prev=[header,...body.slice(0,20)];
+  $('#preview').innerHTML='<table class="ptbl"><thead><tr>'+header.map(h=>`<th>${esc(h)}</th>`).join('')+'</tr></thead><tbody>'+
+    body.slice(0,20).map(r=>'<tr>'+header.map((_,c)=>`<td>${esc(r[c]||'')}</td>`).join('')+'</tr>').join('')+'</tbody></table>';
+}
+$('#clean').addEventListener('click',()=>{ clean(); toast('Cleaned'); });
+$('#input').addEventListener('input',()=>{clearTimeout(window._r);window._r=setTimeout(clean,200);});
+document.querySelectorAll('input[type=checkbox]').forEach(c=>c.addEventListener('change',clean));
+$('#dl').addEventListener('click',()=>{ if(!cleaned){toast('Nothing to export');return;} const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([toCSV(cleaned)],{type:'text/csv'}));a.download='cleaned.csv';a.click();toast('CSV downloaded'); });
+$('#sample').addEventListener('click',()=>{
+  $('#input').value='First Name, Age ,City\nAda , 36,London\nAlan,41, Bletchley\nada ,36,London\nAda,36,London\n , ,\nGrace,45,New York\nAlan,41,Bletchley';
+  clean();
+});
+clean();
+</script>
+
+</body>
+</html>

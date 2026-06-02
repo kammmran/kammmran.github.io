@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Titration Curve — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-line"></i></div><div>Titration Curve</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-chart-line"></i></div>
+      <div>
+        <div class="tool-title">Acid–Base Titration Curve</div>
+        <div class="tool-desc">Plot pH versus titrant volume for strong/weak monoprotic systems — with equivalence and half-equivalence points marked.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Titration type
+      <select id="type">
+        <option value="sa">Strong acid titrated with strong base</option>
+        <option value="wa">Weak acid (pKₐ) titrated with strong base</option>
+        <option value="sb">Strong base titrated with strong acid</option>
+        <option value="wb">Weak base (pK_b) titrated with strong acid</option>
+      </select>
+    </label>
+    <div class="grid3">
+      <label class="fld">Analyte conc. (M)<input type="number" id="ca" value="0.1" step="any" min="0"></label>
+      <label class="fld">Analyte volume (mL)<input type="number" id="va" value="25" step="any" min="0"></label>
+      <label class="fld">Titrant conc. (M)<input type="number" id="cb" value="0.1" step="any" min="0"></label>
+      <label class="fld" id="pkWrap" style="display:none">pKₐ / pK_b<input type="number" id="pk" value="4.76" step="any"></label>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const isWeak = t => t==='wa'||t==='wb';
+
+function pH(t, molA, Cb, Vb, Va, pk){
+  const Vtot = Va+Vb;            // mL
+  const molT = Cb*Vb;           // mmol titrant
+  const Kw=1e-14;
+  if(t==='sa'){ // strong acid + strong base
+    const diff=molA-molT;
+    if(diff>1e-12) return -Math.log10(diff/Vtot);
+    if(diff<-1e-12) return 14+Math.log10(-diff/Vtot);
+    return 7;
+  }
+  if(t==='sb'){ // strong base + strong acid
+    const diff=molA-molT;
+    if(diff>1e-12) return 14+Math.log10(diff/Vtot);
+    if(diff<-1e-12) return -Math.log10(-diff/Vtot);
+    return 7;
+  }
+  if(t==='wa'){ const Ka=Math.pow(10,-pk);
+    if(molT<=1e-12){ const C=molA/Vtot; const x=(-Ka+Math.sqrt(Ka*Ka+4*Ka*C))/2; return -Math.log10(x); }
+    if(molT<molA-1e-12) return pk+Math.log10(molT/(molA-molT));
+    if(Math.abs(molT-molA)<=1e-9){ const C=molA/Vtot; const Kb=Kw/Ka; return 14+Math.log10(Math.sqrt(Kb*C)); }
+    return 14+Math.log10((molT-molA)/Vtot);
+  }
+  // wb
+  const Kb=Math.pow(10,-pk);
+  if(molT<=1e-12){ const C=molA/Vtot; const x=(-Kb+Math.sqrt(Kb*Kb+4*Kb*C))/2; return 14+Math.log10(x); }
+  if(molT<molA-1e-12){ const pOH=pk+Math.log10(molT/(molA-molT)); return 14-pOH; }
+  if(Math.abs(molT-molA)<=1e-9){ const C=molA/Vtot; const Ka=Kw/Kb; return -Math.log10(Math.sqrt(Ka*C)); }
+  return -Math.log10((molT-molA)/Vtot);
+}
+
+function run(){
+  const t=$('#type').value;
+  const Ca=+$('#ca').value, Va=+$('#va').value, Cb=+$('#cb').value, pk=+$('#pk').value;
+  $('#pkWrap').style.display=isWeak(t)?'':'none';
+  const out=$('#out');
+  if(!(Ca>0&&Va>0&&Cb>0)){ out.innerHTML='<div class="muted" style="margin-top:6px">Enter positive concentrations and volume.</div>'; return; }
+  const molA=Ca*Va;             // mmol
+  const Veq=molA/Cb;            // mL
+  const Vmax=Veq*2;
+  const N=240, pts=[];
+  for(let i=0;i<=N;i++){ const Vb=Vmax*i/N; let p=pH(t,molA,Cb,Vb,Va,pk); p=Math.max(0,Math.min(14,p)); pts.push([Vb,p]); }
+  const pHeq=pH(t,molA,Cb,Veq,Va,pk);
+  const pHhalf=pH(t,molA,Cb,Veq/2,Va,pk);
+
+  // --- SVG ---
+  const W=760,H=330,pl=46,pr=18,pt=14,pb=34, iw=W-pl-pr, ih=H-pt-pb;
+  const X=v=>pl+v/Vmax*iw, Y=p=>pt+(14-p)/14*ih;
+  let grid=''; for(let p=0;p<=14;p+=2){ grid+=`<line x1="${pl}" y1="${Y(p)}" x2="${W-pr}" y2="${Y(p)}" stroke="var(--border)" stroke-width="1"/><text x="${pl-6}" y="${Y(p)+3}" text-anchor="end">${p}</text>`; }
+  for(let k=0;k<=4;k++){ const v=Vmax*k/4; grid+=`<line x1="${X(v)}" y1="${pt}" x2="${X(v)}" y2="${H-pb}" stroke="var(--border)" stroke-width="1" opacity=".5"/><text x="${X(v)}" y="${H-pb+16}" text-anchor="middle">${v.toFixed(1)}</text>`; }
+  const path=pts.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+  const eqLine=`<line x1="${X(Veq)}" y1="${pt}" x2="${X(Veq)}" y2="${H-pb}" stroke="var(--pink)" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  const eqDot=`<circle cx="${X(Veq)}" cy="${Y(Math.max(0,Math.min(14,pHeq)))}" r="4.5" fill="var(--pink)"/>`;
+  let halfDot=''; if(isWeak(t)) halfDot=`<circle cx="${X(Veq/2)}" cy="${Y(Math.max(0,Math.min(14,pHhalf)))}" r="4" fill="var(--accent3)"/>`;
+  const svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px">
+    ${grid}<path d="${path}" fill="none" stroke="var(--blue)" stroke-width="2.5"/>${eqLine}${eqDot}${halfDot}
+    <text x="${pl+iw/2}" y="${H-2}" text-anchor="middle">Titrant added (mL)</text>
+    <text transform="translate(13,${pt+ih/2}) rotate(-90)" text-anchor="middle">pH</text>
+  </svg>`;
+
+  out.innerHTML=`
+    <div class="stat-grid" style="margin:6px 0 12px">
+      <div class="stat-card"><div class="stat-label">Equivalence vol.</div><div class="stat-value">${Veq.toFixed(2)} mL</div></div>
+      <div class="stat-card"><div class="stat-label">pH at equivalence</div><div class="stat-value" style="color:var(--pink)">${pHeq.toFixed(2)}</div></div>
+      ${isWeak(t)?`<div class="stat-card"><div class="stat-label">pH at ½ equiv.</div><div class="stat-value" style="color:var(--accent3)">${pHhalf.toFixed(2)}</div></div>
+      <div class="stat-card"><div class="stat-label">${t==='wa'?'pKₐ':'pK_b'} ( = ½-eq pH )</div><div class="stat-value">${pk}</div></div>`:''}
+      <div class="stat-card"><div class="stat-label">Initial pH</div><div class="stat-value">${pts[0][1].toFixed(2)}</div></div>
+    </div>
+    ${svg}
+    <div class="muted" style="font-size:12px;margin-top:8px">Monoprotic model at 25 °C; activities assumed ideal. ${isWeak(t)?'The buffer region follows Henderson–Hasselbalch; at the half-equivalence point pH equals the pKₐ.':'Strong–strong titration: the equivalence point is pH 7.'}</div>`;
+}
+['type','ca','va','cb','pk'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

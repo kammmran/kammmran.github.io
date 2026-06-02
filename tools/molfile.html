@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molfile ↔ SMILES — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-transform"></i></div><div>Molfile ↔ SMILES</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-transform"></i></div>
+      <div>
+        <div class="tool-title">Molfile ↔ SMILES Converter</div>
+        <div class="tool-desc">Convert an MDL Molfile (V2000) to SMILES or vice-versa, with a live 2D structure preview.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="m2s">Molfile → SMILES</button>
+    <button class="tab" data-t="s2m">SMILES → Molfile</button>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span id="inlabel">Molfile input</span><button class="btn btn-sm btn-ghost" id="sample">Sample</button></div>
+      <textarea id="input" placeholder="Paste a V2000 molfile…" style="min-height:280px;font-size:12px"></textarea>
+      <div id="err" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span id="outlabel">SMILES output</span>
+        <div class="panel-actions"><button class="btn btn-sm" id="copy"><i class="ti ti-copy"></i> Copy</button><button class="btn btn-sm" id="dl"><i class="ti ti-download"></i> Save</button></div>
+      </div>
+      <div id="structure" style="background:#fff;border-radius:var(--radius-sm);height:200px;display:flex;align-items:center;justify-content:center;margin-bottom:10px"></div>
+      <textarea id="output" readonly style="min-height:90px;font-size:12px"></textarea>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function ready(cb){ if(window.OCL&&OCL.Molecule)return cb(); let n=0;const iv=setInterval(()=>{if(window.OCL&&OCL.Molecule){clearInterval(iv);cb();}else if(++n>60){clearInterval(iv);$('#err').textContent='Could not load chemistry engine.';}},100); }
+let mode='m2s';
+
+const SAMPLE_SMILES='CC(=O)Oc1ccccc1C(=O)O';
+
+function setMode(m){
+  mode=m;
+  $('#inlabel').textContent = m==='m2s'?'Molfile input':'SMILES input';
+  $('#outlabel').textContent = m==='m2s'?'SMILES output':'Molfile output';
+  $('#input').placeholder = m==='m2s'?'Paste a V2000 molfile…':'Paste a SMILES, e.g. CCO';
+  $('#input').style.fontSize = m==='m2s'?'12px':'14px';
+  $('#input').value=''; $('#output').value=''; $('#structure').innerHTML=''; $('#err').textContent='';
+}
+
+function convert(){
+  ready(()=>{
+    const txt=$('#input').value.trim(); $('#err').textContent='';
+    if(!txt){ $('#output').value=''; $('#structure').innerHTML=''; return; }
+    let mol;
+    try{
+      mol = mode==='m2s' ? OCL.Molecule.fromMolfile(txt) : OCL.Molecule.fromSmiles(txt);
+      if(mol.getAllAtoms()===0) throw new Error('No atoms found');
+    }catch(e){ $('#err').textContent='Could not parse '+(mode==='m2s'?'molfile':'SMILES')+'.'; $('#output').value=''; $('#structure').innerHTML=''; return; }
+    $('#output').value = mode==='m2s' ? mol.toIsomericSmiles() : mol.toMolfile();
+    $('#structure').innerHTML = mol.toSVG(360,200,'m',{autoCrop:true,autoCropMargin:10});
+  });
+}
+
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); setMode(t.dataset.t);
+}));
+$('#input').addEventListener('input',()=>{clearTimeout(window._c);window._c=setTimeout(convert,200);});
+$('#copy').addEventListener('click',()=>{ navigator.clipboard.writeText($('#output').value); toast('Copied'); });
+$('#dl').addEventListener('click',()=>{ const v=$('#output').value; if(!v)return; const ext=mode==='m2s'?'smi':'mol'; const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([v],{type:'text/plain'}));a.download='molecule.'+ext;a.click();toast('Saved'); });
+$('#sample').addEventListener('click',()=>{
+  ready(()=>{
+    if(mode==='s2m'){ $('#input').value=SAMPLE_SMILES; }
+    else { $('#input').value = OCL.Molecule.fromSmiles(SAMPLE_SMILES).toMolfile(); }
+    convert();
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abstract Quality Evaluator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-clipboard-check"></i></div><div>Abstract Evaluator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-clipboard-check"></i></div>
+      <div>
+        <div class="tool-title">Abstract Quality Evaluator</div>
+        <div class="tool-desc">Heuristic checks for a strong research abstract — structure (IMRaD), length, hedging, numbers, and readability.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Your abstract</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+          <button class="btn btn-sm btn-ghost" id="clear">Clear</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="Paste your abstract here…"></textarea>
+      <div class="muted" style="font-size:12px;margin-top:8px" id="wc"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Score</span></div>
+      <div class="scorebar"><div class="scorebar-fill" id="scoreFill"></div><span id="scoreNum">0</span></div>
+      <div class="divider"></div>
+      <div id="checks" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .scorebar { position:relative; height:36px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; display:flex; align-items:center; }
+  .scorebar-fill { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg,var(--red),var(--amber),var(--green)); transition:width .3s; }
+  .scorebar span { position:relative; z-index:1; padding-left:12px; font-weight:700; font-size:15px; color:#0f0f13; mix-blend-mode:luminosity; }
+  .chk { display:flex; align-items:flex-start; gap:10px; font-size:13px; }
+  .chk i { font-size:18px; flex-shrink:0; margin-top:1px; }
+  .chk .ok { color:var(--green); }
+  .chk .warn { color:var(--amber); }
+  .chk .bad { color:var(--red); }
+  .chk-body b { font-weight:600; }
+  .chk-detail { color:var(--text2); font-size:12px; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+function syllables(w){ w=w.toLowerCase().replace(/[^a-z]/g,''); if(w.length<=3)return 1; w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,''); const m=w.match(/[aeiouy]{1,2}/g); return m?m.length:1; }
+
+const STRUCT = {
+  background: ['background','introduction','however','despite','remains','poorly understood','little is known','recent','growing'],
+  objective: ['aim','aimed','objective','purpose','we investigate','this study','we examine','we propose','goal','hypothesi'],
+  methods: ['method','we used','using','data','sample','participants','measured','analyzed','approach','experiment','survey','model','dataset'],
+  results: ['result','found','showed','observed','significant','increase','decrease','p <','p<','p =','% ','associated','correlat'],
+  conclusion: ['conclu','suggest','demonstrate','implication','these findings','our results','highlight','indicate that','overall']
+};
+const HEDGES = ['may','might','could','possibly','perhaps','seems','appears','suggest','relatively','somewhat','arguably','potentially'];
+
+function evaluate(){
+  const text = $('#input').value.trim();
+  const words = (text.match(/\b[\w'-]+\b/g) || []);
+  const wc = words.length;
+  const sentences = (text.match(/[^.!?]+[.!?]+/g) || (text?[text]:[]));
+  $('#wc').textContent = wc ? `${wc} words · ${sentences.length} sentences` : '';
+
+  if (!wc){ $('#checks').innerHTML='<span class="muted">Paste an abstract to evaluate.</span>'; $('#scoreFill').style.width='0%'; $('#scoreNum').textContent='0'; return; }
+
+  const lower = text.toLowerCase();
+  const checks = [];
+  let score = 0, maxScore = 0;
+  function add(weight, state, label, detail){ checks.push({state,label,detail}); maxScore += weight; if(state==='ok')score+=weight; else if(state==='warn')score+=weight*0.5; }
+
+  // 1. Length
+  if (wc >= 150 && wc <= 300) add(20,'ok','Length is ideal', `${wc} words (target 150–300).`);
+  else if (wc >= 100 && wc < 350) add(20,'warn','Length acceptable', `${wc} words — many journals cap at 250–300.`);
+  else add(20,'bad', wc<100?'Too short':'Too long', `${wc} words (target 150–300).`);
+
+  // 2. Structure / IMRaD coverage
+  const present = Object.entries(STRUCT).filter(([k,kw]) => kw.some(t => lower.includes(t))).map(([k])=>k);
+  const missing = Object.keys(STRUCT).filter(k => !present.includes(k));
+  if (present.length >= 5) add(25,'ok','Covers full IMRaD structure', 'Background, objective, methods, results, and conclusion all detected.');
+  else if (present.length >= 3) add(25,'warn',`Covers ${present.length}/5 sections`, `Missing: ${missing.join(', ')}.`);
+  else add(25,'bad','Weak structure', `Only ${present.length}/5 sections detected. Missing: ${missing.join(', ')}.`);
+
+  // 3. Quantitative results
+  const hasNumbers = /\b\d+(\.\d+)?\s?%|\bp\s?[<=>]\s?0?\.\d+|\b\d+(\.\d+)?\b/.test(text);
+  const hasStats = /\bp\s?[<=>]|95%|ci\b|n\s?=|±|odds ratio|confidence/i.test(text);
+  if (hasStats) add(15,'ok','Reports concrete numbers/statistics','Quantitative findings make results credible.');
+  else if (hasNumbers) add(15,'warn','Some numbers present','Consider adding effect sizes / p-values / CIs.');
+  else add(15,'bad','No quantitative results','Add key figures so readers see the magnitude of findings.');
+
+  // 4. Hedging density
+  const hedgeCount = HEDGES.reduce((a,h)=> a + (lower.match(new RegExp('\\b'+h+'\\b','g'))||[]).length, 0);
+  const hedgeRatio = hedgeCount / Math.max(1, sentences.length);
+  if (hedgeRatio <= 0.5) add(10,'ok','Confident tone', `${hedgeCount} hedging word(s).`);
+  else if (hedgeRatio <= 1) add(10,'warn','Somewhat hedged', `${hedgeCount} hedging words — trim "may/might/could/possibly".`);
+  else add(10,'bad','Over-hedged', `${hedgeCount} hedging words dilute your claims.`);
+
+  // 5. Sentence length / readability
+  const avgLen = wc / Math.max(1, sentences.length);
+  const syl = words.reduce((a,w)=>a+syllables(w),0);
+  const flesch = 206.835 - 1.015*avgLen - 84.6*(syl/Math.max(1,wc));
+  if (avgLen <= 25) add(15,'ok','Readable sentence length', `Avg ${avgLen.toFixed(0)} words/sentence (Flesch ${flesch.toFixed(0)}).`);
+  else if (avgLen <= 35) add(15,'warn','Long sentences', `Avg ${avgLen.toFixed(0)} words/sentence — consider splitting.`);
+  else add(15,'bad','Sentences too long', `Avg ${avgLen.toFixed(0)} words/sentence hurts clarity.`);
+
+  // 6. No undefined acronyms (heuristic: acronym used before any "(ACRONYM)")
+  const acronyms = [...new Set((text.match(/\b[A-Z]{2,5}\b/g)||[]).filter(a=>!['DNA','RNA','USA','PCR','AI','ML'].includes(a)))];
+  if (acronyms.length === 0) add(0,'ok','','');
+  // (acronyms check is informational, weight 0 — skip from list if empty)
+  if (acronyms.length){ add(0, acronyms.length>4?'warn':'ok','Acronyms used', `${acronyms.slice(0,6).join(', ')}${acronyms.length>6?'…':''} — make sure each is defined on first use.`); }
+
+  const pct = Math.round(score / maxScore * 100);
+  $('#scoreFill').style.width = pct + '%';
+  $('#scoreNum').textContent = pct + ' / 100';
+  $('#checks').innerHTML = checks.filter(c=>c.label).map(c => {
+    const icon = c.state==='ok'?'circle-check':c.state==='warn'?'alert-triangle':'circle-x';
+    return `<div class="chk"><i class="ti ti-${icon} ${c.state}"></i><div class="chk-body"><b>${c.label}</b><div class="chk-detail">${c.detail}</div></div></div>`;
+  }).join('');
+}
+
+$('#input').addEventListener('input', () => { clearTimeout(window._e); window._e = setTimeout(evaluate, 150); });
+$('#clear').addEventListener('click', () => { $('#input').value=''; evaluate(); });
+$('#sample').addEventListener('click', () => {
+  $('#input').value = "Antibiotic resistance is a growing global health threat, yet the role of soil microbiomes as reservoirs remains poorly understood. This study aimed to characterize resistance gene abundance across agricultural soils. We collected 240 samples from 12 farms and quantified 18 resistance genes using qPCR, analyzing associations with soil chemistry via mixed-effects models. Resistance gene abundance was 3.4-fold higher in manure-amended soils (p < 0.001, 95% CI 2.1–4.8). Total organic carbon explained 41% of the variance. These findings suggest that manure management is a key intervention point, and we conclude that targeted policies could reduce environmental resistance spread.";
+  evaluate(); toast('Sample loaded');
+});
+evaluate();
+</script>
+
+</body>
+</html>

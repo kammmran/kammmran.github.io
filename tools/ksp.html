@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solubility & Ksp — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-droplet"></i></div><div>Solubility & Ksp</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-droplet"></i></div>
+      <div>
+        <div class="tool-title">Solubility &amp; Kₛₚ Calculator</div>
+        <div class="tool-desc">Convert between solubility-product constant and molar solubility for a salt MₐXᵦ — with optional common-ion effect.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="fwd">Kₛₚ → solubility</button>
+    <button class="tab" data-t="rev">Solubility → Kₛₚ</button>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Common salt (or choose Custom)
+      <select id="salt"></select>
+    </label>
+    <div class="grid">
+      <label class="fld">Cation subscript <b>a</b><input type="number" id="a" value="1" min="1" step="1"></label>
+      <label class="fld">Anion subscript <b>b</b><input type="number" id="b" value="1" min="1" step="1"></label>
+      <label class="fld" id="mWrap">Molar mass (g/mol) <span class="muted">opt.</span><input type="number" id="mm" step="any" min="0" placeholder="for g/L"></label>
+    </div>
+
+    <div id="fwd-fields" class="grid">
+      <label class="fld">Kₛₚ<input type="text" id="ksp" value="1.77e-10" placeholder="e.g. 1.8e-10"></label>
+      <label class="fld">Common ion already present (M) <span class="muted">opt.</span><input type="number" id="ci" step="any" min="0" placeholder="0"></label>
+    </div>
+
+    <div id="rev-fields" class="grid" style="display:none">
+      <label class="fld">Molar solubility s (mol/L)<input type="text" id="sol" placeholder="e.g. 1.3e-5"></label>
+    </div>
+
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .eq{font-family:ui-monospace,Menlo,monospace;background:var(--bg3);padding:8px 12px;border-radius:8px;font-size:13px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+// name, a, b, Ksp, molar mass
+const salts = [
+  ['Custom', null, null, null, null],
+  ['AgCl', 1,1, 1.77e-10, 143.32],
+  ['AgBr', 1,1, 5.35e-13, 187.77],
+  ['AgI',  1,1, 8.52e-17, 234.77],
+  ['BaSO₄',1,1, 1.08e-10, 233.39],
+  ['CaCO₃',1,1, 3.36e-9, 100.09],
+  ['CaF₂', 1,2, 3.45e-11, 78.07],
+  ['Ca(OH)₂',1,2, 5.02e-6, 74.09],
+  ['Mg(OH)₂',1,2, 5.61e-12, 58.32],
+  ['PbCl₂',1,2, 1.7e-5, 278.10],
+  ['PbI₂', 1,2, 9.8e-9, 461.01],
+  ['Ag₂CrO₄',2,1, 1.12e-12, 331.73],
+  ['Fe(OH)₃',1,3, 2.79e-39, 106.87],
+];
+$('#salt').innerHTML = salts.map((s,i)=>`<option value="${i}">${s[0]}${s[3]!=null?`  (Kₛₚ ${s[3].toExponential(2)})`:''}</option>`).join('');
+$('#salt').addEventListener('change',()=>{
+  const s=salts[+$('#salt').value];
+  if(s[1]!=null){ $('#a').value=s[1]; $('#b').value=s[2]; $('#ksp').value=s[3].toExponential(3).replace('e','e'); $('#mm').value=s[4]; }
+  run();
+});
+
+const parseNum = v => { const x=parseFloat(v); return Number.isFinite(x)?x:NaN; };
+
+function solubilityFromKsp(Ksp,a,b,ci){
+  // M_aX_b -> a cation + b anion ; pick common ion side with larger contribution arbitrarily: treat ci as on the anion side if b>=a else cation
+  // simpler: no common ion closed form; with common ion, bisection.
+  if(!ci || ci<=0){
+    return Math.pow(Ksp/(Math.pow(a,a)*Math.pow(b,b)), 1/(a+b));
+  }
+  // assume common ion shares the anion (most textbook problems). [cation]=a s, [anion]=ci + b s
+  const f = s => Math.pow(a*s,a)*Math.pow(ci+b*s,b) - Ksp;
+  let lo=0, hi=Math.pow(Ksp/(Math.pow(a,a)*Math.pow(b,b)),1/(a+b)); // s0 upper bound
+  for(let i=0;i<200;i++){ const mid=(lo+hi)/2; if(f(mid)>0) hi=mid; else lo=mid; }
+  return (lo+hi)/2;
+}
+
+function fmt(x){ if(x===0) return '0'; const ax=Math.abs(x); return (ax<1e-3||ax>=1e5)?x.toExponential(3):x.toPrecision(4); }
+
+function run(){
+  const mode = $('.tab.active').dataset.t;
+  const a=Math.max(1,Math.round(+$('#a').value||1)), b=Math.max(1,Math.round(+$('#b').value||1));
+  const mm=parseNum($('#mm').value);
+  const out=$('#out');
+  const dissoc = `MₐXᵦ ⇌ a·Mⁿ⁺ + b·Xᵐ⁻  ·  Kₛₚ = (a·s)<sup>a</sup>·(b·s)<sup>b</sup> = a<sup>a</sup>b<sup>b</sup>·s<sup>(a+b)</sup>`;
+
+  if(mode==='fwd'){
+    const Ksp=parseNum($('#ksp').value), ci=parseNum($('#ci').value)||0;
+    if(!(Ksp>0)){ out.innerHTML='<div class="muted" style="margin-top:6px">Enter a positive Kₛₚ.</div>'; return; }
+    const s0 = solubilityFromKsp(Ksp,a,b,0);
+    const s  = solubilityFromKsp(Ksp,a,b,ci);
+    const cat=a*s, an=ci+b*s;
+    out.innerHTML=`
+      <div class="eq" style="margin-bottom:10px">${dissoc}</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Molar solubility s</div><div class="stat-value" style="color:var(--teal)">${fmt(s)} M</div></div>
+        ${mm>0?`<div class="stat-card"><div class="stat-label">Solubility (g/L)</div><div class="stat-value">${fmt(s*mm)}</div></div>`:''}
+        <div class="stat-card"><div class="stat-label">[cation]</div><div class="stat-value">${fmt(cat)} M</div></div>
+        <div class="stat-card"><div class="stat-label">[anion]</div><div class="stat-value">${fmt(an)} M</div></div>
+        ${ci>0?`<div class="stat-card"><div class="stat-label">s without common ion</div><div class="stat-value">${fmt(s0)} M</div></div>
+        <div class="stat-card"><div class="stat-label">Suppression</div><div class="stat-value" style="color:var(--amber)">${(s0>0?(100*(1-s/s0)):0).toFixed(1)}%</div></div>`:''}
+      </div>
+      ${ci>0?'<div class="muted" style="font-size:12px;margin-top:8px">Common ion taken to be the anion (Xᵐ⁻), the usual textbook setup; it shifts equilibrium left and lowers solubility.</div>':''}`;
+  } else {
+    const s=parseNum($('#sol').value);
+    if(!(s>0)){ out.innerHTML='<div class="muted" style="margin-top:6px">Enter a positive molar solubility.</div>'; return; }
+    const Ksp=Math.pow(a,a)*Math.pow(b,b)*Math.pow(s,a+b);
+    out.innerHTML=`
+      <div class="eq" style="margin-bottom:10px">${dissoc}</div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Kₛₚ</div><div class="stat-value" style="color:var(--teal)">${fmt(Ksp)}</div></div>
+        <div class="stat-card"><div class="stat-label">[cation]</div><div class="stat-value">${fmt(a*s)} M</div></div>
+        <div class="stat-card"><div class="stat-label">[anion]</div><div class="stat-value">${fmt(b*s)} M</div></div>
+        ${mm>0?`<div class="stat-card"><div class="stat-label">Solubility (g/L)</div><div class="stat-value">${fmt(s*mm)}</div></div>`:''}
+      </div>`;
+  }
+}
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+  $('#fwd-fields').style.display=t.dataset.t==='fwd'?'':'none';
+  $('#rev-fields').style.display=t.dataset.t==='rev'?'':'none';
+  run();
+}));
+['a','b','mm','ksp','ci','sol'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

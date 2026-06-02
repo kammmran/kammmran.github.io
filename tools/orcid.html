@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ID Validator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-id-badge-2"></i></div><div>Researcher ID Validator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-id-badge-2"></i></div>
+      <div>
+        <div class="tool-title">Researcher ID Validator</div>
+        <div class="tool-desc">Checksum-validate ORCID and ISNI iDs (ISO 7064 MOD 11-2) and sanity-check DOI / ISBN format. Fully offline.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row" style="margin-bottom:12px">
+      <span class="muted" style="font-size:12px">ID type:</span>
+      <select id="type"><option value="orcid">ORCID</option><option value="isni">ISNI</option><option value="doi">DOI</option><option value="isbn">ISBN</option></select>
+      <span class="ex" id="exbtn" style="font-size:11px;color:var(--accent3);cursor:pointer;padding:4px 8px;background:var(--surface);border-radius:6px">example</span>
+    </div>
+    <input type="text" id="id" placeholder="0000-0002-1825-0097" style="font-size:18px;font-family:ui-monospace,Menlo,monospace">
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+    <div id="link" style="margin-top:10px"></div>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+
+// ISO 7064 MOD 11-2 — used by ORCID & ISNI (16 digits, last is check 0-9 or X)
+function mod11_2(digits){
+  let total=0;
+  for(const ch of digits){ const d=ch==='X'?10:parseInt(ch,10); total=(total+d)*2 % 11; }
+  const remainder=total%11; const result=(12-remainder)%11; return result===10?'X':String(result);
+}
+function validateOrcidIsni(raw){
+  const clean=raw.replace(/[\s-]/g,'').toUpperCase();
+  if(!/^\d{15}[\dX]$/.test(clean)) return {ok:false, msg:'Must be 16 characters (15 digits + check digit).'};
+  const base=clean.slice(0,15), check=clean[15];
+  const expected=mod11_2(base);
+  if(expected!==check) return {ok:false, msg:`Checksum failed — expected check digit "${expected}", got "${check}".`};
+  const fmt=clean.replace(/(.{4})(.{4})(.{4})(.{4})/,'$1-$2-$3-$4');
+  return {ok:true, msg:'Valid checksum.', fmt};
+}
+function validateDOI(raw){
+  const clean=raw.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'').replace(/^doi:/i,'');
+  if(/^10\.\d{4,9}\/\S+$/.test(clean)) return {ok:true, msg:'Well-formed DOI (format only — existence not checked).', fmt:clean};
+  return {ok:false, msg:'Not a valid DOI. Expected 10.XXXX/suffix.'};
+}
+function validateISBN(raw){
+  const clean=raw.replace(/[\s-]/g,'').toUpperCase();
+  if(clean.length===10){
+    if(!/^\d{9}[\dX]$/.test(clean)) return {ok:false,msg:'ISBN-10 must be 9 digits + check (0-9 or X).'};
+    let sum=0; for(let i=0;i<10;i++){ const d=clean[i]==='X'?10:+clean[i]; sum+=d*(10-i); }
+    return sum%11===0?{ok:true,msg:'Valid ISBN-10 checksum.',fmt:clean}:{ok:false,msg:'ISBN-10 checksum failed.'};
+  }
+  if(clean.length===13){
+    if(!/^\d{13}$/.test(clean)) return {ok:false,msg:'ISBN-13 must be 13 digits.'};
+    let sum=0; for(let i=0;i<13;i++){ sum+=(+clean[i])*(i%2?3:1); }
+    return sum%10===0?{ok:true,msg:'Valid ISBN-13 checksum.',fmt:clean}:{ok:false,msg:'ISBN-13 checksum failed.'};
+  }
+  return {ok:false, msg:'ISBN must be 10 or 13 characters.'};
+}
+
+const EXAMPLES={ orcid:'0000-0002-1825-0097', isni:'0000 0001 2103 2683', doi:'10.1038/171737a0', isbn:'978-0-13-468599-1' };
+const PLACE={ orcid:'0000-0002-1825-0097', isni:'0000 0001 2103 2683', doi:'10.1038/171737a0', isbn:'978-0-13-468599-1' };
+
+function run(){
+  const type=$('#type').value, raw=$('#id').value.trim();
+  $('#link').innerHTML='';
+  if(!raw){ $('#out').innerHTML='<span class="muted">Enter an ID to validate.</span>'; return; }
+  let r;
+  if(type==='orcid'||type==='isni') r=validateOrcidIsni(raw);
+  else if(type==='doi') r=validateDOI(raw);
+  else r=validateISBN(raw);
+  $('#out').innerHTML = r.ok
+    ? `<span style="color:var(--green)"><i class="ti ti-circle-check"></i> ${r.msg}</span>${r.fmt?`<div style="margin-top:6px;font-family:ui-monospace,Menlo,monospace;font-size:16px">${r.fmt}</div>`:''}`
+    : `<span style="color:var(--red)"><i class="ti ti-circle-x"></i> ${r.msg}</span>`;
+  if(r.ok && r.fmt){
+    let url=''; if(type==='orcid') url='https://orcid.org/'+r.fmt; else if(type==='isni') url='https://isni.org/isni/'+r.fmt.replace(/-/g,''); else if(type==='doi') url='https://doi.org/'+r.fmt;
+    if(url) $('#link').innerHTML=`<a class="btn btn-sm" href="${url}" target="_blank"><i class="ti ti-external-link"></i> Open ${type.toUpperCase()}</a>`;
+  }
+}
+function setType(){ $('#id').placeholder=PLACE[$('#type').value]; run(); }
+$('#type').addEventListener('change',setType);
+$('#id').addEventListener('input',run);
+$('#exbtn').addEventListener('click',()=>{ $('#id').value=EXAMPLES[$('#type').value]; run(); });
+setType();
+</script>
+
+</body>
+</html>

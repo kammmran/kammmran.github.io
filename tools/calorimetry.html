@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calorimetry — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-flame"></i></div><div>Calorimetry</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:780px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-flame"></i></div>
+      <div>
+        <div class="tool-title">Calorimetry — q = m·c·ΔT</div>
+        <div class="tool-desc">Heat transfer from mass, specific heat and temperature change. Leave one blank to solve.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row" style="margin-bottom:12px">
+      <span class="muted" style="font-size:12px">Common specific heats (J/g·°C):</span>
+      <span class="chip pre" data-c="4.184">Water 4.184</span>
+      <span class="chip pre" data-c="0.897">Al 0.897</span>
+      <span class="chip pre" data-c="0.385">Cu 0.385</span>
+      <span class="chip pre" data-c="0.449">Fe 0.449</span>
+      <span class="chip pre" data-c="2.03">Ice 2.03</span>
+    </div>
+    <div class="grid2">
+      <label class="fld">Heat q (J)<input type="number" id="q" step="any"></label>
+      <label class="fld">Mass m (g)<input type="number" id="m" step="any"></label>
+      <label class="fld">Specific heat c (J/g·°C)<input type="number" id="c" step="any"></label>
+      <label class="fld">Temperature change ΔT (°C)<input type="number" id="dT" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">ΔT = T_final − T_initial. A negative q means heat is released (exothermic).</div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}} .chip.pre{cursor:pointer} .chip.pre:hover{background:var(--surface3)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+
+function solve(){
+  let q=num('q'),m=num('m'),c=num('c'),dT=num('dT');
+  const vals={q,m,c,dT}; const blanks=Object.keys(vals).filter(k=>vals[k]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML=blanks.length===0?'<span class="muted">Leave one field blank to solve.</span>':'<span class="muted">Leave exactly one field blank.</span>'; return; }
+  const b=blanks[0]; let r,label,unit;
+  try{
+    if(b==='q'){ r=m*c*dT; label='q'; unit='J'; }
+    else if(b==='m'){ r=q/(c*dT); label='m'; unit='g'; }
+    else if(b==='c'){ r=q/(m*dT); label='c'; unit='J/g·°C'; }
+    else { r=q/(m*c); label='ΔT'; unit='°C'; }
+    if(!Number.isFinite(r)) throw 0;
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs (no zeros where divided).</span>'; return; }
+  let extra='';
+  if(label==='q'){ const kj=r/1000; extra=` <span class="muted">(${kj.toFixed(4)} kJ, ${(r/4.184).toFixed(2)} cal)</span>`; extra+=`<div class="muted" style="font-size:13px;margin-top:6px">${r>0?'Heat absorbed — endothermic.':r<0?'Heat released — exothermic.':''}</div>`; }
+  out.innerHTML=`<b>${label} = ${r.toPrecision(5)} ${unit}</b>${extra}`;
+}
+document.querySelectorAll('.chip.pre').forEach(ch=>ch.addEventListener('click',()=>{ $('#c').value=ch.dataset.c; solve(); }));
+['q','m','c','dT'].forEach(id=>$('#'+id).addEventListener('input',solve));
+solve();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scientific Tone Optimizer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-temperature"></i></div><div>Scientific Tone Optimizer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-temperature"></i></div>
+      <div>
+        <div class="tool-title">Scientific Tone Optimizer</div>
+        <div class="tool-desc">Catches informal, colloquial and emotive wording that weakens an academic register, and suggests neutral replacements.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste your text
+      <textarea id="txt" style="min-height:200px" placeholder="We didn't expect such a huge effect, but it's really pretty cool that things got a lot better!"></textarea>
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #render{line-height:1.9;font-size:14px}
+  .tn{border-radius:3px;padding:0 2px;cursor:help}
+  .tn.contraction{background:rgba(248,113,113,0.16);box-shadow:inset 0 -2px 0 var(--red)}
+  .tn.informal{background:rgba(251,191,36,0.16);box-shadow:inset 0 -2px 0 var(--amber)}
+  .tn.intensifier{background:rgba(124,109,240,0.16);box-shadow:inset 0 -2px 0 var(--accent3)}
+  .tn.emotive{background:rgba(244,114,182,0.16);box-shadow:inset 0 -2px 0 var(--pink)}
+  .sugg-row{display:flex;justify-content:space-between;gap:12px;padding:8px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:6px;font-size:13px}
+  .cat{font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:1px 7px;border-radius:999px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+const groups = [
+  {cls:'contraction', color:'--red', items:[
+    ["don't",'do not'],["doesn't",'does not'],["didn't",'did not'],["can't",'cannot'],["won't",'will not'],
+    ["isn't",'is not'],["aren't",'are not'],["wasn't",'was not'],["weren't",'were not'],["it's",'it is'],
+    ["we've",'we have'],["we're",'we are'],["we'll",'we will'],["that's",'that is'],["there's",'there is'],
+    ["hasn't",'has not'],["haven't",'have not'],["couldn't",'could not'],["wouldn't",'would not'],["shouldn't",'should not'],
+  ]},
+  {cls:'informal', color:'--amber', items:[
+    ['a lot of','many / much'],['lots of','many'],['kind of','somewhat'],['sort of','somewhat'],['stuff','material / items'],
+    ['things','factors / elements'],['get','obtain'],['got','obtained'],['big','large'],['cool','notable'],
+    ['nowadays','currently'],['okay','acceptable'],['ok','acceptable'],['so','therefore'],['plus','in addition'],
+    ['anyway','regardless'],['basically','essentially'],['actually','—'],['pretty','fairly'],['figure out','determine'],
+  ]},
+  {cls:'intensifier', color:'--accent3', items:[
+    ['very','—'],['really','—'],['extremely','—'],['super','—'],['quite','—'],['totally','—'],
+    ['hugely','substantially'],['incredibly','—'],['vastly','considerably'],['highly','—'],
+  ]},
+  {cls:'emotive', color:'--pink', items:[
+    ['amazing','notable'],['awesome','notable'],['wonderful','favourable'],['terrible','poor'],['awful','poor'],
+    ['surprising','unexpected'],['shocking','unexpected'],['exciting','promising'],['fantastic','strong'],['beautiful','clear'],
+  ]},
+];
+
+function run(){
+  const t=$('#txt').value; const out=$('#out');
+  if(!t.trim()){ out.innerHTML=''; return; }
+  let html=esc(t);
+  const found=[]; let total=0; const counts={contraction:0,informal:0,intensifier:0,emotive:0};
+  groups.forEach(g=>{
+    g.items.forEach(([w,sug])=>{
+      const re=new RegExp('(?<![\\w])'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?![\\w])','ig');
+      html=html.replace(re,m=>{ total++; counts[g.cls]++; found.push({w:m,sug,cls:g.cls,color:g.color}); return `<span class="tn ${g.cls}" title="${g.cls} → ${sug}">${m}</span>`; });
+    });
+  });
+  // exclamation marks
+  const excl=(t.match(/!/g)||[]).length;
+  const words=(t.match(/\b[\w'-]+\b/g)||[]).length||1;
+  const score=Math.max(0,100-Math.round((total+excl*2)/words*1000*1.2));
+  const band=score>=85?'--green':score>=65?'--amber':'--red';
+  const uniq={}; found.forEach(f=>{ const k=f.w.toLowerCase(); if(!uniq[k])uniq[k]={...f,n:0}; uniq[k].n++; });
+  const list=Object.values(uniq).sort((a,b)=>b.n-a.n).map(f=>
+    `<div class="sugg-row"><span><span class="cat" style="background:rgba(127,127,127,.12);color:var(${f.color})">${f.cls}</span> <b>${esc(f.w)}</b> ×${f.n}</span><span>${f.sug==='—'?'<em style="color:var(--text3)">consider removing</em>':'→ '+f.sug}</span></div>`).join('');
+  out.innerHTML=`
+    <div class="stat-grid" style="margin:4px 0 12px">
+      <div class="stat-card"><div class="stat-label">Tone score</div><div class="stat-value" style="color:var(${band})">${score}/100</div></div>
+      <div class="stat-card"><div class="stat-label">Flags</div><div class="stat-value">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Exclamation !</div><div class="stat-value" style="color:${excl?'var(--red)':'var(--text)'}">${excl}</div></div>
+    </div>
+    <div id="render" style="margin-bottom:14px">${html.replace(/\n/g,'<br>')}</div>
+    ${list?`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:8px">Suggestions</div>${list}`:'<div class="muted" style="font-size:13px">Tone looks appropriately formal. 👍</div>'}`;
+}
+$('#txt').addEventListener('input',run);
+</script>
+
+</body>
+</html>

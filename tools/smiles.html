@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMILES Validator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-atom-2"></i></div><div>SMILES Validator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-atom-2"></i></div>
+      <div>
+        <div class="tool-title">SMILES Validator &amp; Descriptors</div>
+        <div class="tool-desc">Validate a SMILES string and get the formula, exact mass, 2D structure, and drug-likeness descriptors (Lipinski).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="panel-label"><span>SMILES</span>
+      <div class="panel-actions" id="examples"></div>
+    </div>
+    <div class="row">
+      <input type="text" id="smiles" placeholder="e.g. CC(=O)OC1=CC=CC=C1C(=O)O (aspirin)" style="flex:1;font-family:ui-monospace,Menlo,monospace">
+      <button class="btn btn-primary" id="go"><i class="ti ti-circle-check"></i> Validate</button>
+    </div>
+    <div id="status" style="margin-top:10px;font-size:13px"></div>
+  </div>
+
+  <div class="workspace" style="margin-top:16px" id="result" hidden>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Structure</span>
+        <div class="panel-actions"><button class="btn btn-sm btn-ghost" id="dlsvg">SVG</button></div>
+      </div>
+      <div id="structure" style="background:#fff;border-radius:var(--radius-sm);min-height:280px;display:flex;align-items:center;justify-content:center"></div>
+      <div class="row" style="margin-top:12px">
+        <span class="cite-label">Canonical SMILES</span>
+      </div>
+      <div id="canonical" class="output-box mono" style="min-height:auto;font-family:ui-monospace,Menlo,monospace;font-size:12px"></div>
+    </div>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Properties</span></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Formula</div><div class="stat-value" id="p_formula">—</div></div>
+        <div class="stat-card"><div class="stat-label">Mol. weight</div><div class="stat-value" id="p_mw">—</div></div>
+        <div class="stat-card"><div class="stat-label">Exact mass</div><div class="stat-value" id="p_exact">—</div></div>
+        <div class="stat-card"><div class="stat-label">Heavy atoms</div><div class="stat-value" id="p_heavy">—</div></div>
+        <div class="stat-card"><div class="stat-label">Rings</div><div class="stat-value" id="p_rings">—</div></div>
+        <div class="stat-card"><div class="stat-label">Rot. bonds</div><div class="stat-value" id="p_rot">—</div></div>
+        <div class="stat-card"><div class="stat-label">H donors</div><div class="stat-value" id="p_don">—</div></div>
+        <div class="stat-card"><div class="stat-label">H acceptors</div><div class="stat-value" id="p_acc">—</div></div>
+        <div class="stat-card"><div class="stat-label">cLogP</div><div class="stat-value" id="p_logp">—</div></div>
+        <div class="stat-card"><div class="stat-label">TPSA</div><div class="stat-value" id="p_tpsa">—</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="panel-label" style="margin-bottom:8px"><span>Lipinski's Rule of Five</span></div>
+      <div id="lipinski" style="display:flex;flex-direction:column;gap:6px;font-size:13px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .lp { display:flex;align-items:center;gap:8px }
+  .lp i { font-size:16px }
+  .lp .ok{color:var(--green)} .lp .bad{color:var(--red)}
+  #examples .ex { font-size:11px;color:var(--accent3);cursor:pointer;padding:2px 6px;border-radius:5px;background:var(--surface) }
+  #examples .ex:hover{ background:var(--surface2) }
+  .ok-msg{color:var(--green)} .err-msg{color:var(--red)}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+const EXAMPLES = {
+  'Aspirin':'CC(=O)OC1=CC=CC=C1C(=O)O',
+  'Caffeine':'CN1C=NC2=C1C(=O)N(C(=O)N2C)C',
+  'Glucose':'OCC1OC(O)C(O)C(O)C1O',
+  'Ibuprofen':'CC(C)CC1=CC=C(C=C1)C(C)C(=O)O',
+  'Paracetamol':'CC(=O)NC1=CC=C(O)C=C1'
+};
+$('#examples').innerHTML = Object.keys(EXAMPLES).map(n=>`<span class="ex" data-n="${n}">${n}</span>`).join('');
+$('#examples').querySelectorAll('.ex').forEach(e=>e.addEventListener('click',()=>{ $('#smiles').value=EXAMPLES[e.dataset.n]; validate(); }));
+
+function ready(cb){
+  if (window.OCL && OCL.Molecule) return cb();
+  let n=0; const iv=setInterval(()=>{ if(window.OCL&&OCL.Molecule){clearInterval(iv);cb();} else if(++n>60){clearInterval(iv);$('#status').innerHTML='<span class="err-msg">Could not load chemistry engine (offline?). Check your connection.</span>';} },100);
+}
+
+function validate(){
+  const smi = $('#smiles').value.trim();
+  const st = $('#status');
+  if (!smi){ st.textContent=''; $('#result').hidden=true; return; }
+  ready(() => {
+    let mol;
+    try {
+      mol = OCL.Molecule.fromSmiles(smi);
+      if (!mol || mol.getAllAtoms() === 0) throw new Error('No atoms parsed');
+    } catch (e) {
+      st.innerHTML = `<span class="err-msg"><i class="ti ti-circle-x"></i> Invalid SMILES — ${(e.message||'could not be parsed')}.</span>`;
+      $('#result').hidden = true; return;
+    }
+    st.innerHTML = '<span class="ok-msg"><i class="ti ti-circle-check"></i> Valid SMILES.</span>';
+    show(mol);
+  });
+}
+
+function show(mol){
+  $('#result').hidden = false;
+  const mf = mol.getMolecularFormula();
+  const set=(id,v)=>$('#'+id).textContent=v;
+  $('#p_formula').innerHTML = formatFormula(mf.formula);
+  set('p_mw', mf.relativeWeight.toFixed(2));
+  set('p_exact', mf.absoluteWeight.toFixed(4));
+  set('p_heavy', mol.getAllAtoms());
+  set('p_rings', mol.getRingSet ? mol.getRingSet().getSize() : '—');
+
+  let don='—',acc='—',logp='—',tpsa='—',rot='—';
+  try {
+    const p = new OCL.MoleculeProperties(mol);
+    don=p.donorCount; acc=p.acceptorCount; logp=p.logP.toFixed(2); tpsa=p.polarSurfaceArea.toFixed(1); rot=p.rotatableBondCount;
+  } catch(e){}
+  set('p_don',don); set('p_acc',acc); set('p_logp',logp); set('p_tpsa',tpsa); set('p_rot',rot);
+
+  // structure svg
+  const svg = mol.toSVG(420, 280, 'mol', { suppressChiralText:false, autoCrop:true, autoCropMargin:12 });
+  $('#structure').innerHTML = svg;
+  window._svg = svg;
+  $('#canonical').textContent = mol.toSmiles();
+
+  // Lipinski
+  const mw = mf.relativeWeight;
+  const rules = [
+    ['MW ≤ 500', mw <= 500, `${mw.toFixed(1)}`],
+    ['cLogP ≤ 5', logp!=='—' && parseFloat(logp) <= 5, logp],
+    ['H-donors ≤ 5', don!=='—' && don <= 5, don],
+    ['H-acceptors ≤ 10', acc!=='—' && acc <= 10, acc],
+  ];
+  const violations = rules.filter(r=>!r[1]).length;
+  $('#lipinski').innerHTML = rules.map(r =>
+    `<div class="lp"><i class="ti ti-${r[1]?'circle-check ok':'circle-x bad'}"></i> ${r[0]} <span class="muted" style="margin-left:auto">${r[2]}</span></div>`
+  ).join('') + `<div class="muted" style="font-size:12px;margin-top:4px">${violations===0?'Passes all four — drug-like.':violations===1?'1 violation (still generally acceptable).':violations+' violations — poor oral drug-likeness.'}</div>`;
+}
+
+function formatFormula(f){ return f.replace(/(\d+)/g,'<sub>$1</sub>'); }
+
+$('#dlsvg').addEventListener('click',()=>{
+  if(!window._svg) return;
+  const blob=new Blob([window._svg],{type:'image/svg+xml'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='structure.svg';a.click();toast('SVG downloaded');
+});
+$('#go').addEventListener('click', validate);
+$('#smiles').addEventListener('keydown', e=>{ if(e.key==='Enter') validate(); });
+</script>
+
+</body>
+</html>

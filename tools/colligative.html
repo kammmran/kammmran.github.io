@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colligative Properties — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-snowflake"></i></div><div>Colligative Properties</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-snowflake"></i></div>
+      <div>
+        <div class="tool-title">Colligative Properties</div>
+        <div class="tool-desc">Boiling-point elevation, freezing-point depression and osmotic pressure of a solution.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row" style="margin-bottom:12px">
+      <span class="muted" style="font-size:12px">Solvent presets:</span>
+      <span class="chip pre" data-kb="0.512" data-kf="1.86" data-bp="100" data-fp="0">Water</span>
+      <span class="chip pre" data-kb="1.22" data-kf="1.99" data-bp="78.4" data-fp="-114">Ethanol</span>
+      <span class="chip pre" data-kb="2.53" data-kf="5.12" data-bp="80.1" data-fp="5.5">Benzene</span>
+    </div>
+    <div class="grid3">
+      <label class="fld">Molality m (mol/kg)<input type="number" id="m" step="any"></label>
+      <label class="fld">van 't Hoff factor i<input type="number" id="i" step="any" value="1"></label>
+      <label class="fld">Temperature T (K) <span class="muted">— osmotic</span><input type="number" id="T" step="any" value="298.15"></label>
+      <label class="fld">Kb (°C·kg/mol)<input type="number" id="kb" step="any" value="0.512"></label>
+      <label class="fld">Kf (°C·kg/mol)<input type="number" id="kf" step="any" value="1.86"></label>
+      <label class="fld">Molarity M (mol/L) <span class="muted">— osmotic</span><input type="number" id="M" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">i = number of dissolved particles (1 for sugar, 2 for NaCl, 3 for CaCl₂). Osmotic pressure uses molarity M.</div>
+    <div id="out" class="stat-grid" style="margin-top:14px"></div>
+    <div id="bpfp" class="muted" style="font-size:13px;margin-top:10px"></div>
+  </div>
+</main>
+
+<style>.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:680px){.grid3{grid-template-columns:1fr}} .chip.pre{cursor:pointer} .chip.pre:hover{background:var(--surface3)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+const R=0.0820573; // L·atm/(mol·K)
+let bp0=100, fp0=0;
+
+function calc(){
+  const m=num('m'), i=num('i')??1, kb=num('kb'), kf=num('kf'), T=num('T'), M=num('M');
+  const cards=[]; let bpfp='';
+  if(m!==null){
+    if(kb!==null){ const dTb=i*kb*m; cards.push(['ΔT boiling', '+'+dTb.toFixed(3)+' °C']); bpfp+=`New boiling point ≈ <b>${(bp0+dTb).toFixed(2)} °C</b>. `; }
+    if(kf!==null){ const dTf=i*kf*m; cards.push(['ΔT freezing', '−'+dTf.toFixed(3)+' °C']); bpfp+=`New freezing point ≈ <b>${(fp0-dTf).toFixed(2)} °C</b>.`; }
+  }
+  if(M!==null && T!==null){ const pi=i*M*R*T; cards.push(['Osmotic π', pi.toPrecision(4)+' atm']); }
+  $('#out').innerHTML = cards.length? cards.map(c=>`<div class="stat-card"><div class="stat-label">${c[0]}</div><div class="stat-value" style="font-size:17px">${c[1]}</div></div>`).join('') : '<div class="muted">Enter molality (and/or molarity for osmotic pressure).</div>';
+  $('#bpfp').innerHTML = bpfp;
+}
+document.querySelectorAll('.chip.pre').forEach(ch=>ch.addEventListener('click',()=>{
+  $('#kb').value=ch.dataset.kb; $('#kf').value=ch.dataset.kf; bp0=+ch.dataset.bp; fp0=+ch.dataset.fp; calc();
+}));
+['m','i','T','kb','kf','M'].forEach(id=>$('#'+id).addEventListener('input',calc));
+calc();
+</script>
+
+</body>
+</html>

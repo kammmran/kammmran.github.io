@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reference Consistency Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-list-check"></i></div><div>Reference Consistency</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-list-check"></i></div>
+      <div>
+        <div class="tool-title">Reference Consistency Checker</div>
+        <div class="tool-desc">Spots reference-list entries that drift from the majority style — year placement, ampersands, DOIs, dash style and more.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Reference list — one reference per line
+      <textarea id="refs" style="min-height:220px" placeholder="Smith, J., & Doe, A. (2021). A title here. Journal of X, 12(3), 45-60. https://doi.org/10.1/x&#10;Lee B and Park C 2019 Another title Nature 5 1-9"></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-checkup-list"></i> Check consistency</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .ref-row{padding:9px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:7px;font-size:13px;line-height:1.5}
+  .ref-row.bad{border-color:rgba(251,191,36,0.4);background:rgba(251,191,36,0.06)}
+  .issues{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+  .issue{font-size:11px;padding:2px 9px;border-radius:999px;background:rgba(251,191,36,0.16);color:var(--amber)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// each feature returns a value per ref; we flag refs that differ from the majority value (when present)
+const features = [
+  {key:'year', label:'year not in parentheses', test:r=>/\((1[89]\d{2}|20\d{2})[a-z]?\)/.test(r)?'paren':(/\b(1[89]\d{2}|20\d{2})\b/.test(r)?'bare':null)},
+  {key:'amp', label:'uses "and" where others use "&"', test:r=>/&/.test(r)?'amp':(/\b\w+,?\s+and\s+\w+/.test(r)&&/,/.test(r)?'and':null)},
+  {key:'doi', label:'missing DOI/URL', test:r=>/(doi\.org|doi:|https?:\/\/|10\.\d{4,})/i.test(r)?'has':'none'},
+  {key:'dash', label:'page dash style differs', test:r=>{const m=r.match(/\d+\s*([–-])\s*\d+/);return m?(m[1]==='–'?'en':'hy'):null;}},
+  {key:'endperiod', label:'no terminal period', test:r=>/[.]\s*$/.test(r.trim())?'dot':'nodot'},
+  {key:'initials', label:'author initials spaced/dotted differently', test:r=>{
+      if(/\b[A-Z]\.\s?[A-Z]\./.test(r)) return 'dotted';        // J. A.
+      if(/\b[A-Z]{2,}\b/.test(r.replace(/^[A-Z][a-z]+/,''))) return 'bunched'; // JA
+      return null; }},
+];
+
+function majority(values){
+  const c={}; values.forEach(v=>{ if(v!=null) c[v]=(c[v]||0)+1; });
+  let best=null,bn=0; for(const k in c){ if(c[k]>bn){bn=c[k];best=k;} }
+  return {best, counts:c, present:Object.keys(c).length};
+}
+
+function run(){
+  const refs = $('#refs').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const out = $('#out');
+  if(refs.length<2){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste at least two references to compare style.</div>'; return; }
+  const vals = features.map(f=>refs.map(r=>f.test(r)));
+  const maj = vals.map(v=>majority(v));
+  let flaggedRefs=0, totalIssues=0;
+  const rows = refs.map((r,ri)=>{
+    const issues=[];
+    features.forEach((f,fi)=>{
+      const m=maj[fi]; const v=vals[fi][ri];
+      // only flag when there's a clear majority (>1 value used) and this ref differs and is non-null
+      if(m.present>1 && v!=null && v!==m.best) issues.push(f.label);
+    });
+    if(issues.length){ flaggedRefs++; totalIssues+=issues.length; }
+    return `<div class="ref-row${issues.length?' bad':''}">${esc(r)}${issues.length?`<div class="issues">${issues.map(i=>`<span class="issue">${i}</span>`).join('')}</div>`:''}</div>`;
+  });
+  const score = Math.round((1 - flaggedRefs/refs.length)*100);
+  const band = score>=90?'--green':score>=70?'--amber':'--red';
+  out.innerHTML = `
+    <div class="stat-grid" style="margin:10px 0 14px">
+      <div class="stat-card"><div class="stat-label">References</div><div class="stat-value">${refs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">With issues</div><div class="stat-value" style="color:var(--amber)">${flaggedRefs}</div></div>
+      <div class="stat-card"><div class="stat-label">Total flags</div><div class="stat-value">${totalIssues}</div></div>
+      <div class="stat-card"><div class="stat-label">Consistency</div><div class="stat-value" style="color:var(${band})">${score}%</div></div>
+    </div>
+    ${rows.join('')}
+    <div class="muted" style="font-size:12px;margin-top:8px">Heuristic check — it compares each entry against the most common style in your list, so it works best with a real reference section.</div>`;
+}
+$('#run').addEventListener('click',run);
+</script>
+
+</body>
+</html>

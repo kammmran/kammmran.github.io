@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction Viewer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrow-big-right-lines"></i></div><div>Reaction Viewer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-arrow-big-right-lines"></i></div>
+      <div>
+        <div class="tool-title">Reaction Viewer</div>
+        <div class="tool-desc">Paste a reaction SMILES (reactants &gt; agents &gt; products) and render it as a structure diagram.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row">
+      <input type="text" id="rxn" placeholder="e.g. CC(=O)O.OCC>>CC(=O)OCC.O" style="flex:1;font-family:ui-monospace,Menlo,monospace">
+      <button class="btn btn-primary" id="go"><i class="ti ti-eye"></i> Render</button>
+      <span class="ex" data-s="OC(=O)c1ccccc1.OCC>[H+]>CCOC(=O)c1ccccc1.O" style="font-size:11px;color:var(--accent3);cursor:pointer;padding:4px 8px;background:var(--surface);border-radius:6px">esterification</span>
+    </div>
+    <div id="status" style="font-size:13px;margin-top:8px"></div>
+  </div>
+
+  <div class="panel" id="result" style="min-height:auto;margin-top:16px;overflow:auto;display:none">
+    <div id="diagram" class="rxn-diagram"></div>
+  </div>
+</main>
+
+<style>
+  .rxn-diagram{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px}
+  .rxn-mol{background:#fff;border-radius:var(--radius-sm);padding:4px}
+  .rxn-op{font-size:24px;color:var(--text2);padding:0 4px}
+  .rxn-arrow{display:flex;flex-direction:column;align-items:center;color:var(--text2);padding:0 8px}
+  .rxn-arrow .ag{font-size:10px;color:var(--text3);font-family:ui-monospace,Menlo,monospace;max-width:120px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rxn-arrow i{font-size:28px}
+  .bad{color:var(--red)}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ready(cb){ if(window.OCL&&OCL.Molecule)return cb(); let n=0;const iv=setInterval(()=>{if(window.OCL&&OCL.Molecule){clearInterval(iv);cb();}else if(++n>60){clearInterval(iv);$('#status').innerHTML='<span class="bad">Could not load chemistry engine.</span>';}},100); }
+
+function molSVG(smi){
+  try{ const m=OCL.Molecule.fromSmiles(smi); if(m.getAllAtoms()===0) throw 0; return m.toSVG(170,140,'m',{autoCrop:true,autoCropMargin:8}); }
+  catch(e){ return null; }
+}
+function side(smis){
+  const parts=smis.split('.').filter(Boolean);
+  return parts.map((p,i)=>{
+    const svg=molSVG(p);
+    const cell = svg? `<div class="rxn-mol">${svg}</div>` : `<div class="rxn-mol" style="padding:30px 14px;color:var(--red);font-size:12px;font-family:ui-monospace,Menlo,monospace">bad: ${esc(p)}</div>`;
+    return cell + (i<parts.length-1?'<span class="rxn-op">+</span>':'');
+  }).join('');
+}
+
+function render(){
+  ready(()=>{
+    const rxn=$('#rxn').value.trim(); $('#status').textContent='';
+    if(!rxn){ $('#result').style.display='none'; return; }
+    // split into up to 3 parts by '>'
+    const segs=rxn.split('>');
+    if(segs.length<2){ $('#status').innerHTML='<span class="bad">Use reaction SMILES with &gt; e.g. A.B&gt;&gt;C</span>'; $('#result').style.display='none'; return; }
+    let reactants, agents='', products;
+    if(segs.length===2){ reactants=segs[0]; products=segs[1]; }
+    else { reactants=segs[0]; agents=segs[1]; products=segs.slice(2).join('>'); }
+
+    const arrow=`<div class="rxn-arrow">${agents?`<div class="ag" title="${esc(agents)}">${esc(agents)}</div>`:''}<i class="ti ti-arrow-right"></i></div>`;
+    $('#result').style.display='block';
+    $('#diagram').innerHTML = side(reactants) + arrow + side(products);
+    $('#status').innerHTML='<span style="color:var(--green)"><i class="ti ti-circle-check"></i> Rendered.</span>';
+  });
+}
+$('#go').addEventListener('click',render);
+$('#rxn').addEventListener('keydown',e=>{ if(e.key==='Enter') render(); });
+document.querySelector('.ex').addEventListener('click',()=>{ $('#rxn').value='OC(=O)c1ccccc1.OCC>[H+]>CCOC(=O)c1ccccc1.O'; render(); });
+</script>
+
+</body>
+</html>

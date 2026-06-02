@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gibbs Free Energy — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-temperature"></i></div><div>Gibbs Free Energy</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:780px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-temperature"></i></div>
+      <div>
+        <div class="tool-title">Gibbs Free Energy — ΔG = ΔH − TΔS</div>
+        <div class="tool-desc">Solve for any variable, judge spontaneity, find the crossover temperature, and convert ΔG° to K.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="grid2">
+      <label class="fld">ΔH (kJ/mol)<input type="number" id="H" step="any"></label>
+      <label class="fld">ΔS (J/mol·K)<input type="number" id="S" step="any"></label>
+      <label class="fld">Temperature T (K)<input type="number" id="T" step="any" value="298.15"></label>
+      <label class="fld">ΔG (kJ/mol)<input type="number" id="G" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Leave one of ΔH, ΔS, T or ΔG blank to solve for it.</div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+const R = 8.314462618; // J/mol·K
+
+function solve(){
+  let H=num('H'),S=num('S'),T=num('T'),G=num('G');
+  const vals={H,S,T,G}; const blanks=Object.keys(vals).filter(k=>vals[k]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML=blanks.length===0?'<span class="muted">Leave one field blank to solve.</span>':'<span class="muted">Leave exactly one field blank.</span>'; return; }
+  const b=blanks[0]; let res='';
+  // ΔG = ΔH - T·ΔS, with ΔH,ΔG in kJ and ΔS in J/K  → ΔG = ΔH - T·ΔS/1000
+  try{
+    if(b==='G'){ G = H - T*S/1000; res=`ΔG = <b>${G.toFixed(3)} kJ/mol</b>`; }
+    else if(b==='H'){ H = G + T*S/1000; res=`ΔH = <b>${H.toFixed(3)} kJ/mol</b>`; }
+    else if(b==='S'){ S = (H - G)/T*1000; res=`ΔS = <b>${S.toFixed(3)} J/mol·K</b>`; }
+    else { T = (H - G)/(S/1000); res=`T = <b>${T.toFixed(2)} K</b>`; }
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs.</span>'; return; }
+
+  let extra='';
+  const spont = G < 0 ? '<b style="color:var(--green)">spontaneous</b> (ΔG &lt; 0)' : G > 0 ? '<b style="color:var(--red)">non-spontaneous</b> (ΔG &gt; 0)' : 'at <b>equilibrium</b> (ΔG = 0)';
+  extra += `<div style="margin-top:8px">Reaction is ${spont} at ${T.toFixed(1)} K.</div>`;
+  if(Number.isFinite(H) && Number.isFinite(S) && S!==0){
+    const Tc = H/(S/1000);
+    if(Tc>0) extra += `<div class="muted" style="font-size:13px;margin-top:4px">Crossover temperature (ΔG = 0): <b>${Tc.toFixed(2)} K</b> (${(Tc-273.15).toFixed(1)} °C).</div>`;
+  }
+  if(Number.isFinite(G) && Number.isFinite(T) && T>0){
+    const K = Math.exp(-G*1000/(R*T));
+    extra += `<div class="muted" style="font-size:13px;margin-top:4px">Equilibrium constant K = e<sup>−ΔG/RT</sup> = <b>${K<1e-4||K>1e6?K.toExponential(3):K.toPrecision(4)}</b>.</div>`;
+  }
+  out.innerHTML = res + extra;
+}
+['H','S','T','G'].forEach(id=>$('#'+id).addEventListener('input',solve));
+solve();
+</script>
+
+</body>
+</html>

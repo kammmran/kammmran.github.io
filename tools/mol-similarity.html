@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molecule Similarity — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-binary-tree"></i></div><div>Molecule Similarity</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-binary-tree"></i></div>
+      <div>
+        <div class="tool-title">Molecule Similarity (Tanimoto)</div>
+        <div class="tool-desc">Compare a reference molecule to one or more candidates by fingerprint Tanimoto similarity, ranked high → low.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="grid2">
+      <label class="fld">Reference (SMILES)<input type="text" id="ref" placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O" style="font-family:ui-monospace,Menlo,monospace"></label>
+      <div id="refpic" style="background:#fff;border-radius:var(--radius-sm);height:90px;display:flex;align-items:center;justify-content:center"></div>
+    </div>
+    <div id="referr" style="color:var(--red);font-size:12px;margin-top:6px"></div>
+  </div>
+
+  <div class="panel" style="min-height:auto;margin-top:16px">
+    <div class="panel-label"><span>Candidates (one SMILES per line)</span><button class="btn btn-sm btn-ghost" id="sample">Sample</button></div>
+    <textarea id="cands" placeholder="CC(=O)Oc1ccccc1C(=O)O&#10;OC(=O)c1ccccc1O&#10;CN1C=NC2=C1C(=O)N(C(=O)N2C)C" style="min-height:100px"></textarea>
+    <div id="results" class="sim-grid" style="margin-top:14px"></div>
+  </div>
+</main>
+
+<style>
+  .grid2{display:grid;grid-template-columns:1fr 200px;gap:14px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr}}
+  .sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+  .sc{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  .sc .pic{background:#fff;height:130px;display:flex;align-items:center;justify-content:center;padding:4px}
+  .sc .bar{height:6px;background:var(--bg3)} .sc .fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--teal))}
+  .sc .ft{font-size:12px;padding:7px 9px;display:flex;justify-content:space-between;align-items:center}
+  .sc .ft b{font-variant-numeric:tabular-nums} .sc .smi{font-family:ui-monospace,Menlo,monospace;font-size:10px;color:var(--text3);padding:0 9px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sc.bad .pic{height:auto;padding:20px;color:var(--red);font-size:12px;background:var(--surface)}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ready(cb){ if(window.OCL&&OCL.Molecule)return cb(); let n=0;const iv=setInterval(()=>{if(window.OCL&&OCL.Molecule){clearInterval(iv);cb();}else if(++n>60){clearInterval(iv);$('#referr').textContent='Could not load chemistry engine.';}},100); }
+
+function popcount(x){ x=x-((x>>>1)&0x55555555); x=(x&0x33333333)+((x>>>2)&0x33333333); x=(x+(x>>>4))&0x0f0f0f0f; return (x*0x01010101)>>>24; }
+function tanimoto(a,b){
+  let inter=0,uni=0; const n=Math.min(a.length,b.length);
+  for(let i=0;i<n;i++){ const x=a[i]>>>0,y=b[i]>>>0; inter+=popcount(x&y); uni+=popcount(x|y); }
+  return uni? inter/uni : 0;
+}
+function color(s){ const t=Math.max(0,Math.min(1,s)); return `hsl(${Math.round(t*140)},65%,55%)`; }
+
+function run(){
+  ready(()=>{
+    const refSmi=$('#ref').value.trim(); $('#referr').textContent='';
+    let refIdx=null;
+    if(refSmi){
+      try{ const r=OCL.Molecule.fromSmiles(refSmi); if(r.getAllAtoms()===0)throw 0; refIdx=r.getIndex(); $('#refpic').innerHTML=r.toSVG(200,90,'r',{autoCrop:true,autoCropMargin:6}); }
+      catch(e){ $('#referr').textContent='Invalid reference SMILES.'; $('#refpic').innerHTML=''; }
+    } else $('#refpic').innerHTML='';
+
+    const lines=$('#cands').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    const items=lines.map(line=>{
+      const parts=line.split(/\s+/); const smi=parts[0]; const label=parts.slice(1).join(' ')||smi;
+      try{ const m=OCL.Molecule.fromSmiles(smi); if(m.getAllAtoms()===0)throw 0;
+        const sim=refIdx?tanimoto(refIdx,m.getIndex()):null;
+        return {smi,label,sim,svg:m.toSVG(190,130,'m',{autoCrop:true,autoCropMargin:6}),ok:true};
+      }catch(e){ return {smi,label,ok:false}; }
+    });
+    if(refIdx) items.sort((a,b)=>(b.sim??-1)-(a.sim??-1));
+    $('#results').innerHTML = items.length? items.map(it=>{
+      if(!it.ok) return `<div class="sc bad"><div class="pic">Invalid SMILES</div><div class="smi">${esc(it.smi)}</div></div>`;
+      const pct=it.sim==null?'—':(it.sim*100).toFixed(1)+'%';
+      return `<div class="sc"><div class="pic">${it.svg}</div>${it.sim!=null?`<div class="bar"><div class="fill" style="width:${it.sim*100}%;background:${color(it.sim)}"></div></div>`:''}<div class="ft"><span>${esc(it.label)}</span><b style="color:${it.sim!=null?color(it.sim):'inherit'}">${pct}</b></div><div class="smi" title="${esc(it.smi)}">${esc(it.smi)}</div></div>`;
+    }).join('') : '<div class="muted" style="grid-column:1/-1">Add candidate molecules above.</div>';
+  });
+}
+['ref','cands'].forEach(id=>$('#'+id).addEventListener('input',()=>{clearTimeout(window._r);window._r=setTimeout(run,200);}));
+$('#sample').addEventListener('click',()=>{ $('#ref').value='CC(=O)Oc1ccccc1C(=O)O'; $('#cands').value='OC(=O)c1ccccc1O salicylic_acid\nCC(=O)Oc1ccccc1C(=O)O aspirin\nc1ccccc1C(=O)O benzoic_acid\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C caffeine\nCCO ethanol'; run(); });
+run();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pH Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-test-pipe"></i></div><div>pH Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-test-pipe"></i></div>
+      <div>
+        <div class="tool-title">pH / pOH Calculator</div>
+        <div class="tool-desc">Convert between pH, pOH, [H⁺] and [OH⁻], or compute pH of a strong acid/base from concentration (25 °C).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="convert">Interconvert</button>
+    <button class="tab" data-t="strong">Strong acid / base</button>
+  </div>
+
+  <div class="panel" id="p-convert" style="min-height:auto">
+    <div class="panel-label"><span>Enter any one value</span></div>
+    <div class="grid2">
+      <label class="fld">pH<input type="number" id="c_ph" step="any"></label>
+      <label class="fld">pOH<input type="number" id="c_poh" step="any"></label>
+      <label class="fld">[H⁺] (mol/L)<input type="number" id="c_h" step="any"></label>
+      <label class="fld">[OH⁻] (mol/L)<input type="number" id="c_oh" step="any"></label>
+    </div>
+    <div id="scale" class="ph-scale"></div>
+    <div id="c_out" class="output-box" style="min-height:auto;margin-top:12px"></div>
+  </div>
+
+  <div class="panel" id="p-strong" style="min-height:auto;display:none">
+    <div class="panel-label"><span>From concentration</span></div>
+    <div class="row">
+      <select id="s_type" style="flex:1"><option value="acid">Strong monoprotic acid (e.g. HCl)</option><option value="base">Strong base (e.g. NaOH)</option></select>
+      <input type="number" id="s_conc" step="any" placeholder="concentration (mol/L)" style="width:200px">
+    </div>
+    <div id="s_out" class="output-box" style="min-height:auto;margin-top:12px"></div>
+  </div>
+</main>
+
+<style>
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}
+  @media(max-width:600px){.grid2{grid-template-columns:1fr}}
+  .ph-scale{height:26px;border-radius:6px;margin:16px 0 4px;position:relative;background:linear-gradient(90deg,#e11d48,#f97316,#fbbf24,#84cc16,#22c55e,#06b6d4,#3b82f6,#7c3aed)}
+  .ph-marker{position:absolute;top:-6px;width:3px;height:38px;background:#fff;border-radius:2px;box-shadow:0 0 6px rgba(0,0,0,.6)}
+  .ph-marker::after{content:attr(data-v);position:absolute;top:40px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text);white-space:nowrap}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+  $('#p-convert').style.display=t.dataset.t==='convert'?'':'none';
+  $('#p-strong').style.display=t.dataset.t==='strong'?'':'none';
+}));
+
+let lock=false;
+function fromAny(){
+  if(lock) return;
+  let ph=num('c_ph'),poh=num('c_poh'),h=num('c_h'),oh=num('c_oh');
+  let known=null;
+  if(document.activeElement===$('#c_ph')&&ph!==null) known={ph};
+  else if(document.activeElement===$('#c_poh')&&poh!==null) known={poh};
+  else if(document.activeElement===$('#c_h')&&h!==null) known={h};
+  else if(document.activeElement===$('#c_oh')&&oh!==null) known={oh};
+  else { if(ph!==null)known={ph}; else if(poh!==null)known={poh}; else if(h!==null)known={h}; else if(oh!==null)known={oh}; }
+  if(!known){ $('#c_out').innerHTML='<span class="muted">Enter one value.</span>'; renderScale(null); return; }
+
+  if(known.ph!==undefined){ ph=known.ph; h=Math.pow(10,-ph); poh=14-ph; oh=Math.pow(10,-poh); }
+  else if(known.poh!==undefined){ poh=known.poh; oh=Math.pow(10,-poh); ph=14-poh; h=Math.pow(10,-ph); }
+  else if(known.h!==undefined){ h=known.h; if(h<=0){bad();return;} ph=-Math.log10(h); poh=14-ph; oh=Math.pow(10,-poh); }
+  else { oh=known.oh; if(oh<=0){bad();return;} poh=-Math.log10(oh); ph=14-poh; h=Math.pow(10,-ph); }
+
+  lock=true;
+  $('#c_ph').value=ph.toFixed(3); $('#c_poh').value=poh.toFixed(3);
+  $('#c_h').value=h.toExponential(3); $('#c_oh').value=oh.toExponential(3);
+  lock=false;
+  const cls = ph<7?'acidic':ph>7?'basic':'neutral';
+  $('#c_out').innerHTML = `pH <b>${ph.toFixed(2)}</b> · pOH <b>${poh.toFixed(2)}</b> · [H⁺] ${h.toExponential(2)} · [OH⁻] ${oh.toExponential(2)} → <b style="color:${ph<7?'var(--red)':ph>7?'var(--blue)':'var(--green)'}">${cls.toUpperCase()}</b>`;
+  renderScale(ph);
+  function bad(){ $('#c_out').innerHTML='<span class="muted">Concentration must be positive.</span>'; }
+}
+function renderScale(ph){
+  const el=$('#scale'); el.querySelectorAll('.ph-marker').forEach(m=>m.remove());
+  if(ph===null||!Number.isFinite(ph)) return;
+  const p=Math.max(0,Math.min(14,ph))/14*100;
+  const m=document.createElement('div'); m.className='ph-marker'; m.style.left=`calc(${p}% - 1.5px)`; m.dataset.v='pH '+ph.toFixed(1); el.appendChild(m);
+}
+['c_ph','c_poh','c_h','c_oh'].forEach(id=>$('#'+id).addEventListener('input',fromAny));
+
+function strong(){
+  const c=num('s_conc'), type=$('#s_type').value;
+  if(c===null||c<=0){ $('#s_out').innerHTML='<span class="muted">Enter a positive concentration.</span>'; return; }
+  let ph,poh;
+  if(type==='acid'){ ph=-Math.log10(c); poh=14-ph; }
+  else { poh=-Math.log10(c); ph=14-poh; }
+  const note = (ph<0||ph>14)?' <span class="muted">(very concentrated — ideal approximation breaks down)</span>':'';
+  $('#s_out').innerHTML = `pH = <b>${ph.toFixed(3)}</b> · pOH = <b>${poh.toFixed(3)}</b>${note}<div class="muted" style="font-size:12px;margin-top:6px">Assumes complete dissociation and activity = concentration.</div>`;
+}
+['s_conc','s_type'].forEach(id=>$('#'+id).addEventListener('input',strong));
+strong();
+</script>
+
+</body>
+</html>

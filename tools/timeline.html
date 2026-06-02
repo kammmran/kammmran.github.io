@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Timeline — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-timeline"></i></div><div>Research Timeline</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1280px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-timeline"></i></div>
+      <div>
+        <div class="tool-title">Research Timeline / Gantt</div>
+        <div class="tool-desc">Plan PhD milestones, a grant, or a project. Add phases with dates → a Gantt chart. Autosaves; export PNG.</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-sm" id="add"><i class="ti ti-plus"></i> Task</button>
+      <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+      <button class="btn btn-sm" id="png"><i class="ti ti-download"></i> PNG</button>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <table class="tl" id="tbl"><thead><tr><th>Task</th><th>Start</th><th>End</th><th>Colour</th><th>%</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+  </div>
+
+  <div class="panel" style="min-height:auto;margin-top:16px;overflow:auto">
+    <div class="panel-label"><span>Gantt chart</span></div>
+    <div id="gantt"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .tl{width:100%;border-collapse:collapse;font-size:13px}
+  .tl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:6px 8px;border-bottom:1px solid var(--border)}
+  .tl td{padding:5px 8px;border-bottom:1px solid var(--border)}
+  .tl input[type=text]{min-width:140px} .tl input[type=date]{width:150px} .tl input[type=number]{width:64px} .tl input[type=color]{width:42px;height:30px;padding:2px;border-radius:6px;background:var(--bg2);border:1px solid var(--border);cursor:pointer}
+  .del-row{color:var(--text3);background:none;border:none;font-size:16px;cursor:pointer}.del-row:hover{color:var(--red)}
+  .g-grid{position:relative;min-width:600px}
+  .g-row{display:flex;align-items:center;height:34px;border-bottom:1px solid var(--border)}
+  .g-label{width:160px;flex-shrink:0;font-size:12.5px;padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .g-track{flex:1;position:relative;height:100%}
+  .g-bar{position:absolute;top:7px;height:20px;border-radius:5px;display:flex;align-items:center;font-size:10.5px;color:#0c0c10;padding:0 6px;overflow:hidden;font-weight:600}
+  .g-prog{position:absolute;left:0;top:0;bottom:0;background:rgba(0,0,0,0.22);border-radius:5px 0 0 5px}
+  .g-axis{display:flex;height:24px;margin-left:160px;border-bottom:1px solid var(--border2)}
+  .g-tick{flex:1;font-size:10px;color:var(--text3);border-left:1px solid var(--border);padding-left:4px;white-space:nowrap}
+  .g-today{position:absolute;top:24px;bottom:0;width:2px;background:var(--red);z-index:3}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+const KEY='academy_timeline_v1';
+const COLORS=['#7c6df0','#2dd4bf','#f472b6','#4ade80','#fbbf24','#60a5fa','#f87171'];
+let tasks=load();
+
+function load(){ try{ const t=JSON.parse(localStorage.getItem(KEY)); return Array.isArray(t)?t:null; }catch(e){ return null; } }
+function save(){ localStorage.setItem(KEY, JSON.stringify(tasks)); }
+
+function addRow(t={}){
+  const tr=document.createElement('tr');
+  const color=t.color||COLORS[$('#rows').children.length%COLORS.length];
+  tr.innerHTML=`<td><input type="text" class="f-name" value="${esc(t.name||'')}" placeholder="Phase / milestone"></td>
+    <td><input type="date" class="f-start" value="${t.start||''}"></td>
+    <td><input type="date" class="f-end" value="${t.end||''}"></td>
+    <td><input type="color" class="f-color" value="${color}"></td>
+    <td><input type="number" class="f-prog" min="0" max="100" value="${t.prog??0}"></td>
+    <td><button class="del-row">&times;</button></td>`;
+  tr.querySelector('.del-row').addEventListener('click',()=>{ tr.remove(); sync(); });
+  tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',sync));
+  $('#rows').appendChild(tr);
+}
+function collect(){
+  return [...$('#rows').children].map(tr=>({
+    name:tr.querySelector('.f-name').value, start:tr.querySelector('.f-start').value,
+    end:tr.querySelector('.f-end').value, color:tr.querySelector('.f-color').value,
+    prog:+tr.querySelector('.f-prog').value||0
+  }));
+}
+function sync(){ tasks=collect(); save(); render(); }
+
+function render(){
+  const valid=tasks.filter(t=>t.start&&t.end&&new Date(t.end)>=new Date(t.start));
+  const g=$('#gantt');
+  if(!valid.length){ g.innerHTML='<div class="muted">Add tasks with valid start & end dates.</div>'; return; }
+  let min=Math.min(...valid.map(t=>+new Date(t.start)));
+  let max=Math.max(...valid.map(t=>+new Date(t.end)));
+  const span=Math.max(1,max-min);
+  const pct=d=>((+new Date(d)-min)/span*100);
+
+  // month ticks
+  const ticks=[]; const d=new Date(min); d.setDate(1);
+  while(+d<=max){ ticks.push(new Date(d)); d.setMonth(d.getMonth()+1); }
+  const axis=ticks.map(t=>`<div class="g-tick">${t.toLocaleDateString(undefined,{month:'short',year:'2-digit'})}</div>`).join('');
+  const today=Date.now();
+  const todayLine = today>=min&&today<=max ? `<div class="g-today" style="left:calc(160px + ${pct(new Date(today).toISOString())}% * (100% - 160px) / 100)"></div>` : '';
+
+  const rows=tasks.map(t=>{
+    if(!t.start||!t.end||new Date(t.end)<new Date(t.start)) return `<div class="g-row"><div class="g-label">${esc(t.name||'(untitled)')}</div><div class="g-track"></div></div>`;
+    const l=pct(t.start), w=Math.max(1.2,pct(t.end)-l);
+    const days=Math.round((+new Date(t.end)-+new Date(t.start))/864e5)+1;
+    return `<div class="g-row"><div class="g-label" title="${esc(t.name)}">${esc(t.name||'(untitled)')}</div>
+      <div class="g-track"><div class="g-bar" style="left:${l}%;width:${w}%;background:${t.color}">${t.prog?`<div class="g-prog" style="width:${t.prog}%"></div>`:''}<span style="position:relative;z-index:1">${days}d</span></div></div></div>`;
+  }).join('');
+
+  g.innerHTML=`<div class="g-grid"><div style="position:relative"><div class="g-axis">${axis}</div>${rows}</div></div>`;
+}
+
+$('#add').addEventListener('click',()=>{ addRow(); sync(); });
+$('#png').addEventListener('click',exportPNG);
+$('#sample').addEventListener('click',()=>{
+  const y=new Date().getFullYear();
+  tasks=[
+    {name:'Literature review',start:`${y}-01-01`,end:`${y}-03-31`,color:'#7c6df0',prog:100},
+    {name:'Method development',start:`${y}-03-01`,end:`${y}-06-30`,color:'#2dd4bf',prog:70},
+    {name:'Data collection',start:`${y}-06-01`,end:`${y}-10-31`,color:'#4ade80',prog:30},
+    {name:'Analysis',start:`${y}-10-01`,end:`${y+1}-01-31`,color:'#fbbf24',prog:0},
+    {name:'Writing & submission',start:`${y+1}-01-01`,end:`${y+1}-04-30`,color:'#f472b6',prog:0},
+  ];
+  save(); $('#rows').innerHTML=''; tasks.forEach(addRow); render(); toast('Sample loaded');
+});
+
+function exportPNG(){
+  // simple canvas render of the gantt
+  const valid=tasks.filter(t=>t.start&&t.end&&new Date(t.end)>=new Date(t.start));
+  if(!valid.length){ toast('Nothing to export'); return; }
+  let min=Math.min(...valid.map(t=>+new Date(t.start))), max=Math.max(...valid.map(t=>+new Date(t.end)));
+  const span=Math.max(1,max-min); const W=1000,labelW=180,rowH=30,H=tasks.length*rowH+50;
+  const c=document.createElement('canvas'); c.width=W; c.height=H; const ctx=c.getContext('2d');
+  ctx.fillStyle='#0c0c10'; ctx.fillRect(0,0,W,H);
+  ctx.font='13px sans-serif';
+  tasks.forEach((t,i)=>{
+    const y=40+i*rowH; ctx.fillStyle='#9997b3'; ctx.fillText((t.name||'').slice(0,22),10,y+18);
+    if(t.start&&t.end&&new Date(t.end)>=new Date(t.start)){
+      const x=labelW+((+new Date(t.start)-min)/span)*(W-labelW-20);
+      const w=Math.max(3,((+new Date(t.end)-+new Date(t.start))/span)*(W-labelW-20));
+      ctx.fillStyle=t.color; ctx.fillRect(x,y+5,w,18);
+      if(t.prog){ ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(x,y+5,w*t.prog/100,18); }
+    }
+  });
+  c.toBlob(b=>{ const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='timeline.png';a.click();toast('PNG downloaded'); });
+}
+
+if(!tasks){ tasks=[]; $('#sample').click(); } else { tasks.forEach(addRow); render(); }
+</script>
+
+</body>
+</html>

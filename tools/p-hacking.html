@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P-Hacking Risk Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-histogram"></i></div><div>P-Hacking Risk Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-chart-histogram"></i></div>
+      <div>
+        <div class="tool-title">P-Hacking Risk Analyzer</div>
+        <div class="tool-desc">Inspect the spread of your p-values for suspicious clustering just below .05, and score your study against questionable-research-practice red flags.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="pcurve">P-value scan</button>
+    <button class="tab" data-t="qrp">QRP checklist</button>
+  </div>
+
+  <div class="panel" id="p-pcurve" style="min-height:auto;gap:12px">
+    <label class="fld">Paste reported p-values — one per line (e.g. <span class="muted">0.048</span>, <span class="muted">p&lt;.05</span>, <span class="muted">p = .032</span>)
+      <textarea id="pv" style="min-height:150px" placeholder="0.049&#10;p = .047&#10;0.012&#10;p < .05&#10;0.043"></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="runp"><i class="ti ti-scan"></i> Scan</button></div>
+    <div id="pout"></div>
+  </div>
+
+  <div class="panel" id="p-qrp" style="min-height:auto;display:none;gap:6px">
+    <div class="muted" style="font-size:12px;margin-bottom:4px">Tick everything that is true of the study. Each unchecked safeguard raises the risk score.</div>
+    <div id="qrplist"></div>
+    <div id="qout" style="margin-top:8px"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .meter{height:14px;border-radius:7px;background:var(--bg3);overflow:hidden;margin:6px 0}
+  .meter>div{height:100%;border-radius:7px;transition:width .3s}
+  .chk{display:flex;gap:9px;align-items:flex-start;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);margin-bottom:6px;cursor:pointer;font-size:13px}
+  .chk input{margin-top:2px;width:16px;height:16px;flex:none}
+  .bar-row{display:flex;align-items:center;gap:10px;margin:3px 0;font-size:12px}
+  .bar-lbl{width:92px;text-align:right;color:var(--text2);font-variant-numeric:tabular-nums}
+  .bar-track{flex:1;background:var(--bg3);border-radius:4px;overflow:hidden;height:18px}
+  .bar-fill{height:100%;border-radius:4px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const col = r => r<34?'--green':r<67?'--amber':'--red';
+
+// ---- p-value scan ----
+function parseP(line){
+  const m = line.match(/(?:p\s*[<>=]?\s*)?(\.\d+|0?\.\d+|\d?\.\d+|[01](?:\.\d+)?)/i);
+  if(!m) return null;
+  let v=parseFloat(m[1].startsWith('.')?'0'+m[1]:m[1]);
+  if(line.includes('<')) v=v-0.0001; // treat p<.05 as just-significant
+  return (v>=0&&v<=1)?v:null;
+}
+function runP(){
+  const lines=$('#pv').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const ps=lines.map(parseP).filter(v=>v!=null);
+  const out=$('#pout');
+  if(!ps.length){ out.innerHTML='<div class="muted">No p-values detected.</div>'; return; }
+  const sig=ps.filter(p=>p<0.05);
+  const justBelow=ps.filter(p=>p>=0.04&&p<0.05).length;          // .040–.050
+  const justAbove=ps.filter(p=>p>=0.05&&p<0.06).length;          // .050–.060
+  const veryLow=ps.filter(p=>p<0.01).length;
+  // suspicious if significant results pile up at the .04–.05 edge rather than near 0
+  const edgeRatio = sig.length? justBelow/sig.length : 0;
+  let risk = Math.min(100, Math.round(edgeRatio*120 + (justBelow>justAbove? (justBelow-justAbove)*8 : 0)));
+  if(sig.length<3) risk=Math.min(risk,40); // not enough data to judge
+  const buckets=[['.00–.01',0,'--green'],['.01–.03',0,'--green'],['.03–.04',0,'--amber'],['.04–.05',0,'--red'],['≥ .05',0,'--text3']];
+  ps.forEach(p=>{ if(p<.01)buckets[0][1]++; else if(p<.03)buckets[1][1]++; else if(p<.04)buckets[2][1]++; else if(p<.05)buckets[3][1]++; else buckets[4][1]++; });
+  const maxB=Math.max(...buckets.map(b=>b[1]),1);
+  out.innerHTML=`
+    <div class="stat-grid" style="margin:8px 0 12px">
+      <div class="stat-card"><div class="stat-label">P-values</div><div class="stat-value">${ps.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Significant (&lt;.05)</div><div class="stat-value">${sig.length}</div></div>
+      <div class="stat-card"><div class="stat-label">In .04–.05</div><div class="stat-value" style="color:var(--red)">${justBelow}</div></div>
+      <div class="stat-card"><div class="stat-label">Edge clustering</div><div class="stat-value" style="color:var(${col(risk)})">${(edgeRatio*100).toFixed(0)}%</div></div>
+    </div>
+    <div class="muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.6px">Distribution</div>
+    ${buckets.map(([l,n,c])=>`<div class="bar-row"><div class="bar-lbl">${l}</div><div class="bar-track"><div class="bar-fill" style="width:${n/maxB*100}%;background:var(${c})"></div></div><div style="width:30px;color:var(--text3)">${n}</div></div>`).join('')}
+    <div style="margin-top:14px">Suspicion of p-hacking <b style="color:var(${col(risk)})">${risk}%</b></div>
+    <div class="meter"><div style="width:${risk}%;background:var(${col(risk)})"></div></div>
+    <div class="muted" style="font-size:12px">A healthy set of true effects has more very-low p-values than ones bunched at .04–.05. Heavy clustering at the .05 edge (with few small p-values) is the classic p-hacking signature. Needs several values to be meaningful.</div>`;
+}
+
+// ---- QRP checklist ---- (checked = good practice present)
+const qrp=[
+  {t:'The study (hypotheses + analysis plan) was <b>pre-registered</b>.', w:18},
+  {t:'The sample size was decided <b>in advance</b> (a priori power analysis), not by checking results as data came in.', w:16},
+  {t:'<b>All</b> measured outcomes and conditions are reported — no selective reporting of only the significant ones.', w:16},
+  {t:'Multiple comparisons are <b>corrected for</b> (Bonferroni, FDR, etc.).', w:14},
+  {t:'Hypotheses were stated <b>before</b> seeing the data (no HARKing — hypothesizing after results are known).', w:12},
+  {t:'No data points were excluded without a <b>pre-specified</b>, documented rule.', w:10},
+  {t:'Exploratory analyses are <b>clearly labelled</b> as exploratory, not confirmatory.', w:8},
+  {t:'Raw data and analysis code are <b>openly available</b>.', w:6},
+];
+const list=$('#qrplist');
+list.innerHTML=qrp.map((q,i)=>`<label class="chk"><input type="checkbox" data-w="${q.w}" id="q${i}"><span>${q.t}</span></label>`).join('');
+function runQ(){
+  let missing=0, total=0;
+  qrp.forEach((q,i)=>{ total+=q.w; if(!$('#q'+i).checked) missing+=q.w; });
+  const risk=Math.round(missing/total*100);
+  const band=col(risk);
+  const lvl=risk<25?'Low risk':risk<55?'Moderate risk':risk<80?'High risk':'Very high risk';
+  const unchecked=qrp.filter((q,i)=>!$('#q'+i).checked);
+  $('#qout').innerHTML=`
+    <div style="margin-top:4px">QRP risk <b style="color:var(${band})">${risk}% — ${lvl}</b></div>
+    <div class="meter"><div style="width:${risk}%;background:var(${band})"></div></div>
+    ${unchecked.length?`<div class="muted" style="font-size:12px">Address these safeguards: ${unchecked.length} of ${qrp.length} not in place.</div>`:'<div style="font-size:13px;color:var(--green)">All safeguards in place. 👍</div>'}`;
+}
+list.querySelectorAll('input').forEach(c=>c.addEventListener('change',runQ));
+runQ();
+
+$('#runp').addEventListener('click',runP);
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+  $('#p-pcurve').style.display=t.dataset.t==='pcurve'?'':'none';
+  $('#p-qrp').style.display=t.dataset.t==='qrp'?'':'none';
+}));
+</script>
+
+</body>
+</html>

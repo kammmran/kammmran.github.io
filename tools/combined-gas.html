@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Combined Gas Law — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrows-transfer-down"></i></div><div>Combined Gas Law</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-arrows-transfer-down"></i></div>
+      <div>
+        <div class="tool-title">Combined Gas Law — P₁V₁/T₁ = P₂V₂/T₂</div>
+        <div class="tool-desc">Relate two states of a fixed amount of gas. Leave exactly one of the six fields blank to solve for it.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="cgl">
+      <div>
+        <div class="panel-label"><span>State 1</span></div>
+        <label class="fld">Pressure P₁<input type="number" id="P1" step="any"></label>
+        <label class="fld">Volume V₁<input type="number" id="V1" step="any"></label>
+        <label class="fld">Temperature T₁ (K)<input type="number" id="T1" step="any"></label>
+      </div>
+      <div>
+        <div class="panel-label"><span>State 2</span></div>
+        <label class="fld">Pressure P₂<input type="number" id="P2" step="any"></label>
+        <label class="fld">Volume V₂<input type="number" id="V2" step="any"></label>
+        <label class="fld">Temperature T₂ (K)<input type="number" id="T2" step="any"></label>
+      </div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">P and V units just have to match between the two states. Temperature must be in kelvin.</div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+</main>
+
+<style>.cgl{display:grid;grid-template-columns:1fr 1fr;gap:24px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);margin-bottom:10px}@media(max-width:600px){.cgl{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+
+function solve(){
+  const ids=['P1','V1','T1','P2','V2','T2'];
+  const v={}; ids.forEach(id=>v[id]=num(id));
+  const blanks=ids.filter(id=>v[id]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML=blanks.length===0?'<span class="muted">Leave one field blank to solve.</span>':'<span class="muted">Leave exactly one field blank.</span>'; return; }
+  const b=blanks[0]; let r;
+  // P1V1/T1 = P2V2/T2
+  try{
+    if(b==='P1') r=v.P2*v.V2/v.T2*v.T1/v.V1;
+    else if(b==='V1') r=v.P2*v.V2/v.T2*v.T1/v.P1;
+    else if(b==='T1') r=v.P1*v.V1*v.T2/(v.P2*v.V2);
+    else if(b==='P2') r=v.P1*v.V1/v.T1*v.T2/v.V2;
+    else if(b==='V2') r=v.P1*v.V1/v.T1*v.T2/v.P2;
+    else r=v.P2*v.V2*v.T1/(v.P1*v.V1);
+    if(!Number.isFinite(r)) throw 0;
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs (no zeros where divided).</span>'; return; }
+  out.innerHTML=`<b>${b.replace(/(\d)/,'<sub>$1</sub>')} = ${r.toPrecision(5)}</b>`;
+}
+['P1','V1','T1','P2','V2','T2'].forEach(id=>$('#'+id).addEventListener('input',solve));
+solve();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta-analysis Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-dots-3"></i></div><div>Meta-analysis</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-chart-dots-3"></i></div>
+      <div>
+        <div class="tool-title">Meta-analysis Calculator</div>
+        <div class="tool-desc">Inverse-variance pooling — fixed &amp; random effects (DerSimonian–Laird), heterogeneity, and a forest plot.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:14px">
+    <div class="tabs" id="effectTabs" style="margin-bottom:0">
+      <button class="tab active" data-type="raw">Effect + 95% CI</button>
+      <button class="tab" data-type="se">Effect + SE</button>
+    </div>
+    <span class="muted" style="font-size:12px" id="hint">Enter the effect (e.g. log OR / SMD / mean diff) and its confidence interval.</span>
+    <div class="spacer"></div>
+    <button class="btn btn-sm" id="add"><i class="ti ti-plus"></i> Add study</button>
+    <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <table class="mtable" id="tbl">
+      <thead><tr>
+        <th>Study</th><th>Effect</th><th class="cilow">CI low</th><th class="cihigh">CI high</th><th class="se" style="display:none">SE</th><th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <div class="workspace" style="margin-top:16px">
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Pooled results</span></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Fixed effect</div><div class="stat-value" id="fe">—</div></div>
+        <div class="stat-card"><div class="stat-label">Random effect</div><div class="stat-value" id="re">—</div></div>
+        <div class="stat-card"><div class="stat-label">I²</div><div class="stat-value" id="i2">—</div></div>
+        <div class="stat-card"><div class="stat-label">τ²</div><div class="stat-value" id="tau2">—</div></div>
+        <div class="stat-card"><div class="stat-label">Q (df)</div><div class="stat-value" id="q">—</div></div>
+        <div class="stat-card"><div class="stat-label">Studies (k)</div><div class="stat-value" id="k">—</div></div>
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:10px" id="interp"></div>
+    </div>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Forest plot</span></div>
+      <div id="forest" class="output-box" style="min-height:200px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .mtable { width:100%; border-collapse:collapse; font-size:13px; }
+  .mtable th { text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--text3); padding:6px 8px; border-bottom:1px solid var(--border); }
+  .mtable td { padding:5px 8px; border-bottom:1px solid var(--border); }
+  .mtable input { padding:6px 8px; font-size:13px; }
+  .mtable input.name { font-family:inherit; }
+  .del-row { color:var(--text3); cursor:pointer; background:none; border:none; font-size:16px; }
+  .del-row:hover { color:var(--red); }
+  .fr-row { display:flex; align-items:center; gap:8px; margin:5px 0; font-size:12px; }
+  .fr-name { width:120px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fr-plot { flex:1; height:20px; position:relative; }
+  .fr-line { position:absolute; top:50%; height:1.5px; background:var(--text3); transform:translateY(-50%); }
+  .fr-sq { position:absolute; top:50%; width:9px; height:9px; background:var(--accent); transform:translate(-50%,-50%); }
+  .fr-zero { position:absolute; top:0; bottom:0; width:1px; background:var(--border2); }
+  .fr-val { width:120px; color:var(--text2); font-variant-numeric:tabular-nums; font-size:11px; }
+  .fr-diamond { position:absolute; top:50%; height:14px; transform:translateY(-50%); }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+let mode = 'raw';
+
+function addRow(name='', eff='', lo='', hi='', se=''){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="name" type="text" value="${name}" placeholder="Study ${$('#rows').children.length+1}"></td>
+    <td><input class="eff" type="number" step="any" value="${eff}" placeholder="0.0"></td>
+    <td class="cilow"><input class="lo" type="number" step="any" value="${lo}" placeholder="low"></td>
+    <td class="cihigh"><input class="hi" type="number" step="any" value="${hi}" placeholder="high"></td>
+    <td class="se" style="display:${mode==='se'?'':'none'}"><input class="seval" type="number" step="any" value="${se}" placeholder="SE"></td>
+    <td><button class="del-row" title="Remove">&times;</button></td>`;
+  tr.querySelector('.del-row').addEventListener('click', () => { tr.remove(); compute(); });
+  tr.querySelectorAll('input').forEach(i => i.addEventListener('input', compute));
+  $('#rows').appendChild(tr);
+}
+
+function studies(){
+  const out = [];
+  $('#rows').querySelectorAll('tr').forEach(tr => {
+    const name = tr.querySelector('.name').value || 'Study';
+    const eff = parseFloat(tr.querySelector('.eff').value);
+    let se;
+    if (mode === 'se') se = parseFloat(tr.querySelector('.seval').value);
+    else {
+      const lo = parseFloat(tr.querySelector('.lo').value), hi = parseFloat(tr.querySelector('.hi').value);
+      if (Number.isFinite(lo) && Number.isFinite(hi)) se = (hi - lo) / (2 * 1.959964);
+    }
+    if (Number.isFinite(eff) && Number.isFinite(se) && se > 0) out.push({ name, eff, se, lo: eff-1.959964*se, hi: eff+1.959964*se });
+  });
+  return out;
+}
+
+function compute(){
+  const st = studies();
+  const k = st.length;
+  const set = (id, v) => $('#'+id).textContent = v;
+  if (k < 1){ ['fe','re','i2','tau2','q','k'].forEach(id => set(id,'—')); $('#forest').innerHTML='<span class="muted">Add studies with valid effect + variance.</span>'; $('#interp').textContent=''; return; }
+
+  // Fixed effect (inverse variance)
+  let sw = 0, swy = 0, swy2 = 0, sw2 = 0;
+  st.forEach(s => { const w = 1/(s.se*s.se); sw += w; swy += w*s.eff; swy2 += w*s.eff*s.eff; sw2 += w*w; });
+  const feEst = swy / sw;
+  const feSE = Math.sqrt(1/sw);
+
+  // Heterogeneity
+  const Q = swy2 - (swy*swy)/sw;
+  const df = k - 1;
+  let tau2 = 0;
+  if (df > 0){ const C = sw - sw2/sw; tau2 = Math.max(0, (Q - df) / C); }
+  const I2 = Q > df && Q > 0 ? Math.max(0, (Q - df) / Q) * 100 : 0;
+
+  // Random effects (DL)
+  let swR = 0, swyR = 0;
+  st.forEach(s => { const w = 1/(s.se*s.se + tau2); swR += w; swyR += w*s.eff; });
+  const reEst = swyR / swR;
+  const reSE = Math.sqrt(1/swR);
+
+  const ci = (e, se) => `${e.toFixed(3)} [${(e-1.96*se).toFixed(2)}, ${(e+1.96*se).toFixed(2)}]`;
+  set('fe', feEst.toFixed(3)); set('re', reEst.toFixed(3));
+  set('i2', I2.toFixed(0)+'%'); set('tau2', tau2.toFixed(3));
+  set('q', `${Q.toFixed(2)} (${df})`); set('k', k);
+
+  let het = I2 < 25 ? 'low' : I2 < 50 ? 'moderate' : I2 < 75 ? 'substantial' : 'considerable';
+  $('#interp').innerHTML = `Random-effects pooled estimate: <b>${ci(reEst, reSE)}</b> (95% CI). Heterogeneity is <b>${het}</b> (I² = ${I2.toFixed(0)}%). ${I2 >= 50 ? 'Prefer the random-effects model.' : 'Fixed and random estimates should be similar.'}`;
+
+  drawForest(st, reEst, reSE);
+}
+
+function drawForest(st, pooled, pooledSE){
+  const all = st.flatMap(s => [s.lo, s.hi]).concat([pooled-1.96*pooledSE, pooled+1.96*pooledSE, 0]);
+  let min = Math.min(...all), max = Math.max(...all);
+  if (min === max){ min -= 1; max += 1; }
+  const pad = (max-min)*0.08; min -= pad; max += pad;
+  const X = v => ((v - min)/(max - min))*100;
+  const maxW = Math.max(...st.map(s => 1/(s.se*s.se)));
+
+  const rows = st.map(s => {
+    const w = (1/(s.se*s.se))/maxW;
+    const sq = 5 + w*8;
+    return `<div class="fr-row">
+      <div class="fr-name" title="${s.name}">${s.name}</div>
+      <div class="fr-plot">
+        <div class="fr-zero" style="left:${X(0)}%"></div>
+        <div class="fr-line" style="left:${X(s.lo)}%;width:${X(s.hi)-X(s.lo)}%"></div>
+        <div class="fr-sq" style="left:${X(s.eff)}%;width:${sq}px;height:${sq}px"></div>
+      </div>
+      <div class="fr-val">${s.eff.toFixed(2)} [${s.lo.toFixed(2)}, ${s.hi.toFixed(2)}]</div>
+    </div>`;
+  }).join('');
+
+  const plo = pooled-1.96*pooledSE, phi = pooled+1.96*pooledSE;
+  const cx = X(pooled), x1 = X(plo), x2 = X(phi);
+  const diamond = `<div class="fr-row" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+    <div class="fr-name" style="font-weight:600;color:var(--text)">Pooled (RE)</div>
+    <div class="fr-plot">
+      <div class="fr-zero" style="left:${X(0)}%"></div>
+      <svg class="fr-diamond" style="left:0;width:100%" viewBox="0 0 100 14" preserveAspectRatio="none">
+        <polygon points="${x1},7 ${cx},2 ${x2},7 ${cx},12" fill="#4ade80" stroke="#22c55e"/>
+      </svg>
+    </div>
+    <div class="fr-val" style="color:var(--text);font-weight:600">${pooled.toFixed(2)} [${plo.toFixed(2)}, ${phi.toFixed(2)}]</div>
+  </div>`;
+
+  $('#forest').innerHTML = rows + diamond;
+}
+
+document.querySelectorAll('#effectTabs .tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('#effectTabs .tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active'); mode = t.dataset.type;
+  const isSE = mode === 'se';
+  document.querySelectorAll('.cilow,.cihigh').forEach(e => e.style.display = isSE ? 'none' : '');
+  document.querySelectorAll('.se').forEach(e => e.style.display = isSE ? '' : 'none');
+  $('#hint').textContent = isSE ? 'Enter the effect and its standard error.' : 'Enter the effect (e.g. log OR / SMD / mean diff) and its confidence interval.';
+  compute();
+}));
+
+$('#add').addEventListener('click', () => { addRow(); });
+$('#sample').addEventListener('click', () => {
+  $('#rows').innerHTML = '';
+  [['Smith 2019',0.42,0.10,0.74],['Lee 2020',0.31,0.05,0.57],['Garcia 2020',0.65,0.20,1.10],
+   ['Patel 2021',0.18,-0.10,0.46],['Wu 2022',0.55,0.30,0.80],['Novak 2023',0.28,0.02,0.54]]
+   .forEach(r => addRow(r[0], r[1], r[2], r[3]));
+  compute(); toast('Sample loaded');
+});
+
+['Study A','Study B','Study C'].forEach(() => addRow());
+compute();
+</script>
+
+</body>
+</html>

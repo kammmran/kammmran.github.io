@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conflict-of-Interest Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-description"></i></div><div>COI Statement Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-file-description"></i></div>
+      <div>
+        <div class="tool-title">Conflict-of-Interest Generator</div>
+        <div class="tool-desc">Fill in funding and competing interests — get ready-to-paste Funding, Conflict-of-Interest and (optional) author-contribution statements.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Authors (comma-separated, in order) <span class="muted">— used for initials</span>
+      <input type="text" id="authors" placeholder="Kamran Heydarov, Jane A. Smith, Bo Lee">
+    </label>
+    <label class="fld">Funding sources <span class="muted">— one per line, include grant numbers if known</span>
+      <textarea id="funding" style="min-height:70px" placeholder="National Science Foundation (grant #ABC-12345)&#10;Wellcome Trust"></textarea>
+    </label>
+    <label class="fld">Competing / financial interests <span class="muted">— one per line; leave blank if none</span>
+      <textarea id="coi" style="min-height:70px" placeholder="K.H. is a paid consultant for Acme Corp.&#10;J.A.S. holds shares in BioVentures Inc."></textarea>
+    </label>
+    <div class="row" style="gap:18px">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:7px"><input type="checkbox" id="contribCk" style="width:16px;height:16px"> Include CRediT author-contribution statement</label>
+    </div>
+    <div id="contribWrap" style="display:none">
+      <label class="fld">Contributions <span class="muted">— one per line, e.g. <span class="muted">K.H.: conceptualization, writing</span></span>
+        <textarea id="contrib" style="min-height:60px" placeholder="K.H.: conceptualization, methodology, writing – original draft&#10;J.A.S.: data curation, formal analysis"></textarea>
+      </label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-file-text"></i> Generate</button>
+      <button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button></div>
+    <div id="out" class="output-box" style="min-height:auto;white-space:pre-wrap;font-size:14px;line-height:1.7"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #out h5{margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent3)}
+  #out .sec{margin-bottom:14px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+$('#contribCk').addEventListener('change',e=>$('#contribWrap').style.display=e.target.checked?'':'none');
+
+function initials(name){
+  return name.trim().split(/\s+/).map(t=>t[0]).filter(Boolean).join('.').toUpperCase()+'.';
+}
+
+function run(){
+  const authorsRaw = $('#authors').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const inits = authorsRaw.map(initials);
+  const funding = $('#funding').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const coi = $('#coi').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const contrib = $('#contribCk').checked ? $('#contrib').value.split(/\n/).map(s=>s.trim()).filter(Boolean) : [];
+
+  let html='';
+  // Funding
+  html += '<div class="sec"><h5>Funding</h5>';
+  if(funding.length){
+    html += 'This work was supported by '+ joinList(funding) + '.';
+  } else {
+    html += 'This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.';
+  }
+  html += '</div>';
+  // COI
+  html += '<div class="sec"><h5>Conflict of Interest / Competing Interests</h5>';
+  if(coi.length){
+    html += coi.map(c=>/[.!?]$/.test(c)?c:c+'.').join(' ') + (inits.length?` All other authors declare no competing interests.`:'');
+  } else {
+    const subj = authorsRaw.length>1 ? 'The authors declare' : 'The author declares';
+    html += `${subj} that they have no known competing financial interests or personal relationships that could have appeared to influence the work reported in this paper.`;
+  }
+  html += '</div>';
+  // Contributions
+  if(contrib.length){
+    html += '<div class="sec"><h5>Author Contributions (CRediT)</h5>'+ contrib.map(c=>/[.!?]$/.test(c)?c:c+'.').join(' ') +'</div>';
+  }
+  $('#out').innerHTML = html;
+}
+function joinList(a){ return a.length===1?a[0]:a.slice(0,-1).join(', ')+' and '+a[a.length-1]; }
+
+function plain(){ return $('#out').innerText.trim(); }
+$('#copy').addEventListener('click',()=>{ const t=plain(); if(t) navigator.clipboard.writeText(t).then(()=>{ const b=$('#copy'); b.innerHTML='<i class="ti ti-check"></i> Copied'; setTimeout(()=>b.innerHTML='<i class="ti ti-copy"></i> Copy',1400); }); });
+$('#run').addEventListener('click',run);
+run();
+</script>
+
+</body>
+</html>

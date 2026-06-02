@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMID Lookup — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-vaccine-bottle"></i></div><div>PMID Lookup</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-vaccine-bottle"></i></div>
+      <div>
+        <div class="tool-title">PMID Lookup</div>
+        <div class="tool-desc">Paste a PubMed ID (PMID), get the full citation in APA, MLA, Chicago, and BibTeX. Powered by NCBI E-utilities.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row">
+      <input type="text" id="pmid" placeholder="e.g. 31452104  (or several: 31452104, 28495875)" style="flex:1">
+      <button class="btn btn-primary" id="go"><i class="ti ti-search"></i> Look up</button>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Accepts a single PMID or a comma/space-separated list. Data from PubMed.</div>
+  </div>
+
+  <div id="results" style="margin-top:16px;display:flex;flex-direction:column;gap:14px"></div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .rcard { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+  .rtitle { font-size:15px; font-weight:600; margin-bottom:4px; }
+  .rmeta { font-size:12px; color:var(--text2); margin-bottom:12px; }
+  .rmeta a { color:var(--accent3); }
+  .cite-block { margin:8px 0; }
+  .cite-label { font-size:11px; text-transform:uppercase; letter-spacing:.6px; color:var(--text3); margin-bottom:4px; display:flex; align-items:center; justify-content:space-between; }
+  .cite-text { font-size:13px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px 12px; line-height:1.6; }
+  .cite-text.mono { font-family:ui-monospace,Menlo,monospace; white-space:pre-wrap; font-size:12px; }
+  .copy-btn { background:none; border:none; color:var(--text3); cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:4px; }
+  .copy-btn:hover { color:var(--accent3); }
+  .err { color:var(--red); font-size:13px; }
+  .skeleton { color:var(--text3); font-size:13px; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fmtAuthorsAPA(authors){
+  const names = authors.map(a => {
+    const parts = (a.name||'').split(' ');
+    const initials = parts.slice(1).join(' ');
+    return parts[0] + (initials ? ', ' + initials.split('').filter(c=>/[A-Z]/.test(c)).map(c=>c+'.').join('') : '');
+  });
+  if (names.length === 0) return '';
+  if (names.length === 1) return names[0];
+  if (names.length <= 20) return names.slice(0,-1).join(', ') + ', & ' + names[names.length-1];
+  return names.slice(0,19).join(', ') + ', … ' + names[names.length-1];
+}
+function fmtAuthorsMLA(authors){
+  if (!authors.length) return '';
+  const first = authors[0].name || '';
+  const parts = first.split(' ');
+  const lead = parts[0] + (parts[1] ? ', ' + parts.slice(1).join(' ') : '');
+  if (authors.length === 1) return lead;
+  if (authors.length === 2) return lead + ', and ' + (authors[1].name||'');
+  return lead + ', et al';
+}
+
+function buildCitations(d){
+  const authors = d.authors ? d.authors.filter(a=>a.authtype==='Author') : [];
+  const year = (d.pubdate||'').match(/\d{4}/)?.[0] || 'n.d.';
+  const title = (d.title||'').replace(/\.$/,'');
+  const journal = d.fulljournalname || d.source || '';
+  const vol = d.volume || '', issue = d.issue || '', pages = d.pages || '';
+  const doi = (d.articleids||[]).find(x=>x.idtype==='doi')?.value || (d.elocationid||'').replace(/^doi:\s*/i,'');
+  const doiUrl = doi ? `https://doi.org/${doi}` : '';
+  const vip = vol + (issue?`(${issue})`:'') + (pages?`, ${pages}`:'');
+
+  const apa = `${fmtAuthorsAPA(authors)} (${year}). ${title}. <i>${journal}</i>${vip?`, ${vip}`:''}.${doi?` ${doiUrl}`:''}`;
+  const mla = `${fmtAuthorsMLA(authors)}. "${title}." <i>${journal}</i>${vol?`, vol. ${vol}`:''}${issue?`, no. ${issue}`:''}, ${year}${pages?`, pp. ${pages}`:''}.${doi?` ${doiUrl}`:''}`;
+  const chicago = `${fmtAuthorsAPA(authors)} "${title}." <i>${journal}</i> ${vol}${issue?`, no. ${issue}`:''} (${year})${pages?`: ${pages}`:''}.${doi?` ${doiUrl}`:''}`;
+  const first = (authors[0]?.name||'anon').split(' ')[0].toLowerCase().replace(/[^a-z]/g,'');
+  const bib = `@article{${first}${year},\n  title   = {${title}},\n  author  = {${authors.map(a=>a.name).join(' and ')}},\n  journal = {${journal}},\n  year    = {${year}},${vol?`\n  volume  = {${vol}},`:''}${issue?`\n  number  = {${issue}},`:''}${pages?`\n  pages   = {${pages}},`:''}${doi?`\n  doi     = {${doi}},`:''}\n  pmid    = {${d.uid}}\n}`;
+
+  return { apa, mla, chicago, bib, title, journal, year, doi, doiUrl, authors };
+}
+
+function citeBlock(label, text, mono){
+  const id = 'c' + Math.random().toString(36).slice(2,8);
+  return `<div class="cite-block">
+    <div class="cite-label">${label}<button class="copy-btn" data-id="${id}"><i class="ti ti-copy"></i> Copy</button></div>
+    <div class="cite-text ${mono?'mono':''}" id="${id}">${text}</div>
+  </div>`;
+}
+
+async function lookup(pmid){
+  const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${encodeURIComponent(pmid)}&retmode=json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('PubMed request failed ('+res.status+')');
+  const json = await res.json();
+  const d = json.result && json.result[pmid];
+  if (!d || d.error) throw new Error('PMID not found');
+  return d;
+}
+
+async function run(){
+  const raw = $('#pmid').value.trim();
+  const ids = (raw.match(/\d+/g) || []);
+  const box = $('#results');
+  if (!ids.length){ box.innerHTML = '<div class="rcard err">Enter a valid PMID (numbers only).</div>'; return; }
+  box.innerHTML = `<div class="rcard skeleton"><i class="ti ti-loader"></i> Looking up ${ids.length} record(s)…</div>`;
+  const cards = [];
+  for (const id of ids){
+    try {
+      const d = await lookup(id);
+      const c = buildCitations(d);
+      cards.push(`<div class="rcard fade-in">
+        <div class="rtitle">${esc(c.title)}</div>
+        <div class="rmeta">${esc(c.authors.map(a=>a.name).slice(0,8).join(', '))}${c.authors.length>8?' et al.':''} · <i>${esc(c.journal)}</i> · ${c.year} · PMID <a href="https://pubmed.ncbi.nlm.nih.gov/${d.uid}/" target="_blank">${d.uid}</a>${c.doi?` · <a href="${c.doiUrl}" target="_blank">DOI</a>`:''}</div>
+        ${citeBlock('APA', c.apa)}
+        ${citeBlock('MLA', c.mla)}
+        ${citeBlock('Chicago', c.chicago)}
+        ${citeBlock('BibTeX', esc(c.bib), true)}
+      </div>`);
+    } catch (e) {
+      cards.push(`<div class="rcard err"><b>PMID ${esc(id)}</b> — ${esc(e.message)}</div>`);
+    }
+  }
+  box.innerHTML = cards.join('');
+  box.querySelectorAll('.copy-btn').forEach(b => b.addEventListener('click', () => {
+    const el = document.getElementById(b.dataset.id);
+    const tmp = el.cloneNode(true); // strip <i> tags to plain text
+    navigator.clipboard.writeText(tmp.textContent);
+    toast('Copied');
+  }));
+}
+
+$('#go').addEventListener('click', run);
+$('#pmid').addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+</script>
+
+</body>
+</html>

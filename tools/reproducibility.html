@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reproducibility & FAIR Checklist — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-recycle"></i></div><div>Reproducibility & FAIR</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-recycle"></i></div>
+      <div>
+        <div class="tool-title">Reproducibility & FAIR Checklist</div>
+        <div class="tool-desc">Score how reproducible and how FAIR (Findable, Accessible, Interoperable, Reusable) your study is, section by section.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:6px">
+    <div id="summary"></div>
+    <div id="groups"></div>
+  </div>
+</main>
+
+<style>
+  .grp{margin-top:16px}
+  .grp h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent3);margin:0 0 8px;display:flex;justify-content:space-between}
+  .grp h4 span{color:var(--text3);font-weight:400}
+  .item{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);margin-bottom:6px;cursor:pointer;font-size:13px;line-height:1.45}
+  .item input{margin-top:2px;width:16px;height:16px;flex:none}
+  .item.done{border-color:rgba(45,212,191,0.4)}
+  .meter{height:16px;border-radius:8px;background:var(--bg3);overflow:hidden;margin:8px 0}
+  .meter>div{height:100%;border-radius:8px;transition:width .3s}
+  .subscores{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .ss{flex:1;min-width:90px;padding:10px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);text-align:center}
+  .ss b{display:block;font-size:18px;font-variant-numeric:tabular-nums}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const groups = [
+  {key:'Data (Findable & Accessible)', items:[
+    'Data deposited in a public repository (Zenodo, OSF, Dryad, figshare…)',
+    'Dataset has a persistent identifier (DOI / accession number)',
+    'Data is released under an explicit licence (e.g. CC-BY, CC0)',
+    'A data-availability statement is included in the manuscript',
+  ]},
+  {key:'Data (Interoperable & Reusable)', items:[
+    'Data uses open, non-proprietary formats (CSV, JSON, NetCDF…)',
+    'Variables/columns are documented in a data dictionary or codebook',
+    'Rich metadata describes provenance and collection method',
+  ]},
+  {key:'Code', items:[
+    'Analysis code is publicly available (GitHub/GitLab + archived release)',
+    'Software dependencies and versions are pinned (requirements/lockfile/container)',
+    'Random seeds are fixed so results are deterministic',
+    'A README documents how to reproduce each figure/table',
+  ]},
+  {key:'Methods', items:[
+    'Methods give enough detail to re-run the study independently',
+    'Materials, instruments and reagents are fully specified',
+    'Statistical analysis plan / model specification is reported',
+    'Exact software and package versions used are stated',
+  ]},
+  {key:'Transparency', items:[
+    'The study (or analysis plan) was pre-registered',
+    'Funding sources and conflicts of interest are disclosed',
+    'Reporting follows a relevant guideline (PRISMA, CONSORT, ARRIVE…)',
+  ]},
+];
+
+const wrap=$('#groups');
+wrap.innerHTML = groups.map((g,gi)=>`<div class="grp"><h4>${g.key} <span class="gcount" data-g="${gi}"></span></h4>${
+  g.items.map((it,ii)=>`<label class="item"><input type="checkbox" data-g="${gi}" id="i${gi}_${ii}"><span>${it}</span></label>`).join('')
+}</div>`).join('');
+
+// FAIR sub-score mapping by group index
+const fair = {F:[0],A:[0],I:[1],R:[1,2,4]}; // rough association of groups to FAIR letters
+
+function recalc(){
+  let total=0, done=0;
+  const gDone=groups.map(()=>0), gTot=groups.map(g=>g.items.length);
+  groups.forEach((g,gi)=>g.items.forEach((_,ii)=>{ total++; if($('#i'+gi+'_'+ii).checked){ done++; gDone[gi]++; } }));
+  document.querySelectorAll('.item').forEach(l=>l.classList.toggle('done',l.querySelector('input').checked));
+  document.querySelectorAll('.gcount').forEach(s=>{ const gi=+s.dataset.g; s.textContent=`${gDone[gi]}/${gTot[gi]}`; });
+  const pct=Math.round(done/total*100);
+  const band=pct>=80?'--green':pct>=50?'--amber':'--red';
+  const grade=pct>=85?'A':pct>=70?'B':pct>=55?'C':pct>=40?'D':'F';
+  // FAIR letters
+  const letterScore=L=>{ const gs=fair[L]; let d=0,t=0; gs.forEach(gi=>{ gTot[gi]; t+=gTot[gi]; d+=gDone[gi]; }); return t?Math.round(d/t*100):0; };
+  $('#summary').innerHTML=`
+    <div class="row" style="justify-content:space-between"><b style="font-size:15px">Reproducibility score</b><span style="font-size:15px;color:var(${band})"><b>${pct}%</b> · grade ${grade}</span></div>
+    <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>
+    <div class="subscores">
+      ${['F','A','I','R'].map(L=>{ const s=letterScore(L); const c=s>=80?'--green':s>=50?'--amber':'--red'; const name={F:'Findable',A:'Accessible',I:'Interoperable',R:'Reusable'}[L]; return `<div class="ss"><b style="color:var(${c})">${s}%</b>${name}</div>`; }).join('')}
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Tick everything that is already true. Aim for 80%+ before submission.</div>`;
+}
+document.querySelectorAll('.item input').forEach(c=>c.addEventListener('change',recalc));
+recalc();
+</script>
+
+</body>
+</html>

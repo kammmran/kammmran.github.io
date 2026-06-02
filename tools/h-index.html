@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>H-index Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-arrows-vertical"></i></div><div>H-index Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-chart-arrows-vertical"></i></div>
+      <div>
+        <div class="tool-title">H-index Calculator</div>
+        <div class="tool-desc">Paste citation counts (one per paper) and get h-index, i10, g-index, and the full citation profile.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Citations per paper</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+          <button class="btn btn-sm btn-ghost" id="clear">Clear</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="One number per line (or comma / space separated):&#10;142&#10;88&#10;57&#10;31&#10;12&#10;9&#10;4&#10;1"></textarea>
+      <div class="muted" style="font-size:12px;margin-top:8px">Tip: copy the "Cited by" column from Google Scholar / Scopus.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-label"><span>Metrics</span></div>
+      <div class="stat-grid" id="stats">
+        <div class="stat-card"><div class="stat-label">h-index</div><div class="stat-value" id="h">—</div></div>
+        <div class="stat-card"><div class="stat-label">i10-index</div><div class="stat-value" id="i10">—</div></div>
+        <div class="stat-card"><div class="stat-label">g-index</div><div class="stat-value" id="g">—</div></div>
+        <div class="stat-card"><div class="stat-label">Papers</div><div class="stat-value" id="n">—</div></div>
+        <div class="stat-card"><div class="stat-label">Total citations</div><div class="stat-value" id="total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Mean / paper</div><div class="stat-value" id="mean">—</div></div>
+        <div class="stat-card"><div class="stat-label">Median</div><div class="stat-value" id="median">—</div></div>
+        <div class="stat-card"><div class="stat-label">Max</div><div class="stat-value" id="max">—</div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="panel-label" style="margin-bottom:8px"><span>Citation profile</span></div>
+      <div id="chart" class="output-box" style="min-height:160px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .bar-row { display:flex; align-items:center; gap:8px; margin:3px 0; font-size:12px; }
+  .bar-rank { width:34px; color:var(--text3); text-align:right; font-variant-numeric:tabular-nums; }
+  .bar-track { flex:1; height:14px; background:var(--bg3); border-radius:4px; overflow:hidden; position:relative; }
+  .bar-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--teal)); }
+  .bar-fill.below { background:var(--surface3); }
+  .bar-val { width:46px; color:var(--text2); font-variant-numeric:tabular-nums; }
+  .h-line { color:var(--amber); font-weight:600; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+function parse(text){
+  return (text.match(/-?\d+(\.\d+)?/g) || [])
+    .map(Number)
+    .filter(n => n >= 0 && Number.isFinite(n))
+    .map(Math.round);
+}
+
+function hIndex(sorted){ // sorted desc
+  let h = 0;
+  for (let i = 0; i < sorted.length; i++) { if (sorted[i] >= i + 1) h = i + 1; else break; }
+  return h;
+}
+function gIndex(sorted){ // largest g where top g papers have >= g^2 citations total
+  let sum = 0, g = 0;
+  for (let i = 0; i < sorted.length; i++) { sum += sorted[i]; if (sum >= (i + 1) * (i + 1)) g = i + 1; else break; }
+  return g;
+}
+
+function render(){
+  const vals = parse($('#input').value);
+  const sorted = [...vals].sort((a, b) => b - a);
+  const n = sorted.length;
+  const set = (id, v) => $('#' + id).textContent = v;
+
+  if (!n){
+    ['h','i10','g','n','total','mean','median','max'].forEach(id => set(id, '—'));
+    $('#chart').innerHTML = '<span class="muted">Enter citation counts to see metrics.</span>';
+    return;
+  }
+
+  const total = sorted.reduce((a, b) => a + b, 0);
+  const h = hIndex(sorted);
+  const i10 = sorted.filter(x => x >= 10).length;
+  const g = gIndex(sorted);
+  const mean = total / n;
+  const mid = Math.floor(n / 2);
+  const median = n % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+
+  set('h', h); set('i10', i10); set('g', g); set('n', n);
+  set('total', total.toLocaleString());
+  set('mean', mean.toFixed(1));
+  set('median', Number.isInteger(median) ? median : median.toFixed(1));
+  set('max', sorted[0]);
+
+  const max = sorted[0] || 1;
+  const shown = sorted.slice(0, 40);
+  $('#chart').innerHTML = shown.map((v, i) => {
+    const rank = i + 1;
+    const within = rank <= h; // papers contributing to h
+    const w = Math.max(2, (v / max) * 100);
+    return `<div class="bar-row">
+      <div class="bar-rank ${rank === h ? 'h-line' : ''}">${rank}</div>
+      <div class="bar-track"><div class="bar-fill ${within ? '' : 'below'}" style="width:${w}%"></div></div>
+      <div class="bar-val">${v}</div>
+    </div>`;
+  }).join('') + (n > 40 ? `<div class="muted" style="font-size:12px;margin-top:6px">…and ${n - 40} more</div>` : '')
+    + `<div class="muted" style="font-size:12px;margin-top:8px">Highlighted rank = h-index cutoff (${h} papers with ≥ ${h} citations).</div>`;
+}
+
+$('#input').addEventListener('input', render);
+$('#clear').addEventListener('click', () => { $('#input').value = ''; render(); });
+$('#sample').addEventListener('click', () => {
+  $('#input').value = '142, 88, 57, 41, 31, 22, 18, 12, 9, 7, 4, 3, 1, 0';
+  render(); toast('Sample loaded');
+});
+render();
+</script>
+
+</body>
+</html>

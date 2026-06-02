@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chemical Equation Balancer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-equal"></i></div><div>Equation Balancer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-equal"></i></div>
+      <div>
+        <div class="tool-title">Chemical Equation Balancer</div>
+        <div class="tool-desc">Type an unbalanced equation and get the smallest whole-number coefficients via linear algebra.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="panel-label"><span>Equation</span><div class="panel-actions" id="examples"></div></div>
+    <input type="text" id="eq" placeholder="e.g. H2 + O2 = H2O   (use + and = or ->)" style="font-family:ui-monospace,Menlo,monospace;font-size:16px">
+    <div id="err" style="font-size:13px;margin-top:8px;color:var(--red)"></div>
+  </div>
+
+  <div class="panel" id="out" style="margin-top:16px;min-height:auto;display:none">
+    <div class="panel-label"><span>Balanced</span></div>
+    <div id="balanced" style="font-size:22px;line-height:1.6;font-family:ui-monospace,Menlo,monospace"></div>
+    <div class="divider"></div>
+    <div class="panel-label"><span>Element check</span></div>
+    <div id="check" style="font-size:13px"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<script src="../assets/chem-data.js"></script>
+<script src="../assets/chem-balance.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+const balance = ChemBalance.balance;
+
+function sub(formula){ return formula.replace(/(\d+)/g,'<sub>$1</sub>'); }
+
+function render(){
+  const eq = $('#eq').value.trim();
+  $('#err').textContent = '';
+  if (!eq){ $('#out').style.display='none'; return; }
+  let res;
+  try { res = balance(eq); }
+  catch(e){ $('#err').textContent = e.message; $('#out').style.display='none'; return; }
+
+  const { species, left, ints } = res;
+  const fmtSide = (arr, offset) => arr.map((sp, i) => { const c = ints[offset+i]; return (c===1?'':c) + sub(sp); }).join(' + ');
+  const lhs = fmtSide(left, 0);
+  const rhs = fmtSide(res.right, left.length);
+  $('#out').style.display = 'block';
+  $('#balanced').innerHTML = `${lhs} &nbsp;→&nbsp; ${rhs}`;
+
+  // element check
+  $('#check').innerHTML = res.elements.map(el => {
+    let l = 0, rr = 0;
+    species.forEach((sp,j) => { const cnt = (res.comps[j][el]||0)*ints[j]; if (j < left.length) l += cnt; else rr += cnt; });
+    return `<span class="chip ${l===rr?'teal':''}" style="margin:2px 4px 2px 0">${el}: ${l} = ${rr}</span>`;
+  }).join('');
+}
+
+const EX = ['H2 + O2 = H2O','C3H8 + O2 = CO2 + H2O','Fe + O2 = Fe2O3','KMnO4 + HCl = KCl + MnCl2 + H2O + Cl2','Ca(OH)2 + H3PO4 = Ca3(PO4)2 + H2O'];
+$('#examples').innerHTML = EX.map(e=>`<span class="ex" data-e="${e}" style="font-size:11px;color:var(--accent3);cursor:pointer;padding:2px 6px;border-radius:5px;background:var(--surface)">${e.split(' ')[0]}…</span>`).join(' ');
+$('#examples').querySelectorAll('.ex').forEach(x=>x.addEventListener('click',()=>{ $('#eq').value=x.dataset.e; render(); }));
+
+$('#eq').addEventListener('input', render);
+</script>
+
+</body>
+</html>

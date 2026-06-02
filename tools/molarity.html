@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molarity & Dilution — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-flask-2"></i></div><div>Molarity & Dilution</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-flask-2"></i></div>
+      <div>
+        <div class="tool-title">Molarity &amp; Dilution Calculator</div>
+        <div class="tool-desc">Make a solution from mass &amp; volume, or dilute a stock with C₁V₁ = C₂V₂. Leave one field blank to solve for it.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="molarity">Molarity (mass → M)</button>
+    <button class="tab" data-t="dilution">Dilution (C₁V₁=C₂V₂)</button>
+  </div>
+
+  <div class="panel" id="p-molarity" style="min-height:auto">
+    <div class="panel-label"><span>Prepare a solution</span></div>
+    <div class="grid2">
+      <label class="fld">Mass of solute (g)<input type="number" id="m_mass" step="any"></label>
+      <label class="fld">Molar mass (g/mol)<input type="number" id="m_mm" step="any" placeholder="e.g. 58.44 for NaCl"></label>
+      <label class="fld">Volume of solution (L)<input type="number" id="m_vol" step="any"></label>
+      <label class="fld">Molarity (mol/L)<input type="number" id="m_molarity" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Fill any three — the fourth is computed. Moles = mass / molar mass; M = moles / V.</div>
+    <div id="m_out" class="output-box" style="min-height:auto;margin-top:12px"></div>
+  </div>
+
+  <div class="panel" id="p-dilution" style="min-height:auto;display:none">
+    <div class="panel-label"><span>Dilute a stock solution</span></div>
+    <div class="grid2">
+      <label class="fld">Stock concentration C₁<input type="number" id="d_c1" step="any"></label>
+      <label class="fld">Stock volume V₁<input type="number" id="d_v1" step="any"></label>
+      <label class="fld">Final concentration C₂<input type="number" id="d_c2" step="any"></label>
+      <label class="fld">Final volume V₂<input type="number" id="d_v2" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Leave exactly one field blank to solve for it. Units must match (C in same unit, V in same unit).</div>
+    <div id="d_out" class="output-box" style="min-height:auto;margin-top:12px"></div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v = parseFloat($('#'+id).value); return Number.isFinite(v) ? v : null; };
+
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  $('#p-molarity').style.display = t.dataset.t==='molarity'?'':'none';
+  $('#p-dilution').style.display = t.dataset.t==='dilution'?'':'none';
+}));
+
+function molarity(){
+  let mass=num('m_mass'), mm=num('m_mm'), vol=num('m_vol'), M=num('m_molarity');
+  const filled = [mass,mm,vol,M].filter(x=>x!==null).length;
+  const out = $('#m_out');
+  if (filled < 3){ out.innerHTML='<span class="muted">Enter any three values.</span>'; return; }
+  let res='';
+  if (mass===null){ if(mm&&vol&&M!==null){ mass = M*vol*mm; res=`Mass needed = <b>${mass.toPrecision(5)} g</b>`; } }
+  else if (M===null){ if(mass&&mm&&vol){ const mol=mass/mm; M=mol/vol; res=`Moles = ${(mass/mm).toPrecision(5)} mol → Molarity = <b>${M.toPrecision(5)} mol/L</b>`; } }
+  else if (vol===null){ if(mass&&mm&&M){ vol=(mass/mm)/M; res=`Volume = <b>${vol.toPrecision(5)} L</b> (${(vol*1000).toPrecision(5)} mL)`; } }
+  else if (mm===null){ if(mass&&vol&&M){ mm=mass/(M*vol); res=`Molar mass = <b>${mm.toPrecision(5)} g/mol</b>`; } }
+  out.innerHTML = res || '<span class="muted">Check your inputs (no zeros where a divisor is needed).</span>';
+}
+
+function dilution(){
+  const ids=['d_c1','d_v1','d_c2','d_v2'];
+  const vals=ids.map(num);
+  const blanks=vals.map((v,i)=>v===null?i:-1).filter(i=>i>=0);
+  const out=$('#d_out');
+  if (blanks.length!==1){ out.innerHTML = blanks.length===0?'<span class="muted">Leave one field blank to solve.</span>':'<span class="muted">Leave exactly one field blank.</span>'; return; }
+  let [c1,v1,c2,v2]=vals; const i=blanks[0]; let r='',label=['C₁','V₁','C₂','V₂'][i];
+  try{
+    if(i===0){ c1=c2*v2/v1; r=c1; }
+    else if(i===1){ v1=c2*v2/c1; r=v1; }
+    else if(i===2){ c2=c1*v1/v2; r=c2; }
+    else { v2=c1*v1/c2; r=v2; }
+    if(!Number.isFinite(r)) throw 0;
+    let extra='';
+    if(i===3||i===1){ const add=(i===3?(v2-v1):0); }
+    if(i===3){ extra=`<div class="muted" style="font-size:12px;margin-top:6px">Add ${ (v2-v1).toPrecision(4)} of solvent to ${v1} of stock.</div>`; }
+    out.innerHTML = `<b>${label} = ${r.toPrecision(5)}</b>${extra}`;
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs (avoid dividing by zero).</span>'; }
+}
+
+['m_mass','m_mm','m_vol','m_molarity'].forEach(id=>$('#'+id).addEventListener('input',molarity));
+['d_c1','d_v1','d_c2','d_v2'].forEach(id=>$('#'+id).addEventListener('input',dilution));
+molarity(); dilution();
+</script>
+
+</body>
+</html>

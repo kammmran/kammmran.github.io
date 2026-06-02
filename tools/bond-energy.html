@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bond Energy & Reaction Enthalpy — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-link"></i></div><div>Bond Energy → ΔH</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-link"></i></div>
+      <div>
+        <div class="tool-title">Bond Energy &amp; Reaction Enthalpy</div>
+        <div class="tool-desc">Estimate ΔH from average bond enthalpies: ΔH ≈ Σ(bonds broken) − Σ(bonds formed).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="cols">
+      <div class="col">
+        <div class="col-head" style="color:var(--red)"><i class="ti ti-unlink"></i> Bonds broken (reactants)</div>
+        <div id="brokenRows"></div>
+        <button class="btn btn-sm" data-add="broken"><i class="ti ti-plus"></i> Add bond</button>
+        <div class="col-sum">Σ broken = <b id="sumBroken">0</b> kJ/mol</div>
+      </div>
+      <div class="col">
+        <div class="col-head" style="color:var(--green)"><i class="ti ti-link"></i> Bonds formed (products)</div>
+        <div id="formedRows"></div>
+        <button class="btn btn-sm" data-add="formed"><i class="ti ti-plus"></i> Add bond</button>
+        <div class="col-sum">Σ formed = <b id="sumFormed">0</b> kJ/mol</div>
+      </div>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:640px){.cols{grid-template-columns:1fr}}
+  .col-head{font-size:12px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:8px;display:flex;gap:6px;align-items:center}
+  .brow{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+  .brow select{flex:1;font-size:13px}
+  .brow input{width:58px}
+  .brow .x{flex:none;cursor:pointer;color:var(--text3);padding:4px}
+  .brow .x:hover{color:var(--red)}
+  .col-sum{margin-top:8px;font-size:13px;color:var(--text2)}
+  .verdict{padding:14px;border-radius:10px;text-align:center;margin-top:6px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+// average bond enthalpies, kJ/mol
+const bonds = [
+  ['H–H',436],['C–H',413],['C–C',347],['C=C',614],['C≡C',839],
+  ['O=O',495],['O–H',463],['C–O',358],['C=O',745],['C=O (in CO₂)',799],
+  ['N–H',391],['N–N',163],['N=N',418],['N≡N',945],['C–N',305],['C=N',615],['C≡N',891],
+  ['S–H',347],['C–S',259],['S=O',523],['S–S',266],
+  ['F–F',155],['Cl–Cl',243],['Br–Br',193],['I–I',151],
+  ['H–F',567],['H–Cl',431],['H–Br',366],['H–I',299],
+  ['C–F',485],['C–Cl',339],['C–Br',276],['C–I',240],['Si–O',452],['P–O',335],
+];
+const opts = bonds.map(([n,e])=>`<option value="${e}">${n} — ${e}</option>`).join('');
+
+function addRow(side, sel='413', cnt=1){
+  const row=document.createElement('div'); row.className='brow';
+  row.innerHTML=`<select>${opts}</select><input type="number" min="0" step="1" value="${cnt}"><i class="ti ti-x x" title="remove"></i>`;
+  row.querySelector('select').value=sel;
+  row.querySelector('.x').addEventListener('click',()=>{ row.remove(); calc(); });
+  row.querySelector('select').addEventListener('input',calc);
+  row.querySelector('input').addEventListener('input',calc);
+  $('#'+side+'Rows').appendChild(row);
+}
+function sideSum(side){
+  let s=0; document.querySelectorAll('#'+side+'Rows .brow').forEach(r=>{ s += (+r.querySelector('select').value)*(+r.querySelector('input').value||0); }); return s;
+}
+function calc(){
+  const broken=sideSum('broken'), formed=sideSum('formed');
+  $('#sumBroken').textContent=broken; $('#sumFormed').textContent=formed;
+  const out=$('#out');
+  if(!broken && !formed){ out.innerHTML='<div class="muted">Add the bonds broken and formed to estimate ΔH.</div>'; return; }
+  const dH = broken - formed;
+  const exo = dH<0;
+  const c = exo?'--green':'--red';
+  out.innerHTML=`
+    <div class="verdict" style="background:rgba(127,127,127,.07);border:1px solid var(${c})">
+      <div style="font-size:13px;color:var(--text3)">ΔH = Σ broken − Σ formed = ${broken} − ${formed}</div>
+      <div style="font-size:30px;font-weight:700;color:var(${c});margin-top:4px">${dH>0?'+':''}${dH} kJ/mol</div>
+      <div style="color:var(${c});font-weight:600">${exo?'Exothermic — releases energy':'Endothermic — absorbs energy'}</div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Uses <i>average</i> bond enthalpies, so this is an estimate (±5–10%) — it ignores the specific molecular environment and assumes all species are gaseous.</div>`;
+}
+document.querySelectorAll('[data-add]').forEach(b=>b.addEventListener('click',()=>{ addRow(b.dataset.add); calc(); }));
+// seed example: CH4 + 2 O2 -> CO2 + 2 H2O
+addRow('broken','413',4); addRow('broken','495',2);
+addRow('formed','799',2); addRow('formed','463',4);
+calc();
+</script>
+
+</body>
+</html>

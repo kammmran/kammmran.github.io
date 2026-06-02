@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ideal Gas Law — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-air-balloon"></i></div><div>Ideal Gas Law</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:780px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-air-balloon"></i></div>
+      <div>
+        <div class="tool-title">Ideal Gas Law — PV = nRT</div>
+        <div class="tool-desc">Leave one variable blank to solve for it. Pick your pressure unit; temperature is in kelvin.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row" style="margin-bottom:14px">
+      <span class="muted" style="font-size:12px">Pressure unit:</span>
+      <select id="punit"><option value="0.0820573">atm</option><option value="0.0831446">bar</option><option value="62.3637">mmHg / Torr</option><option value="8.31446">kPa</option></select>
+      <span class="spacer"></span>
+      <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+    </div>
+    <div class="grid2">
+      <label class="fld">Pressure P (<span id="pu">atm</span>)<input type="number" id="P" step="any"></label>
+      <label class="fld">Volume V (L)<input type="number" id="V" step="any"></label>
+      <label class="fld">Moles n (mol)<input type="number" id="n" step="any"></label>
+      <label class="fld">Temperature T (K)<input type="number" id="T" step="any"></label>
+    </div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+    <div class="muted" style="font-size:12px;margin-top:8px">R depends on units. atm·L: 0.082057, bar·L: 0.083145, Torr·L: 62.3637 L·Torr·K⁻¹·mol⁻¹.</div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+const UNAME = {'0.0820573':'atm','8.31446':'kPa','62.3637':'Torr','0.0831446':'bar'};
+
+function solve(){
+  const R = parseFloat($('#punit').value);
+  $('#pu').textContent = UNAME[$('#punit').value];
+  let P=num('P'),V=num('V'),n=num('n'),T=num('T');
+  const vals={P,V,n,T}; const blanks=Object.keys(vals).filter(k=>vals[k]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML = blanks.length===0?'<span class="muted">Leave one field blank to solve for it.</span>':'<span class="muted">Leave exactly one field blank.</span>'; return; }
+  const b=blanks[0]; let r,label,unit;
+  try{
+    if(b==='P'){ r=n*R*T/V; label='P'; unit=UNAME[$('#punit').value]; }
+    else if(b==='V'){ r=n*R*T/P; label='V'; unit='L'; }
+    else if(b==='n'){ r=P*V/(R*T); label='n'; unit='mol'; }
+    else { r=P*V/(n*R); label='T'; unit='K'; }
+    if(!Number.isFinite(r)) throw 0;
+    out.innerHTML=`<b>${label} = ${r.toPrecision(5)} ${unit}</b>`;
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs (no zeros where divided).</span>'; }
+}
+['P','V','n','T','punit'].forEach(id=>$('#'+id).addEventListener('input',solve));
+$('#sample').addEventListener('click',()=>{ $('#P').value='1'; $('#V').value=''; $('#n').value='1'; $('#T').value='273.15'; solve(); });
+solve();
+</script>
+
+</body>
+</html>

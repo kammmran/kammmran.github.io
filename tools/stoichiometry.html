@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stoichiometry Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrows-split"></i></div><div>Stoichiometry</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-arrows-split"></i></div>
+      <div>
+        <div class="tool-title">Stoichiometry Calculator</div>
+        <div class="tool-desc">Enter a reaction (auto-balanced) and one known amount — get moles and grams of every species.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="panel-label"><span>Reaction</span><div class="panel-actions"><button class="btn btn-sm btn-ghost" id="sample">Sample</button></div></div>
+    <input type="text" id="eq" placeholder="e.g. N2 + H2 = NH3" style="font-family:ui-monospace,Menlo,monospace;font-size:16px">
+    <div id="err" style="font-size:13px;margin-top:8px;color:var(--red)"></div>
+    <div class="row" style="margin-top:12px">
+      <span class="muted" style="font-size:12px">Known:</span>
+      <select id="known" style="flex:1"></select>
+      <input type="number" id="amt" placeholder="amount" step="any" style="width:120px">
+      <select id="unit" style="width:90px"><option value="mol">mol</option><option value="g">g</option></select>
+    </div>
+  </div>
+
+  <div class="panel" id="out" style="margin-top:16px;min-height:auto;display:none">
+    <div class="panel-label"><span>Amounts of all species</span></div>
+    <div id="balanced" style="font-size:18px;font-family:ui-monospace,Menlo,monospace;margin-bottom:14px"></div>
+    <table class="stoich-tbl"><thead><tr><th>Species</th><th>Coeff.</th><th>Molar mass</th><th>Moles</th><th>Mass (g)</th></tr></thead><tbody id="rows"></tbody></table>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .stoich-tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .stoich-tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:6px 10px;border-bottom:1px solid var(--border)}
+  .stoich-tbl td{padding:7px 10px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+  .stoich-tbl tr.known{background:rgba(124,109,240,0.08)}
+</style>
+
+<script src="../assets/chem-data.js"></script>
+<script src="../assets/chem-balance.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+const AW = CHEM.AW;
+function molarMass(comp){ let m=0; for(const el in comp) m += AW[el]*comp[el]; return m; }
+function sub(s){ return s.replace(/(\d+)/g,'<sub>$1</sub>'); }
+
+let current = null;
+
+function parseReaction(){
+  const eq = $('#eq').value.trim();
+  $('#err').textContent = '';
+  if (!eq){ current=null; $('#out').style.display='none'; $('#known').innerHTML=''; return; }
+  try {
+    current = ChemBalance.balance(eq);
+    const opts = current.species.map((sp,i)=>`<option value="${i}">${sp}</option>`).join('');
+    const prev = $('#known').value;
+    $('#known').innerHTML = opts;
+    if (prev && current.species[prev]) $('#known').value = prev;
+    compute();
+  } catch(e){ $('#err').textContent = e.message; current=null; $('#out').style.display='none'; }
+}
+
+function compute(){
+  if (!current) return;
+  const ki = parseInt($('#known').value, 10);
+  const amt = parseFloat($('#amt').value);
+  const unit = $('#unit').value;
+  const masses = current.comps.map(molarMass);
+  if (!Number.isFinite(amt)){ $('#out').style.display='none'; return; }
+
+  const knownMoles = unit === 'mol' ? amt : amt / masses[ki];
+  const perCoeff = knownMoles / current.ints[ki]; // extent of reaction
+
+  $('#out').style.display = 'block';
+  const fmtSide = (arr, off) => arr.map((sp,i)=>{ const c=current.ints[off+i]; return (c===1?'':c)+sub(sp); }).join(' + ');
+  $('#balanced').innerHTML = `${fmtSide(current.left,0)} → ${fmtSide(current.right,current.left.length)}`;
+
+  $('#rows').innerHTML = current.species.map((sp,i)=>{
+    const mol = perCoeff * current.ints[i];
+    const g = mol * masses[i];
+    return `<tr class="${i===ki?'known':''}"><td>${sub(sp)}${i===ki?' <span class="chip accent">known</span>':''}</td><td>${current.ints[i]}</td><td>${masses[i].toFixed(2)}</td><td>${mol.toPrecision(4)}</td><td>${g.toPrecision(4)}</td></tr>`;
+  }).join('');
+}
+
+$('#eq').addEventListener('input', parseReaction);
+['known','amt','unit'].forEach(id=>$('#'+id).addEventListener('input', compute));
+$('#sample').addEventListener('click', ()=>{ $('#eq').value='N2 + H2 = NH3'; parseReaction(); $('#amt').value='28'; $('#unit').value='g'; compute(); toast('Sample loaded'); });
+</script>
+
+</body>
+</html>

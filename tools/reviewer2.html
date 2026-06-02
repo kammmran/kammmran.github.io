@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reviewer #2 Simulator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-mood-suspect"></i></div><div>Reviewer #2 Simulator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-mood-suspect"></i></div>
+      <div>
+        <div class="tool-title">Reviewer #2 Simulator</div>
+        <div class="tool-desc">Paste your abstract or manuscript and get the pre-emptive grilling — the comments a sceptical reviewer is most likely to raise.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste your abstract or full manuscript text
+      <textarea id="txt" style="min-height:210px" placeholder="Paste your abstract or manuscript here…"></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-message-report"></i> Summon Reviewer #2</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .cmt{display:flex;gap:10px;padding:11px 13px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:8px}
+  .cmt .sev{flex:none;width:6px;border-radius:3px}
+  .cmt.major .sev{background:var(--red)} .cmt.minor .sev{background:var(--amber)} .cmt.ok .sev{background:var(--green)}
+  .cmt-num{font-weight:700;color:var(--text3);flex:none}
+  .verdict{padding:12px 14px;border-radius:10px;font-weight:600;text-align:center;margin-bottom:14px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+
+function run(){
+  const t=$('#txt').value; const lower=t.toLowerCase(); const out=$('#out');
+  if(!t.trim()){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste some text first.</div>'; return; }
+  const words=(t.match(/\b[\w'-]+\b/g)||[]).length;
+  const has = re => re.test(lower);
+  const C=[];
+  const add=(sev,msg)=>C.push({sev,msg});
+
+  // novelty / contribution
+  if(!has(/\b(novel|new|first|contribution|we propose|we introduce|unlike (previous|prior|existing)|in contrast to)\b/))
+    add('major','The novelty is unclear. What exactly is new here versus the existing literature? State the contribution explicitly.');
+  // sample size / data
+  if(!has(/\bn\s*=\s*\d|\b\d+\s+(participants|subjects|patients|samples|observations|respondents|compounds|trials|images)\b/))
+    add('major','I see no sample size. How many participants/samples were used, and is the study adequately powered?');
+  // statistics
+  if(!has(/\bp\s*[<>=]\s*0?\.\d|\bp-value|confidence interval|\bci\b|significant|effect size|cohen|\br\s*=\s*|±/))
+    add('major','Statistical support is missing. Report test statistics, p-values, effect sizes and uncertainty — not just point estimates.');
+  // limitations
+  if(!has(/\blimitation|caveat|future work|further (research|study|studies)|shortcoming|threats? to validity\b/))
+    add('major','The manuscript does not discuss its limitations. No study is without them — add a limitations paragraph.');
+  // methods reproducibility
+  if(!has(/\bmethod|we (used|measured|collected|analyz|computed|performed)|procedure|protocol|dataset|materials\b/))
+    add('minor','The methods are thin. Provide enough detail (and data/code availability) for the work to be reproduced.');
+  // overclaiming
+  if(has(/\b(prove[sd]?|proven|always|never|completely|undeniabl|groundbreaking|revolutionary|guarantee)\b/))
+    add('minor','The language overclaims. Soften absolute terms ("proves", "always", "groundbreaking") to match what the evidence supports.');
+  // comparison / baseline
+  if(!has(/\b(compared (to|with)|baseline|state[- ]of[- ]the[- ]art|control group|versus|outperform|relative to)\b/))
+    add('minor','No comparison or baseline is evident. How does this perform relative to existing approaches or a control?');
+  // hedging absent + strong claims
+  if(!has(/\b(suggest|may|might|could|appears?|likely|indicate|consistent with)\b/))
+    add('minor','Claims are stated very firmly with little hedging. Calibrate confidence to the strength of the evidence.');
+  // length sanity
+  if(words<120) add('minor','The text is quite short — make sure motivation, methods, results and implications are all actually present.');
+  // citations
+  if(!/\([^)]*\b(1[89]\d{2}|20\d{2})\)|\[\d+\]|et al\./.test(t))
+    add('minor','I could not find any citations. Situate the work in the literature with appropriate references.');
+  // reproducibility data/code
+  if(!has(/\b(available (at|on|from)|github|zenodo|osf|supplementary|data availability|open ?source|repository)\b/))
+    add('minor','State a data/code availability — reviewers increasingly require it.');
+
+  if(!C.length) add('ok','Honestly… this is tighter than most. I have no major concerns — minor polish only. (Reviewer #2 is suspicious of its own approval.)');
+
+  const majors=C.filter(c=>c.sev==='major').length;
+  const verdict = majors>=3?{t:'Reject / Major revisions',c:'--red'}:majors>=1?{t:'Major revisions',c:'--amber'}:C.some(c=>c.sev==='minor')?{t:'Minor revisions',c:'--blue'}:{t:'Accept (with light edits)',c:'--green'};
+  out.innerHTML = `
+    <div class="verdict" style="background:rgba(127,127,127,.08);border:1px solid var(${verdict.c});color:var(${verdict.c})">
+      Recommendation: ${verdict.t} · ${majors} major / ${C.filter(c=>c.sev==='minor').length} minor
+    </div>
+    ${C.map((c,i)=>`<div class="cmt ${c.sev}"><div class="sev"></div><div class="cmt-num">${i+1}.</div><div>${c.msg}</div></div>`).join('')}
+    <div class="muted" style="font-size:12px;margin-top:8px">Heuristic, not a real review — it pattern-matches for things reviewers commonly flag. Use it as a pre-submission checklist.</div>`;
+}
+$('#run').addEventListener('click',run);
+</script>
+
+</body>
+</html>

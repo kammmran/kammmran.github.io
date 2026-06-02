@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRISMA Diagram Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-sitemap"></i></div><div>PRISMA Diagram</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-sitemap"></i></div>
+      <div>
+        <div class="tool-title">PRISMA 2020 Flow Diagram</div>
+        <div class="tool-desc">Enter your screening numbers and generate a publication-ready PRISMA flow diagram. Exports to SVG / PNG.</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-sm" id="dl-svg"><i class="ti ti-download"></i> SVG</button>
+      <button class="btn btn-sm" id="dl-png"><i class="ti ti-photo"></i> PNG</button>
+    </div>
+  </div>
+
+  <div class="workspace" style="grid-template-columns:300px 1fr">
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Identification</span></div>
+      <label class="fld">Records from databases<input type="number" id="f_db" value="1240" min="0"></label>
+      <label class="fld">Records from registers<input type="number" id="f_reg" value="60" min="0"></label>
+      <label class="fld">Duplicates removed<input type="number" id="f_dup" value="310" min="0"></label>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Screening</span></div>
+      <label class="fld">Records screened<input type="number" id="f_screen" value="990" min="0"></label>
+      <label class="fld">Records excluded<input type="number" id="f_screenex" value="720" min="0"></label>
+      <label class="fld">Reports sought for retrieval<input type="number" id="f_sought" value="270" min="0"></label>
+      <label class="fld">Reports not retrieved<input type="number" id="f_notret" value="15" min="0"></label>
+      <label class="fld">Reports assessed for eligibility<input type="number" id="f_assess" value="255" min="0"></label>
+      <label class="fld">Reports excluded<input type="number" id="f_eligex" value="213" min="0"></label>
+      <div class="divider"></div>
+      <div class="panel-label"><span>Included</span></div>
+      <label class="fld">Studies included<input type="number" id="f_inc" value="42" min="0"></label>
+    </div>
+
+    <div class="panel" style="min-height:auto;overflow:auto">
+      <div class="panel-label"><span>Diagram</span></div>
+      <div id="diagram" style="overflow:auto"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .fld { display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--text2); margin-bottom:10px; }
+  .fld input { font-variant-numeric:tabular-nums; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+const v = id => Math.max(0, parseInt($('#'+id).value||'0',10) || 0);
+
+// SVG box helper
+function box(x, y, w, h, lines, fill){
+  const pad = 10, lh = 16;
+  const text = lines.map((ln, i) =>
+    `<text x="${x + pad}" y="${y + pad + 14 + i*lh}" font-size="12" fill="#1a1a22" font-family="Inter,Arial,sans-serif">${ln}</text>`
+  ).join('');
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="${fill}" stroke="#9aa" stroke-width="1"/>${text}`;
+}
+function arrow(x1,y1,x2,y2){ return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#667" stroke-width="1.5" marker-end="url(#ah)"/>`; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function build(){
+  const db = v('f_db'), reg = v('f_reg'), dup = v('f_dup');
+  const screen = v('f_screen'), screenex = v('f_screenex');
+  const sought = v('f_sought'), notret = v('f_notret');
+  const assess = v('f_assess'), eligex = v('f_eligex'), inc = v('f_inc');
+
+  const W = 760, H = 720;
+  const colL = 60, colW = 300, colRx = 440, colRw = 240;
+  const fillL = '#e8f0fe', fillR = '#fff4e6', fillBand = '#eef7f4';
+
+  const rows = [
+    box(colL, 40, colW, 56, [`Records identified from:`, `Databases (n = ${db}),  Registers (n = ${reg})`], fillL),
+    box(colRx, 40, colRw, 56, [`Records removed before screening:`, `Duplicates removed (n = ${dup})`], fillR),
+
+    box(colL, 150, colW, 44, [`Records screened (n = ${screen})`], fillL),
+    box(colRx, 150, colRw, 44, [`Records excluded (n = ${screenex})`], fillR),
+
+    box(colL, 250, colW, 44, [`Reports sought for retrieval (n = ${sought})`], fillL),
+    box(colRx, 250, colRw, 44, [`Reports not retrieved (n = ${notret})`], fillR),
+
+    box(colL, 350, colW, 44, [`Reports assessed for eligibility (n = ${assess})`], fillL),
+    box(colRx, 350, colRw, 44, [`Reports excluded (n = ${eligex})`], fillR),
+
+    box(colL, 460, colW, 44, [`Studies included in review (n = ${inc})`], fillBand),
+  ];
+
+  const cxL = colL + colW/2;
+  const arrows = [
+    arrow(cxL, 96, cxL, 150),
+    arrow(cxL, 194, cxL, 250),
+    arrow(cxL, 294, cxL, 350),
+    arrow(cxL, 394, cxL, 460),
+    // side arrows
+    arrow(colL + colW, 62, colRx, 62),
+    arrow(colL + colW, 172, colRx, 172),
+    arrow(colL + colW, 272, colRx, 272),
+    arrow(colL + colW, 372, colRx, 372),
+  ];
+
+  // stage labels (rotated band on the left)
+  function stageLabel(y, txt){
+    return `<text x="22" y="${y}" font-size="11" font-weight="700" fill="#7c6df0" font-family="Inter,Arial,sans-serif" transform="rotate(-90 22 ${y})" text-anchor="middle">${txt}</text>`;
+  }
+
+  return `<svg id="svg" xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L7,3 L0,6 Z" fill="#667"/></marker></defs>
+    <rect width="${W}" height="${H}" fill="#ffffff"/>
+    ${stageLabel(70, 'Identification')}
+    ${stageLabel(300, 'Screening')}
+    ${stageLabel(482, 'Included')}
+    ${arrows.join('')}
+    ${rows.join('')}
+  </svg>`;
+}
+
+function render(){ $('#diagram').innerHTML = build(); }
+document.querySelectorAll('input').forEach(el => el.addEventListener('input', render));
+
+function downloadSVG(){
+  const svg = $('#svg').outerHTML;
+  const blob = new Blob([svg], {type:'image/svg+xml'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'prisma-flow.svg'; a.click();
+  toast('SVG downloaded');
+}
+function downloadPNG(){
+  const svgEl = $('#svg');
+  const xml = new XMLSerializer().serializeToString(svgEl);
+  const img = new Image();
+  const svg64 = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(xml)));
+  img.onload = () => {
+    const scale = 2;
+    const c = document.createElement('canvas');
+    c.width = svgEl.width.baseVal.value * scale; c.height = svgEl.height.baseVal.value * scale;
+    const ctx = c.getContext('2d'); ctx.scale(scale, scale); ctx.drawImage(img, 0, 0);
+    c.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'prisma-flow.png'; a.click(); toast('PNG downloaded'); });
+  };
+  img.src = svg64;
+}
+$('#dl-svg').addEventListener('click', downloadSVG);
+$('#dl-png').addEventListener('click', downloadPNG);
+render();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic CV Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-cv"></i></div><div>Academic CV Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1280px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-file-cv"></i></div>
+      <div>
+        <div class="tool-title">Academic CV Generator</div>
+        <div class="tool-desc">Fill the form, watch the CV build live. Autosaves locally. Export to print/PDF or standalone HTML.</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-sm" id="print"><i class="ti ti-printer"></i> Print / PDF</button>
+      <button class="btn btn-sm" id="html"><i class="ti ti-download"></i> HTML</button>
+      <button class="btn btn-sm btn-ghost" id="reset"><i class="ti ti-trash"></i></button>
+    </div>
+  </div>
+
+  <div class="workspace" style="grid-template-columns:380px 1fr;align-items:start">
+    <div class="panel" style="min-height:auto;max-height:78vh;overflow:auto">
+      <label class="fld">Full name<input id="f_name" placeholder="Dr Ada Lovelace"></label>
+      <label class="fld">Title / position<input id="f_title" placeholder="Postdoctoral Researcher"></label>
+      <div class="grid2"><label class="fld">Email<input id="f_email"></label><label class="fld">Phone<input id="f_phone"></label></div>
+      <div class="grid2"><label class="fld">Website<input id="f_web"></label><label class="fld">ORCID<input id="f_orcid"></label></div>
+      <label class="fld">Location<input id="f_loc"></label>
+      <label class="fld">Research summary<textarea id="f_summary" style="min-height:70px"></textarea></label>
+      <div class="sec-edit" data-key="education"><div class="sec-h">Education <button class="addbtn" data-k="education">+ add</button></div></div>
+      <div class="sec-edit" data-key="experience"><div class="sec-h">Experience <button class="addbtn" data-k="experience">+ add</button></div></div>
+      <div class="sec-edit" data-key="pubs"><div class="sec-h">Publications <button class="addbtn" data-k="pubs">+ add</button></div></div>
+      <div class="sec-edit" data-key="awards"><div class="sec-h">Awards & grants <button class="addbtn" data-k="awards">+ add</button></div></div>
+      <label class="fld" style="margin-top:12px">Skills (comma-separated)<input id="f_skills" placeholder="Python, R, NMR, GC-MS"></label>
+    </div>
+
+    <div class="panel" style="min-height:auto;padding:0;background:#fff;overflow:auto;max-height:78vh">
+      <div id="cv" class="cv-doc"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);margin-bottom:10px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .sec-edit{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+  .sec-h{font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .addbtn{background:var(--surface);border:1px solid var(--border);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer}
+  .addbtn:hover{background:var(--surface2)}
+  .item{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:8px;position:relative}
+  .item input,.item textarea{margin-bottom:6px}
+  .item .del{position:absolute;top:6px;right:6px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px}
+  .item .del:hover{color:var(--red)}
+  /* CV document */
+  .cv-doc{color:#1a1a22;font-family:Georgia,'Times New Roman',serif;padding:42px 48px;font-size:13.5px;line-height:1.5;min-height:600px}
+  .cv-doc h1{font-size:26px;margin-bottom:2px;font-family:-apple-system,Helvetica,Arial,sans-serif;letter-spacing:-.5px}
+  .cv-doc .cv-title{color:#555;font-size:14px;margin-bottom:6px;font-family:-apple-system,Helvetica,Arial,sans-serif}
+  .cv-doc .cv-contact{color:#444;font-size:12px;margin-bottom:18px;font-family:-apple-system,Helvetica,Arial,sans-serif}
+  .cv-doc .cv-contact span{margin-right:14px;white-space:nowrap}
+  .cv-doc h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #1a1a22;padding-bottom:3px;margin:18px 0 8px;font-family:-apple-system,Helvetica,Arial,sans-serif}
+  .cv-doc .entry{margin-bottom:9px}
+  .cv-doc .entry .top{display:flex;justify-content:space-between;gap:12px}
+  .cv-doc .entry .role{font-weight:700}
+  .cv-doc .entry .date{color:#555;font-size:12px;white-space:nowrap;font-family:-apple-system,Helvetica,Arial,sans-serif}
+  .cv-doc .entry .org{font-style:italic;color:#333}
+  .cv-doc .entry .desc{font-size:12.5px;color:#333;margin-top:2px}
+  .cv-doc .pub{margin-bottom:6px;font-size:12.5px;padding-left:18px;text-indent:-18px}
+  .cv-doc .skills{font-size:12.5px}
+  @media print{ body *{visibility:hidden} #cv,#cv *{visibility:visible} #cv{position:absolute;left:0;top:0;width:100%} .topbar{display:none} }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+const KEY='academy_cv_v1';
+
+const SCHEMA={
+  education:[['role','Degree'],['org','Institution'],['date','Years'],['desc','Details (optional)']],
+  experience:[['role','Role'],['org','Organisation'],['date','Years'],['desc','Description']],
+  pubs:[['desc','Full reference']],
+  awards:[['role','Award / grant'],['org','Body'],['date','Year'],['desc','Details (optional)']],
+};
+let data=load();
+
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY))||blank(); }catch(e){ return blank(); } }
+function blank(){ return { fields:{}, education:[], experience:[], pubs:[], awards:[] }; }
+function save(){ localStorage.setItem(KEY, JSON.stringify(data)); }
+
+function renderEditors(){
+  Object.keys(SCHEMA).forEach(k=>{
+    const wrap=document.querySelector(`.sec-edit[data-key="${k}"]`);
+    wrap.querySelectorAll('.item').forEach(e=>e.remove());
+    data[k].forEach((item,idx)=>{
+      const div=document.createElement('div'); div.className='item';
+      div.innerHTML=SCHEMA[k].map(([f,ph])=> f==='desc'
+        ? `<textarea data-k="${k}" data-i="${idx}" data-f="${f}" placeholder="${ph}" style="min-height:46px">${esc(item[f]||'')}</textarea>`
+        : `<input data-k="${k}" data-i="${idx}" data-f="${f}" placeholder="${ph}" value="${esc(item[f]||'')}">`).join('')
+        + `<button class="del" data-k="${k}" data-i="${idx}">&times;</button>`;
+      wrap.appendChild(div);
+    });
+  });
+  wireItems();
+}
+function wireItems(){
+  document.querySelectorAll('.item [data-f]').forEach(el=>el.addEventListener('input',()=>{
+    data[el.dataset.k][+el.dataset.i][el.dataset.f]=el.value; save(); renderCV();
+  }));
+  document.querySelectorAll('.item .del').forEach(b=>b.addEventListener('click',()=>{
+    data[b.dataset.k].splice(+b.dataset.i,1); save(); renderEditors(); renderCV();
+  }));
+}
+document.querySelectorAll('.addbtn').forEach(b=>b.addEventListener('click',()=>{ data[b.dataset.k].push({}); save(); renderEditors(); renderCV(); }));
+
+const FIELDS=['name','title','email','phone','web','orcid','loc','summary','skills'];
+FIELDS.forEach(f=>{ const el=$('#f_'+f); el.addEventListener('input',()=>{ data.fields[f]=el.value; save(); renderCV(); }); });
+function fillForm(){ FIELDS.forEach(f=>{ if(data.fields[f]!=null) $('#f_'+f).value=data.fields[f]; }); }
+
+function entryHTML(k){
+  return data[k].filter(i=>Object.values(i).some(v=>v&&v.trim())).map(i=>{
+    if(k==='pubs') return `<div class="pub">${esc(i.desc)}</div>`;
+    return `<div class="entry"><div class="top"><span class="role">${esc(i.role)}</span><span class="date">${esc(i.date)}</span></div>${i.org?`<div class="org">${esc(i.org)}</div>`:''}${i.desc?`<div class="desc">${esc(i.desc)}</div>`:''}</div>`;
+  }).join('');
+}
+function section(title,k){ const h=entryHTML(k); return h?`<h2>${title}</h2>${h}`:''; }
+
+function renderCV(){
+  const f=data.fields;
+  const contact=[ f.email&&`<span>✉ ${esc(f.email)}</span>`, f.phone&&`<span>☎ ${esc(f.phone)}</span>`, f.loc&&`<span>📍 ${esc(f.loc)}</span>`, f.web&&`<span>🔗 ${esc(f.web)}</span>`, f.orcid&&`<span>ORCID ${esc(f.orcid)}</span>` ].filter(Boolean).join('');
+  const skills=(f.skills||'').split(',').map(s=>s.trim()).filter(Boolean);
+  $('#cv').innerHTML=`
+    <h1>${esc(f.name)||'Your Name'}</h1>
+    ${f.title?`<div class="cv-title">${esc(f.title)}</div>`:''}
+    <div class="cv-contact">${contact}</div>
+    ${f.summary?`<h2>Research summary</h2><div style="font-size:12.5px">${esc(f.summary)}</div>`:''}
+    ${section('Education','education')}
+    ${section('Experience','experience')}
+    ${section('Publications','pubs')}
+    ${section('Awards & grants','awards')}
+    ${skills.length?`<h2>Skills</h2><div class="skills">${skills.map(esc).join(' · ')}</div>`:''}`;
+}
+
+$('#print').addEventListener('click',()=>window.print());
+$('#html').addEventListener('click',()=>{
+  const css=document.querySelector('style').textContent;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(data.fields.name||'CV')}</title><style>body{margin:0;background:#fff}${css}</style></head><body><div id="cv" class="cv-doc">${$('#cv').innerHTML}</div></body></html>`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=(data.fields.name||'cv').replace(/[^a-z0-9]/gi,'_')+'.html';a.click();toast('HTML downloaded');
+});
+$('#reset').addEventListener('click',()=>{ if(confirm('Clear the whole CV?')){ data=blank(); save(); fillForm(); FIELDS.forEach(f=>$('#f_'+f).value=''); renderEditors(); renderCV(); } });
+
+// seed sample on first use
+if(!localStorage.getItem(KEY)){
+  data={ fields:{name:'Dr Ada Lovelace',title:'Postdoctoral Researcher, Computational Chemistry',email:'ada@uni.edu',loc:'London, UK',orcid:'0000-0002-1825-0097',summary:'Computational chemist working on machine-learning models for reaction prediction.',skills:'Python, RDKit, PyTorch, NMR, DFT'},
+    education:[{role:'PhD in Chemistry',org:'University of Cambridge',date:'2018–2022',desc:'Thesis on QSAR modelling of kinase inhibitors.'}],
+    experience:[{role:'Postdoctoral Researcher',org:'Imperial College London',date:'2022–present',desc:'Developing graph neural networks for retrosynthesis.'}],
+    pubs:[{desc:'Lovelace, A. (2023). Graph models for reaction prediction. J. Chem. Inf. Model., 63(4), 1100–1112.'}],
+    awards:[{role:'Marie Curie Fellowship',org:'European Commission',date:'2022'}] };
+  save();
+}
+fillForm(); renderEditors(); renderCV();
+</script>
+
+</body>
+</html>

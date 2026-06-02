@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molecular Weight Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-flask"></i></div><div>Molecular Weight</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-flask"></i></div>
+      <div>
+        <div class="tool-title">Molecular Weight Calculator</div>
+        <div class="tool-desc">Type a chemical formula — get the molar mass and elemental composition. Handles brackets and hydrates.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="panel-label"><span>Formula</span>
+      <div class="panel-actions" id="examples"></div>
+    </div>
+    <input type="text" id="formula" placeholder="e.g. C6H12O6, Ca(OH)2, CuSO4.5H2O" style="font-family:ui-monospace,Menlo,monospace;font-size:16px">
+    <div id="err" class="muted" style="font-size:12px;margin-top:8px;color:var(--red)"></div>
+  </div>
+
+  <div class="workspace" style="margin-top:16px" id="out" hidden>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Result</span></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Molar mass</div><div class="stat-value" id="mw">—</div></div>
+        <div class="stat-card"><div class="stat-label">Atoms total</div><div class="stat-value" id="atoms">—</div></div>
+        <div class="stat-card"><div class="stat-label">Distinct elements</div><div class="stat-value" id="nel">—</div></div>
+      </div>
+      <div class="divider"></div>
+      <label class="fld">Mass to moles (g) <input type="number" id="grams" placeholder="enter grams" step="any"></label>
+      <div class="muted" id="moles" style="font-size:13px;margin-top:6px"></div>
+    </div>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Elemental composition</span></div>
+      <div id="comp"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}
+  .crow{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+  .csym{width:30px;font-weight:600;color:var(--accent3)}
+  .cbar{flex:1;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden}
+  .cfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--teal))}
+  .cpct{width:120px;text-align:right;color:var(--text2);font-variant-numeric:tabular-nums;font-size:12px}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+// Standard atomic weights (IUPAC 2021, conventional)
+const AW = {H:1.008,He:4.0026,Li:6.94,Be:9.0122,B:10.81,C:12.011,N:14.007,O:15.999,F:18.998,Ne:20.180,Na:22.990,Mg:24.305,Al:26.982,Si:28.085,P:30.974,S:32.06,Cl:35.45,Ar:39.948,K:39.098,Ca:40.078,Sc:44.956,Ti:47.867,V:50.942,Cr:51.996,Mn:54.938,Fe:55.845,Co:58.933,Ni:58.693,Cu:63.546,Zn:65.38,Ga:69.723,Ge:72.630,As:74.922,Se:78.971,Br:79.904,Kr:83.798,Rb:85.468,Sr:87.62,Y:88.906,Zr:91.224,Nb:92.906,Mo:95.95,Tc:98,Ru:101.07,Rh:102.91,Pd:106.42,Ag:107.87,Cd:112.41,In:114.82,Sn:118.71,Sb:121.76,Te:127.60,I:126.90,Xe:131.29,Cs:132.91,Ba:137.33,La:138.91,Ce:140.12,Pr:140.91,Nd:144.24,Pm:145,Sm:150.36,Eu:151.96,Gd:157.25,Tb:158.93,Dy:162.50,Ho:164.93,Er:167.26,Tm:168.93,Yb:173.05,Lu:174.97,Hf:178.49,Ta:180.95,W:183.84,Re:186.21,Os:190.23,Ir:192.22,Pt:195.08,Au:196.97,Hg:200.59,Tl:204.38,Pb:207.2,Bi:208.98,Po:209,At:210,Rn:222,Fr:223,Ra:226,Ac:227,Th:232.04,Pa:231.04,U:238.03,Np:237,Pu:244};
+
+// Parse formula into element counts. Supports (), [], {}, and hydrate dots (. or ·) with leading multiplier.
+function parse(formula){
+  let s = formula.replace(/\s+/g,'').replace(/·/g,'.').replace(/\[/g,'(').replace(/\]/g,')').replace(/\{/g,'(').replace(/\}/g,')');
+  if (!s) throw new Error('');
+  // handle hydrate / addition segments separated by dots
+  const segs = s.split('.').filter(Boolean);
+  const total = {};
+  for (let seg of segs){
+    // leading multiplier e.g. 5H2O
+    let mult = 1;
+    const m = seg.match(/^(\d+)(?=[A-Za-z(])/);
+    if (m){ mult = parseInt(m[1],10); seg = seg.slice(m[1].length); }
+    const counts = parseSeg(seg);
+    for (const [el,n] of Object.entries(counts)) total[el] = (total[el]||0) + n*mult;
+  }
+  return total;
+}
+
+function parseSeg(s){
+  let i = 0;
+  function group(){
+    const stack = {};
+    while (i < s.length){
+      const ch = s[i];
+      if (ch === '('){ i++; const sub = group(); if (s[i] !== ')') throw new Error('Unbalanced parentheses'); i++;
+        const n = readNum(); for (const [e,c] of Object.entries(sub)) stack[e]=(stack[e]||0)+c*n;
+      } else if (ch === ')'){ break; }
+      else if (/[A-Z]/.test(ch)){
+        let el = ch; i++;
+        while (i < s.length && /[a-z]/.test(s[i])){ el += s[i]; i++; }
+        if (!(el in AW)) throw new Error('Unknown element: ' + el);
+        const n = readNum(); stack[el]=(stack[el]||0)+n;
+      } else { throw new Error('Unexpected character: ' + ch); }
+    }
+    return stack;
+  }
+  function readNum(){ let num=''; while(i<s.length && /\d/.test(s[i])){ num+=s[i]; i++; } return num?parseInt(num,10):1; }
+  const r = group();
+  if (i < s.length) throw new Error('Unexpected character: ' + s[i]);
+  return r;
+}
+
+function calc(){
+  const raw = $('#formula').value.trim();
+  $('#err').textContent = '';
+  if (!raw){ $('#out').hidden = true; return; }
+  let counts;
+  try { counts = parse(raw); }
+  catch(e){ $('#err').textContent = e.message || 'Could not parse formula.'; $('#out').hidden = true; return; }
+  if (!Object.keys(counts).length){ $('#out').hidden = true; return; }
+
+  let mw = 0, atoms = 0;
+  const parts = Object.entries(counts).map(([el,n]) => { const mass = AW[el]*n; mw += mass; atoms += n; return { el, n, mass }; });
+  parts.sort((a,b)=>b.mass-a.mass);
+
+  $('#out').hidden = false;
+  $('#mw').textContent = mw.toFixed(3) + ' g/mol';
+  $('#atoms').textContent = atoms;
+  $('#nel').textContent = parts.length;
+
+  $('#comp').innerHTML = parts.map(p => {
+    const pct = p.mass/mw*100;
+    return `<div class="crow">
+      <div class="csym">${p.el}</div>
+      <div class="cbar"><div class="cfill" style="width:${pct}%"></div></div>
+      <div class="cpct">${pct.toFixed(2)}% · ${p.n}×</div>
+    </div>`;
+  }).join('');
+
+  window._mw = mw;
+  updateMoles();
+}
+
+function updateMoles(){
+  const g = parseFloat($('#grams').value);
+  if (Number.isFinite(g) && window._mw){
+    const mol = g/window._mw;
+    $('#moles').innerHTML = `<b>${g} g</b> = <b>${mol.toPrecision(4)} mol</b> = ${(mol*6.02214076e23).toExponential(3)} molecules`;
+  } else $('#moles').textContent = '';
+}
+
+const EX = ['C6H12O6','C9H8O4','Ca(OH)2','CuSO4.5H2O','C8H10N4O2','NaCl','H2SO4','KMnO4'];
+$('#examples').innerHTML = EX.map(f=>`<span class="ex" data-f="${f}" style="font-size:11px;color:var(--accent3);cursor:pointer;padding:2px 6px;border-radius:5px;background:var(--surface);font-family:ui-monospace,Menlo,monospace">${f}</span>`).join(' ');
+$('#examples').querySelectorAll('.ex').forEach(e=>e.addEventListener('click',()=>{ $('#formula').value=e.dataset.f; calc(); }));
+
+$('#formula').addEventListener('input', calc);
+$('#grams').addEventListener('input', updateMoles);
+</script>
+
+</body>
+</html>

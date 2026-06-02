@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Periodic Table — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-table"></i></div><div>Periodic Table</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1280px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-table"></i></div>
+      <div>
+        <div class="tool-title">Interactive Periodic Table</div>
+        <div class="tool-desc">All 118 elements. Click for details, search by name/symbol/number, and colour by category or electronegativity.</div>
+      </div>
+    </div>
+    <div class="row">
+      <input type="search" id="search" placeholder="Search element…" style="width:180px">
+      <div class="tabs" id="colormode" style="margin-bottom:0">
+        <button class="tab active" data-m="category">Category</button>
+        <button class="tab" data-m="en">Electroneg.</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="legend" class="row" style="gap:8px;margin-bottom:14px;font-size:11px"></div>
+
+  <div class="ptable" id="ptable"></div>
+
+  <div id="detail" class="panel" style="margin-top:18px;min-height:auto;display:none"></div>
+</main>
+
+<style>
+  .ptable { display:grid; grid-template-columns:repeat(18,1fr); gap:4px; }
+  .cell { aspect-ratio:1; border-radius:6px; padding:3px 4px; cursor:pointer; position:relative; border:1px solid transparent; transition:transform .1s; overflow:hidden; min-width:0; }
+  .cell:hover { transform:scale(1.12); z-index:5; border-color:#fff; }
+  .cell .num { font-size:8px; color:rgba(255,255,255,0.7); line-height:1; }
+  .cell .sym { font-size:15px; font-weight:700; color:#fff; line-height:1.1; }
+  .cell .nm { font-size:6.5px; color:rgba(255,255,255,0.75); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cell.dim { opacity:0.18; }
+  .gap { grid-column: span 1; }
+  @media (max-width:900px){ .ptable{ gap:2px } .cell .sym{ font-size:11px } .cell .nm{ display:none } }
+  .dt-head { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+  .dt-sym { width:72px; height:72px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; }
+  .dt-sym .s { font-size:30px; font-weight:700; }
+  .dt-sym .n { font-size:11px; }
+  .lg-item { display:inline-flex; align-items:center; gap:5px; color:var(--text2); }
+  .lg-sw { width:12px; height:12px; border-radius:3px; }
+</style>
+
+<script src="../assets/chem-data.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const { ELEMENTS, CATEGORY_LABELS } = CHEM;
+let mode = 'category';
+
+const CAT_COLORS = {
+  nonmetal:'#4ade80', noble:'#7c6df0', alkali:'#f87171', alkaline:'#fb923c',
+  metalloid:'#2dd4bf', halogen:'#fbbf24', transition:'#60a5fa', postmetal:'#94a3b8',
+  lanthanide:'#f472b6', actinide:'#c084fc', unknown:'#52525b'
+};
+function enColor(en){
+  if (en == null) return '#3a3a44';
+  const t = Math.max(0, Math.min(1, (en - 0.7) / (3.98 - 0.7)));
+  const r = Math.round(45 + t*(248-45)), g = Math.round(80 + t*(113-80)), b = Math.round(220 - t*(220-113));
+  return `rgb(${r},${g},${b})`;
+}
+function cellColor(e){ return mode === 'category' ? CAT_COLORS[e.category] : enColor(e.en); }
+
+function buildTable(){
+  const grid = $('#ptable');
+  grid.innerHTML = '';
+  // place into 18 x 10 grid; lanthanides ypos 9, actinides ypos 10
+  const cells = {};
+  ELEMENTS.forEach(e => { cells[e.ypos + '-' + e.xpos] = e; });
+  for (let y = 1; y <= 10; y++){
+    for (let x = 1; x <= 18; x++){
+      const e = cells[y + '-' + x];
+      if (y === 8){ continue; } // spacer handled by gap row below
+      const div = document.createElement('div');
+      if (!e){ div.className = 'gap'; grid.appendChild(div); continue; }
+      div.className = 'cell';
+      div.style.background = cellColor(e);
+      div.dataset.num = e.number;
+      div.innerHTML = `<div class="num">${e.number}</div><div class="sym">${e.symbol}</div><div class="nm">${e.name}</div>`;
+      div.addEventListener('click', () => showDetail(e));
+      grid.appendChild(div);
+    }
+    if (y === 7){ // insert a blank spacer row before lanthanide/actinide block
+      for (let x = 0; x < 18; x++){ const d = document.createElement('div'); d.className='gap'; d.style.height='8px'; grid.appendChild(d); }
+    }
+  }
+}
+
+function showDetail(e){
+  const d = $('#detail');
+  d.style.display = 'block';
+  const enText = e.en == null ? '—' : e.en.toFixed(2);
+  d.innerHTML = `
+    <div class="dt-head">
+      <div class="dt-sym" style="background:${cellColor(e)}"><div class="n">${e.number}</div><div class="s">${e.symbol}</div></div>
+      <div>
+        <div style="font-size:20px;font-weight:700">${e.name}</div>
+        <div class="muted" style="font-size:13px">${CATEGORY_LABELS[e.category]}</div>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Atomic number</div><div class="stat-value">${e.number}</div></div>
+      <div class="stat-card"><div class="stat-label">Atomic weight</div><div class="stat-value">${e.weight}</div></div>
+      <div class="stat-card"><div class="stat-label">Group</div><div class="stat-value">${e.ypos>=9?'—':e.xpos}</div></div>
+      <div class="stat-card"><div class="stat-label">Period</div><div class="stat-value">${e.ypos>=9?(e.ypos===9?6:7):e.ypos}</div></div>
+      <div class="stat-card"><div class="stat-label">Electronegativity</div><div class="stat-value">${enText}</div></div>
+      <div class="stat-card"><div class="stat-label">Category</div><div class="stat-value" style="font-size:13px">${CATEGORY_LABELS[e.category]}</div></div>
+    </div>`;
+  d.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+function buildLegend(){
+  if (mode === 'category'){
+    $('#legend').innerHTML = Object.entries(CATEGORY_LABELS).map(([k,v]) =>
+      `<span class="lg-item"><span class="lg-sw" style="background:${CAT_COLORS[k]}"></span>${v}</span>`).join('');
+  } else {
+    $('#legend').innerHTML = `<span class="lg-item"><span class="lg-sw" style="background:${enColor(0.7)}"></span>Low EN (0.7)</span>
+      <span class="lg-item"><span class="lg-sw" style="background:${enColor(2.3)}"></span>2.3</span>
+      <span class="lg-item"><span class="lg-sw" style="background:${enColor(3.98)}"></span>High EN (3.98)</span>`;
+  }
+}
+
+$('#search').addEventListener('input', () => {
+  const q = $('#search').value.trim().toLowerCase();
+  document.querySelectorAll('.cell').forEach(c => {
+    const e = ELEMENTS.find(x => x.number == c.dataset.num);
+    const match = !q || e.name.toLowerCase().includes(q) || e.symbol.toLowerCase() === q || String(e.number) === q || e.category.includes(q);
+    c.classList.toggle('dim', !match);
+  });
+});
+
+document.querySelectorAll('#colormode .tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('#colormode .tab').forEach(x => x.classList.remove('active'));
+  t.classList.add('active'); mode = t.dataset.m; buildTable(); buildLegend();
+}));
+
+buildTable(); buildLegend();
+</script>
+
+</body>
+</html>

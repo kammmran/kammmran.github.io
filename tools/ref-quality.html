@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reference Quality Score — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-award"></i></div><div>Reference Quality Score</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-award"></i></div>
+      <div>
+        <div class="tool-title">Reference Quality Score</div>
+        <div class="tool-desc">Scores each reference on completeness — author, year, title, venue, DOI/URL — and gives your bibliography an overall grade.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld">Manuscript year<input type="number" id="yr" style="width:120px" min="1900" max="2100"></label>
+    </div>
+    <label class="fld">Reference list — one reference per line
+      <textarea id="refs" style="min-height:210px" placeholder="Smith, J., & Doe, A. (2021). A title here. Journal of X, 12(3), 45-60. https://doi.org/10.1/x"></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-star"></i> Score references</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .ref-row{padding:10px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:7px;font-size:13px;line-height:1.5;display:flex;gap:12px;align-items:flex-start}
+  .scorebadge{flex:none;width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .checks{margin-top:5px;display:flex;flex-wrap:wrap;gap:8px;font-size:11px}
+  .ck{display:inline-flex;align-items:center;gap:3px;color:var(--text3)}
+  .ck.on{color:var(--green)} .ck.off{color:var(--text3);opacity:.6}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+$('#yr').value = new Date().getFullYear();
+
+function scoreRef(r, now){
+  const yearM = r.match(/\b(1[89]\d{2}|20\d{2})\b/);
+  const year = yearM?+yearM[0]:null;
+  const checks = {
+    author:  {w:20, ok:/[A-Z][a-z]+,?\s*[A-Z]\.?|[A-Z]\.\s?[A-Z][a-z]+/.test(r), lbl:'author'},
+    year:    {w:20, ok:!!year, lbl:'year'},
+    title:   {w:20, ok:r.replace(/https?:\/\/\S+/g,'').split(/[.?]/).some(s=>s.trim().split(/\s+/).length>=4), lbl:'title'},
+    venue:   {w:15, ok:/journal|review|proceedings|conference|nature|science|press|ed\.|vol|\bpp?\.|\b\d+\(\d+\)|university/i.test(r), lbl:'venue'},
+    doi:     {w:20, ok:/(doi\.org|doi:|10\.\d{4,}\/|https?:\/\/)/i.test(r), lbl:'DOI/URL'},
+    pages:   {w:5,  ok:/\b\d+\s*[–-]\s*\d+\b/.test(r), lbl:'pages'},
+  };
+  let s=0; for(const k in checks) if(checks[k].ok) s+=checks[k].w;
+  return {score:s, checks, year};
+}
+
+function run(){
+  const now = parseInt($('#yr').value,10)||new Date().getFullYear();
+  const refs = $('#refs').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const out=$('#out');
+  if(!refs.length){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste a reference list.</div>'; return; }
+  const col = s=>s>=80?'--green':s>=55?'--amber':'--red';
+  let totalScore=0, withDoi=0, recent=0, withYear=0;
+  const rows = refs.map(r=>{
+    const {score,checks,year} = scoreRef(r,now);
+    totalScore+=score;
+    if(checks.doi.ok) withDoi++;
+    if(year){ withYear++; if(now-year<=5) recent++; }
+    const c=col(score);
+    return `<div class="ref-row">
+      <div class="scorebadge" style="background:rgba(127,127,127,.08);color:var(${c});border:1px solid var(${c})">${score}</div>
+      <div style="flex:1">${esc(r)}
+        <div class="checks">${Object.values(checks).map(ch=>`<span class="ck ${ch.ok?'on':'off'}"><i class="ti ti-${ch.ok?'check':'x'}"></i>${ch.lbl}</span>`).join('')}</div>
+      </div></div>`;
+  });
+  const avg = totalScore/refs.length;
+  const grade = avg>=85?'A':avg>=70?'B':avg>=55?'C':avg>=40?'D':'F';
+  out.innerHTML = `
+    <div class="stat-grid" style="margin:10px 0 14px">
+      <div class="stat-card"><div class="stat-label">References</div><div class="stat-value">${refs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Avg quality</div><div class="stat-value" style="color:var(${col(avg)})">${avg.toFixed(0)}/100</div></div>
+      <div class="stat-card"><div class="stat-label">Grade</div><div class="stat-value" style="color:var(${col(avg)})">${grade}</div></div>
+      <div class="stat-card"><div class="stat-label">With DOI/URL</div><div class="stat-value">${(withDoi/refs.length*100).toFixed(0)}%</div></div>
+      <div class="stat-card"><div class="stat-label">≤ 5 yr old</div><div class="stat-value">${withYear?(recent/withYear*100).toFixed(0):0}%</div></div>
+    </div>
+    ${rows.join('')}
+    <div class="muted" style="font-size:12px;margin-top:8px">Heuristic completeness scoring — a low score usually means a field is missing or unparseable, not that the source is bad.</div>`;
+}
+$('#run').addEventListener('click',run);
+</script>
+
+</body>
+</html>

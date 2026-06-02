@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manuscript Completeness — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-checklist"></i></div><div>Manuscript Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-checklist"></i></div>
+      <div>
+        <div class="tool-title">Manuscript Completeness Checker</div>
+        <div class="tool-desc">Paste your full manuscript — it checks for the expected IMRaD sections and common submission essentials.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Manuscript text</span><button class="btn btn-sm btn-ghost" id="sample">Sample</button></div>
+      <textarea id="input" placeholder="Paste the full text of your manuscript…"></textarea>
+      <div class="muted" id="wc" style="font-size:12px;margin-top:8px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Completeness</span></div>
+      <div class="scorebar"><div class="scorebar-fill" id="fill"></div><span id="num">0%</span></div>
+      <div class="divider"></div>
+      <div id="checks" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .scorebar{position:relative;height:34px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;display:flex;align-items:center}
+  .scorebar-fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--red),var(--amber),var(--green));transition:width .3s}
+  .scorebar span{position:relative;z-index:1;padding-left:12px;font-weight:700;color:#0f0f13;mix-blend-mode:luminosity}
+  .chk{display:flex;align-items:flex-start;gap:10px;font-size:13px}
+  .chk i{font-size:17px;flex-shrink:0;margin-top:1px}
+  .ok{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
+  .chk-detail{color:var(--text2);font-size:12px}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+const SECTIONS=[
+  ['Abstract', /\babstract\b/i],
+  ['Introduction', /\b(introduction|background)\b/i],
+  ['Methods', /\b(methods?|methodology|materials and methods|experimental)\b/i],
+  ['Results', /\b(results?|findings)\b/i],
+  ['Discussion', /\bdiscussion\b/i],
+  ['Conclusion', /\b(conclusions?|concluding remarks)\b/i],
+  ['References', /\b(references|bibliography|works cited|literature cited)\b/i],
+];
+const EXTRAS=[
+  ['Keywords', /\bkey\s?words?\b/i, 'List 3–6 keywords after the abstract.'],
+  ['Funding / acknowledgements', /\b(funding|acknowledge?ments?|grant)\b/i, 'State funding sources or acknowledgements.'],
+  ['Author contributions', /\b(author contributions?|CRediT)\b/i, 'Many journals require a contributions statement.'],
+  ['Conflict of interest', /\b(conflict[s]? of interest|competing interests|declaration of interest)\b/i, 'Declare any competing interests.'],
+  ['Data availability', /\b(data availability|data accessibility|available upon request|repository)\b/i, 'Add a data availability statement.'],
+  ['Ethics statement', /\b(ethic(s|al)|IRB|institutional review|informed consent)\b/i, 'Required for human/animal studies.'],
+];
+
+function evaluate(){
+  const text=$('#input').value; const lower=text.toLowerCase();
+  const words=(text.match(/\b[\w'-]+\b/g)||[]).length;
+  $('#wc').textContent = words?`${words.toLocaleString()} words`:'';
+  if(!text.trim()){ $('#checks').innerHTML='<span class="muted">Paste your manuscript to run the checks.</span>'; $('#fill').style.width='0%'; $('#num').textContent='0%'; return; }
+
+  const checks=[]; let score=0, max=0;
+  // section headings — look at line starts for stronger signal
+  const lines=text.split(/\n/).map(l=>l.trim());
+  SECTIONS.forEach(([name,re])=>{
+    max+=2;
+    const asHeading=lines.some(l=>l.length<60 && re.test(l));
+    const anywhere=re.test(lower);
+    if(asHeading){ score+=2; checks.push(['ok',name,'Section heading found.']); }
+    else if(anywhere){ score+=1; checks.push(['warn',name,'Mentioned but not as a clear heading.']); }
+    else checks.push(['bad',name,'Not found — add this section.']);
+  });
+
+  // citations present
+  max+=2;
+  const hasCites = /\[\d+\]|\(\w+,?\s?\d{4}\)|\bet al\.?/i.test(text);
+  if(hasCites){ score+=2; checks.push(['ok','In-text citations','Citation markers detected.']); }
+  else checks.push(['bad','In-text citations','No citation markers ([1], (Author, 2020), et al.) found.']);
+
+  // figures/tables
+  max+=1;
+  if(/\b(figure|fig\.?|table)\s?\d+/i.test(text)){ score+=1; checks.push(['ok','Figures / tables','Figure or table references present.']); }
+  else checks.push(['warn','Figures / tables','No "Figure 1"/"Table 1" references found.']);
+
+  // extras
+  EXTRAS.forEach(([name,re,tip])=>{ max+=1; if(re.test(lower)){ score+=1; checks.push(['ok',name,'Present.']); } else checks.push(['warn',name,tip]); });
+
+  const pct=Math.round(score/max*100);
+  $('#fill').style.width=pct+'%'; $('#num').textContent=pct+'%';
+  $('#checks').innerHTML=checks.map(([st,nm,d])=>{
+    const icon=st==='ok'?'circle-check':st==='warn'?'alert-triangle':'circle-x';
+    return `<div class="chk"><i class="ti ti-${icon} ${st}"></i><div><b>${nm}</b><div class="chk-detail">${d}</div></div></div>`;
+  }).join('');
+}
+$('#input').addEventListener('input',()=>{clearTimeout(window._e);window._e=setTimeout(evaluate,150);});
+$('#sample').addEventListener('click',()=>{
+  $('#input').value=`Abstract\nThis study examines... We found a significant effect (p < 0.01).\n\nKeywords: ecology, modelling, biodiversity\n\nIntroduction\nClimate change threatens... [1]. However, little is known about...\n\nMethods\nWe collected 240 samples and analysed them using mixed models (Table 1).\n\nResults\nAbundance increased by 32% (Figure 1). Smith et al. reported similar trends.\n\nDiscussion\nThese findings suggest...\n\nConclusion\nWe conclude that targeted management is needed.\n\nData availability\nData are available in the Zenodo repository.\n\nReferences\n[1] Smith, J. (2020). ...`;
+  evaluate(); toast('Sample loaded');
+});
+evaluate();
+</script>
+
+</body>
+</html>

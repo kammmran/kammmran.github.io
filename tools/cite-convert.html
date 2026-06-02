@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citation Converter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-transform"></i></div><div>Citation Converter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-transform"></i></div>
+      <div>
+        <div class="tool-title">Citation Format Converter</div>
+        <div class="tool-desc">Convert references between BibTeX, RIS and CSL-JSON, and preview a formatted APA reference. Runs locally.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label"><span>Input</span>
+        <div class="panel-actions">
+          <select id="from" style="padding:4px 26px 4px 8px;font-size:12px">
+            <option value="bibtex">BibTeX</option><option value="ris">RIS</option><option value="csl">CSL-JSON</option>
+          </select>
+          <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="Paste BibTeX, RIS, or CSL-JSON…" style="min-height:320px;font-size:12px"></textarea>
+      <div id="err" style="color:var(--red);font-size:12px;margin-top:6px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Output</span>
+        <div class="panel-actions">
+          <select id="to" style="padding:4px 26px 4px 8px;font-size:12px">
+            <option value="ris">RIS</option><option value="bibtex">BibTeX</option><option value="csl">CSL-JSON</option><option value="apa">APA (formatted)</option>
+          </select>
+          <button class="btn btn-sm" id="copy"><i class="ti ti-copy"></i> Copy</button>
+        </div>
+      </div>
+      <textarea id="output" readonly style="min-height:320px;font-size:12px"></textarea>
+      <div class="muted" id="cnt" style="font-size:12px;margin-top:6px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+// ---- Internal record shape: {type, title, author:[{family,given}], year, journal, volume, issue, pages, doi, publisher, url} ----
+const TYPE_MAP = { article:'article-journal', book:'book', inproceedings:'paper-conference', incollection:'chapter', phdthesis:'thesis', techreport:'report', misc:'document' };
+const RIS_TYPE = { 'article-journal':'JOUR', book:'BOOK', 'paper-conference':'CONF', chapter:'CHAP', thesis:'THES', report:'RPRT', document:'GEN' };
+const RIS_TYPE_REV = { JOUR:'article-journal', BOOK:'book', CONF:'paper-conference', CHAP:'chapter', THES:'thesis', RPRT:'report', GEN:'document', ELEC:'webpage' };
+
+function splitName(s){
+  s=s.trim();
+  if(s.includes(',')){ const [f,g]=s.split(',',2); return {family:f.trim(), given:(g||'').trim()}; }
+  const parts=s.split(/\s+/); const family=parts.pop(); return {family, given:parts.join(' ')};
+}
+
+function parseBibtex(text){
+  const recs=[]; const entries=text.split(/(?=@\w+\s*\{)/).filter(e=>e.trim().startsWith('@'));
+  for(const e of entries){
+    const m=e.match(/@(\w+)\s*\{\s*([^,]*),([\s\S]*)\}\s*$/);
+    if(!m) continue;
+    const r={ type: TYPE_MAP[m[1].toLowerCase()]||'document', _key:m[2].trim(), author:[] };
+    const body=m[3];
+    const fieldRe=/(\w+)\s*=\s*(\{((?:[^{}]|\{[^{}]*\})*)\}|"([^"]*)"|([^,\n]+))/g; let f;
+    while((f=fieldRe.exec(body))){
+      const key=f[1].toLowerCase(); let val=(f[3]??f[4]??f[5]??'').trim().replace(/\s+/g,' ');
+      if(key==='author'||key==='editor'){ r.author=val.split(/\s+and\s+/).map(splitName); }
+      else if(key==='title') r.title=val;
+      else if(key==='journal'||key==='booktitle') r.journal=val;
+      else if(key==='year') r.year=val;
+      else if(key==='volume') r.volume=val;
+      else if(key==='number'||key==='issue') r.issue=val;
+      else if(key==='pages') r.pages=val.replace(/--/,'–');
+      else if(key==='doi') r.doi=val;
+      else if(key==='publisher') r.publisher=val;
+      else if(key==='url') r.url=val;
+    }
+    recs.push(r);
+  }
+  return recs;
+}
+
+function parseRIS(text){
+  const recs=[]; let cur=null;
+  text.split(/\r?\n/).forEach(line=>{
+    const m=line.match(/^([A-Z][A-Z0-9])\s+-\s?(.*)$/);
+    if(!m) return;
+    const [,tag,val]=m;
+    if(tag==='TY'){ cur={ type:RIS_TYPE_REV[val.trim()]||'document', author:[] }; recs.push(cur); }
+    else if(!cur) return;
+    else if(tag==='AU'||tag==='A1') cur.author.push(splitName(val));
+    else if(tag==='TI'||tag==='T1') cur.title=val;
+    else if(tag==='JO'||tag==='JF'||tag==='T2') cur.journal=val;
+    else if(tag==='PY'||tag==='Y1') cur.year=(val.match(/\d{4}/)||[''])[0];
+    else if(tag==='VL') cur.volume=val;
+    else if(tag==='IS') cur.issue=val;
+    else if(tag==='SP') cur.sp=val;
+    else if(tag==='EP') cur.ep=val;
+    else if(tag==='DO') cur.doi=val;
+    else if(tag==='PB') cur.publisher=val;
+    else if(tag==='UR') cur.url=val;
+  });
+  recs.forEach(r=>{ if(r.sp) r.pages=r.sp+(r.ep?'–'+r.ep:''); });
+  return recs;
+}
+
+function parseCSL(text){
+  let data=JSON.parse(text); if(!Array.isArray(data)) data=[data];
+  return data.map(d=>({
+    type:d.type||'document', title:d.title,
+    author:(d.author||[]).map(a=>({family:a.family||'',given:a.given||''})),
+    year:(d.issued&&d.issued['date-parts']&&d.issued['date-parts'][0]&&d.issued['date-parts'][0][0])||d.year||'',
+    journal:d['container-title'], volume:d.volume, issue:d.issue, pages:d.page, doi:d.DOI, publisher:d.publisher, url:d.URL
+  }));
+}
+
+function toBibtex(recs){
+  return recs.map((r,i)=>{
+    const bt=Object.keys(TYPE_MAP).find(k=>TYPE_MAP[k]===r.type)||'article';
+    const key=r._key || ((r.author[0]?.family||'ref').toLowerCase().replace(/[^a-z]/g,'')+(r.year||''));
+    const fields=[];
+    if(r.author.length) fields.push(['author', r.author.map(a=>a.family+(a.given?', '+a.given:'')).join(' and ')]);
+    if(r.title) fields.push(['title', r.title]);
+    if(r.journal) fields.push([bt==='inproceedings'?'booktitle':'journal', r.journal]);
+    if(r.year) fields.push(['year', r.year]);
+    if(r.volume) fields.push(['volume', r.volume]);
+    if(r.issue) fields.push(['number', r.issue]);
+    if(r.pages) fields.push(['pages', r.pages.replace(/–/,'--')]);
+    if(r.publisher) fields.push(['publisher', r.publisher]);
+    if(r.doi) fields.push(['doi', r.doi]);
+    if(r.url) fields.push(['url', r.url]);
+    return `@${bt}{${key},\n`+fields.map(([k,v])=>`  ${k} = {${v}}`).join(',\n')+`\n}`;
+  }).join('\n\n');
+}
+function toRIS(recs){
+  return recs.map(r=>{
+    const L=[['TY', RIS_TYPE[r.type]||'GEN']];
+    r.author.forEach(a=>L.push(['AU', a.family+(a.given?', '+a.given:'')]));
+    if(r.title) L.push(['TI', r.title]);
+    if(r.journal) L.push(['JO', r.journal]);
+    if(r.year) L.push(['PY', r.year]);
+    if(r.volume) L.push(['VL', r.volume]);
+    if(r.issue) L.push(['IS', r.issue]);
+    if(r.pages){ const [sp,ep]=r.pages.split(/[–-]/); L.push(['SP', sp]); if(ep)L.push(['EP',ep]); }
+    if(r.doi) L.push(['DO', r.doi]);
+    if(r.publisher) L.push(['PB', r.publisher]);
+    if(r.url) L.push(['UR', r.url]);
+    L.push(['ER','']);
+    return L.map(([t,v])=>`${t}  - ${v}`).join('\n');
+  }).join('\n\n');
+}
+function toCSL(recs){
+  return JSON.stringify(recs.map((r,i)=>{
+    const o={ id:r._key||('ref'+(i+1)), type:r.type, title:r.title, author:r.author.map(a=>({family:a.family,given:a.given})) };
+    if(r.year) o.issued={'date-parts':[[+r.year||r.year]]};
+    if(r.journal) o['container-title']=r.journal;
+    if(r.volume) o.volume=r.volume; if(r.issue) o.issue=r.issue; if(r.pages) o.page=r.pages;
+    if(r.doi) o.DOI=r.doi; if(r.publisher) o.publisher=r.publisher; if(r.url) o.URL=r.url;
+    return o;
+  }), null, 2);
+}
+function toAPA(recs){
+  return recs.map(r=>{
+    const authors=r.author.map(a=>a.family+(a.given?', '+a.given.split(/\s+/).map(g=>g[0]+'.').join(' '):'')).join(', ');
+    const yr=r.year?` (${r.year}).`:'';
+    const ttl=r.title?` ${r.title}.`:'';
+    const jr=r.journal?` ${r.journal}`:'';
+    const vip=(r.volume?`, ${r.volume}`:'')+(r.issue?`(${r.issue})`:'')+(r.pages?`, ${r.pages}`:'');
+    const doi=r.doi?` https://doi.org/${r.doi}`:'';
+    return `${authors}${yr}${ttl}${jr}${vip}.${doi}`.replace(/\s+/g,' ').trim();
+  }).join('\n\n');
+}
+
+function convert(){
+  const from=$('#from').value, to=$('#to').value, text=$('#input').value.trim();
+  $('#err').textContent=''; $('#cnt').textContent='';
+  if(!text){ $('#output').value=''; return; }
+  let recs;
+  try{ recs = from==='bibtex'?parseBibtex(text):from==='ris'?parseRIS(text):parseCSL(text); }
+  catch(e){ $('#err').textContent='Parse error: '+e.message; $('#output').value=''; return; }
+  if(!recs.length){ $('#err').textContent='No references found.'; $('#output').value=''; return; }
+  const out = to==='bibtex'?toBibtex(recs):to==='ris'?toRIS(recs):to==='csl'?toCSL(recs):toAPA(recs);
+  $('#output').value=out;
+  $('#cnt').textContent=`${recs.length} reference${recs.length!==1?'s':''} converted`;
+}
+
+['from','to','input'].forEach(id=>$('#'+id).addEventListener('input',convert));
+['from','to'].forEach(id=>$('#'+id).addEventListener('change',convert));
+$('#copy').addEventListener('click',()=>{ if($('#output').value){ navigator.clipboard.writeText($('#output').value); toast('Copied'); } });
+$('#sample').addEventListener('click',()=>{
+  $('#from').value='bibtex';
+  $('#input').value='@article{watson1953,\n  author = {Watson, James D. and Crick, Francis H. C.},\n  title = {Molecular Structure of Nucleic Acids},\n  journal = {Nature},\n  year = {1953},\n  volume = {171},\n  number = {4356},\n  pages = {737--738},\n  doi = {10.1038/171737a0}\n}';
+  convert();
+});
+convert();
+</script>
+
+</body>
+</html>

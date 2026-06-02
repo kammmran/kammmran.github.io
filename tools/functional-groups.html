@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Functional Group Identifier — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-hexagons"></i></div><div>Functional Groups</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-hexagons"></i></div>
+      <div>
+        <div class="tool-title">Functional Group Identifier</div>
+        <div class="tool-desc">Enter a SMILES → detect common functional groups via substructure matching, with the molecule rendered.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row">
+      <input type="text" id="smiles" placeholder="e.g. CC(=O)Oc1ccccc1C(=O)O (aspirin)" style="flex:1;font-family:ui-monospace,Menlo,monospace">
+      <button class="btn btn-primary" id="go"><i class="ti ti-search"></i> Detect</button>
+      <span class="ex" data-s="CC(=O)Oc1ccccc1C(=O)O" style="font-size:11px;color:var(--accent3);cursor:pointer;padding:4px 8px;background:var(--surface);border-radius:6px">aspirin</span>
+    </div>
+    <div id="status" style="font-size:13px;margin-top:8px"></div>
+  </div>
+
+  <div class="workspace" id="result" style="margin-top:16px" hidden>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Structure</span></div>
+      <div id="structure" style="background:#fff;border-radius:var(--radius-sm);min-height:240px;display:flex;align-items:center;justify-content:center"></div>
+    </div>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Detected groups</span><span class="muted" id="count" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
+      <div id="groups" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+</main>
+
+<style>
+  .fg{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px}
+  .fg.hit{border-color:rgba(74,222,128,0.5);background:rgba(74,222,128,0.06)}
+  .fg .nm{font-weight:600} .fg .sm{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--text3)} .fg .spacer{flex:1}
+  .ok{color:var(--green)}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ready(cb){ if(window.OCL&&OCL.Molecule)return cb(); let n=0;const iv=setInterval(()=>{if(window.OCL&&OCL.Molecule){clearInterval(iv);cb();}else if(++n>60){clearInterval(iv);$('#status').innerHTML='<span style="color:var(--red)">Could not load chemistry engine.</span>';}},100); }
+
+// name, query SMILES (as fragment). Order roughly specific → general.
+const GROUPS=[
+  ['Carboxylic acid','C(=O)O'],
+  ['Ester','C(=O)OC'],
+  ['Amide','C(=O)N'],
+  ['Aldehyde','[CH](=O)'],
+  ['Ketone','CC(=O)C'],
+  ['Anhydride','C(=O)OC(=O)'],
+  ['Alcohol / hydroxyl','CO'],
+  ['Phenol','c[OH]'],
+  ['Ether','COC'],
+  ['Primary amine','CN'],
+  ['Nitrile','C#N'],
+  ['Nitro','[N+](=O)[O-]'],
+  ['Aromatic ring','c1ccccc1'],
+  ['Alkene','C=C'],
+  ['Alkyne','C#C'],
+  ['Thiol','CS'],
+  ['Sulfonic acid','S(=O)(=O)O'],
+  ['Phosphate','P(=O)(O)O'],
+  ['Imine','C=N'],
+];
+
+function detect(){
+  ready(()=>{
+    const smi=$('#smiles').value.trim(); $('#status').textContent='';
+    if(!smi){ $('#result').hidden=true; return; }
+    let mol;
+    try{ mol=OCL.Molecule.fromSmiles(smi); if(mol.getAllAtoms()===0) throw 0; }
+    catch(e){ $('#status').innerHTML='<span style="color:var(--red)"><i class="ti ti-circle-x"></i> Invalid SMILES.</span>'; $('#result').hidden=true; return; }
+    $('#status').innerHTML='<span class="ok"><i class="ti ti-circle-check"></i> Valid molecule.</span>';
+    $('#result').hidden=false;
+    $('#structure').innerHTML=mol.toSVG(400,240,'m',{autoCrop:true,autoCropMargin:12});
+
+    const searcher=new OCL.SSSearcher();
+    const hits=[];
+    GROUPS.forEach(([name,q])=>{
+      let match=false;
+      try{ const frag=OCL.Molecule.fromSmiles(q); frag.setFragment(true); searcher.setMolecule(mol); searcher.setFragment(frag); match=searcher.isFragmentInMolecule(); }catch(e){}
+      if(match) hits.push([name,q]);
+    });
+    // Halide: scan atoms directly (F=9, Cl=17, Br=35, I=53)
+    const halSyms={9:'F',17:'Cl',35:'Br',53:'I'}; const found=new Set();
+    for(let a=0;a<mol.getAllAtoms();a++){ const z=mol.getAtomicNo(a); if(halSyms[z]) found.add(halSyms[z]); }
+    if(found.size) hits.push(['Halide ('+[...found].join(', ')+')','F/Cl/Br/I']);
+
+    $('#count').textContent = `${hits.length} found`;
+    $('#groups').innerHTML = hits.length ? hits.map(([n,q])=>
+      `<div class="fg hit"><i class="ti ti-check ok"></i><span class="nm">${n}</span><span class="spacer"></span><span class="sm">${esc(q)}</span></div>`
+    ).join('') : '<span class="muted" style="font-size:13px">No common functional groups matched (may be a simple hydrocarbon).</span>';
+  });
+}
+$('#go').addEventListener('click',detect);
+$('#smiles').addEventListener('keydown',e=>{ if(e.key==='Enter') detect(); });
+document.querySelector('.ex').addEventListener('click',()=>{ $('#smiles').value='CC(=O)Oc1ccccc1C(=O)O'; detect(); });
+</script>
+
+</body>
+</html>

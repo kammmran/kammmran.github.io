@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buffer Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-test-pipe-2"></i></div><div>Buffer Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:780px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-test-pipe-2"></i></div>
+      <div>
+        <div class="tool-title">Buffer — Henderson–Hasselbalch</div>
+        <div class="tool-desc">pH = pKa + log([A⁻]/[HA]). Leave one field blank to solve for it. Works for base buffers too (pOH form).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="row" style="margin-bottom:14px">
+      <span class="muted" style="font-size:12px">Buffer type:</span>
+      <select id="type"><option value="acid">Acid buffer (pKa, [A⁻]/[HA])</option><option value="base">Base buffer (pKb, [BH⁺]/[B])</option></select>
+    </div>
+    <div class="grid2">
+      <label class="fld"><span id="lbl-pk">pKa</span><input type="number" id="pk" step="any"></label>
+      <label class="fld">pH<input type="number" id="ph" step="any"></label>
+      <label class="fld"><span id="lbl-base">[A⁻] (conjugate base)</span><input type="number" id="base" step="any"></label>
+      <label class="fld"><span id="lbl-acid">[HA] (weak acid)</span><input type="number" id="acid" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Concentrations may be in mol/L or moles (ratio is what matters). Leave exactly one of the four blank.</div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+
+function setType(){
+  const base = $('#type').value==='base';
+  $('#lbl-pk').textContent = base?'pKb':'pKa';
+  $('#lbl-base').textContent = base?'[BH⁺] (conjugate acid)':'[A⁻] (conjugate base)';
+  $('#lbl-acid').textContent = base?'[B] (weak base)':'[HA] (weak acid)';
+  solve();
+}
+
+function solve(){
+  const isBase = $('#type').value==='base';
+  let pk=num('pk'), ph=num('ph'), b=num('base'), a=num('acid');
+  // for base: compute pOH = pKb + log([BH+]/[B]); then pH = 14 - pOH
+  const core={pk,ph,base:b,acid:a};
+  const blanks=Object.keys(core).filter(k=>core[k]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML=blanks.length===0?'<span class="muted">Leave one field blank to solve.</span>':'<span class="muted">Leave exactly one field blank.</span>'; return; }
+  const target=blanks[0];
+  // internal "p" = pH (acid) or pOH (base)
+  let p = ph===null?null:(isBase?14-ph:ph);
+  let res='';
+  try{
+    if(target==='ph'){ p = pk + Math.log10(b/a); ph = isBase?14-p:p; res=`pH = <b>${ph.toFixed(3)}</b>`; if(isBase) res+=` <span class="muted">(pOH = ${p.toFixed(3)})</span>`; }
+    else if(target==='pk'){ pk = p - Math.log10(b/a); res=`${isBase?'pKb':'pKa'} = <b>${pk.toFixed(3)}</b>`; }
+    else if(target==='base'){ b = a*Math.pow(10, p-pk); res=`${isBase?'[BH⁺]':'[A⁻]'} = <b>${b.toPrecision(4)}</b>`; }
+    else { a = b/Math.pow(10, p-pk); res=`${isBase?'[B]':'[HA]'} = <b>${a.toPrecision(4)}</b>`; }
+    if(!Number.isFinite(parseFloat(res.replace(/[^0-9.eE+-]/g,'')))) throw 0;
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs (ratios must be positive, no zero divisor).</span>'; return; }
+  const ratio = b/a;
+  let extra = Number.isFinite(ratio) ? `<div class="muted" style="font-size:13px;margin-top:6px">Buffer ratio = ${ratio.toPrecision(3)} : 1. Best buffering when pH ≈ ${isBase?'pKa':'pKa'} (ratio ≈ 1, within ±1 pH unit).</div>` : '';
+  out.innerHTML = res + extra;
+}
+$('#type').addEventListener('change',setType);
+['pk','ph','base','acid'].forEach(id=>$('#'+id).addEventListener('input',solve));
+setType();
+</script>
+
+</body>
+</html>

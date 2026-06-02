@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistical Red-Flag Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-alert-octagon"></i></div><div>Stat Red-Flag Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-alert-octagon"></i></div>
+      <div>
+        <div class="tool-title">Statistical Red-Flag Checker</div>
+        <div class="tool-desc">Recompute a p-value from its test statistic and flag mismatches, or run the GRIM test on a reported mean.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="pval">Statistic → p-value</button>
+    <button class="tab" data-t="grim">GRIM test</button>
+  </div>
+
+  <div class="panel" id="p-pval" style="min-height:auto">
+    <div class="grid2">
+      <label class="fld">Test statistic
+        <select id="test"><option value="z">z (normal)</option><option value="t">t</option><option value="chi2">χ²</option><option value="F">F</option></select>
+      </label>
+      <label class="fld">Value<input type="number" id="stat" step="any" placeholder="e.g. 2.13"></label>
+      <label class="fld" id="df1box">Degrees of freedom (df)<input type="number" id="df1" step="any" placeholder="e.g. 38"></label>
+      <label class="fld" id="df2box" style="display:none">df₂ (denominator)<input type="number" id="df2" step="any"></label>
+      <label class="fld" id="tailsbox">Tails<select id="tails"><option value="2">Two-tailed</option><option value="1">One-tailed</option></select></label>
+      <label class="fld">Reported p (optional)<input type="number" id="reported" step="any" placeholder="e.g. 0.04"></label>
+    </div>
+    <div id="pv_out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+
+  <div class="panel" id="p-grim" style="min-height:auto;display:none">
+    <div class="grid2">
+      <label class="fld">Reported mean<input type="number" id="g_mean" step="any" placeholder="e.g. 3.45"></label>
+      <label class="fld">Sample size N<input type="number" id="g_n" step="1" placeholder="e.g. 20"></label>
+      <label class="fld">Items per participant<input type="number" id="g_items" step="1" value="1"></label>
+      <label class="fld">Decimal places reported<input type="number" id="g_dec" step="1" value="2"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">GRIM applies when the measure is a sum/average of integer responses (e.g. Likert items). It checks whether the reported mean is arithmetically possible.</div>
+    <div id="grim_out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+  .flag{padding:8px 10px;border-radius:var(--radius-sm);margin-top:8px;font-size:13px}
+  .flag.ok{background:rgba(74,222,128,0.1);color:var(--green)} .flag.warn{background:rgba(251,191,36,0.12);color:var(--amber)} .flag.bad{background:rgba(248,113,113,0.12);color:var(--red)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+// ---- numerics ----
+function erf(x){ const s=x<0?-1:1; x=Math.abs(x); const t=1/(1+0.3275911*x);
+  const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x); return s*y; }
+function normalCDF(z){ return 0.5*(1+erf(z/Math.SQRT2)); }
+function gammaln(x){ const g=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let xx=x,y=x,tmp=x+5.5; tmp-=(x+0.5)*Math.log(tmp); let ser=1.000000000190015; for(let j=0;j<6;j++){ y++; ser+=g[j]/y; } return -tmp+Math.log(2.5066282746310005*ser/xx); }
+function gammp(a,x){ // lower regularized incomplete gamma
+  if(x<0||a<=0) return NaN; if(x===0) return 0;
+  if(x<a+1){ let ap=a,sum=1/a,del=sum; for(let n=1;n<200;n++){ ap++; del*=x/ap; sum+=del; if(Math.abs(del)<Math.abs(sum)*1e-12) break; } return sum*Math.exp(-x+a*Math.log(x)-gammaln(a)); }
+  let b=x+1-a,c=1e300,d=1/b,h=d; for(let i=1;i<200;i++){ const an=-i*(i-a); b+=2; d=an*d+b; if(Math.abs(d)<1e-300)d=1e-300; c=b+an/c; if(Math.abs(c)<1e-300)c=1e-300; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<1e-12)break; } return 1-Math.exp(-x+a*Math.log(x)-gammaln(a))*h; }
+function betacf(a,b,x){ const MAXIT=200,EPS=1e-12,FPMIN=1e-300; let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap; if(Math.abs(d)<FPMIN)d=FPMIN; d=1/d; let h=d;
+  for(let m=1;m<=MAXIT;m++){ const m2=2*m; let aa=m*(b-m)*x/((qam+m2)*(a+m2)); d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN; c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN; d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2)); d=1+aa*d; if(Math.abs(d)<FPMIN)d=FPMIN; c=1+aa/c; if(Math.abs(c)<FPMIN)c=FPMIN; d=1/d; const del=d*c; h*=del; if(Math.abs(del-1)<EPS)break; } return h; }
+function betai(a,b,x){ if(x<=0)return 0; if(x>=1)return 1; const bt=Math.exp(gammaln(a+b)-gammaln(a)-gammaln(b)+a*Math.log(x)+b*Math.log(1-x)); return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b; }
+
+function pFromStat(test, stat, df1, df2, tails){
+  let p;
+  if(test==='z'){ p = (1-normalCDF(Math.abs(stat))); p = tails==2? 2*p : p; }
+  else if(test==='t'){ const x=df1/(df1+stat*stat); const oneTail=0.5*betai(df1/2,0.5,x); p = tails==2? 2*oneTail : (stat<0?1-oneTail:oneTail); if(tails==1&&stat>=0) p=oneTail; }
+  else if(test==='chi2'){ p = 1-gammp(df1/2, stat/2); } // always upper tail
+  else if(test==='F'){ p = betai(df2/2, df1/2, df2/(df2+df1*stat)); } // upper tail
+  return Math.max(0, Math.min(1, p));
+}
+
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+  $('#p-pval').style.display=t.dataset.t==='pval'?'':'none'; $('#p-grim').style.display=t.dataset.t==='grim'?'':'none';
+}));
+function updateFields(){
+  const test=$('#test').value;
+  $('#df1box').style.display = test==='z'?'none':'';
+  $('#df2box').style.display = test==='F'?'':'none';
+  $('#tailsbox').style.display = (test==='z'||test==='t')?'':'none';
+  $('#df1box').firstChild.nodeValue = test==='F'?'df₁ (numerator)':'Degrees of freedom (df)';
+  pval();
+}
+function pval(){
+  const test=$('#test').value, stat=parseFloat($('#stat').value), df1=parseFloat($('#df1').value), df2=parseFloat($('#df2').value), tails=$('#tails').value;
+  const out=$('#pv_out');
+  if(!Number.isFinite(stat)){ out.innerHTML='<span class="muted">Enter the test statistic.</span>'; return; }
+  if(test!=='z' && !Number.isFinite(df1)){ out.innerHTML='<span class="muted">Enter degrees of freedom.</span>'; return; }
+  if(test==='F' && !Number.isFinite(df2)){ out.innerHTML='<span class="muted">Enter df₂.</span>'; return; }
+  const p=pFromStat(test,stat,df1,df2,tails);
+  let html=`Recomputed p-value: <b>${p<0.0001?p.toExponential(2):p.toFixed(4)}</b> ${p<0.05?'<span class="chip teal">significant at .05</span>':'<span class="chip">n.s.</span>'}`;
+  const rep=parseFloat($('#reported').value);
+  if(Number.isFinite(rep)){
+    const ratio=Math.abs(Math.log10((p||1e-12)/(rep||1e-12)));
+    let cls,msg;
+    if(Math.abs(p-rep)<=0.5*Math.pow(10,-decimals(rep))||ratio<0.05){ cls='ok'; msg='Reported p is consistent with the statistic.'; }
+    else if((p<0.05)!==(rep<0.05)){ cls='bad'; msg=`Significance disagrees! Reported p=${rep} but recomputed p=${p.toFixed(4)} — they fall on opposite sides of .05.`; }
+    else { cls='warn'; msg=`Reported p=${rep} differs from recomputed ${p.toFixed(4)}. Check rounding, tails, or df.`; }
+    html+=`<div class="flag ${cls}">${msg}</div>`;
+  }
+  out.innerHTML=html;
+}
+function decimals(x){ const s=String(x); return s.includes('.')?s.split('.')[1].length:0; }
+
+function grim(){
+  const mean=parseFloat($('#g_mean').value), N=parseInt($('#g_n').value,10), items=parseInt($('#g_items').value,10)||1, dec=parseInt($('#g_dec').value,10);
+  const out=$('#grim_out');
+  if(!Number.isFinite(mean)||!Number.isFinite(N)||N<1){ out.innerHTML='<span class="muted">Enter the reported mean and sample size.</span>'; return; }
+  const totalN=N*items;
+  // mean = integerSum / totalN. Check nearest integer sum.
+  const estSum=Math.round(mean*totalN);
+  const reconstructed=estSum/totalN;
+  const rounded=reconstructed.toFixed(dec);
+  const tol=0.5*Math.pow(10,-dec);
+  const possible=Math.abs(parseFloat(rounded)-mean)<1e-9 || Math.abs(reconstructed-mean)<=tol;
+  // also check neighbours
+  let ok=false; for(let s=estSum-1;s<=estSum+1;s++){ if((s/totalN).toFixed(dec)===mean.toFixed(dec)){ ok=true; break; } }
+  out.innerHTML = ok
+    ? `<div class="flag ok"><i class="ti ti-circle-check"></i> Consistent — mean ${mean.toFixed(dec)} is achievable with N=${totalN} integer responses (sum ≈ ${estSum}).</div>`
+    : `<div class="flag bad"><i class="ti ti-alert-triangle"></i> GRIM-inconsistent — no integer total over N=${totalN} rounds to ${mean.toFixed(dec)}. Nearest possible: ${(Math.round(mean*totalN)/totalN).toFixed(dec)}. This can indicate a reporting/typo error.</div>`;
+}
+
+$('#test').addEventListener('change',updateFields);
+['stat','df1','df2','tails','reported'].forEach(id=>$('#'+id).addEventListener('input',pval));
+['g_mean','g_n','g_items','g_dec'].forEach(id=>$('#'+id).addEventListener('input',grim));
+updateFields();
+</script>
+
+</body>
+</html>

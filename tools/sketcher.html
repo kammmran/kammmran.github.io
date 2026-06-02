@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molecule Sketcher — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-pencil"></i></div><div>Molecule Sketcher</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1180px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-pencil"></i></div>
+      <div>
+        <div class="tool-title">Molecule Sketcher</div>
+        <div class="tool-desc">Draw a structure and read off its SMILES, molfile, formula and molar mass live. Or load a SMILES to edit.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:14px">
+    <input type="text" id="loadSmi" placeholder="Load a SMILES into the editor…" style="flex:1;font-family:ui-monospace,Menlo,monospace">
+    <button class="btn btn-sm" id="loadBtn"><i class="ti ti-upload"></i> Load</button>
+    <button class="btn btn-sm btn-ghost" id="clearBtn"><i class="ti ti-trash"></i> Clear</button>
+  </div>
+
+  <div class="workspace" style="grid-template-columns:1fr 360px">
+    <div class="panel" style="min-height:auto;padding:8px">
+      <div id="editor" style="width:100%;height:440px;background:#fff;border-radius:var(--radius-sm);overflow:hidden"></div>
+    </div>
+    <div class="panel" style="min-height:auto">
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-card"><div class="stat-label">Formula</div><div class="stat-value" id="formula" style="font-size:16px">—</div></div>
+        <div class="stat-card"><div class="stat-label">Molar mass</div><div class="stat-value" id="mw" style="font-size:16px">—</div></div>
+      </div>
+      <div class="cite-block"><div class="cite-label">SMILES <button class="copy-btn" data-t="smiles"><i class="ti ti-copy"></i></button></div><div class="cite-text mono" id="smiles">—</div></div>
+      <div class="cite-block"><div class="cite-label">Molfile <button class="copy-btn" data-t="molfile"><i class="ti ti-copy"></i></button></div><textarea id="molfile" readonly style="min-height:150px;font-size:11px">—</textarea></div>
+    </div>
+  </div>
+  <div id="warn" class="muted" style="font-size:12px;margin-top:10px"></div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .cite-block{margin:10px 0}
+  .cite-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;display:flex;justify-content:space-between}
+  .cite-text.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;word-break:break-all;min-height:20px}
+  .copy-btn{background:none;border:none;color:var(--text3);cursor:pointer}.copy-btn:hover{color:var(--accent3)}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function ready(cb){ if(window.OCL&&OCL.StructureEditor)return cb(); let n=0;const iv=setInterval(()=>{if(window.OCL&&OCL.StructureEditor){clearInterval(iv);cb();}else if(++n>80){clearInterval(iv);$('#warn').textContent='Could not load the structure editor.';}},100); }
+
+let editor=null, last={smiles:'',molfile:''};
+function update(mol){
+  try{
+    if(!mol) mol = editor.getMolecule();
+    const atoms = mol.getAllAtoms();
+    if(!atoms){ $('#formula').textContent='—'; $('#mw').textContent='—'; $('#smiles').textContent='draw something…'; $('#molfile').value=''; last={smiles:'',molfile:''}; return; }
+    const mf=mol.getMolecularFormula();
+    $('#formula').innerHTML = mf.formula.replace(/(\d+)/g,'<sub>$1</sub>');
+    $('#mw').textContent = mf.relativeWeight.toFixed(2);
+    const smi = mol.toIsomericSmiles();
+    $('#smiles').textContent = smi;
+    $('#molfile').value = mol.toMolfile();
+    last = { smiles: smi, molfile: mol.toMolfile() };
+  }catch(e){}
+}
+
+ready(()=>{
+  editor = OCL.StructureEditor.createSVGEditor('editor', 1);
+  editor.setChangeListenerCallback((idcode, molecule)=> update(molecule));
+  update();
+});
+
+$('#loadBtn').addEventListener('click',()=>{
+  ready(()=>{
+    const smi=$('#loadSmi').value.trim(); if(!smi) return;
+    try{ const m=OCL.Molecule.fromSmiles(smi); if(m.getAllAtoms()===0) throw 0; editor.setSmiles(smi); update(m); toast('Loaded'); }
+    catch(e){ $('#warn').textContent='Invalid SMILES — could not load.'; }
+  });
+});
+$('#loadSmi').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#loadBtn').click(); });
+$('#clearBtn').addEventListener('click',()=>{ ready(()=>{ editor.setMolecule(new OCL.Molecule(0,0)); update(); }); });
+document.querySelectorAll('.copy-btn').forEach(b=>b.addEventListener('click',()=>{ const v=b.dataset.t==='smiles'?last.smiles:last.molfile; if(v){ navigator.clipboard.writeText(v); toast('Copied'); } }));
+</script>
+
+</body>
+</html>

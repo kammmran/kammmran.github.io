@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chart Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-bar"></i></div><div>Chart Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-bar"></i></div>
+      <div>
+        <div class="tool-title">Chart Generator</div>
+        <div class="tool-desc">Paste labels &amp; values, pick a chart type, and export a clean PNG. All in your browser — no libraries.</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-sm" id="dl"><i class="ti ti-download"></i> Download PNG</button>
+    </div>
+  </div>
+
+  <div class="workspace" style="grid-template-columns:340px 1fr">
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Chart type</span></div>
+      <div class="tabs" id="types" style="flex-wrap:wrap">
+        <button class="tab active" data-t="bar">Bar</button>
+        <button class="tab" data-t="hbar">H-Bar</button>
+        <button class="tab" data-t="line">Line</button>
+        <button class="tab" data-t="pie">Pie</button>
+        <button class="tab" data-t="scatter">Scatter</button>
+      </div>
+
+      <div class="panel-label" style="margin-top:14px"><span id="dlabel">Data — label, value</span></div>
+      <textarea id="data" style="min-height:200px" placeholder="One row per point:&#10;Jan, 42&#10;Feb, 55&#10;Mar, 38"></textarea>
+
+      <label class="fld">Title<input type="text" id="title" placeholder="Chart title" value="Monthly results"></label>
+      <label class="fld">Axis / value label<input type="text" id="axis" placeholder="e.g. Count" value="Count"></label>
+      <button class="btn btn-sm btn-ghost" id="sample" style="margin-top:6px">Load sample</button>
+    </div>
+
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Preview</span><span class="muted" id="msg" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
+      <div style="background:#0c0c10;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px">
+        <canvas id="cv" width="900" height="560" style="width:100%;height:auto;display:block"></canvas>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);margin-top:10px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+const PALETTE = ['#7c6df0','#2dd4bf','#f472b6','#4ade80','#fbbf24','#60a5fa','#f87171','#a594f7','#34d399','#fb923c'];
+let type = 'bar';
+
+function parseData(){
+  const rows = $('#data').value.trim().split('\n').map(l=>l.trim()).filter(Boolean);
+  return rows.map(r => {
+    const parts = r.split(/[,\t;]+/).map(s=>s.trim());
+    if (type === 'scatter'){ return { label: parts[0], x: parseFloat(parts[0]), y: parseFloat(parts[1]) }; }
+    return { label: parts[0], value: parseFloat(parts[parts.length-1]) };
+  }).filter(d => type==='scatter' ? (Number.isFinite(d.x)&&Number.isFinite(d.y)) : Number.isFinite(d.value));
+}
+
+function draw(){
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#0c0c10'; ctx.fillRect(0,0,W,H);
+  const data = parseData();
+  $('#msg').textContent = data.length ? `${data.length} points` : '';
+
+  // Title
+  ctx.fillStyle = '#f0eff8'; ctx.font = '600 24px Inter, sans-serif'; ctx.textAlign = 'left';
+  ctx.fillText($('#title').value || '', 40, 44);
+  ctx.font = '13px Inter, sans-serif'; ctx.fillStyle = '#9997b3';
+  if ($('#axis').value && type!=='pie') ctx.fillText($('#axis').value, 40, 66);
+
+  if (!data.length){ ctx.fillStyle='#6b6984'; ctx.font='15px Inter'; ctx.textAlign='center'; ctx.fillText('Enter data to render a chart', W/2, H/2); return; }
+
+  const pad = { l: 70, r: 40, t: 90, b: 70 };
+  const cw = W - pad.l - pad.r, ch = H - pad.t - pad.b;
+
+  if (type === 'pie'){ drawPie(ctx, data, W, H); return; }
+  if (type === 'scatter'){ drawScatter(ctx, data, pad, cw, ch, W, H); return; }
+
+  const vals = data.map(d=>d.value);
+  let maxV = Math.max(...vals, 0), minV = Math.min(...vals, 0);
+  if (maxV === minV) maxV = minV + 1;
+  const horiz = type === 'hbar';
+
+  // axes/grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.fillStyle = '#6b6984'; ctx.font = '12px Inter'; ctx.lineWidth = 1;
+  const ticks = 5;
+  for (let i=0;i<=ticks;i++){
+    const v = minV + (maxV-minV)*i/ticks;
+    if (horiz){
+      const x = pad.l + cw*i/ticks;
+      ctx.beginPath(); ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t+ch); ctx.stroke();
+      ctx.textAlign='center'; ctx.fillText(fmt(v), x, pad.t+ch+20);
+    } else {
+      const y = pad.t + ch - ch*i/ticks;
+      ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(pad.l+cw, y); ctx.stroke();
+      ctx.textAlign='right'; ctx.fillText(fmt(v), pad.l-10, y+4);
+    }
+  }
+
+  if (type === 'line'){
+    ctx.strokeStyle = PALETTE[0]; ctx.lineWidth = 2.5; ctx.beginPath();
+    data.forEach((d,i)=>{
+      const x = pad.l + (data.length===1?cw/2:cw*i/(data.length-1));
+      const y = pad.t + ch - (d.value-minV)/(maxV-minV)*ch;
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    });
+    ctx.stroke();
+    data.forEach((d,i)=>{
+      const x = pad.l + (data.length===1?cw/2:cw*i/(data.length-1));
+      const y = pad.t + ch - (d.value-minV)/(maxV-minV)*ch;
+      ctx.fillStyle = PALETTE[0]; ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.fill();
+      ctx.fillStyle='#9997b3'; ctx.font='12px Inter'; ctx.textAlign='center'; ctx.fillText(d.label, x, pad.t+ch+20);
+    });
+  } else if (horiz){
+    const bw = ch/data.length*0.7, gap = ch/data.length;
+    data.forEach((d,i)=>{
+      const y = pad.t + gap*i + (gap-bw)/2;
+      const w = (d.value-Math.min(0,minV))/(maxV-minV)*cw;
+      ctx.fillStyle = PALETTE[i%PALETTE.length];
+      ctx.fillRect(pad.l, y, Math.max(0,w), bw);
+      ctx.fillStyle='#9997b3'; ctx.font='12px Inter'; ctx.textAlign='right'; ctx.fillText(d.label, pad.l-10, y+bw/2+4);
+      ctx.fillStyle='#f0eff8'; ctx.textAlign='left'; ctx.fillText(fmt(d.value), pad.l+w+8, y+bw/2+4);
+    });
+  } else {
+    const bw = cw/data.length*0.62, gap = cw/data.length;
+    const zeroY = pad.t + ch - (0-minV)/(maxV-minV)*ch;
+    data.forEach((d,i)=>{
+      const x = pad.l + gap*i + (gap-bw)/2;
+      const y = pad.t + ch - (d.value-minV)/(maxV-minV)*ch;
+      ctx.fillStyle = PALETTE[i%PALETTE.length];
+      ctx.fillRect(x, Math.min(y,zeroY), bw, Math.abs(zeroY-y));
+      ctx.fillStyle='#9997b3'; ctx.font='12px Inter'; ctx.textAlign='center';
+      ctx.fillText(trunc(d.label,10), x+bw/2, pad.t+ch+20);
+      ctx.fillStyle='#f0eff8'; ctx.fillText(fmt(d.value), x+bw/2, y-6);
+    });
+  }
+}
+
+function drawScatter(ctx, data, pad, cw, ch, W, H){
+  const xs = data.map(d=>d.x), ys = data.map(d=>d.y);
+  let minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  if(minX===maxX){minX-=1;maxX+=1;} if(minY===maxY){minY-=1;maxY+=1;}
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.fillStyle='#6b6984'; ctx.font='12px Inter';
+  for(let i=0;i<=5;i++){
+    const y=pad.t+ch-ch*i/5, x=pad.l+cw*i/5;
+    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke();
+    ctx.textAlign='right';ctx.fillText(fmt(minY+(maxY-minY)*i/5),pad.l-10,y+4);
+    ctx.textAlign='center';ctx.fillText(fmt(minX+(maxX-minX)*i/5),x,pad.t+ch+20);
+  }
+  data.forEach(d=>{
+    const x=pad.l+(d.x-minX)/(maxX-minX)*cw;
+    const y=pad.t+ch-(d.y-minY)/(maxY-minY)*ch;
+    ctx.fillStyle=PALETTE[0]+'cc'; ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill();
+  });
+}
+
+function drawPie(ctx, data, W, H){
+  const cx=W/2+40, cy=H/2+30, r=Math.min(W,H)/2-90;
+  const total=data.reduce((a,d)=>a+Math.max(0,d.value),0)||1;
+  let ang=-Math.PI/2;
+  data.forEach((d,i)=>{
+    const slice=Math.max(0,d.value)/total*Math.PI*2;
+    ctx.fillStyle=PALETTE[i%PALETTE.length];
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,ang,ang+slice);ctx.closePath();ctx.fill();
+    const mid=ang+slice/2;
+    if(slice>0.15){
+      ctx.fillStyle='#0c0c10';ctx.font='600 13px Inter';ctx.textAlign='center';
+      ctx.fillText(Math.round(d.value/total*100)+'%', cx+Math.cos(mid)*r*0.62, cy+Math.sin(mid)*r*0.62+4);
+    }
+    ang+=slice;
+  });
+  // legend
+  let ly=110;
+  data.forEach((d,i)=>{
+    ctx.fillStyle=PALETTE[i%PALETTE.length];ctx.fillRect(W-210,ly,14,14);
+    ctx.fillStyle='#f0eff8';ctx.font='13px Inter';ctx.textAlign='left';
+    ctx.fillText(trunc(d.label,16)+'  '+fmt(d.value), W-188, ly+12); ly+=24;
+  });
+}
+
+function fmt(v){ return Math.abs(v)>=1000? (v/1000).toFixed(v%1000?1:0)+'k' : (Number.isInteger(v)?v:v.toFixed(1)); }
+function trunc(s,n){ s=String(s); return s.length>n?s.slice(0,n-1)+'…':s; }
+
+document.querySelectorAll('#types .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#types .tab').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); type=t.dataset.t;
+  $('#dlabel').textContent = type==='scatter' ? 'Data — x, y' : 'Data — label, value';
+  $('#data').placeholder = type==='scatter' ? 'One row per point:\n1.2, 3.4\n2.5, 5.1\n3.1, 4.8' : 'One row per point:\nJan, 42\nFeb, 55\nMar, 38';
+  draw();
+}));
+['data','title','axis'].forEach(id=>$('#'+id).addEventListener('input',draw));
+$('#dl').addEventListener('click',()=>{ $('#cv').toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='chart.png';a.click();toast('Downloaded');}); });
+$('#sample').addEventListener('click',()=>{
+  if(type==='scatter') $('#data').value='1.2, 3.4\n2.1, 4.0\n2.9, 5.2\n3.8, 5.0\n4.5, 6.3\n5.2, 7.1';
+  else $('#data').value='Jan, 42\nFeb, 55\nMar, 38\nApr, 61\nMay, 49\nJun, 72';
+  draw(); toast('Sample loaded');
+});
+
+$('#data').value='Jan, 42\nFeb, 55\nMar, 38\nApr, 61\nMay, 49\nJun, 72';
+draw();
+</script>
+
+</body>
+</html>

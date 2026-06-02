@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citation-Needed Detector — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-quote"></i></div><div>Citation-Needed Detector</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-quote"></i></div>
+      <div>
+        <div class="tool-title">Citation-Needed Detector</div>
+        <div class="tool-desc">Highlights sentences that make factual or statistical claims but carry no citation — the spots a reviewer will ask you to back up.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste a paragraph or section
+      <textarea id="txt" style="min-height:200px" placeholder="Most researchers agree that this method is superior. It has been shown to improve outcomes by 40%. Smith (2020) reported similar results."></textarea>
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #render{line-height:1.85;font-size:14px;margin-top:4px}
+  .sent{padding:1px 2px;border-radius:3px}
+  .sent.flag{background:rgba(96,165,250,0.16);box-shadow:inset 0 -2px 0 var(--blue)}
+  .sent.cited{background:rgba(74,222,128,0.10)}
+  .why{display:block;font-size:11px;color:var(--blue);margin:2px 0 6px;padding-left:6px;border-left:2px solid var(--blue)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+// claim triggers → why a citation is likely needed
+const triggers = [
+  {re:/\b(most|many|several|few|the majority of)\s+(researchers|scientists|studies|scholars|experts|authors)\b/i, why:'attributes a view to a group of researchers'},
+  {re:/\b(studies|research|evidence|data|experiments?)\s+(show|shows|showed|suggest|suggests|indicate|indicates|demonstrate|demonstrates|reveal|reveals|confirm|confirms|prove|proves)\b/i, why:'claims that studies/evidence show something'},
+  {re:/\bit (is|has been|was)\s+(well[- ]?known|established|shown|demonstrated|reported|widely accepted|believed|recognized)\b/i, why:'states something is known/established'},
+  {re:/\b(according to|based on)\s+(?!figure|table|fig\.|eq)/i, why:'refers to an external source'},
+  {re:/\b\d+(\.\d+)?\s?%/, why:'cites a specific statistic'},
+  {re:/\b(increased?|decreased?|reduced?|improved?|higher|lower|greater|faster|slower)\s+(by\s+)?\d/i, why:'reports a quantitative result'},
+  {re:/\b(significantly|statistically significant|correlat\w+|associated with)\b/i, why:'makes a statistical claim'},
+  {re:/\b(first|only|largest|smallest|best|worst|leading|novel|unprecedented)\b/i, why:'makes a superlative/novelty claim'},
+  {re:/\b(recent\w*|previous\w*|prior|earlier)\s+(studies|work|research|literature|findings)\b/i, why:'refers to prior literature'},
+];
+// inline citation markers that satisfy the claim
+const citationRe = /\([^)]*\b(1[89]\d{2}|20\d{2})[a-z]?\)|\[\d+(\s*[,–-]\s*\d+)*\]|\b[A-Z][a-z]+\s+(et al\.?\s+)?\(\d{4}\)|\bet al\.|\((?:see\s+)?(?:ref\.?|[A-Z][a-z]+,?\s+\d{4})/;
+
+function splitSentences(t){
+  return t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g) || [];
+}
+
+function run(){
+  const t = $('#txt').value.trim();
+  const out = $('#out');
+  if(!t){ out.innerHTML=''; return; }
+  const sents = splitSentences(t);
+  let flagged=0, cited=0;
+  const html = sents.map(s=>{
+    const trimmed=s.trim(); if(!trimmed) return '';
+    const hasCite = citationRe.test(trimmed);
+    const hit = triggers.find(tr=>tr.re.test(trimmed));
+    if(hit && !hasCite){
+      flagged++;
+      return `<span class="sent flag" title="${hit.why}">${esc(s)}</span><span class="why"><i class="ti ti-alert-circle"></i> ${hit.why} — add a citation</span>`;
+    }
+    if(hasCite){ cited++; return `<span class="sent cited">${esc(s)}</span> `; }
+    return `<span class="sent">${esc(s)}</span> `;
+  }).join('');
+  out.innerHTML = `
+    <div class="stat-grid" style="margin:4px 0 12px">
+      <div class="stat-card"><div class="stat-label">Sentences</div><div class="stat-value">${sents.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Need a citation</div><div class="stat-value" style="color:var(--blue)">${flagged}</div></div>
+      <div class="stat-card"><div class="stat-label">Already cited</div><div class="stat-value" style="color:var(--green)">${cited}</div></div>
+    </div>
+    <div id="render">${html}</div>
+    <div class="muted" style="font-size:12px;margin-top:10px">Blue = a claim with no nearby citation. Green = already has one. This flags candidates, not certainties — your own results don't need a citation.</div>`;
+}
+$('#txt').addEventListener('input',run);
+</script>
+
+</body>
+</html>

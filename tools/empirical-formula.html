@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Empirical Formula — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-math-symbols"></i></div><div>Empirical Formula</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-math-symbols"></i></div>
+      <div>
+        <div class="tool-title">Empirical &amp; Molecular Formula</div>
+        <div class="tool-desc">Enter elements with mass % (or grams) → empirical formula. Add a molar mass to get the molecular formula.</div>
+      </div>
+    </div>
+    <div class="row"><button class="btn btn-sm" id="add"><i class="ti ti-plus"></i> Element</button><button class="btn btn-sm btn-ghost" id="sample">Sample</button></div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <table class="ef-tbl"><thead><tr><th>Element</th><th>Mass % or grams</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+    <div class="row" style="margin-top:14px">
+      <label class="fld" style="flex:1">Molar mass of compound (g/mol) — optional<input type="number" id="mm" step="any" placeholder="for molecular formula"></label>
+    </div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:12px"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .ef-tbl{width:100%;border-collapse:collapse;font-size:13px}
+  .ef-tbl th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:6px 8px;border-bottom:1px solid var(--border)}
+  .ef-tbl td{padding:5px 8px;border-bottom:1px solid var(--border)}
+  .del-row{color:var(--text3);cursor:pointer;background:none;border:none;font-size:16px}.del-row:hover{color:var(--red)}
+  .fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}
+</style>
+
+<script src="../assets/chem-data.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+const AW = CHEM.AW;
+
+function addRow(sym='', val=''){
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="sym" type="text" value="${sym}" placeholder="e.g. C" style="width:90px"></td>
+    <td><input class="val" type="number" step="any" value="${val}" placeholder="e.g. 40.0"></td>
+    <td><button class="del-row">&times;</button></td>`;
+  tr.querySelector('.del-row').addEventListener('click',()=>{tr.remove();calc();});
+  tr.querySelectorAll('input').forEach(i=>i.addEventListener('input',calc));
+  $('#rows').appendChild(tr);
+}
+
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;}
+
+function calc(){
+  const rows=[...$('#rows').querySelectorAll('tr')];
+  const data=[];
+  for(const tr of rows){
+    const sym=tr.querySelector('.sym').value.trim();
+    const val=parseFloat(tr.querySelector('.val').value);
+    if(!sym) continue;
+    if(!(sym in AW)){ $('#out').innerHTML=`<span style="color:var(--red)">Unknown element "${sym}".</span>`; return; }
+    if(!Number.isFinite(val)||val<=0) continue;
+    data.push({sym,val});
+  }
+  if(data.length<1){ $('#out').innerHTML='<span class="muted">Add elements with their mass % or grams.</span>'; return; }
+
+  // moles per element
+  data.forEach(d=>d.mol=d.val/AW[d.sym]);
+  const minMol=Math.min(...data.map(d=>d.mol));
+  data.forEach(d=>d.ratio=d.mol/minMol);
+
+  // find integer multiplier (1..12) making all ratios near-integers
+  let mult=1;
+  for(let m=1;m<=12;m++){ if(data.every(d=>Math.abs(d.ratio*m-Math.round(d.ratio*m))<0.08*Math.max(1,d.ratio))){ mult=m; break; } }
+  data.forEach(d=>d.sub=Math.max(1,Math.round(d.ratio*mult)));
+  // reduce by gcd
+  let g=data.reduce((a,d)=>gcd(a,d.sub),data[0].sub);
+  data.forEach(d=>d.sub/=g);
+
+  const empFormula=data.map(d=>d.sym+(d.sub>1?d.sub:'')).join('');
+  const empMass=data.reduce((a,d)=>a+AW[d.sym]*d.sub,0);
+
+  let html=`<div style="font-size:13px;margin-bottom:8px">Mole ratios: ${data.map(d=>d.sym+' '+d.ratio.toFixed(2)).join(' : ')}</div>`;
+  html+=`<div style="font-size:20px;font-family:ui-monospace,Menlo,monospace">Empirical: <b>${sub(empFormula)}</b> <span class="muted" style="font-size:14px">(${empMass.toFixed(2)} g/mol)</span></div>`;
+
+  const mm=parseFloat($('#mm').value);
+  if(Number.isFinite(mm)&&mm>0){
+    const n=Math.round(mm/empMass);
+    if(n>=1){
+      const molFormula=data.map(d=>d.sym+(d.sub*n>1?d.sub*n:'')).join('');
+      html+=`<div style="font-size:20px;font-family:ui-monospace,Menlo,monospace;margin-top:8px">Molecular: <b>${sub(molFormula)}</b> <span class="muted" style="font-size:14px">(n = ${n})</span></div>`;
+    }
+  }
+  $('#out').innerHTML=html;
+}
+function sub(s){return s.replace(/(\d+)/g,'<sub>$1</sub>');}
+
+$('#add').addEventListener('click',()=>addRow());
+$('#mm').addEventListener('input',calc);
+$('#sample').addEventListener('click',()=>{ $('#rows').innerHTML=''; addRow('C',40.0); addRow('H',6.7); addRow('O',53.3); $('#mm').value='180'; calc(); toast('Glucose sample'); });
+
+addRow('C',''); addRow('H',''); addRow('O','');
+calc();
+</script>
+
+</body>
+</html>

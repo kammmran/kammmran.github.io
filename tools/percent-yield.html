@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Percent Yield & Composition — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-percentage"></i></div><div>Yield & Composition</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-percentage"></i></div>
+      <div>
+        <div class="tool-title">Percent Yield &amp; Composition</div>
+        <div class="tool-desc">Compute reaction percent yield from actual vs theoretical, and percent composition by mass from a formula.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="yield">Percent yield</button>
+    <button class="tab" data-t="comp">Percent composition</button>
+  </div>
+
+  <div class="panel" id="p-yield" style="min-height:auto">
+    <div class="grid2">
+      <label class="fld">Actual yield<input type="number" id="y_act" step="any"></label>
+      <label class="fld">Theoretical yield<input type="number" id="y_theo" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Same units (g or mol) on both. % yield = actual / theoretical × 100.</div>
+    <div id="y_out" class="output-box" style="min-height:auto;margin-top:12px"></div>
+  </div>
+
+  <div class="panel" id="p-comp" style="min-height:auto;display:none">
+    <label class="fld">Chemical formula<input type="text" id="c_formula" placeholder="e.g. C6H12O6, Ca(NO3)2" style="font-family:ui-monospace,Menlo,monospace;font-size:16px"></label>
+    <div id="c_err" style="font-size:12px;color:var(--red);margin-top:6px"></div>
+    <div id="c_out" style="margin-top:12px"></div>
+  </div>
+</main>
+
+<style>
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+  .crow{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:13px}
+  .csym{width:34px;font-weight:600;color:var(--accent3)}
+  .cbar{flex:1;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden}
+  .cfill{height:100%;background:linear-gradient(90deg,var(--accent),var(--teal))}
+  .cpct{width:150px;text-align:right;color:var(--text2);font-variant-numeric:tabular-nums;font-size:12px}
+</style>
+
+<script src="../assets/chem-data.js"></script>
+<script src="../assets/chem-balance.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+const AW = CHEM.AW;
+
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active');
+  $('#p-yield').style.display=t.dataset.t==='yield'?'':'none';
+  $('#p-comp').style.display=t.dataset.t==='comp'?'':'none';
+}));
+
+function yieldCalc(){
+  const a=num('y_act'), th=num('y_theo');
+  if(a===null||th===null){ $('#y_out').innerHTML='<span class="muted">Enter both values.</span>'; return; }
+  if(th<=0){ $('#y_out').innerHTML='<span class="muted">Theoretical yield must be positive.</span>'; return; }
+  const pct=a/th*100;
+  const color = pct>100?'var(--amber)':pct>=70?'var(--green)':'var(--text)';
+  let note = pct>100?' <span class="muted">(>100% — likely impurity or measurement error)</span>':'';
+  $('#y_out').innerHTML=`Percent yield = <b style="color:${color}">${pct.toFixed(2)}%</b>${note}`;
+}
+['y_act','y_theo'].forEach(id=>$('#'+id).addEventListener('input',yieldCalc));
+
+function compCalc(){
+  const f=$('#c_formula').value.trim();
+  $('#c_err').textContent='';
+  if(!f){ $('#c_out').innerHTML=''; return; }
+  let comp;
+  try{ comp=ChemBalance.parseFormula(f.replace(/·/g,'').replace(/\.(?=\d*[A-Za-z])/g,'')); }
+  catch(e){ $('#c_err').textContent=e.message; $('#c_out').innerHTML=''; return; }
+  const parts=Object.entries(comp).map(([el,n])=>({el,n,mass:AW[el]*n}));
+  const total=parts.reduce((a,p)=>a+p.mass,0);
+  parts.sort((a,b)=>b.mass-a.mass);
+  $('#c_out').innerHTML=`<div style="font-size:13px;margin-bottom:8px">Molar mass = <b>${total.toFixed(3)} g/mol</b></div>`+
+    parts.map(p=>{const pct=p.mass/total*100;return `<div class="crow"><div class="csym">${p.el}</div><div class="cbar"><div class="cfill" style="width:${pct}%"></div></div><div class="cpct">${pct.toFixed(2)}% · ${p.mass.toFixed(2)} g</div></div>`;}).join('');
+}
+$('#c_formula').addEventListener('input',compCalc);
+yieldCalc();
+</script>
+
+</body>
+</html>

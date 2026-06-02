@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nernst Equation — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-battery-charging"></i></div><div>Nernst Equation</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:780px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-battery-charging"></i></div>
+      <div>
+        <div class="tool-title">Nernst Equation</div>
+        <div class="tool-desc">E = E° − (RT/nF)·ln Q. Find the cell potential under non-standard conditions, or solve for any term.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="grid2">
+      <label class="fld">Standard potential E° (V)<input type="number" id="E0" step="any" value="1.10"></label>
+      <label class="fld">Cell potential E (V)<input type="number" id="E" step="any"></label>
+      <label class="fld">Electrons transferred n<input type="number" id="n" step="any" value="2"></label>
+      <label class="fld">Reaction quotient Q<input type="number" id="Q" step="any" value="1"></label>
+      <label class="fld">Temperature T (K)<input type="number" id="T" step="any" value="298.15"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Leave one of E°, E, n or Q blank to solve for it (T is always given).</div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+const R=8.314462618, F=96485.332;
+
+function solve(){
+  let E0=num('E0'),E=num('E'),n=num('n'),Q=num('Q'),T=num('T');
+  if(T===null||T<=0){ $('#out').innerHTML='<span class="muted">Enter a valid temperature (K).</span>'; return; }
+  const core={E0,E,n,Q}; const blanks=Object.keys(core).filter(k=>core[k]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML=blanks.length===0?'<span class="muted">Leave one of E°, E, n, Q blank to solve.</span>':'<span class="muted">Leave exactly one (of E°, E, n, Q) blank.</span>'; return; }
+  const b=blanks[0]; const k=R*T/F; let res='';
+  try{
+    if(b==='E'){ E=E0-(k/n)*Math.log(Q); res=`E = <b>${E.toFixed(4)} V</b>`; }
+    else if(b==='E0'){ E0=E+(k/n)*Math.log(Q); res=`E° = <b>${E0.toFixed(4)} V</b>`; }
+    else if(b==='n'){ n=(k*Math.log(Q))/(E0-E); res=`n = <b>${n.toFixed(3)}</b>`; }
+    else { Q=Math.exp((E0-E)*n/k); res=`Q = <b>${Q<1e-3||Q>1e6?Q.toExponential(4):Q.toPrecision(5)}</b>`; }
+    if(!Number.isFinite(E)&&!Number.isFinite(E0)) {}
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs.</span>'; return; }
+  const slope=(2.302585*k).toFixed(5);
+  out.innerHTML=res+`<div class="muted" style="font-size:13px;margin-top:6px">At ${T.toFixed(1)} K, RT/F·ln10 = ${slope} V (≈ 0.0592 V at 298 K). ΔG = −nFE.</div>`;
+}
+['E0','E','n','Q','T'].forEach(id=>$('#'+id).addEventListener('input',solve));
+solve();
+</script>
+
+</body>
+</html>

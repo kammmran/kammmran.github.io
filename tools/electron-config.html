@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Electron Configuration — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-atom"></i></div><div>Electron Configuration</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-atom"></i></div>
+      <div>
+        <div class="tool-title">Electron Configuration</div>
+        <div class="tool-desc">Enter an element (symbol, name or atomic number) to get its aufbau configuration, noble-gas shorthand and orbital diagram.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <input type="text" id="q" placeholder="e.g. Fe, iron, or 26" style="font-size:16px">
+    <div id="err" style="font-size:12px;color:var(--red);margin-top:6px"></div>
+  </div>
+
+  <div id="out" class="panel" style="min-height:auto;margin-top:16px;display:none"></div>
+</main>
+
+<script src="../assets/chem-data.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const { ELEMENTS, CATEGORY_LABELS } = CHEM;
+const ORDER=[['1s',2],['2s',2],['2p',6],['3s',2],['3p',6],['4s',2],['3d',10],['4p',6],['5s',2],['4d',10],['5p',6],['6s',2],['4f',14],['5d',10],['6p',6],['7s',2],['5f',14],['6d',10],['7p',6]];
+const NOBLE=[[2,'He'],[10,'Ne'],[18,'Ar'],[36,'Kr'],[54,'Xe'],[86,'Rn']];
+
+function config(Z){
+  let left=Z; const filled=[];
+  for(const [orb,cap] of ORDER){ if(left<=0)break; const e=Math.min(cap,left); filled.push([orb,e]); left-=e; }
+  return filled;
+}
+function sup(n){ return `<sup>${n}</sup>`; }
+
+function find(qs){
+  qs=qs.trim().toLowerCase(); if(!qs) return null;
+  if(/^\d+$/.test(qs)) return ELEMENTS.find(e=>e.number===+qs);
+  return ELEMENTS.find(e=>e.symbol.toLowerCase()===qs) || ELEMENTS.find(e=>e.name.toLowerCase()===qs) || ELEMENTS.find(e=>e.name.toLowerCase().startsWith(qs)&&qs.length>=3);
+}
+
+function render(){
+  const el=find($('#q').value); $('#err').textContent='';
+  if(!el){ $('#out').style.display='none'; if($('#q').value.trim())$('#err').textContent='No matching element.'; return; }
+  const filled=config(el.number);
+  const full=filled.map(([o,e])=>`${o}${sup(e)}`).join(' ');
+
+  // noble gas shorthand
+  let core=null; for(const [z,sym] of NOBLE){ if(z<el.number) core=[z,sym]; }
+  let short=full;
+  if(core){ const coreFilled=config(core[0]); const coreStr=coreFilled.map(([o,e])=>`${o}${e}`).join(','); const rest=filled.filter(f=>{ const cf=coreFilled.find(c=>c[0]===f[0]); return !(cf&&cf[1]===f[1]); }); short=`[${core[1]}] `+rest.map(([o,e])=>`${o}${sup(e)}`).join(' '); }
+
+  // valence (highest n shell s+p, plus relevant)
+  const maxN=Math.max(...filled.map(f=>+f[0][0]));
+  const valence=filled.filter(f=>+f[0][0]===maxN).reduce((a,f)=>a+f[1],0);
+
+  // orbital diagram
+  const boxes=filled.map(([orb,e])=>{
+    const subshell=orb[1]; const slots={s:1,p:3,d:5,f:7}[subshell];
+    const arrows=[];
+    for(let i=0;i<slots;i++) arrows.push(0);
+    // Hund's rule: one up each, then pair
+    for(let i=0;i<e;i++){ const idx=i<slots?i:i-slots; arrows[idx]+= (i<slots?1:1); }
+    const boxHtml=arrows.map(a=>{ let inner=a===0?'':(a===1?'↑':'↑↓'); return `<span class="orb-box">${inner}</span>`; }).join('');
+    return `<div class="orb-row"><span class="orb-lbl">${orb}</span>${boxHtml}</div>`;
+  }).join('');
+
+  $('#out').style.display='block';
+  $('#out').innerHTML=`
+    <div class="row" style="align-items:center;gap:14px;margin-bottom:14px">
+      <div class="ecard">${el.number}<br><b>${el.symbol}</b></div>
+      <div><div style="font-size:19px;font-weight:700">${el.name}</div><div class="muted" style="font-size:13px">${CATEGORY_LABELS[el.category]} · ${valence} valence electron${valence!==1?'s':''} (shell ${maxN})</div></div>
+    </div>
+    <div class="cfg-block"><div class="cfg-lbl">Full configuration</div><div class="cfg-val">${full}</div></div>
+    <div class="cfg-block"><div class="cfg-lbl">Noble-gas shorthand</div><div class="cfg-val">${short}</div></div>
+    <div class="divider"></div>
+    <div class="cfg-lbl" style="margin-bottom:8px">Orbital diagram (Hund's rule)</div>
+    <div class="orb-wrap">${boxes}</div>
+    <div class="muted" style="font-size:12px;margin-top:10px">Idealised aufbau filling — real configurations for some d/f-block elements (Cr, Cu, etc.) differ.</div>`;
+}
+
+$('#q').addEventListener('input',render);
+</script>
+
+<style>
+  .ecard{width:60px;height:60px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--teal));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;line-height:1.3;text-align:center}
+  .ecard b{font-size:20px}
+  .cfg-block{margin:8px 0}
+  .cfg-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px}
+  .cfg-val{font-size:16px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px}
+  .orb-wrap{display:flex;flex-direction:column;gap:5px}
+  .orb-row{display:flex;align-items:center;gap:6px}
+  .orb-lbl{width:30px;font-size:13px;color:var(--text2);font-weight:600}
+  .orb-box{width:26px;height:24px;border:1px solid var(--border2);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--accent3);letter-spacing:-1px}
+</style>
+
+</body>
+</html>

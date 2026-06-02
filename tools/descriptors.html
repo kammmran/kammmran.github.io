@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molecular Descriptors — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-table-options"></i></div><div>Molecular Descriptors</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1240px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-table-options"></i></div>
+      <div>
+        <div class="tool-title">Batch Descriptor Calculator</div>
+        <div class="tool-desc">Paste many SMILES → a table of MW, cLogP, TPSA, H-bond donors/acceptors, rings, rotatable bonds &amp; Lipinski.</div>
+      </div>
+    </div>
+    <div class="row"><button class="btn btn-sm btn-ghost" id="sample">Sample</button><button class="btn btn-sm" id="dl"><i class="ti ti-download"></i> CSV</button></div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <textarea id="input" placeholder="One SMILES per line. Optionally add a name:  CCO  ethanol" style="min-height:120px"></textarea>
+  </div>
+
+  <div class="panel" style="min-height:auto;margin-top:16px;overflow:auto">
+    <div class="panel-label"><span>Descriptors</span><span class="muted" id="stat" style="text-transform:none;letter-spacing:0;font-weight:400"></span></div>
+    <table class="dtbl" id="tbl"><thead><tr>
+      <th>#</th><th>Name / SMILES</th><th>Formula</th><th>MW</th><th>cLogP</th><th>TPSA</th><th>HBD</th><th>HBA</th><th>Rings</th><th>RotB</th><th>Lipinski</th>
+    </tr></thead><tbody id="rows"></tbody></table>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .dtbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:760px}
+  .dtbl th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:6px 9px;border-bottom:1px solid var(--border);white-space:nowrap}
+  .dtbl td{padding:6px 9px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .dtbl td.nm{font-family:ui-monospace,Menlo,monospace;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+  .dtbl tr.bad td{color:var(--red)}
+  .pass{color:var(--green)} .fail{color:var(--amber)}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ready(cb){ if(window.OCL&&OCL.Molecule)return cb(); let n=0;const iv=setInterval(()=>{if(window.OCL&&OCL.Molecule){clearInterval(iv);cb();}else if(++n>60){clearInterval(iv);$('#rows').innerHTML='<tr><td colspan=11 class="bad">Could not load chemistry engine.</td></tr>';}},100); }
+
+let data=[];
+function run(){
+  ready(()=>{
+    const lines=$('#input').value.split('\n').map(l=>l.trim()).filter(Boolean);
+    data=[]; let ok=0;
+    lines.forEach(line=>{
+      const parts=line.split(/\s+/); const smi=parts[0]; const name=parts.slice(1).join(' ');
+      try{
+        const mol=OCL.Molecule.fromSmiles(smi); if(mol.getAllAtoms()===0) throw 0;
+        const mf=mol.getMolecularFormula();
+        let logp='',tpsa='',hbd='',hba='',rot='';
+        try{ const p=new OCL.MoleculeProperties(mol); logp=p.logP; tpsa=p.polarSurfaceArea; hbd=p.donorCount; hba=p.acceptorCount; rot=p.rotatableBondCount; }catch(e){}
+        const rings=mol.getRingSet?mol.getRingSet().getSize():'';
+        const mw=mf.relativeWeight;
+        const viol=[mw>500, logp!==''&&logp>5, hbd!==''&&hbd>5, hba!==''&&hba>10].filter(Boolean).length;
+        data.push({name:name||smi, smi, formula:mf.formula, mw, logp, tpsa, hbd, hba, rings, rot, viol, ok:true});
+        ok++;
+      }catch(e){ data.push({name:smi, smi, ok:false}); }
+    });
+    $('#stat').textContent = lines.length?`${ok}/${lines.length} parsed`:'';
+    render();
+  });
+}
+function num(v,d=2){ return v===''||v==null?'—':(typeof v==='number'?v.toFixed(d):v); }
+function sub(f){ return String(f).replace(/(\d+)/g,'<sub>$1</sub>'); }
+function render(){
+  $('#rows').innerHTML = data.length? data.map((r,i)=>{
+    if(!r.ok) return `<tr class="bad"><td>${i+1}</td><td class="nm">${esc(r.smi)}</td><td colspan=9>invalid SMILES</td></tr>`;
+    const lip = r.viol===0?'<span class="pass">pass</span>':`<span class="fail">${r.viol} viol.</span>`;
+    return `<tr><td>${i+1}</td><td class="nm" title="${esc(r.smi)}">${esc(r.name)}</td><td>${sub(r.formula)}</td><td>${num(r.mw)}</td><td>${num(r.logp)}</td><td>${num(r.tpsa,1)}</td><td>${num(r.hbd,0)}</td><td>${num(r.hba,0)}</td><td>${num(r.rings,0)}</td><td>${num(r.rot,0)}</td><td>${lip}</td></tr>`;
+  }).join('') : '<tr><td colspan=11 class="muted">Paste SMILES to compute descriptors.</td></tr>';
+}
+$('#input').addEventListener('input',()=>{clearTimeout(window._r);window._r=setTimeout(run,200);});
+$('#sample').addEventListener('click',()=>{ $('#input').value='CC(=O)Oc1ccccc1C(=O)O aspirin\nCN1C=NC2=C1C(=O)N(C(=O)N2C)C caffeine\nCC(C)Cc1ccc(cc1)C(C)C(=O)O ibuprofen\nCC(=O)Nc1ccc(O)cc1 paracetamol\nOCC1OC(O)C(O)C(O)C1O glucose'; run(); });
+$('#dl').addEventListener('click',()=>{
+  if(!data.length)return;
+  const head='name,smiles,formula,MW,cLogP,TPSA,HBD,HBA,rings,rotatable,lipinski_violations\n';
+  const csv=head+data.map(r=>r.ok?`"${r.name}","${r.smi}",${r.formula},${num(r.mw)},${num(r.logp)},${num(r.tpsa,1)},${r.hbd},${r.hba},${r.rings},${r.rot},${r.viol}`:`"${r.smi}",,INVALID`).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='descriptors.csv';a.click();toast('CSV downloaded');
+});
+run();
+</script>
+
+</body>
+</html>

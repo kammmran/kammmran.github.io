@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Ethics Checklist — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-shield-check"></i></div><div>Research Ethics Checklist</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-shield-check"></i></div>
+      <div>
+        <div class="tool-title">Research Ethics Checklist</div>
+        <div class="tool-desc">Tell it what your study involves — it builds the list of ethical requirements that apply and tracks what you've completed.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div>
+      <div class="panel-label">What does your study involve?</div>
+      <div id="traits" class="trait-grid"></div>
+    </div>
+    <div id="reqs"></div>
+  </div>
+</main>
+
+<style>.trait-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+  .trait{display:flex;gap:8px;align-items:flex-start;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:13px}
+  .trait input{margin-top:2px;width:16px;height:16px;flex:none}
+  .req-group{margin-top:14px}
+  .req-group h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent3);margin:0 0 8px}
+  .req{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);margin-bottom:6px;cursor:pointer;font-size:13px;line-height:1.45}
+  .req input{margin-top:2px;width:16px;height:16px;flex:none}
+  .req.done{opacity:.6;text-decoration:line-through}
+  .meter{height:14px;border-radius:7px;background:var(--bg3);overflow:hidden;margin:6px 0}
+  .meter>div{height:100%;border-radius:7px;background:var(--green);transition:width .3s}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const traits = [
+  {id:'human', t:'Human participants'},
+  {id:'identifiable', t:'Personal / identifiable data'},
+  {id:'sensitive', t:'Sensitive data (health, biometric, etc.)'},
+  {id:'vulnerable', t:'Vulnerable groups (children, patients…)'},
+  {id:'animal', t:'Animal subjects'},
+  {id:'clinical', t:'Clinical trial / intervention'},
+  {id:'tissue', t:'Human tissue / biosamples'},
+  {id:'deception', t:'Deception or incomplete disclosure'},
+  {id:'secondary', t:'Secondary / third-party dataset'},
+  {id:'field', t:'Fieldwork / Indigenous communities'},
+  {id:'dualuse', t:'Dual-use / biosecurity concern'},
+];
+// requirement → which traits trigger it
+const requirements = [
+  {grp:'Approvals', t:'Obtain Research Ethics Board / IRB approval before data collection', any:['human','animal','clinical','tissue','vulnerable']},
+  {grp:'Approvals', t:'Obtain institutional animal care committee (IACUC) approval; follow ARRIVE/3Rs guidelines', any:['animal']},
+  {grp:'Approvals', t:'Register the clinical trial in a public registry (e.g. ClinicalTrials.gov) before enrolment', any:['clinical']},
+  {grp:'Approvals', t:'Secure a material/biosample transfer agreement and biobank ethics clearance', any:['tissue']},
+  {grp:'Consent', t:'Obtain documented informed consent from each participant', any:['human','clinical','tissue']},
+  {grp:'Consent', t:'Obtain guardian consent + age-appropriate assent for minors/vulnerable participants', any:['vulnerable']},
+  {grp:'Consent', t:'Provide a debriefing afterwards and justify the deception to the ethics board', any:['deception']},
+  {grp:'Consent', t:'Confirm the original consent / licence permits your secondary use of the data', any:['secondary']},
+  {grp:'Data protection', t:'Define a lawful basis and comply with GDPR / local data-protection law', any:['identifiable','sensitive']},
+  {grp:'Data protection', t:'Anonymise or pseudonymise data; store identifiers separately and securely', any:['identifiable','sensitive']},
+  {grp:'Data protection', t:'Apply extra safeguards (encryption, access control) for sensitive categories', any:['sensitive']},
+  {grp:'Data protection', t:'Write a data management plan covering retention and deletion', any:['human','identifiable','sensitive','secondary']},
+  {grp:'Conduct', t:'Engage the community early and respect local/Indigenous data sovereignty', any:['field']},
+  {grp:'Conduct', t:'Complete a dual-use / biosecurity risk assessment and report on responsible use', any:['dualuse']},
+  {grp:'Reporting', t:'Include an ethics-approval statement (committee name + reference number) in the manuscript', any:['human','animal','clinical','tissue','vulnerable']},
+  {grp:'Reporting', t:'Add a data-availability statement noting any access restrictions', any:['human','identifiable','sensitive','secondary']},
+];
+const order=['Approvals','Consent','Data protection','Conduct','Reporting'];
+
+$('#traits').innerHTML = traits.map(t=>`<label class="trait"><input type="checkbox" data-tr="${t.id}"><span>${t.t}</span></label>`).join('');
+
+function activeTraits(){ return new Set([...document.querySelectorAll('#traits input:checked')].map(i=>i.dataset.tr)); }
+
+function render(){
+  const act = activeTraits();
+  const applicable = requirements.filter(r=>r.any.some(a=>act.has(a)));
+  const reqs=$('#reqs');
+  if(!applicable.length){ reqs.innerHTML='<div class="muted" style="margin-top:6px">Select what your study involves to generate the applicable ethics requirements.</div>'; return; }
+  const byGrp={}; applicable.forEach(r=>{ (byGrp[r.grp]=byGrp[r.grp]||[]).push(r); });
+  const html = order.filter(g=>byGrp[g]).map(g=>`<div class="req-group"><h4>${g}</h4>${
+    byGrp[g].map((r,i)=>`<label class="req" data-key="${g}-${i}"><input type="checkbox" class="reqck"><span>${r.t}</span></label>`).join('')
+  }</div>`).join('');
+  reqs.innerHTML = `<div id="prog"></div>${html}`;
+  reqs.querySelectorAll('.reqck').forEach(c=>c.addEventListener('change',e=>{ e.target.closest('.req').classList.toggle('done',e.target.checked); prog(); }));
+  prog();
+}
+function prog(){
+  const all=[...document.querySelectorAll('.reqck')];
+  const done=all.filter(c=>c.checked).length;
+  const pct=all.length?Math.round(done/all.length*100):0;
+  $('#prog').innerHTML=`<div class="row" style="justify-content:space-between"><b>${all.length} requirements apply</b><span class="muted">${done}/${all.length} done · ${pct}%</span></div><div class="meter"><div style="width:${pct}%"></div></div>`;
+}
+document.querySelectorAll('#traits input').forEach(c=>c.addEventListener('change',render));
+render();
+</script>
+
+</body>
+</html>

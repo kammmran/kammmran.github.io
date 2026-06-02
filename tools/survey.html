@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Survey Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-clipboard-data"></i></div><div>Survey Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-clipboard-data"></i></div>
+      <div>
+        <div class="tool-title">Survey / Likert Analyzer</div>
+        <div class="tool-desc">Paste a CSV of responses (rows = respondents, columns = items). Get per-item stats, distributions and Cronbach's α.</div>
+      </div>
+    </div>
+    <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="panel-label"><span>Response data (CSV — first row = item names)</span>
+      <label class="chk-lbl"><input type="checkbox" id="hdr" checked> First row is header</label>
+    </div>
+    <textarea id="input" placeholder="Q1,Q2,Q3&#10;4,5,3&#10;3,4,4&#10;5,5,5"></textarea>
+  </div>
+
+  <div id="summary" class="stat-grid" style="margin-top:16px"></div>
+
+  <div class="panel" style="min-height:auto;margin-top:16px;overflow:auto">
+    <div class="panel-label"><span>Per-item statistics</span></div>
+    <table class="svy" id="tbl"><thead><tr><th>Item</th><th>N</th><th>Mean</th><th>SD</th><th>Median</th><th>Min</th><th>Max</th><th>Distribution</th></tr></thead><tbody id="rows"></tbody></table>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .chk-lbl{font-size:12px;color:var(--text2);display:inline-flex;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-weight:400}
+  .svy{width:100%;border-collapse:collapse;font-size:13px;min-width:680px}
+  .svy th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);padding:6px 9px;border-bottom:1px solid var(--border)}
+  .svy td{padding:6px 9px;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+  .spark{display:flex;align-items:flex-end;gap:2px;height:30px}
+  .spark span{width:12px;background:linear-gradient(var(--accent),var(--teal));border-radius:2px 2px 0 0;min-height:2px}
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+
+function parseCSV(text){
+  return text.trim().split(/\r?\n/).map(l=>l.split(/[,\t;]/).map(c=>c.trim()));
+}
+function stats(arr){
+  const n=arr.length; if(!n) return null;
+  const mean=arr.reduce((a,b)=>a+b,0)/n;
+  const variance=n>1?arr.reduce((a,b)=>a+(b-mean)**2,0)/(n-1):0;
+  const sd=Math.sqrt(variance);
+  const sorted=[...arr].sort((a,b)=>a-b);
+  const median=n%2?sorted[(n-1)/2]:(sorted[n/2-1]+sorted[n/2])/2;
+  return {n,mean,sd,variance,median,min:sorted[0],max:sorted[n-1]};
+}
+
+function run(){
+  const rows=parseCSV($('#input').value);
+  if(rows.length<1||(rows.length===1&&$('#hdr').checked)){ $('#rows').innerHTML=''; $('#summary').innerHTML='<div class="muted">Paste CSV response data.</div>'; return; }
+  const hdr=$('#hdr').checked;
+  const names = hdr ? rows[0] : rows[0].map((_,i)=>'Item '+(i+1));
+  const dataRows = hdr ? rows.slice(1) : rows;
+  const ncol=names.length;
+
+  // columns of numeric values
+  const cols=[]; for(let c=0;c<ncol;c++){ cols[c]=[]; }
+  let respValid=[];
+  dataRows.forEach(r=>{
+    const vals=[]; let allNum=true;
+    for(let c=0;c<ncol;c++){ const v=parseFloat(r[c]); if(Number.isFinite(v)){ cols[c].push(v); vals[c]=v; } else allNum=false; }
+    if(vals.filter(v=>Number.isFinite(v)).length===ncol) respValid.push(vals);
+  });
+
+  // per-item
+  const colStats=cols.map(stats);
+  $('#rows').innerHTML=names.map((nm,c)=>{
+    const s=colStats[c]; if(!s||!s.n) return `<tr><td>${nm}</td><td colspan=7 class="muted">no numeric data</td></tr>`;
+    // distribution over integer range
+    const lo=Math.floor(s.min), hi=Math.ceil(s.max); const counts={}; for(let v=lo;v<=hi;v++) counts[v]=0;
+    cols[c].forEach(v=>{ const k=Math.round(v); counts[k]=(counts[k]||0)+1; });
+    const maxc=Math.max(...Object.values(counts),1);
+    const spark=Object.keys(counts).map(k=>`<span style="height:${counts[k]/maxc*100}%" title="${k}: ${counts[k]}"></span>`).join('');
+    return `<tr><td>${nm}</td><td>${s.n}</td><td>${s.mean.toFixed(2)}</td><td>${s.sd.toFixed(2)}</td><td>${s.median}</td><td>${s.min}</td><td>${s.max}</td><td><div class="spark">${spark}</div></td></tr>`;
+  }).join('');
+
+  // Cronbach's alpha (uses complete cases)
+  let alpha=null;
+  if(ncol>=2 && respValid.length>=2){
+    const k=ncol;
+    const itemVars=[]; for(let c=0;c<k;c++){ itemVars.push(stats(respValid.map(r=>r[c])).variance); }
+    const totals=respValid.map(r=>r.reduce((a,b)=>a+b,0));
+    const totalVar=stats(totals).variance;
+    if(totalVar>0){ alpha=(k/(k-1))*(1 - itemVars.reduce((a,b)=>a+b,0)/totalVar); }
+  }
+  const overallMean = colStats.filter(s=>s).reduce((a,s)=>a+s.mean*s.n,0)/colStats.filter(s=>s).reduce((a,s)=>a+s.n,0);
+  const cards=[
+    ['Respondents', dataRows.length],
+    ['Items', ncol],
+    ['Complete cases', respValid.length],
+    ['Grand mean', overallMean.toFixed(2)],
+  ];
+  if(alpha!==null){ const q=alpha>=0.9?'excellent':alpha>=0.8?'good':alpha>=0.7?'acceptable':alpha>=0.6?'questionable':'poor'; cards.push(["Cronbach's α", alpha.toFixed(3)+` (${q})`]); }
+  $('#summary').innerHTML=cards.map(c=>`<div class="stat-card"><div class="stat-label">${c[0]}</div><div class="stat-value" style="font-size:17px">${c[1]}</div></div>`).join('');
+}
+$('#input').addEventListener('input',()=>{clearTimeout(window._r);window._r=setTimeout(run,150);});
+$('#hdr').addEventListener('change',run);
+$('#sample').addEventListener('click',()=>{
+  $('#hdr').checked=true;
+  $('#input').value='Clarity,Usefulness,Engagement,Pace\n4,5,4,3\n3,4,3,4\n5,5,5,4\n4,4,4,3\n2,3,2,2\n5,5,4,5\n3,3,3,3\n4,5,5,4\n4,4,3,4\n5,4,5,3';
+  run(); toast('Sample loaded');
+});
+run();
+</script>
+
+</body>
+</html>

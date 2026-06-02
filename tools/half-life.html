@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radioactive Decay — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-radioactive"></i></div><div>Radioactive Decay</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-radioactive"></i></div>
+      <div>
+        <div class="tool-title">Radioactive Decay / Half-life</div>
+        <div class="tool-desc">N = N₀·(½)^(t/t½). Find remaining amount, elapsed time, or half-life — plus a decay curve.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace" style="grid-template-columns:340px 1fr">
+    <div class="panel" style="min-height:auto">
+      <label class="fld">Initial amount N₀<input type="number" id="N0" step="any" value="100"></label>
+      <label class="fld">Remaining amount N<input type="number" id="N" step="any"></label>
+      <label class="fld">Half-life t½<input type="number" id="th" step="any" value="5730"></label>
+      <label class="fld">Elapsed time t<input type="number" id="t" step="any"></label>
+      <div class="muted" style="font-size:12px;margin-top:6px">Leave exactly one field blank to solve for it. t and t½ must share the same time unit.</div>
+      <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+    </div>
+    <div class="panel" style="min-height:auto">
+      <div class="panel-label"><span>Decay curve</span></div>
+      <canvas id="cv" width="700" height="380" style="width:100%;height:auto;background:#0c0c10;border:1px solid var(--border);border-radius:var(--radius-sm)"></canvas>
+    </div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);margin-bottom:10px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+
+function solve(){
+  let N0=num('N0'),N=num('N'),th=num('th'),t=num('t');
+  const vals={N0,N,th,t}; const blanks=Object.keys(vals).filter(k=>vals[k]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML=blanks.length===0?'<span class="muted">Leave one field blank to solve.</span>':'<span class="muted">Leave exactly one field blank.</span>'; draw(N0,th,t); return; }
+  const b=blanks[0]; let res='';
+  try{
+    if(b==='N'){ N=N0*Math.pow(0.5,t/th); res=`Remaining N = <b>${N.toPrecision(5)}</b> (${(N/N0*100).toFixed(2)}% of N₀)`; }
+    else if(b==='N0'){ N0=N/Math.pow(0.5,t/th); res=`Initial N₀ = <b>${N0.toPrecision(5)}</b>`; }
+    else if(b==='t'){ t=th*Math.log(N/N0)/Math.log(0.5); res=`Elapsed time t = <b>${t.toPrecision(5)}</b> (${(t/th).toFixed(3)} half-lives)`; }
+    else { th=t*Math.log(0.5)/Math.log(N/N0); res=`Half-life t½ = <b>${th.toPrecision(5)}</b>`; }
+    if(!Number.isFinite(parseFloat(res.replace(/[^0-9.eE+-]/g,'')))) {}
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs.</span>'; return; }
+  const lambda = Math.log(2)/th;
+  out.innerHTML = res + `<div class="muted" style="font-size:13px;margin-top:6px">Decay constant λ = ln2/t½ = <b>${lambda.toPrecision(4)}</b> · Mean lifetime τ = <b>${(1/lambda).toPrecision(4)}</b></div>`;
+  draw(N0, th, t);
+}
+
+function draw(N0, th, tMark){
+  const cv=$('#cv'), ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#0c0c10'; ctx.fillRect(0,0,W,H);
+  if(!Number.isFinite(N0)||!Number.isFinite(th)||th<=0){ return; }
+  const pad={l:50,r:20,t:24,b:36}, cw=W-pad.l-pad.r, ch=H-pad.t-pad.b;
+  const tMax = th*5;
+  ctx.strokeStyle='rgba(255,255,255,0.08)'; ctx.fillStyle='#6b6984'; ctx.font='11px Inter';
+  for(let i=0;i<=5;i++){ const y=pad.t+ch-ch*i/5; ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(pad.l+cw,y);ctx.stroke(); ctx.textAlign='right';ctx.fillText((i*20)+'%',pad.l-8,y+4); }
+  for(let i=0;i<=5;i++){ const x=pad.l+cw*i/5; ctx.textAlign='center'; ctx.fillText(i+'·t½',x,pad.t+ch+18); }
+  // curve
+  ctx.strokeStyle='#4ade80'; ctx.lineWidth=2.5; ctx.beginPath();
+  for(let px=0;px<=cw;px++){ const t=tMax*px/cw; const frac=Math.pow(0.5,t/th); const x=pad.l+px,y=pad.t+ch-frac*ch; px?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+  ctx.stroke();
+  // half-life dots
+  ctx.fillStyle='#fbbf24';
+  for(let k=1;k<=5;k++){ const x=pad.l+cw*k/5; const y=pad.t+ch-Math.pow(0.5,k)*ch; ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill(); }
+  if(Number.isFinite(tMark)&&tMark>=0&&tMark<=tMax){ const x=pad.l+cw*tMark/tMax; ctx.strokeStyle='#f472b6';ctx.lineWidth=1.5;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x,pad.t);ctx.lineTo(x,pad.t+ch);ctx.stroke();ctx.setLineDash([]); }
+}
+['N0','N','th','t'].forEach(id=>$('#'+id).addEventListener('input',solve));
+solve();
+</script>
+
+</body>
+</html>

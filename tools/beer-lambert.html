@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beer–Lambert Law — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-wave-sine"></i></div><div>Beer–Lambert Law</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:780px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-wave-sine"></i></div>
+      <div>
+        <div class="tool-title">Beer–Lambert Law — A = ε·l·c</div>
+        <div class="tool-desc">Relate absorbance, molar absorptivity, path length and concentration. Leave one blank to solve.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="grid2">
+      <label class="fld">Absorbance A (unitless)<input type="number" id="A" step="any"></label>
+      <label class="fld">Molar absorptivity ε (L·mol⁻¹·cm⁻¹)<input type="number" id="E" step="any"></label>
+      <label class="fld">Path length l (cm)<input type="number" id="L" step="any" value="1"></label>
+      <label class="fld">Concentration c (mol/L)<input type="number" id="C" step="any"></label>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Leave one of A, ε, l or c blank to solve for it.</div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+
+function solve(){
+  let A=num('A'),E=num('E'),L=num('L'),C=num('C');
+  const vals={A,E,L,C}; const blanks=Object.keys(vals).filter(k=>vals[k]===null);
+  const out=$('#out');
+  if(blanks.length!==1){ out.innerHTML=blanks.length===0?'<span class="muted">Leave one field blank to solve.</span>':'<span class="muted">Leave exactly one field blank.</span>'; return; }
+  const b=blanks[0]; let res='';
+  try{
+    if(b==='A'){ A=E*L*C; res=`A = <b>${A.toPrecision(5)}</b>`; }
+    else if(b==='E'){ E=A/(L*C); res=`ε = <b>${E.toPrecision(5)} L·mol⁻¹·cm⁻¹</b>`; }
+    else if(b==='L'){ L=A/(E*C); res=`l = <b>${L.toPrecision(5)} cm</b>`; }
+    else { C=A/(E*L); res=`c = <b>${C.toPrecision(5)} mol/L</b>`; }
+    if(!Number.isFinite(res)&&!res) throw 0;
+  }catch(e){ out.innerHTML='<span class="muted">Check inputs (avoid zero divisors).</span>'; return; }
+  let extra='';
+  if(Number.isFinite(A)){ const T=Math.pow(10,-A)*100; extra=`<div class="muted" style="font-size:13px;margin-top:6px">Transmittance %T = 10⁻ᴬ × 100 = <b>${T.toPrecision(4)} %</b></div>`; }
+  out.innerHTML = res + extra;
+}
+['A','E','L','C'].forEach(id=>$('#'+id).addEventListener('input',solve));
+solve();
+</script>
+
+</body>
+</html>

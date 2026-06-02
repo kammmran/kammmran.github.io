@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Jargon Simplifier — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-wand"></i></div><div>Jargon Simplifier</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-wand"></i></div>
+      <div>
+        <div class="tool-title">Academic Jargon Simplifier</div>
+        <div class="tool-desc">Flags wordy and inflated phrases and suggests plainer alternatives. Apply suggestions one-by-one or all at once.</div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-sm btn-primary" id="applyAll"><i class="ti ti-sparkles"></i> Simplify all</button>
+      <button class="btn btn-sm" id="copy"><i class="ti ti-copy"></i> Copy</button>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Your text</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+          <button class="btn btn-sm btn-ghost" id="clear">Clear</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="Paste your text…"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Suggestions</span>
+        <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400" id="count"></span>
+      </div>
+      <div id="preview" class="output-box" style="white-space:pre-wrap;line-height:1.7;min-height:120px"><span class="muted">Highlighted preview appears here.</span></div>
+      <div class="divider"></div>
+      <div id="list" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto"></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .hl-j { background:rgba(124,109,240,0.2); border-bottom:2px solid var(--accent); border-radius:2px; padding:0 1px; cursor:default; }
+  .sg { display:flex; align-items:center; gap:8px; font-size:13px; padding:6px 8px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius-sm); }
+  .sg .from { color:var(--text2); text-decoration:line-through; text-decoration-color:var(--text3); }
+  .sg .arr { color:var(--text3); }
+  .sg .to { color:var(--accent3); font-weight:500; }
+  .sg .spacer { flex:1; }
+  .sg button { padding:3px 8px; font-size:12px; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// from -> to  (plain-language guide, Gowers / Strunk-style)
+const MAP = {
+  'a majority of':'most','a number of':'several','a sufficient number of':'enough','accordingly':'so',
+  'along the lines of':'like','an adequate amount of':'enough','as a consequence of':'because of',
+  'as a means of':'to','as a result of':'because of','at the present time':'now','at this point in time':'now',
+  'by means of':'by','by virtue of':'by','despite the fact that':'although','due to the fact that':'because',
+  'during the course of':'during','for the purpose of':'to','for the reason that':'because','has the ability to':'can',
+  'has the capacity to':'can','in a timely manner':'promptly','in close proximity to':'near','in connection with':'about',
+  'in light of the fact that':'because','in order to':'to','in spite of the fact that':'although','in the absence of':'without',
+  'in the event that':'if','in the near future':'soon','in the vicinity of':'near','in view of the fact that':'because',
+  'is able to':'can','it is often the case that':'often','on the basis of':'from','on the grounds that':'because',
+  'owing to the fact that':'because','prior to':'before','subsequent to':'after','take into consideration':'consider',
+  'the majority of':'most','until such time as':'until','with regard to':'about','with respect to':'about','with the exception of':'except',
+  'utilize':'use','utilization':'use','utilizes':'uses','utilized':'used','facilitate':'help','endeavor':'try',
+  'commence':'start','terminate':'end','ascertain':'find out','demonstrate':'show','elucidate':'explain',
+  'methodology':'methods','necessitate':'need','numerous':'many','obtain':'get','sufficient':'enough','additional':'more',
+  'approximately':'about','initiate':'start','aforementioned':'this','heretofore':'until now','nevertheless':'still',
+  'notwithstanding':'despite','aforesaid':'this','cognizant of':'aware of','in regard to':'about','fundamental':'basic',
+  'leverage':'use','paradigm':'model','utilizing':'using','conceptualize':'imagine','operationalize':'define'
+};
+const keys = Object.keys(MAP).sort((a,b)=>b.length-a.length);
+
+function findMatches(text){
+  const found = [];
+  keys.forEach(k => {
+    const re = new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','gi');
+    let m;
+    while ((m = re.exec(text)) !== null){
+      found.push({ from: m[0], to: MAP[k], idx: m.index, len: m[0].length, key: k });
+      if (re.lastIndex === m.index) re.lastIndex++;
+    }
+  });
+  // remove overlaps, keep longer / earlier
+  found.sort((a,b)=> a.idx - b.idx || b.len - a.len);
+  const out = [];
+  let lastEnd = -1;
+  for (const f of found){ if (f.idx >= lastEnd){ out.push(f); lastEnd = f.idx + f.len; } }
+  return out;
+}
+
+function preserveCase(from, to){
+  if (from[0] === from[0].toUpperCase()) return to[0].toUpperCase() + to.slice(1);
+  return to;
+}
+
+function render(){
+  const text = $('#input').value;
+  const matches = findMatches(text);
+  $('#count').textContent = matches.length ? `${matches.length} found` : '';
+
+  // highlighted preview
+  if (!text.trim()){ $('#preview').innerHTML = '<span class="muted">Highlighted preview appears here.</span>'; $('#list').innerHTML=''; return; }
+  let html = '', cur = 0;
+  matches.forEach(m => {
+    html += esc(text.slice(cur, m.idx));
+    html += `<span class="hl-j" title="→ ${esc(m.to)}">${esc(text.slice(m.idx, m.idx+m.len))}</span>`;
+    cur = m.idx + m.len;
+  });
+  html += esc(text.slice(cur));
+  $('#preview').innerHTML = html || '<span class="muted">No suggestions — looks clean!</span>';
+
+  // dedupe list for display
+  const seen = new Map();
+  matches.forEach(m => { const key = m.from.toLowerCase(); if (!seen.has(key)) seen.set(key, { ...m, n: 0 }); seen.get(key).n++; });
+  $('#list').innerHTML = [...seen.values()].map(m =>
+    `<div class="sg"><span class="from">${esc(m.from)}</span><span class="arr">→</span><span class="to">${esc(m.to)}</span>${m.n>1?`<span class="chip">${m.n}×</span>`:''}<span class="spacer"></span><button class="btn btn-sm" data-key="${esc(m.key)}">Apply</button></div>`
+  ).join('') || '<span class="muted" style="font-size:13px">No suggestions — your text is concise.</span>';
+
+  $('#list').querySelectorAll('button').forEach(b => b.addEventListener('click', () => applyOne(b.dataset.key)));
+}
+
+function applyOne(key){
+  const re = new RegExp('\\b' + key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','gi');
+  $('#input').value = $('#input').value.replace(re, m => preserveCase(m, MAP[key]));
+  render(); toast('Applied');
+}
+function applyAll(){
+  let text = $('#input').value;
+  keys.forEach(k => {
+    const re = new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','gi');
+    text = text.replace(re, m => preserveCase(m, MAP[k]));
+  });
+  $('#input').value = text; render(); toast('Simplified all');
+}
+
+$('#input').addEventListener('input', () => { clearTimeout(window._j); window._j = setTimeout(render, 120); });
+$('#applyAll').addEventListener('click', applyAll);
+$('#copy').addEventListener('click', () => { navigator.clipboard.writeText($('#input').value); toast('Copied'); });
+$('#clear').addEventListener('click', () => { $('#input').value=''; render(); });
+$('#sample').addEventListener('click', () => {
+  $('#input').value = 'Due to the fact that the majority of participants were able to utilize the new methodology, we were able to ascertain the results in a timely manner. In order to facilitate the analysis, a number of additional samples were obtained prior to the experiment. It is important to note that approximately fifty percent demonstrated improvement.';
+  render(); toast('Sample loaded');
+});
+render();
+</script>
+
+</body>
+</html>

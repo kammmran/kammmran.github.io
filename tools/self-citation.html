@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Citation Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-quote"></i></div><div>Self-Citation Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-quote"></i></div>
+      <div>
+        <div class="tool-title">Self-Citation Analyzer</div>
+        <div class="tool-desc">Paste your author name(s) and a reference list — see what fraction of the references are your own work.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Author name(s) — one per line (e.g. <span class="muted">Kamran Heydarov</span>)
+      <textarea id="authors" style="min-height:70px" placeholder="Kamran Heydarov&#10;A. N. Other"></textarea>
+    </label>
+    <label class="fld">Reference list — one reference per line
+      <textarea id="refs" style="min-height:200px" placeholder="Heydarov, K., & Smith, J. (2021). A study of things. Journal of X, 12(3), 45-60.&#10;Doe, J. (2019). Another paper. Nature, 5, 1-9."></textarea>
+    </label>
+    <div class="row">
+      <button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Analyze</button>
+      <span class="muted" style="font-size:12px">Matches last name + initial. Counts blank lines as separators.</span>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .ref-row{padding:9px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:7px;font-size:13px;line-height:1.5}
+  .ref-row.self{border-color:rgba(124,109,240,0.4);background:rgba(124,109,240,0.07)}
+  .hit{background:rgba(124,109,240,0.28);border-radius:3px;padding:0 2px;font-weight:600}
+  .tag{font-size:11px;padding:1px 8px;border-radius:999px;margin-left:8px}
+  .tag.self{background:rgba(124,109,240,0.2);color:var(--accent3)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+
+function parseAuthors(raw){
+  return raw.split(/[\n;]+/).map(s=>s.trim()).filter(Boolean).map(name=>{
+    const clean = name.replace(/,/g,' ').replace(/\s+/g,' ').trim();
+    const toks = clean.split(' ').filter(Boolean);
+    if(!toks.length) return null;
+    // last name = longest non-initial token, else last token
+    let last = toks.filter(t=>t.replace(/\./g,'').length>1).pop() || toks[toks.length-1];
+    let first = toks.find(t=>t!==last) || '';
+    const init = (first[0]||last[0]||'').toLowerCase();
+    return {raw:name, last:last.toLowerCase(), init};
+  }).filter(Boolean);
+}
+
+function matcher(a){
+  const L = reEsc(a.last), I = reEsc(a.init);
+  // "Heydarov, K" / "Heydarov K"  OR  "K. Heydarov" / "Kamran Heydarov"
+  return new RegExp('\\b'+L+'\\b[\\s,.]*'+I+'|\\b'+I+'\\w*\\.?\\s+'+L+'\\b','i');
+}
+
+function run(){
+  const authors = parseAuthors($('#authors').value);
+  const refs = $('#refs').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const out = $('#out');
+  if(!authors.length){ out.innerHTML='<div class="muted" style="margin-top:6px">Enter at least one author name.</div>'; return; }
+  if(!refs.length){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste a reference list.</div>'; return; }
+  const matchers = authors.map(matcher);
+  let selfCount = 0;
+  const rows = refs.map(ref=>{
+    let isSelf=false, html=esc(ref);
+    matchers.forEach((re,i)=>{
+      if(re.test(ref)){ isSelf=true; }
+    });
+    if(isSelf){
+      selfCount++;
+      // highlight last names
+      authors.forEach(a=>{
+        html = html.replace(new RegExp('\\b('+reEsc(a.last)+')\\b','ig'),'<span class="hit">$1</span>');
+      });
+    }
+    return `<div class="ref-row${isSelf?' self':''}">${html}${isSelf?'<span class="tag self">self-citation</span>':''}</div>`;
+  });
+  const total = refs.length;
+  const rate = (selfCount/total*100);
+  let band = rate<10?{c:'--green',t:'low — typical'}:rate<25?{c:'--amber',t:'moderate'}:{c:'--red',t:'high — reviewers may flag'};
+  out.innerHTML = `
+    <div class="stat-grid" style="margin:10px 0 14px">
+      <div class="stat-card"><div class="stat-label">References</div><div class="stat-value">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Self-citations</div><div class="stat-value" style="color:var(--accent3)">${selfCount}</div></div>
+      <div class="stat-card"><div class="stat-label">Self-citation rate</div><div class="stat-value" style="color:var(${band.c})">${rate.toFixed(1)}%</div></div>
+      <div class="stat-card"><div class="stat-label">Assessment</div><div class="stat-value" style="font-size:13px;color:var(${band.c})">${band.t}</div></div>
+    </div>
+    ${rows.join('')}`;
+}
+$('#run').addEventListener('click',run);
+['authors','refs'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)) run(); }));
+</script>
+
+</body>
+</html>

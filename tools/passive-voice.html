@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Passive Voice Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-eyeglass"></i></div><div>Passive Voice Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1200px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-eyeglass"></i></div>
+      <div>
+        <div class="tool-title">Passive Voice Analyzer</div>
+        <div class="tool-desc">Highlights likely passive constructions and weak/hedging phrases so you can tighten your academic writing.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace">
+    <div class="panel">
+      <div class="panel-label">
+        <span>Your text</span>
+        <div class="panel-actions">
+          <button class="btn btn-sm btn-ghost" id="sample">Sample</button>
+          <button class="btn btn-sm btn-ghost" id="clear">Clear</button>
+        </div>
+      </div>
+      <textarea id="input" placeholder="Paste a paragraph or your whole manuscript…"></textarea>
+    </div>
+    <div class="panel">
+      <div class="panel-label"><span>Analysis</span></div>
+      <div class="stat-grid" style="margin-bottom:12px">
+        <div class="stat-card"><div class="stat-label">Sentences</div><div class="stat-value" id="s_sent">0</div></div>
+        <div class="stat-card"><div class="stat-label">Passive</div><div class="stat-value" id="s_pass">0</div></div>
+        <div class="stat-card"><div class="stat-label">Passive %</div><div class="stat-value" id="s_pct">0%</div></div>
+        <div class="stat-card"><div class="stat-label">Weak phrases</div><div class="stat-value" id="s_weak">0</div></div>
+      </div>
+      <div class="panel-label" style="margin-bottom:8px"><span>Highlighted</span>
+        <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">
+          <span class="hl-pass">passive</span> · <span class="hl-weak">weak/hedging</span>
+        </span>
+      </div>
+      <div id="out" class="output-box"><span class="muted">Highlighted text appears here.</span></div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span></span></div>
+
+<style>
+  .hl-pass { background:rgba(251,191,36,0.22); border-bottom:2px solid var(--amber); border-radius:2px; padding:0 1px; }
+  .hl-weak { background:rgba(244,114,182,0.18); border-bottom:2px solid var(--pink); border-radius:2px; padding:0 1px; }
+  #out { white-space:pre-wrap; line-height:1.7; }
+  .sent-pass { background:rgba(251,191,36,0.06); border-left:2px solid var(--amber); padding-left:6px; display:inline; }
+</style>
+
+<script>
+const $ = s => document.querySelector(s);
+function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const BE = ['be','being','been','am','is','are','was','were','isn\'t','aren\'t','wasn\'t','weren\'t','get','gets','got','gotten'];
+// passive = (be-verb) + (optional adverb) + past participle. Past participle heuristic: ends in -ed or known irregular.
+const IRREGULAR = new Set(('written shown given taken seen done made found used known held built sent kept left told brought bought caught taught thought sought become run begun chosen drawn driven eaten fallen forgotten hidden led lost met paid put read said sold spent stood understood won set cut hit let cost broken spoken stolen frozen proven proved arisen borne worn torn sworn drawn grown flown thrown blown shaken mistaken undertaken withdrawn').split(' '));
+const WEAK = [
+  'very','really','quite','rather','somewhat','fairly','basically','actually','simply','just','clearly','obviously',
+  'it is important to note','it should be noted','it is worth noting','in order to','due to the fact that','a number of',
+  'it can be argued','it seems','it appears','arguably','to some extent','more or less','in terms of','as a matter of fact',
+  'there is','there are','it is','perhaps','possibly','maybe','might suggest','may suggest','could potentially'
+];
+
+function isParticiple(w){
+  w = w.toLowerCase().replace(/[^a-z']/g,'');
+  if (!w) return false;
+  if (IRREGULAR.has(w)) return true;
+  return /ed$/.test(w) && w.length > 3;
+}
+
+function analyze(){
+  const text = $('#input').value;
+  if (!text.trim()){
+    ['s_sent','s_pass','s_weak'].forEach(id => $('#'+id).textContent='0');
+    $('#s_pct').textContent='0%';
+    $('#out').innerHTML='<span class="muted">Highlighted text appears here.</span>';
+    return;
+  }
+  // split into sentences while keeping them
+  const sentences = text.match(/[^.!?]+[.!?]*\s*/g) || [text];
+  let passCount = 0, weakCount = 0;
+  const beSet = new Set(BE);
+
+  const htmlParts = sentences.map(sent => {
+    const tokens = sent.match(/\s+|[^\s]+/g) || [];
+    let sentIsPassive = false;
+    // detect passive on token stream
+    const words = tokens.map((t,i)=>({t,i,word:t.replace(/[^A-Za-z']/g,'')}));
+    const passiveIdx = new Set();
+    for (let i = 0; i < words.length; i++){
+      const w = words[i].word.toLowerCase();
+      if (beSet.has(w)){
+        // look ahead up to 3 non-space tokens for participle
+        let seen = 0;
+        for (let j = i+1; j < words.length && seen < 4; j++){
+          if (/^\s+$/.test(words[j].t)) continue;
+          seen++;
+          const nw = words[j].word.toLowerCase();
+          if (['not','also','being','been','widely','often','generally','typically','recently','clearly','well','carefully','only','then','now','still'].includes(nw)) continue;
+          if (isParticiple(words[j].word)){ passiveIdx.add(i); passiveIdx.add(j); sentIsPassive = true; }
+          break;
+        }
+      }
+    }
+    if (sentIsPassive) passCount++;
+    let html = words.map(o => {
+      if (/^\s+$/.test(o.t)) return o.t;
+      let cls = passiveIdx.has(o.i) ? 'hl-pass' : '';
+      return cls ? `<span class="${cls}">${esc(o.t)}</span>` : esc(o.t);
+    }).join('');
+    // weak phrase highlight (multi-word + single)
+    WEAK.sort((a,b)=>b.length-a.length).forEach(ph => {
+      const re = new RegExp('\\b' + ph.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','gi');
+      html = html.replace(re, m => { weakCount++; return `<span class="hl-weak">${m}</span>`; });
+    });
+    return sentIsPassive ? `<span class="sent-pass">${html}</span>` : html;
+  });
+
+  $('#s_sent').textContent = sentences.length;
+  $('#s_pass').textContent = passCount;
+  $('#s_weak').textContent = weakCount;
+  $('#s_pct').textContent = Math.round(passCount / sentences.length * 100) + '%';
+  $('#out').innerHTML = htmlParts.join('');
+}
+
+$('#input').addEventListener('input', () => { clearTimeout(window._a); window._a = setTimeout(analyze, 120); });
+$('#clear').addEventListener('click', () => { $('#input').value=''; analyze(); });
+$('#sample').addEventListener('click', () => {
+  $('#input').value = 'The experiment was conducted by the researchers over a period of six weeks. It is important to note that the samples were collected and were analyzed using a standard protocol. The results were shown to be significant. A number of limitations should be noted. The data was processed and the conclusions were drawn carefully.';
+  analyze(); toast('Sample loaded');
+});
+analyze();
+</script>
+
+</body>
+</html>

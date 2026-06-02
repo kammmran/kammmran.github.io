@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concentration Converter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-droplet-half-2"></i></div><div>Concentration Converter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:780px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-droplet-half-2"></i></div>
+      <div>
+        <div class="tool-title">Concentration Converter</div>
+        <div class="tool-desc">Convert between molarity, g/L, mg/L, mass % and ppm. Needs the solute's molar mass and the solution density.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto">
+    <div class="grid2">
+      <label class="fld">Molar mass of solute (g/mol)<input type="number" id="mm" step="any" placeholder="e.g. 58.44"></label>
+      <label class="fld">Solution density (g/mL)<input type="number" id="dens" step="any" value="1.0"></label>
+    </div>
+    <div class="divider"></div>
+    <div class="row">
+      <input type="number" id="amt" step="any" placeholder="value" style="flex:1">
+      <select id="unit" style="width:160px">
+        <option value="M">Molarity (mol/L)</option>
+        <option value="gL">g/L</option>
+        <option value="mgL">mg/L</option>
+        <option value="pct">mass % (w/w)</option>
+        <option value="ppm">ppm (w/w)</option>
+      </select>
+    </div>
+    <div id="out" class="output-box" style="min-height:auto;margin-top:14px"></div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Molarity needs molar mass; mass %, ppm and mg/L conversions to/from volume-based units use the density.</div>
+  </div>
+</main>
+
+<style>.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2)}@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+  .conv-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:14px}
+  .conv-row b{font-variant-numeric:tabular-nums}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
+
+function fmt(v){ if(!Number.isFinite(v)) return '—'; if(v!==0&&(Math.abs(v)<1e-3||Math.abs(v)>=1e6)) return v.toExponential(4); return v.toPrecision(6).replace(/\.?0+$/,''); }
+
+function calc(){
+  const mm=num('mm'), dens=num('dens')||1.0, amt=num('amt'), unit=$('#unit').value;
+  const out=$('#out');
+  if(amt===null){ out.innerHTML='<span class="muted">Enter a value to convert.</span>'; return; }
+  const dgL = dens*1000; // g of solution per L
+
+  // canonical: gL = grams solute per L solution
+  let gL;
+  if(unit==='M'){ if(!mm){ out.innerHTML='<span class="muted">Enter the molar mass to convert from molarity.</span>'; return; } gL=amt*mm; }
+  else if(unit==='gL'){ gL=amt; }
+  else if(unit==='mgL'){ gL=amt/1000; }
+  else if(unit==='pct'){ gL=amt/100*dgL; }
+  else { gL=amt/1e6*dgL; } // ppm
+
+  const M = mm ? gL/mm : null;
+  const mgL = gL*1000;
+  const pct = gL/dgL*100;
+  const ppm = gL/dgL*1e6;
+
+  out.innerHTML = `
+    <div class="conv-row"><span>Molarity</span><b>${M===null?'(need molar mass)':fmt(M)+' mol/L'}</b></div>
+    <div class="conv-row"><span>g/L</span><b>${fmt(gL)} g/L</b></div>
+    <div class="conv-row"><span>mg/L</span><b>${fmt(mgL)} mg/L</b></div>
+    <div class="conv-row"><span>Mass % (w/w)</span><b>${fmt(pct)} %</b></div>
+    <div class="conv-row" style="border:none"><span>ppm (w/w)</span><b>${fmt(ppm)} ppm</b></div>`;
+}
+['mm','dens','amt','unit'].forEach(id=>$('#'+id).addEventListener('input',calc));
+calc();
+</script>
+
+</body>
+</html>
