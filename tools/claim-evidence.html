@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claim-to-Evidence Verifier — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-scale-outline"></i></div><div>Claim-to-Evidence Verifier</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-scale-outline"></i></div>
+      <div>
+        <div class="tool-title">Claim-to-Evidence Verifier</div>
+        <div class="tool-desc">Pairs each assertive claim in your text with its supporting evidence (citation, statistic or data) and flags the claims that stand unsupported.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste your text
+      <textarea id="txt" style="min-height:190px" placeholder="Paste a paragraph or section…"></textarea>
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .row2{padding:9px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:6px;font-size:13px;line-height:1.5;border-left:3px solid var(--text3)}
+  .row2.sup{border-left-color:var(--green)} .row2.unsup{border-left-color:var(--red)}
+  .ev{font-size:11px;margin-top:4px}
+  .ev.sup{color:var(--green)} .ev.unsup{color:var(--red)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const CLAIM=/\b(is|are|was|were|has|have|shows?|demonstrates?|proves?|causes?|leads? to|results? in|improves?|reduces?|increases?|decreases?|most|all|always|never|significantly|the (best|first|only|key)|essential|critical|widely|well[- ]known|established)\b/i;
+const EVID_CITE=/\([^)]*\b(1[89]\d{2}|20\d{2})[a-z]?\)|\[\d+(\s*[,–-]\s*\d+)*\]|\b[A-Z][a-z]+\s+(et al\.?\s+)?\(\d{4}\)/;
+const EVID_DATA=/\b\d+(\.\d+)?\s?(%|percent|fold|±|mg|kg|μm|nm)\b|\bp\s*[<>=]\s*0?\.\d|\bn\s*=\s*\d|\b(figure|table|fig\.|eq\.)\s*\d/i;
+const OWN=/\b(we|our|this (study|paper|work|article)|here we|in this)\b/i;
+function sentences(t){ return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)||[]).map(s=>s.trim()).filter(s=>s.split(' ').length>=4); }
+
+function run(){
+  const t=$('#txt').value.trim(); const out=$('#out');
+  if(!t){ out.innerHTML=''; return; }
+  const sents=sentences(t);
+  let claims=0,sup=0;
+  const rows=[];
+  sents.forEach(s=>{
+    if(!CLAIM.test(s)) return;
+    claims++;
+    const cite=EVID_CITE.test(s), data=EVID_DATA.test(s), own=OWN.test(s);
+    const supported=cite||data||own;
+    if(supported) sup++;
+    const why=cite?'citation present':data?'reports data/statistic':own?'own result (this study)':'no citation, data or attribution';
+    rows.push(`<div class="row2 ${supported?'sup':'unsup'}">${esc(s)}<div class="ev ${supported?'sup':'unsup'}"><i class="ti ti-${supported?'circle-check':'alert-circle'}"></i> ${why}</div></div>`);
+  });
+  if(!claims){ out.innerHTML='<div class="muted" style="margin-top:6px">No assertive claims detected in this text.</div>'; return; }
+  const rate=Math.round(sup/claims*100); const band=rate>=80?'--green':rate>=55?'--amber':'--red';
+  out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">Claims found</div><div class="stat-value">${claims}</div></div>
+      <div class="stat-card"><div class="stat-label">Supported</div><div class="stat-value" style="color:var(--green)">${sup}</div></div>
+      <div class="stat-card"><div class="stat-label">Unsupported</div><div class="stat-value" style="color:var(--red)">${claims-sup}</div></div>
+      <div class="stat-card"><div class="stat-label">Support rate</div><div class="stat-value" style="color:var(${band})">${rate}%</div></div>
+    </div>${rows.join('')}
+    <div class="muted" style="font-size:12px;margin-top:8px">A claim counts as supported if it carries a citation, reports a statistic, or is clearly your own result ("we…"). Red = needs evidence. Heuristic — review each.</div>`;
+}
+$('#txt').addEventListener('input',run);
+</script>
+
+</body>
+</html>

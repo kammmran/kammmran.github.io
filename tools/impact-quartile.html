@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Impact Factor & Quartile Lookup — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-trending-up"></i></div><div>Impact & Quartile</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-trending-up"></i></div>
+      <div>
+        <div class="tool-title">Impact Factor &amp; Quartile Lookup</div>
+        <div class="tool-desc">A journal's citation impact and an indicative tier, from OpenAlex open metrics. (JCR/Scopus quartiles are proprietary — this is an open-data estimate.)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <form id="f" class="row" style="gap:8px">
+      <input type="text" id="q" placeholder="Journal name, e.g. Journal of Chemical Information and Modeling" style="flex:1;min-width:240px">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-search"></i> Look up</button>
+    </form>
+    <div id="out"><div class="muted">Search a journal to see its citation metrics.</div></div>
+  </div>
+</main>
+
+<style>.jrow{padding:10px 13px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);margin-bottom:6px;cursor:pointer}
+  .jrow:hover{border-color:var(--accent)}
+  .jrow h3{margin:0;font-size:14px}
+  .q{font-size:34px;font-weight:800;font-family:Georgia,serif}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MAIL='mailto=academy-tools@users.noreply.github.com';
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('#q').value.trim(); if(!q) return;
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Searching…</div>';
+  try{
+    const r=await fetch(`https://api.openalex.org/sources?search=${encodeURIComponent(q)}&filter=type:journal&per_page=8&${MAIL}`);
+    const d=await r.json();
+    if(!d.results||!d.results.length){ out.innerHTML='<div class="muted">No journal found.</div>'; return; }
+    out.innerHTML='<div class="muted" style="font-size:12px;margin-bottom:6px">Pick the journal:</div>'+
+      d.results.map((s,i)=>`<div class="jrow" data-i="${i}"><h3>${esc(s.display_name)}</h3><div style="font-size:12px;color:var(--text3)">${esc(s.host_organization_name||'')}${s.issn_l?' · ISSN '+esc(s.issn_l):''}</div></div>`).join('');
+    out.querySelectorAll('.jrow').forEach(el=>el.addEventListener('click',()=>show(d.results[+el.dataset.i])));
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
+});
+
+function show(s){
+  const st=s.summary_stats||{}; const jif=st['2yr_mean_citedness']||0; const h=st.h_index||0;
+  // indicative tier from 2-yr mean citedness (open-data heuristic, NOT official JCR)
+  let tier, col, note;
+  if(jif>=8){tier='Q1 (top tier)';col='--green';}
+  else if(jif>=3){tier='Q1–Q2';col='--teal';}
+  else if(jif>=1.5){tier='Q2–Q3';col='--amber';}
+  else if(jif>=0.6){tier='Q3–Q4';col='--amber';}
+  else {tier='Q4 / unranked';col='--red';}
+  $('#out').innerHTML=`
+    <div style="text-align:center;margin:6px 0 12px">
+      <div class="q" style="color:var(${col})">${tier.split(' ')[0]}</div>
+      <div style="color:var(${col});font-weight:600">${tier}</div>
+      <div class="muted" style="font-size:11px">indicative tier from open citation data — not an official JCR/Scopus quartile</div>
+    </div>
+    <div style="font-weight:600;font-size:15px;text-align:center;margin-bottom:10px">${esc(s.display_name)}</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">2-yr mean citedness (≈ JIF)</div><div class="stat-value" style="color:var(${col})">${jif.toFixed(2)}</div></div>
+      <div class="stat-card"><div class="stat-label">h-index</div><div class="stat-value">${h}</div></div>
+      <div class="stat-card"><div class="stat-label">Total works</div><div class="stat-value">${(s.works_count||0).toLocaleString()}</div></div>
+      <div class="stat-card"><div class="stat-label">Total citations</div><div class="stat-value">${(s.cited_by_count||0).toLocaleString()}</div></div>
+      <div class="stat-card"><div class="stat-label">Open access</div><div class="stat-value" style="font-size:14px">${s.is_oa?'Yes':'No'}</div></div>
+      <div class="stat-card"><div class="stat-label">ISSN-L</div><div class="stat-value" style="font-size:14px">${esc(s.issn_l||'—')}</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">The "2-yr mean citedness" is OpenAlex's open analogue of the Journal Impact Factor. Official Clarivate JIF and Scopus CiteScore/quartiles require a paid subscription — use this for triage, then confirm on the journal's own page.</div>`;
+}
+</script>
+
+</body>
+</html>

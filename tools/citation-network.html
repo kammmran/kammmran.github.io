@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citation Network Visualizer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-binary-tree"></i></div><div>Citation Network</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-binary-tree"></i></div>
+      <div>
+        <div class="tool-title">Citation Network Visualizer</div>
+        <div class="tool-desc">Enter a DOI or paper title → a graph of what it cites (its foundations) and what cites it (its impact). Powered by OpenAlex.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <form id="f" class="row" style="gap:8px">
+      <input type="text" id="q" placeholder="DOI (10.1038/…) or paper title" style="flex:1;min-width:240px">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-binary-tree"></i> Map</button>
+    </form>
+    <div id="out"><div class="muted">References fan out to the left, citing papers to the right.</div></div>
+  </div>
+</main>
+
+<style>svg text{font-size:10px}
+  a.lnk{color:var(--accent3);text-decoration:none}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MAIL='mailto=academy-tools@users.noreply.github.com';
+const short=(s,n=42)=>{ s=s||''; return s.length>n?s.slice(0,n-1)+'…':s; };
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); let q=$('#q').value.trim(); if(!q) return;
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Building network…</div>';
+  try{
+    const doi=q.match(/10\.\d{4,}\/\S+/);
+    const url=doi?`https://api.openalex.org/works/doi:${encodeURIComponent(doi[0])}?${MAIL}`
+                 :`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per_page=1&${MAIL}`;
+    let w=await fetch(url).then(r=>r.json()); if(w.results) w=w.results[0];
+    if(!w||!w.id){ out.innerHTML='<div class="muted">Paper not found.</div>'; return; }
+    const refIds=(w.referenced_works||[]).slice(0,6).map(u=>u.split('/').pop());
+    const [refs,cites]=await Promise.all([
+      refIds.length?fetch(`https://api.openalex.org/works?filter=openalex_id:${refIds.join('|')}&select=id,display_name,publication_year,cited_by_count&per_page=6&${MAIL}`).then(r=>r.json()).then(d=>d.results||[]):Promise.resolve([]),
+      fetch(`https://api.openalex.org/works?filter=cites:${w.id.split('/').pop()}&sort=cited_by_count:desc&per_page=6&select=id,display_name,publication_year,cited_by_count&${MAIL}`).then(r=>r.json()).then(d=>d.results||[])
+    ]);
+    draw(w,refs,cites);
+  }catch(err){ $('#out').innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
+});
+
+function draw(focal,refs,cites){
+  const W=900,H=Math.max(320, 60+Math.max(refs.length,cites.length)*46);
+  const cx=W/2, cy=H/2;
+  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px">`;
+  // edges first
+  const place=(arr,side)=>arr.map((n,i)=>{ const y=(H/(arr.length+1))*(i+1); const x=side<0?170:W-170; return {n,x,y}; });
+  const L=place(refs,-1), R=place(cites,1);
+  [...L,...R].forEach(p=>{ s+=`<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="var(--border2)" stroke-width="1"/>`; });
+  const card=(x,y,n,col,anchor)=>{ const w2=210,h=34; const rx=anchor==='end'?x-w2:x;
+    return `<g><rect x="${anchor==='start'?x:x-w2}" y="${y-h/2}" width="${w2}" height="${h}" rx="7" fill="var(--bg3)" stroke="${col}"/>
+      <text x="${anchor==='start'?x+8:x-8}" y="${y-3}" text-anchor="${anchor}" fill="var(--text)">${esc(short(n.display_name,34))}</text>
+      <text x="${anchor==='start'?x+8:x-8}" y="${y+11}" text-anchor="${anchor}" fill="var(--text3)">${n.publication_year||''} · ${(n.cited_by_count||0).toLocaleString()} cites</text></g>`; };
+  L.forEach(p=>{ s+=card(p.x,p.y,p.n,'var(--blue)','end'); });
+  R.forEach(p=>{ s+=card(p.x,p.y,p.n,'var(--green)','start'); });
+  // focal
+  s+=`<circle cx="${cx}" cy="${cy}" r="44" fill="rgba(124,109,240,0.2)" stroke="var(--accent3)" stroke-width="2"/>`;
+  s+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" fill="var(--text)" style="font-size:11px;font-weight:700">FOCAL</text>`;
+  s+=`<text x="${cx}" y="${cy+12}" text-anchor="middle" fill="var(--text3)">${focal.cited_by_count||0} cites</text>`;
+  s+=`<text x="170" y="22" text-anchor="middle" fill="var(--blue)" style="font-size:12px">← references (${refs.length})</text>`;
+  s+=`<text x="${W-170}" y="22" text-anchor="middle" fill="var(--green)" style="font-size:12px">citing papers (${cites.length}) →</text>`;
+  s+='</svg>';
+  $('#out').innerHTML=`<div style="font-weight:600;margin-bottom:8px">${esc(focal.display_name)}</div>${s}
+    <div class="muted" style="font-size:12px;margin-top:8px">Left = papers this work builds on. Right = the most-cited papers that cite it. Limited to 6 each for readability.</div>`;
+}
+</script>
+
+</body>
+</html>

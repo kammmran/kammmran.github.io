@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Missing Seminal Papers Detector — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-bulb"></i></div><div>Missing Seminal Papers</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-bulb"></i></div>
+      <div>
+        <div class="tool-title">Missing Seminal Papers Detector</div>
+        <div class="tool-desc">Paste your reference list and a topic → it fetches the field's most-cited works and flags the influential ones you haven't cited. Via OpenAlex.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Topic / field<input type="text" id="q" placeholder="e.g. transformer language models"></label>
+    <label class="fld">Your reference list — one per line (titles or DOIs)
+      <textarea id="refs" style="min-height:150px" placeholder="Vaswani et al. Attention is all you need&#10;10.18653/v1/n19-1423"></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Check coverage</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .prow{padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);margin-bottom:7px;font-size:13px}
+  .prow.miss{border-color:rgba(248,113,113,0.45);background:rgba(248,113,113,0.06)}
+  .prow.have{opacity:.6}
+  .tag{font-size:11px;padding:1px 8px;border-radius:999px;margin-left:6px}
+  .tag.miss{background:rgba(248,113,113,0.18);color:var(--red)} .tag.have{background:rgba(74,222,128,0.16);color:var(--green)}
+  a.lnk{color:var(--accent3);text-decoration:none}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MAIL='mailto=academy-tools@users.noreply.github.com';
+const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+
+$('#run').addEventListener('click',async ()=>{
+  const q=$('#q').value.trim(); const refsRaw=$('#refs').value;
+  if(!q){ $('#out').innerHTML='<div class="muted" style="margin-top:6px">Enter a topic.</div>'; return; }
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Fetching top-cited works…</div>';
+  const refLines=refsRaw.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const refDois=new Set(refLines.map(l=>{const m=l.match(/10\.\d{4,}\/\S+/);return m?m[0].toLowerCase():null;}).filter(Boolean));
+  const refNorm=refLines.map(norm);
+  try{
+    const r=await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&sort=cited_by_count:desc&per_page=25&select=display_name,publication_year,cited_by_count,doi&${MAIL}`);
+    const d=await r.json(); const works=d.results||[];
+    if(!works.length){ out.innerHTML='<div class="muted">No works found for that topic.</div>'; return; }
+    let missing=0;
+    const rows=works.map(w=>{
+      const t=norm(w.display_name); const doi=w.doi?w.doi.replace('https://doi.org/','').toLowerCase():'';
+      const cited = (doi&&refDois.has(doi)) || refNorm.some(rn=> rn.length>8 && (rn.includes(t.slice(0,Math.min(40,t.length))) || t.includes(rn.slice(0,Math.min(40,rn.length)))) );
+      if(!cited) missing++;
+      return `<div class="prow ${cited?'have':'miss'}">${esc(w.display_name)} <span class="tag ${cited?'have':'miss'}">${cited?'cited':'not cited'}</span>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px">${w.publication_year||''} · ${(w.cited_by_count||0).toLocaleString()} citations ${w.doi?`· <a class="lnk" href="${esc(w.doi)}" target="_blank" rel="noopener">DOI ↗</a>`:''}</div></div>`;
+    });
+    out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+        <div class="stat-card"><div class="stat-label">Top works checked</div><div class="stat-value">${works.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Possibly missing</div><div class="stat-value" style="color:var(--red)">${missing}</div></div>
+        <div class="stat-card"><div class="stat-label">Coverage</div><div class="stat-value" style="color:var(--green)">${Math.round((works.length-missing)/works.length*100)}%</div></div>
+      </div>${rows.join('')}
+      <div class="muted" style="font-size:12px;margin-top:8px">Matching is fuzzy (title/DOI) — double-check flags before assuming a gap. "Not cited" highly-cited papers are the ones a reviewer is most likely to ask about.</div>`;
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
+});
+</script>
+
+</body>
+</html>

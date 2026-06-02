@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Trend Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-line"></i></div><div>Research Trend Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-chart-line"></i></div>
+      <div>
+        <div class="tool-title">Research Trend Analyzer</div>
+        <div class="tool-desc">How fast is a topic growing? Publications per year and the hottest sub-topics for any query. Powered by OpenAlex.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <form id="f" class="row" style="gap:8px">
+      <input type="text" id="q" placeholder="e.g. graph neural networks, CRISPR, perovskite solar cells" style="flex:1;min-width:220px">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-chart-bar"></i> Analyze trend</button>
+    </form>
+    <div id="out"><div class="muted">Enter a research topic to chart its growth.</div></div>
+  </div>
+</main>
+
+<style>.bar-row{display:flex;align-items:center;gap:10px;margin:2px 0;font-size:12px}
+  .bar-lbl{width:42px;text-align:right;color:var(--text2);font-variant-numeric:tabular-nums}
+  .bar-track{flex:1;background:var(--bg3);border-radius:4px;overflow:hidden;height:16px}
+  .bar-fill{height:100%;background:var(--accent3);border-radius:4px}
+  .bar-n{width:70px;color:var(--text3);font-size:11px;font-variant-numeric:tabular-nums}
+  .pill{font-size:11px;padding:3px 10px;border-radius:999px;background:var(--surface2);color:var(--text2);margin:3px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MAIL='mailto=academy-tools@users.noreply.github.com';
+const NOW=new Date().getFullYear();
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('#q').value.trim(); if(!q) return;
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Querying OpenAlex…</div>';
+  try{
+    const enc=encodeURIComponent(q);
+    const [byYear,byConcept]=await Promise.all([
+      fetch(`https://api.openalex.org/works?search=${enc}&group_by=publication_year&${MAIL}`).then(r=>r.json()),
+      fetch(`https://api.openalex.org/works?search=${enc}&group_by=concepts.id&${MAIL}`).then(r=>r.json())
+    ]);
+    const map={}; (byYear.group_by||[]).forEach(g=>{ const y=+g.key; if(y>=NOW-14&&y<=NOW) map[y]=g.count; });
+    const years=[]; for(let y=NOW-14;y<=NOW;y++) years.push(y);
+    const counts=years.map(y=>map[y]||0); const max=Math.max(...counts,1);
+    const total=(byYear.group_by||[]).reduce((a,g)=>a+g.count,0);
+    // growth: last 3 yrs vs prior 3 yrs (excluding current partial year)
+    const recent=(map[NOW-1]||0)+(map[NOW-2]||0)+(map[NOW-3]||0);
+    const older=(map[NOW-4]||0)+(map[NOW-5]||0)+(map[NOW-6]||0);
+    const growth=older>0?((recent-older)/older*100):0;
+    const concepts=(byConcept.group_by||[]).slice(0,12).map(g=>g.key_display_name).filter(Boolean);
+    out.innerHTML=`
+      <div class="stat-grid" style="margin-bottom:12px">
+        <div class="stat-card"><div class="stat-label">Total works</div><div class="stat-value">${total.toLocaleString()}</div></div>
+        <div class="stat-card"><div class="stat-label">${NOW-1} output</div><div class="stat-value">${(map[NOW-1]||0).toLocaleString()}</div></div>
+        <div class="stat-card"><div class="stat-label">3-yr growth</div><div class="stat-value" style="color:${growth>=0?'var(--green)':'var(--red)'}">${growth>=0?'+':''}${growth.toFixed(0)}%</div></div>
+        <div class="stat-card"><div class="stat-label">Momentum</div><div class="stat-value" style="font-size:13px">${growth>40?'🔥 hot':growth>0?'rising':'cooling'}</div></div>
+      </div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px">Publications per year</div>
+      ${years.map((y,i)=>`<div class="bar-row"><div class="bar-lbl">${y}</div><div class="bar-track"><div class="bar-fill" style="width:${counts[i]/max*100}%"></div></div><div class="bar-n">${counts[i].toLocaleString()}</div></div>`).join('')}
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:12px 0 6px">Associated sub-topics</div>
+      <div>${concepts.map(c=>`<span class="pill">${esc(c)}</span>`).join('')}</div>
+      <div class="muted" style="font-size:12px;margin-top:8px">The current year is usually incomplete, so the last bar dips. Growth compares the last 3 full years to the 3 before.</div>`;
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
+});
+</script>
+
+</body>
+</html>

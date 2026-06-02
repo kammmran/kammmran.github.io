@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Finder — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-book"></i></div><div>Journal Finder</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-book"></i></div>
+      <div>
+        <div class="tool-title">Journal Finder</div>
+        <div class="tool-desc">Search scholarly journals by topic or title — works count, citation impact, open-access status and ISSN. Powered by OpenAlex.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <form id="f" class="row" style="gap:8px">
+      <input type="text" id="q" placeholder="e.g. computational chemistry, machine learning, oncology" style="flex:1;min-width:220px">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-search"></i> Find journals</button>
+    </form>
+    <div id="out"><div class="muted">Enter a research topic or journal name.</div></div>
+  </div>
+</main>
+
+<style>.jrow{padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);margin-bottom:8px}
+  .jrow h3{margin:0 0 4px;font-size:15px}
+  .jrow .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .pill{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--surface2);color:var(--text2)}
+  .pill.oa{background:rgba(74,222,128,0.16);color:var(--green)}
+  a.src{color:var(--accent3);text-decoration:none;font-size:12px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const API='https://api.openalex.org';
+const MAIL='mailto=academy-tools@users.noreply.github.com';
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('#q').value.trim(); if(!q) return;
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Searching OpenAlex…</div>';
+  try{
+    const r=await fetch(`${API}/sources?search=${encodeURIComponent(q)}&filter=type:journal&per_page=20&${MAIL}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    if(!d.results||!d.results.length){ out.innerHTML='<div class="muted">No journals found. Try a broader term.</div>'; return; }
+    out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${d.meta.count.toLocaleString()} sources matched — top ${d.results.length}, ranked by works.</div>`+
+      d.results.map(s=>{
+        const issn=(s.issn_l||(s.issn&&s.issn[0])||'');
+        const pub=s.host_organization_name||'';
+        return `<div class="jrow">
+          <h3>${esc(s.display_name)}</h3>
+          <div style="font-size:12px;color:var(--text3)">${esc(pub)}${issn?' · ISSN '+esc(issn):''}</div>
+          <div class="meta">
+            <span class="pill">${(s.works_count||0).toLocaleString()} works</span>
+            <span class="pill">${(s.cited_by_count||0).toLocaleString()} citations</span>
+            <span class="pill">2-yr impact ≈ ${(s.summary_stats&&s.summary_stats['2yr_mean_citedness']||0).toFixed(2)}</span>
+            <span class="pill">h-index ${s.summary_stats&&s.summary_stats.h_index||'—'}</span>
+            ${s.is_oa?'<span class="pill oa">Open Access</span>':''}
+            ${s.homepage_url?`<a class="src" href="${esc(s.homepage_url)}" target="_blank" rel="noopener">homepage ↗</a>`:''}
+          </div>
+        </div>`;
+      }).join('');
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}). Check your connection and retry.</div>`; }
+});
+function esc(s){ return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+</script>
+
+</body>
+</html>

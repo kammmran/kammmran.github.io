@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dataset Finder — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-database-search"></i></div><div>Dataset Finder</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-database-search"></i></div>
+      <div>
+        <div class="tool-title">Dataset Finder</div>
+        <div class="tool-desc">Discover openly published research datasets by topic — title, repository, year and DOI. Powered by DataCite.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <form id="f" class="row" style="gap:8px">
+      <input type="text" id="q" placeholder="e.g. air quality time series, protein structures, MNIST" style="flex:1;min-width:220px">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-search"></i> Find datasets</button>
+    </form>
+    <div id="out"><div class="muted">Search millions of datasets registered with a DOI.</div></div>
+  </div>
+</main>
+
+<style>.drow{padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);margin-bottom:8px}
+  .drow h3{margin:0 0 4px;font-size:14.5px;line-height:1.35}
+  .pill{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--surface2);color:var(--text2);margin-right:6px}
+  a.lnk{color:var(--accent3);text-decoration:none;font-size:12px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('#q').value.trim(); if(!q) return;
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Searching DataCite…</div>';
+  try{
+    const r=await fetch(`https://api.datacite.org/dois?query=${encodeURIComponent(q)}&resource-type-id=dataset&page[size]=20&sort=relevance`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const items=d.data||[];
+    if(!items.length){ out.innerHTML='<div class="muted">No datasets found. Try different keywords.</div>'; return; }
+    out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${(d.meta&&d.meta.total||items.length).toLocaleString()} datasets matched — top ${items.length}.</div>`+
+      items.map(it=>{
+        const a=it.attributes; const title=(a.titles&&a.titles[0]&&a.titles[0].title)||'(untitled)';
+        const repo=(a.publisher&&(a.publisher.name||a.publisher))||a.client_id||''; const yr=a.publicationYear||'';
+        const creators=(a.creators||[]).slice(0,3).map(c=>c.name).filter(Boolean).join('; ');
+        return `<div class="drow">
+          <h3>${esc(title)}</h3>
+          <div style="font-size:12px;color:var(--text3)">${esc(creators)}${creators&&yr?' · ':''}${yr}</div>
+          <div style="margin-top:6px"><span class="pill">${esc(repo)}</span><span class="pill">dataset</span>
+            <a class="lnk" href="https://doi.org/${esc(a.doi)}" target="_blank" rel="noopener">${esc(a.doi)} ↗</a></div>
+        </div>`;
+      }).join('');
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach DataCite (${esc(err.message)}).</div>`; }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Novelty Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-diamond"></i></div><div>Novelty Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-diamond"></i></div>
+      <div>
+        <div class="tool-title">Research Novelty Analyzer</div>
+        <div class="tool-desc">Does your abstract actually say what's new? Highlights novelty &amp; contribution statements and scores how clearly the "what's new here?" is articulated.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste your abstract or introduction
+      <textarea id="txt" style="min-height:190px" placeholder="Paste your abstract here…"></textarea>
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #render{line-height:1.8;font-size:14px}
+  .nov{background:rgba(45,212,191,0.16);box-shadow:inset 0 -2px 0 var(--teal);border-radius:3px;padding:0 2px}
+  .contrib{background:rgba(124,109,240,0.16);box-shadow:inset 0 -2px 0 var(--accent3);border-radius:3px;padding:0 2px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const NOVELTY=/\b(novel|new(ly)?|first(\s+(time|to|study|ever))?|for the first time|unprecedented|original|innovat\w+|unlike (previous|prior|existing)|in contrast to (previous|prior|existing)|to our knowledge|has not (been|previously)|previously (unexplored|unknown|unreported)|fills? (a|the|this) gap|address(es)? (a|the|this) gap)\b/gi;
+const CONTRIB=/\b(we (propose|present|introduce|develop|design|contribute|demonstrate|provide|show)|this (paper|study|work) (presents|proposes|introduces|develops|contributes|demonstrates)|our (contribution|approach|method|main contribution)|the (main|key) contribution)\b/gi;
+function sentences(t){ return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)||[]).map(s=>s.trim()).filter(Boolean); }
+
+function run(){
+  const t=$('#txt').value.trim(); const out=$('#out');
+  if(!t){ out.innerHTML=''; return; }
+  const sents=sentences(t);
+  let novS=0,conS=0;
+  const html=sents.map(s=>{ NOVELTY.lastIndex=0;CONTRIB.lastIndex=0; const hasN=NOVELTY.test(s), hasC=CONTRIB.test(s); if(hasN)novS++; if(hasC)conS++;
+    let h=esc(s); h=h.replace(NOVELTY,m=>`<span class="nov">${m}</span>`).replace(CONTRIB,m=>`<span class="contrib">${m}</span>`); return h; }).join(' ');
+  const novWords=(t.match(NOVELTY)||[]).length, conWords=(t.match(CONTRIB)||[]).length;
+  // articulation score: presence of novelty + contribution + contrast to prior
+  let score=0; if(novS)score+=40; if(conS)score+=35; if(/\b(unlike|in contrast to|whereas|compared to (previous|prior|existing)|gap)\b/i.test(t))score+=25;
+  const band=score>=75?'--green':score>=40?'--amber':'--red';
+  const verdict=score>=75?'Novelty is clearly articulated':score>=40?'Novelty is partly stated — make it explicit':'Novelty is unclear — a reviewer will ask "what is new?"';
+  out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">Articulation score</div><div class="stat-value" style="color:var(${band})">${score}/100</div></div>
+      <div class="stat-card"><div class="stat-label">Novelty cues</div><div class="stat-value" style="color:var(--teal)">${novWords}</div></div>
+      <div class="stat-card"><div class="stat-label">Contribution cues</div><div class="stat-value" style="color:var(--accent3)">${conWords}</div></div>
+    </div>
+    <div style="font-weight:600;color:var(${band});margin-bottom:8px">${verdict}</div>
+    <div id="render">${html}</div>
+    <div class="muted" style="font-size:12px;margin-top:10px"><span class="nov">teal</span> = novelty claims · <span class="contrib">purple</span> = contribution statements. If neither is highlighted, add an explicit "Unlike prior work…, we are the first to…" sentence.</div>`;
+}
+$('#txt').addEventListener('input',run);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Question Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-help-circle"></i></div><div>Research Question Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:840px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-help-circle"></i></div>
+      <div>
+        <div class="tool-title">Research Question Generator</div>
+        <div class="tool-desc">Fill the PICO building blocks → well-formed research questions in several styles (descriptive, comparative, relational, causal).</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Population / problem (P)<input id="p" placeholder="e.g. type-2 diabetes patients"></label>
+      <label class="fld">Intervention / interest (I)<input id="i" placeholder="e.g. a low-carb diet"></label>
+      <label class="fld">Comparison (C) <span class="muted">opt.</span><input id="c" placeholder="e.g. standard diet"></label>
+      <label class="fld">Outcome (O)<input id="o" placeholder="e.g. blood-glucose control"></label>
+      <label class="fld">Context / time (T) <span class="muted">opt.</span><input id="t" placeholder="e.g. over 12 months"></label>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .q{padding:10px 13px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);margin-bottom:7px;font-size:14px;line-height:1.5}
+  .q .ty{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent3);font-weight:600;margin-bottom:3px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const v=id=>$('#'+id).value.trim();
+
+function run(){
+  const p=v('p'),i=v('i'),c=v('c'),o=v('o'),t=v('t'); const out=$('#out');
+  if(!p||!o){ out.innerHTML='<div class="muted" style="margin-top:6px">Fill at least Population and Outcome to generate questions.</div>'; return; }
+  const ctx=t?` ${t}`:''; const I=i||'the intervention';
+  const qs=[];
+  qs.push(['Descriptive', `What is the level of ${o} among ${p}${ctx}?`]);
+  qs.push(['Relational', `What is the relationship between ${I} and ${o} in ${p}${ctx}?`]);
+  if(c) qs.push(['Comparative', `How does ${I} compare with ${c} in affecting ${o} among ${p}${ctx}?`]);
+  qs.push(['Causal', `Does ${I} ${c?`(versus ${c}) `:''}improve ${o} in ${p}${ctx}?`]);
+  qs.push(['Mechanistic', `To what extent, and through what mechanism, does ${I} influence ${o} in ${p}${ctx}?`]);
+  if(c) qs.push(['Effect-size', `What is the effect size of ${I} relative to ${c} on ${o} in ${p}${ctx}?`]);
+  qs.push(['Exploratory', `What factors are associated with ${o} among ${p}${ctx}?`]);
+  out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">PICO(T): <b>${esc(p)}</b> · <b>${esc(i||'—')}</b> · <b>${esc(c||'—')}</b> · <b>${esc(o)}</b>${t?` · <b>${esc(t)}</b>`:''}</div>`+
+    qs.map(([ty,q])=>`<div class="q"><div class="ty">${ty}</div>${esc(q)}</div>`).join('')+
+    `<div class="muted" style="font-size:12px;margin-top:8px">Refine with FINER: is it <b>F</b>easible, <b>I</b>nteresting, <b>N</b>ovel, <b>E</b>thical, <b>R</b>elevant? Pick the phrasing that matches your study design.</div>`;
+}
+['p','i','c','o','t'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

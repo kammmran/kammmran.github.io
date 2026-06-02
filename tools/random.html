@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-dice"></i></div>
       <div>
         <div class="tool-title">Random Generator</div>
-        <div class="tool-desc">Lorem ipsum, UUIDs, passwords, numbers, and picks — generate what you need.</div>
+        <div class="tool-desc">Lorem ipsum, UUIDs, passwords, numbers, dice, coins, colors, dates, names, strings, Gaussian values, picks &amp; teams — generate what you need.</div>
       </div>
     </div>
   </div>
@@ -32,6 +32,14 @@
     <button class="tab" data-tool="password">Password</button>
     <button class="tab" data-tool="number">Number</button>
     <button class="tab" data-tool="pick">Pick from list</button>
+    <button class="tab" data-tool="dice">Dice</button>
+    <button class="tab" data-tool="coin">Coin flip</button>
+    <button class="tab" data-tool="color">Color</button>
+    <button class="tab" data-tool="date">Date</button>
+    <button class="tab" data-tool="name">Name</button>
+    <button class="tab" data-tool="string">String</button>
+    <button class="tab" data-tool="gauss">Gaussian</button>
+    <button class="tab" data-tool="teams">Shuffle / Teams</button>
   </div>
 
   <div class="workspace">
@@ -105,6 +113,73 @@ Tails</textarea>
         </div>
       </div>
 
+      <div id="opts-dice" style="display:none">
+        <div class="row" style="gap:8px">
+          <div style="flex:1"><div class="panel-label"><span>Dice</span></div><input type="number" id="dice-n" value="2" min="1" max="100"></div>
+          <div style="flex:1"><div class="panel-label"><span>Sides</span></div><input type="number" id="dice-sides" value="6" min="2" max="1000"></div>
+          <div style="flex:1"><div class="panel-label"><span>Modifier</span></div><input type="number" id="dice-mod" value="0"></div>
+        </div>
+        <div class="row" style="margin-top:10px"><span class="muted" style="font-size:13px">Sets</span><input type="number" id="dice-sets" value="1" min="1" max="100" style="width:90px"></div>
+      </div>
+
+      <div id="opts-coin" style="display:none">
+        <div class="row"><span class="muted" style="font-size:13px">Flips</span><input type="number" id="coin-n" value="10" min="1" max="100000" style="width:110px"></div>
+      </div>
+
+      <div id="opts-color" style="display:none">
+        <div class="row" style="gap:8px">
+          <select id="color-fmt"><option value="hex">HEX</option><option value="rgb">RGB</option><option value="hsl">HSL</option></select>
+          <input type="number" id="color-n" value="8" min="1" max="500" style="width:90px">
+        </div>
+      </div>
+
+      <div id="opts-date" style="display:none">
+        <div class="row" style="gap:8px">
+          <div style="flex:1"><div class="panel-label"><span>From</span></div><input type="date" id="date-from"></div>
+          <div style="flex:1"><div class="panel-label"><span>To</span></div><input type="date" id="date-to"></div>
+        </div>
+        <div class="row" style="margin-top:10px; gap:10px">
+          <span class="muted" style="font-size:13px">How many</span><input type="number" id="date-n" value="5" min="1" max="1000" style="width:90px">
+          <label class="row" style="gap:6px; font-size:13px; color:var(--text2)"><input type="checkbox" id="date-time"> Include time</label>
+        </div>
+      </div>
+
+      <div id="opts-name" style="display:none">
+        <div class="row" style="gap:8px">
+          <select id="name-style"><option value="full">Full name</option><option value="first">First only</option><option value="last">Last only</option></select>
+          <input type="number" id="name-n" value="8" min="1" max="500" style="width:90px">
+        </div>
+      </div>
+
+      <div id="opts-string" style="display:none">
+        <div class="row" style="gap:8px">
+          <select id="str-set"><option value="alnum">Alphanumeric</option><option value="hex">Hex</option><option value="letters">Letters</option><option value="digits">Digits</option><option value="custom">Custom…</option></select>
+          <div style="flex:1"><div class="panel-label"><span>Length</span></div><input type="number" id="str-len" value="12" min="1" max="512"></div>
+          <div style="flex:1"><div class="panel-label"><span>Count</span></div><input type="number" id="str-n" value="5" min="1" max="500"></div>
+        </div>
+        <input type="text" id="str-custom" placeholder="Custom characters (used with Custom…)" style="margin-top:10px">
+      </div>
+
+      <div id="opts-gauss" style="display:none">
+        <div class="row" style="gap:8px">
+          <div style="flex:1"><div class="panel-label"><span>Mean</span></div><input type="number" id="gauss-mean" value="0"></div>
+          <div style="flex:1"><div class="panel-label"><span>Std dev</span></div><input type="number" id="gauss-sd" value="1"></div>
+        </div>
+        <div class="row" style="gap:8px; margin-top:10px">
+          <div style="flex:1"><div class="panel-label"><span>How many</span></div><input type="number" id="gauss-n" value="10" min="1" max="10000"></div>
+          <div style="flex:1"><div class="panel-label"><span>Decimals</span></div><input type="number" id="gauss-dec" value="2" min="0" max="10"></div>
+        </div>
+      </div>
+
+      <div id="opts-teams" style="display:none">
+        <div class="panel-label"><span>Your list (one per line)</span></div>
+        <textarea id="teams-list" placeholder="Alice&#10;Bob&#10;Carol&#10;Dan&#10;Eve&#10;Frank" style="min-height:120px"></textarea>
+        <div class="row" style="margin-top:10px; gap:8px">
+          <select id="teams-mode"><option value="shuffle">Shuffle order</option><option value="split">Split into groups</option></select>
+          <input type="number" id="teams-groups" value="2" min="1" max="100" style="width:90px" title="Number of groups">
+        </div>
+      </div>
+
       <div class="divider"></div>
       <button class="btn btn-primary" id="gen-btn"><i class="ti ti-refresh"></i> Generate</button>
     </div>
@@ -131,7 +206,7 @@ function tabClick(t) {
   document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
   activeTool = t.dataset.tool;
-  ['lorem','uuid','password','number','pick'].forEach(k =>
+  ['lorem','uuid','password','number','pick','dice','coin','color','date','name','string','gauss','teams'].forEach(k =>
     document.getElementById('opts-' + k).style.display = (k === activeTool ? '' : 'none')
   );
 }
@@ -269,10 +344,114 @@ function genPick() {
   return out.join('\n');
 }
 
+const v = id => document.getElementById(id).value;
+
+function genDice() {
+  const n = Math.max(1, +v('dice-n')), s = Math.max(2, +v('dice-sides')), mod = +v('dice-mod') || 0, sets = Math.max(1, +v('dice-sets'));
+  const out = [];
+  for (let k = 0; k < sets; k++) {
+    const rolls = []; for (let i = 0; i < n; i++) rolls.push(rndInt(1, s));
+    const sum = rolls.reduce((a, b) => a + b, 0) + mod;
+    out.push(`${n}d${s}${mod ? (mod > 0 ? '+' + mod : mod) : ''}: ${rolls.join(', ')}  →  ${sum}`);
+  }
+  return out.join('\n');
+}
+
+function genCoin() {
+  const n = Math.max(1, +v('coin-n')); let h = 0; const seq = [];
+  for (let i = 0; i < n; i++) { const heads = Math.random() < 0.5; if (heads) h++; seq.push(heads ? 'H' : 'T'); }
+  return `${seq.join(' ')}\n\nHeads: ${h} (${(h / n * 100).toFixed(1)}%)   Tails: ${n - h} (${((n - h) / n * 100).toFixed(1)}%)`;
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b); let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else { const d = max - min; s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) { case r: h = (g - b) / d + (g < b ? 6 : 0); break; case g: h = (b - r) / d + 2; break; default: h = (r - g) / d + 4; } h /= 6; }
+  return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+}
+function genColor() {
+  const n = Math.max(1, +v('color-n')), fmt = v('color-fmt'), out = [];
+  for (let i = 0; i < n; i++) {
+    const r = rndInt(0, 255), g = rndInt(0, 255), b = rndInt(0, 255);
+    if (fmt === 'rgb') out.push(`rgb(${r}, ${g}, ${b})`);
+    else if (fmt === 'hsl') out.push(rgbToHsl(r, g, b));
+    else out.push('#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join(''));
+  }
+  return out.join('\n');
+}
+
+function genDate() {
+  const f = new Date(v('date-from') || '2000-01-01').getTime();
+  const t = new Date(v('date-to') || new Date().toISOString().slice(0, 10)).getTime();
+  if (isNaN(f) || isNaN(t)) return 'Enter valid dates.';
+  if (t < f) return 'The "To" date must be on or after "From".';
+  const n = Math.max(1, +v('date-n')), withTime = document.getElementById('date-time').checked, out = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(f + Math.random() * (t - f));
+    out.push(withTime ? d.toISOString().slice(0, 16).replace('T', ' ') : d.toISOString().slice(0, 10));
+  }
+  return out.join('\n');
+}
+
+const FIRST = "James Mary John Patricia Robert Jennifer Michael Linda William Elizabeth David Barbara Maria Ada Grace Alan Katherine Omar Yuki Wei Sofia Liam Noah Olivia Emma Aisha Mohammed Chen Ananya Diego Lucas Mia Hana Ivan Fatima Carlos Nadia".split(' ');
+const LAST = "Smith Johnson Williams Brown Jones Garcia Miller Davis Rodriguez Martinez Hernandez Lopez Gonzalez Wilson Lee Walker Hall Allen Young King Wright Scott Green Baker Nguyen Kim Patel Khan Chen Yamamoto Muller Rossi Silva Ivanov Okafor".split(' ');
+function genName() {
+  const n = Math.max(1, +v('name-n')), style = v('name-style'), out = [];
+  for (let i = 0; i < n; i++) {
+    const fn = FIRST[rndInt(0, FIRST.length - 1)], ln = LAST[rndInt(0, LAST.length - 1)];
+    out.push(style === 'first' ? fn : style === 'last' ? ln : `${fn} ${ln}`);
+  }
+  return out.join('\n');
+}
+
+function genString() {
+  const len = Math.max(1, +v('str-len')), n = Math.max(1, +v('str-n')), set = v('str-set');
+  let pool = set === 'hex' ? '0123456789abcdef'
+    : set === 'letters' ? 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    : set === 'digits' ? '0123456789'
+    : set === 'custom' ? document.getElementById('str-custom').value
+    : 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  if (!pool) return 'Enter a custom character set first.';
+  const out = [];
+  for (let i = 0; i < n; i++) { const buf = crypto.getRandomValues(new Uint32Array(len)); out.push([...buf].map(x => pool[x % pool.length]).join('')); }
+  return out.join('\n');
+}
+
+function genGauss() {
+  const mean = +v('gauss-mean') || 0, sd = +v('gauss-sd'), n = Math.max(1, +v('gauss-n')), dec = Math.max(0, Math.min(10, +v('gauss-dec'))), out = [];
+  for (let i = 0; i < n; i++) {
+    let u = 0, w = 0; while (u === 0) u = Math.random(); while (w === 0) w = Math.random();
+    const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * w);
+    out.push((mean + z * sd).toFixed(dec));
+  }
+  return out.join('\n');
+}
+
+function genTeams() {
+  const items = document.getElementById('teams-list').value.split('\n').map(x => x.trim()).filter(Boolean);
+  if (!items.length) return 'Add items to the list first.';
+  const s = shuffled(items);
+  if (v('teams-mode') === 'shuffle') return s.join('\n');
+  const g = Math.max(1, +v('teams-groups'));
+  const groups = Array.from({ length: g }, () => []);
+  s.forEach((it, i) => groups[i % g].push(it));
+  return groups.map((grp, i) => `Group ${i + 1}: ${grp.join(', ')}`).join('\n');
+}
+
+// sensible default date range
+(function () {
+  const df = document.getElementById('date-from'), dt = document.getElementById('date-to');
+  if (df && !df.value) df.value = '2000-01-01';
+  if (dt && !dt.value) dt.value = new Date().toISOString().slice(0, 10);
+})();
+
 document.getElementById('pw-len').addEventListener('input', e => document.getElementById('pw-len-val').textContent = e.target.value);
 
 document.getElementById('gen-btn').addEventListener('click', () => {
-  const fns = { lorem: genLorem, uuid: genUuid, password: genPassword, number: genNumber, pick: genPick };
+  const fns = { lorem: genLorem, uuid: genUuid, password: genPassword, number: genNumber, pick: genPick,
+    dice: genDice, coin: genCoin, color: genColor, date: genDate, name: genName, string: genString, gauss: genGauss, teams: genTeams };
   document.getElementById('output').value = fns[activeTool]();
 });
 

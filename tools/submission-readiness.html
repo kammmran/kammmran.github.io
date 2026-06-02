@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submission Readiness Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-clipboard-check"></i></div><div>Submission Readiness</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-clipboard-check"></i></div>
+      <div>
+        <div class="tool-title">Manuscript Submission Readiness Checker</div>
+        <div class="tool-desc">The final pre-submission audit — tick off everything the journal will check, and don't hit "submit" until you're green.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:6px">
+    <div id="prog"></div>
+    <div id="groups"></div>
+  </div>
+</main>
+
+<style>.grp{margin-top:14px}.grp h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent3);margin:0 0 8px;display:flex;justify-content:space-between}.grp h4 span{color:var(--text3);font-weight:400}
+  .item{display:flex;gap:9px;align-items:flex-start;padding:8px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;cursor:pointer;font-size:13px;line-height:1.45}
+  .item input{margin-top:2px;width:16px;height:16px;flex:none}.item.done{opacity:.55;text-decoration:line-through}
+  .meter{height:16px;border-radius:8px;background:var(--bg3);overflow:hidden;margin:8px 0}.meter>div{height:100%;background:var(--green);transition:width .3s}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const GROUPS=[
+  ['Manuscript',[ 'Follows the journal\'s article type & word limit','Structured per author guidelines (IMRaD / required sections)','Abstract within the word limit and unstructured/structured as required','Keywords provided','Title is concise and informative' ]],
+  ['Figures & tables',[ 'All figures cited in order and at required resolution (≥300 dpi)','Tables editable (not images) and within limits','Figure/table captions complete and standalone','Permissions obtained for any reused figures' ]],
+  ['References',[ 'Reference style matches the journal','All in-text citations appear in the list (and vice-versa)','DOIs included where available','Reference manager artefacts removed' ]],
+  ['Ethics & compliance',[ 'Ethics/IRB approval statement included (if applicable)','Informed consent statement (human subjects)','Data availability statement included','Conflict-of-interest statement included','Funding statement included' ]],
+  ['Authorship & metadata',[ 'All authors meet authorship criteria & approved the version','ORCID iDs added for authors','Affiliations correct and standardized','Corresponding author & contact details set' ]],
+  ['Files & extras',[ 'Cover letter drafted (highlights fit & novelty)','Suggested/excluded reviewers prepared','Highlights / graphical abstract (if required)','Supplementary files named and referenced','Plagiarism / similarity check passed' ]],
+];
+$('#groups').innerHTML=GROUPS.map((g,gi)=>`<div class="grp"><h4>${g[0]} <span class="gc" data-g="${gi}"></span></h4>${g[1].map((it,ii)=>`<label class="item"><input type="checkbox" id="c${gi}_${ii}"><span>${it}</span></label>`).join('')}</div>`).join('');
+
+function run(){
+  let total=0,done=0; const gd=GROUPS.map(()=>0);
+  GROUPS.forEach((g,gi)=>g[1].forEach((_,ii)=>{ total++; if($('#c'+gi+'_'+ii).checked){done++;gd[gi]++;} }));
+  document.querySelectorAll('.item').forEach(l=>l.classList.toggle('done',l.querySelector('input').checked));
+  document.querySelectorAll('.gc').forEach(s=>{const gi=+s.dataset.g; s.textContent=`${gd[gi]}/${GROUPS[gi][1].length}`;});
+  const pct=Math.round(done/total*100); const band=pct>=100?'--green':pct>=70?'--amber':'--red';
+  $('#prog').innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:15px">Submission readiness</b><span style="color:var(${band})"><b>${pct}%</b> · ${done}/${total}</span></div>
+    <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>
+    <div style="font-size:13px;color:var(${band})">${pct>=100?'Ready to submit ✓':pct>=70?'Almost there — clear the remaining items.':'Not ready — several essentials outstanding.'}</div>`;
+}
+document.querySelectorAll('#groups input').forEach(c=>c.addEventListener('change',run));
+run();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affiliation Standardizer (ROR) — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-building-bank"></i></div><div>Affiliation Standardizer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-building-bank"></i></div>
+      <div>
+        <div class="tool-title">Affiliation Standardizer (ROR)</div>
+        <div class="tool-desc">Match a messy affiliation string to its canonical institution — official name, ROR ID, country and aliases. Via the ROR registry.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <form id="f" class="row" style="gap:8px">
+      <input type="text" id="q" placeholder="e.g. Dept of Chemistry, Univ of Cambridge, UK" style="flex:1;min-width:220px">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-search"></i> Standardize</button>
+    </form>
+    <div id="out"><div class="muted">Paste an affiliation as it appears on a paper.</div></div>
+  </div>
+</main>
+
+<style>.rrow{padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);margin-bottom:8px}
+  .rrow.best{border-color:rgba(45,212,191,0.45);background:rgba(45,212,191,0.06)}
+  .rrow h3{margin:0 0 3px;font-size:15px}
+  .pill{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--surface2);color:var(--text2);margin-right:6px}
+  .copy{cursor:pointer;color:var(--accent3);font-size:12px}
+  code{font-family:ui-monospace,Menlo,monospace;font-size:12px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('#q').value.trim(); if(!q) return;
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Querying ROR…</div>';
+  try{
+    const r=await fetch(`https://api.ror.org/organizations?affiliation=${encodeURIComponent(q)}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const items=d.items||[];
+    if(!items.length){ out.innerHTML='<div class="muted">No match in the ROR registry. Try simplifying the string.</div>'; return; }
+    out.innerHTML=items.slice(0,8).map((it,i)=>{
+      const o=it.organization; const conf=Math.round((it.score||0)*100);
+      const country=o.country&&o.country.country_name||'';
+      const aliases=(o.aliases||[]).concat(o.acronyms||[]).slice(0,5);
+      return `<div class="rrow${it.chosen||i===0?' best':''}">
+        <h3>${esc(o.name)} ${it.chosen?'<span class="pill" style="background:rgba(45,212,191,.16);color:var(--teal)">best match</span>':''}</h3>
+        <div style="font-size:13px;margin:4px 0">ROR ID: <code>${esc(o.id)}</code> <span class="copy" data-c="${esc(o.id)}"><i class="ti ti-copy"></i> copy</span></div>
+        <div><span class="pill">${esc(country)}</span><span class="pill">match ${conf}%</span><span class="pill">${esc(o.types&&o.types[0]||'')}</span></div>
+        ${aliases.length?`<div style="font-size:12px;color:var(--text3);margin-top:6px">Also known as: ${aliases.map(esc).join(', ')}</div>`:''}
+        <div style="margin-top:6px"><a class="copy" href="${esc(o.links&&o.links[0]||o.id)}" target="_blank" rel="noopener">site ↗</a></div>
+      </div>`;
+    }).join('');
+    out.querySelectorAll('.copy[data-c]').forEach(b=>b.addEventListener('click',()=>{ navigator.clipboard.writeText(b.dataset.c); b.innerHTML='<i class="ti ti-check"></i> copied'; }));
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach ROR (${esc(err.message)}).</div>`; }
+});
+</script>
+
+</body>
+</html>

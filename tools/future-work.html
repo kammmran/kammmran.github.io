@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Future Work Aggregator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrow-forward-up"></i></div><div>Future Work Aggregator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-arrow-forward-up"></i></div>
+      <div>
+        <div class="tool-title">Future Work Aggregator</div>
+        <div class="tool-desc">Paste one or several papers (separate with a blank line or <code>---</code>) → collects every "future work / further research" statement into one list of open directions.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste paper(s) — separate multiple with a blank line or a line of ---
+      <textarea id="txt" style="min-height:200px" placeholder="Paper 1 text…&#10;---&#10;Paper 2 text…"></textarea>
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .fw{padding:8px 12px;border-left:3px solid var(--amber);background:rgba(251,191,36,0.07);border-radius:4px;margin-bottom:7px;font-size:13.5px;line-height:1.5}
+  .src{font-size:11px;color:var(--text3);margin-bottom:2px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const CUES=/\b(future (work|research|studies|directions?|investigations?)|further (research|work|studies|investigation|study)|in future|future studies|remains? to be (explored|investigated|determined|studied|addressed)|should (be (explored|investigated|examined|studied|addressed)|focus)|could be (extended|explored|investigated|improved|applied)|next steps?|warrants? further|worth (exploring|investigating)|open (question|problem|challenge)|we plan to|yet to be|would benefit from|avenue for)\b/i;
+function sentences(t){ return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)||[]).map(s=>s.trim()).filter(s=>s.split(' ').length>=4); }
+
+function run(){
+  const t=$('#txt').value.trim(); const out=$('#out');
+  if(!t){ out.innerHTML=''; return; }
+  const papers=t.split(/\n\s*---+\s*\n|\n\s*\n/).map(p=>p.trim()).filter(Boolean);
+  let total=0; const rows=[];
+  papers.forEach((p,i)=>{ sentences(p).forEach(s=>{ if(CUES.test(s)){ total++; rows.push([papers.length>1?`Paper ${i+1}`:'',s]); } }); });
+  if(!rows.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No future-work statements found — these usually live in the Conclusion/Discussion.</div>'; return; }
+  out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">Papers</div><div class="stat-value">${papers.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Future directions</div><div class="stat-value" style="color:var(--amber)">${total}</div></div>
+    </div>`+
+    rows.map(([src,s])=>`<div class="fw">${src?`<div class="src">${src}</div>`:''}${esc(s)}</div>`).join('')+
+    `<div class="muted" style="font-size:12px;margin-top:8px">A ready-made list of open problems — great for motivating your own contribution or a review's "future directions" section.</div>`;
+}
+$('#txt').addEventListener('input',run);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Scope Matcher — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-target-arrow"></i></div><div>Journal Scope Matcher</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-target-arrow"></i></div>
+      <div>
+        <div class="tool-title">Journal Scope Matcher</div>
+        <div class="tool-desc">Paste your abstract and a journal's Aims &amp; Scope → a fit score, the shared themes, and the scope keywords your paper is missing.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Your abstract<textarea id="abs" style="min-height:120px" placeholder="Paste your abstract…"></textarea></label>
+    <label class="fld">Journal Aims &amp; Scope (copy from the journal's website)<textarea id="scope" style="min-height:120px" placeholder="Paste the journal's aims & scope text…"></textarea></label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-target"></i> Check fit</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .pill{font-size:12px;padding:3px 10px;border-radius:999px;margin:3px;display:inline-block}
+  .pill.shared{background:rgba(74,222,128,0.16);color:var(--green)} .pill.miss{background:rgba(248,113,113,0.12);color:var(--red)}
+  .big{font-size:40px;font-weight:800;font-family:Georgia,serif;text-align:center}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on for with as by at from is are was were be been this that these those it its their our we they not no will also which such including across into other more most than then aims scope journal publishes papers articles research areas topics submission authors welcomes interested field fields study studies'.split(' '));
+function terms(t){ const m={}; (t.toLowerCase().match(/[a-z][a-z'-]{3,}/g)||[]).forEach(w=>{ if(!STOP.has(w))m[w]=(m[w]||0)+1; }); return m; }
+
+$('#run').addEventListener('click',()=>{
+  const a=terms($('#abs').value), s=terms($('#scope').value); const out=$('#out');
+  if(!Object.keys(a).length||!Object.keys(s).length){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste both your abstract and the journal scope.</div>'; return; }
+  const scopeKeys=Object.entries(s).sort((x,y)=>y[1]-x[1]).map(x=>x[0]);
+  const shared=scopeKeys.filter(k=>a[k]);
+  const missing=scopeKeys.filter(k=>!a[k]).slice(0,12);
+  // fit = share of (weighted) scope terms present in abstract
+  let num=0,den=0; for(const k in s){ den+=s[k]; if(a[k])num+=s[k]; }
+  const fit=Math.round(num/den*100);
+  const band=fit>=45?'--green':fit>=22?'--amber':'--red';
+  const verdict=fit>=45?'Strong fit — scope aligns well':fit>=22?'Partial fit — emphasise the shared themes in your cover letter':'Weak fit — consider a different journal';
+  out.innerHTML=`<div class="big" style="color:var(${band})">${fit}<span style="font-size:18px">%</span></div>
+    <div style="text-align:center;color:var(${band});font-weight:600;margin-bottom:12px">${verdict}</div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px">Shared themes (${shared.length})</div>
+    <div>${shared.length?shared.slice(0,18).map(k=>`<span class="pill shared">${esc(k)}</span>`).join(''):'<span class="muted">none — likely a poor match</span>'}</div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:10px 0 4px">Scope terms your abstract doesn't mention</div>
+    <div>${missing.map(k=>`<span class="pill miss">${esc(k)}</span>`).join('')}</div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Keyword-overlap heuristic. A low score with a journal you believe fits often just means your abstract doesn't use the journal's vocabulary — worth aligning either way.</div>`;
+});
+</script>
+
+</body>
+</html>

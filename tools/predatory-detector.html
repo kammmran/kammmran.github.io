@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Predatory Journal Detector — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-alert-hexagon"></i></div><div>Predatory Journal Detector</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:840px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-alert-hexagon"></i></div>
+      <div>
+        <div class="tool-title">Predatory Journal Detector</div>
+        <div class="tool-desc">Tick the red flags that apply to a journal (Think · Check · Submit criteria) → a risk score and a verdict before you submit.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:6px">
+    <div class="muted" style="font-size:12px;margin-bottom:4px">Check each statement that is <b>true</b> of the journal. More checks = higher risk.</div>
+    <div id="qs"></div>
+    <div id="out" style="margin-top:8px"></div>
+  </div>
+</main>
+
+<style>.item{display:flex;gap:9px;align-items:flex-start;padding:8px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;cursor:pointer;font-size:13px;line-height:1.45}
+  .item input{margin-top:2px;width:16px;height:16px;flex:none}
+  .item.w3{border-left:3px solid var(--red)} .item.w2{border-left:3px solid var(--amber)} .item.w1{border-left:3px solid var(--text3)}
+  .meter{height:16px;border-radius:8px;background:var(--bg3);overflow:hidden;margin:8px 0}.meter>div{height:100%;transition:width .3s}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const FLAGS=[
+  [3,'Aggressive, flattering spam emails soliciting submissions'],
+  [3,'Promises unusually fast peer review (a few days) or "guaranteed" acceptance'],
+  [3,'Article-processing charges are hidden, revealed only after acceptance'],
+  [3,'No clear peer-review process described'],
+  [3,'Not indexed in DOAJ, Scopus, Web of Science or PubMed (despite claiming so)'],
+  [2,'Editorial board members are unnamed, unverifiable, or unaware they are listed'],
+  [2,'Fake or inflated "impact factor" from an unrecognised metric provider'],
+  [2,'Journal name/scope mimics a well-known established journal'],
+  [2,'Website has spelling/grammar errors or broken links'],
+  [2,'No verifiable ISSN, or the same ISSN used across multiple journals'],
+  [2,'Publisher lists hundreds of unrelated journals across all fields'],
+  [1,'No physical address, or a fake/PO-box-only contact'],
+  [1,'Editor-in-chief or contact uses a free webmail (gmail/yahoo) address'],
+  [1,'Charges to authors but content is hard to actually find/access'],
+  [1,'Manuscripts published with little or no copy-editing/typesetting'],
+];
+$('#qs').innerHTML=FLAGS.map((f,i)=>`<label class="item w${f[0]}"><input type="checkbox" data-w="${f[0]}" id="f${i}"><span>${f[1]}</span></label>`).join('');
+const TOTAL=FLAGS.reduce((a,f)=>a+f[0],0);
+
+function run(){
+  let score=0; FLAGS.forEach((f,i)=>{ if($('#f'+i).checked) score+=f[0]; });
+  const pct=Math.round(score/TOTAL*100);
+  const band=pct>=50?'--red':pct>=20?'--amber':'--green';
+  const verdict=pct>=50?'High risk — likely predatory. Do not submit.':pct>=20?'Caution — several red flags. Verify on DOAJ / Think-Check-Submit before submitting.':pct>0?'Low risk — a few minor concerns. Still verify indexing.':'No red flags ticked. Confirm indexing and reputation anyway.';
+  $('#out').innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:15px">Predatory-risk score</b><span style="color:var(${band})"><b>${pct}%</b></span></div>
+    <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>
+    <div style="font-weight:600;color:var(${band})">${verdict}</div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Cross-check with <b>thinkchecksubmit.org</b>, the <b>DOAJ</b> whitelist, and your library. A single severe flag (hidden fees, fake indexing) is enough to walk away.</div>`;
+}
+document.querySelectorAll('#qs input').forEach(c=>c.addEventListener('change',run));
+run();
+</script>
+
+</body>
+</html>

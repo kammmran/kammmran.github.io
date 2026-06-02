@@ -7,13 +7,43 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="assets/theme.css">
 <style>
-  .hero-search { position: relative; max-width: 540px; margin: 26px auto 0; }
-  .hero-search i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 18px; }
-  .hero-search input { width: 100%; padding: 14px 16px 14px 46px; font-size: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); outline: none; transition: all .15s; }
-  .hero-search input:focus { border-color: var(--accent); background: var(--surface2); }
-  .hero-search input::placeholder { color: var(--text3); }
+  .hero-search { position: relative; max-width: 620px; margin: 26px auto 0; text-align: left; }
+  .search-row { display: flex; gap: 8px; }
+  .scope-sel { flex: none; max-width: 178px; padding: 14px 30px 14px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text2); font-size: 13px; cursor: pointer; outline: none; }
+  .scope-sel:focus { border-color: var(--accent); }
+  .search-input-wrap { position: relative; flex: 1; }
+  .search-input-wrap > i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 18px; }
+  .search-input-wrap input { width: 100%; padding: 14px 16px 14px 46px; font-size: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); outline: none; transition: all .15s; }
+  .search-input-wrap input:focus { border-color: var(--accent); background: var(--surface2); }
+  .search-input-wrap input::placeholder { color: var(--text3); }
+  /* autocomplete — kept in normal flow so it pushes the buttons down instead of overlapping them */
+  .autocomplete { margin-top: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.25); display: none; max-height: 56vh; overflow-y: auto; }
+  .autocomplete.show { display: block; }
+  .ac-head { padding: 7px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text3); border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); }
+  .ac-item { display: flex; gap: 10px; align-items: center; padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item.active, .ac-item:hover { background: var(--surface2); }
+  .ac-ic { flex: none; width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .ac-main { min-width: 0; flex: 1; }
+  .ac-name { font-size: 14px; color: var(--text); font-weight: 500; }
+  .ac-name mark { background: rgba(124,109,240,.32); color: inherit; border-radius: 2px; padding: 0 1px; }
+  .ac-desc { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ac-cat { flex: none; font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--text3); background: var(--surface2); padding: 2px 8px; border-radius: 999px; }
+  .ac-empty { padding: 16px; color: var(--text3); font-size: 13px; text-align: center; }
   .hero-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
   .hero-actions .btn { padding: 10px 18px; font-size: 14px; }
+  /* advanced panel */
+  .adv-panel { max-width: 620px; margin: 12px auto 0; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .adv-row { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 12px; }
+  .adv-row:last-child { margin-bottom: 0; }
+  .adv-label { flex: none; width: 76px; font-size: 11px; color: var(--text3); padding-top: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+  .seg button { background: var(--bg2); color: var(--text2); border: none; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .seg button.active { background: var(--accent); color: #fff; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip-f { font-size: 12px; padding: 4px 11px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); cursor: pointer; }
+  .chip-f.active { background: rgba(124,109,240,.16); border-color: var(--accent3); color: var(--accent3); }
+  @media (max-width: 560px) { .search-row { flex-direction: column; } .scope-sel { max-width: none; } .adv-label { width: 100%; } .adv-row { flex-direction: column; gap: 6px; } }
 </style>
 </head>
 <body>
@@ -29,12 +59,33 @@
   <h1>Everything you need to <span>research, write & cite</span></h1>
   <p>A simple, modern hub of free academic tools. No accounts. No tracking. Runs entirely in your browser.</p>
   <div class="hero-search">
-    <i class="ti ti-search"></i>
-    <input id="search" type="search" placeholder="Search tools…" autocomplete="off">
+    <div class="search-row">
+      <select id="scope" class="scope-sel" title="Search within"></select>
+      <div class="search-input-wrap">
+        <i class="ti ti-search"></i>
+        <input id="search" type="search" placeholder="Search tools…" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ac" aria-autocomplete="list">
+      </div>
+    </div>
+    <div id="ac" class="autocomplete" role="listbox"></div>
   </div>
   <div class="hero-actions">
     <button id="luckyBtn" class="btn"><i class="ti ti-dice-5"></i> I'm Feeling Lucky</button>
     <button id="showAllBtn" class="btn btn-primary"><i class="ti ti-layout-grid"></i> Show all tools</button>
+    <button id="advBtn" class="btn"><i class="ti ti-adjustments-horizontal"></i> Advanced</button>
+  </div>
+  <div id="advPanel" class="adv-panel" style="display:none">
+    <div class="adv-row">
+      <span class="adv-label">Match in</span>
+      <div class="seg" id="matchSeg">
+        <button data-m="name">Names</button>
+        <button data-m="desc" class="active">Name + description</button>
+        <button data-m="all">Everything</button>
+      </div>
+    </div>
+    <div class="adv-row">
+      <span class="adv-label">Categories</span>
+      <div class="chips" id="catChips"></div>
+    </div>
   </div>
 </section>
 
@@ -334,6 +385,251 @@
         <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-share-3"></i></div>
         <div class="tile-name">Mind Map</div>
         <div class="tile-desc">Visual node editor for brainstorming. Export PNG or JSON.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="discovery">
+    <div class="category-header">
+      <div class="category-title">Literature discovery</div>
+      <div class="category-count">12 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/research-gap-finder.html" data-name="research gap finder under-explored subtopics openalex evidence gap population methodological framework">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-zoom-question"></i></div>
+        <div class="tile-name">Research Gap Finder</div>
+        <div class="tile-desc">Map a topic's sub-areas by study volume, test intersections for thin coverage, work a gap framework.</div>
+      </a>
+      <a class="tile" href="tools/journal-finder.html" data-name="journal finder target journal by topic impact open access issn openalex sources">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-book"></i></div>
+        <div class="tile-name">Journal Finder</div>
+        <div class="tile-desc">Search journals by topic → works count, citation impact, OA status and ISSN.</div>
+      </a>
+      <a class="tile" href="tools/impact-quartile.html" data-name="impact factor quartile lookup journal jif citescore q1 q2 q3 q4 openalex 2yr mean citedness h-index">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-trending-up"></i></div>
+        <div class="tile-name">Impact &amp; Quartile</div>
+        <div class="tile-desc">A journal's citation impact and an indicative tier from open metrics.</div>
+      </a>
+      <a class="tile" href="tools/author-disambiguator.html" data-name="author name disambiguator same name distinct researchers orcid affiliation scopus wos openalex">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-users"></i></div>
+        <div class="tile-name">Author Disambiguator</div>
+        <div class="tile-desc">One name, many researchers — see the distinct profiles by affiliation, ORCID & topics.</div>
+      </a>
+      <a class="tile" href="tools/ror-lookup.html" data-name="affiliation standardizer ror lookup institution canonical name id reporting normalize">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-building-bank"></i></div>
+        <div class="tile-name">Affiliation Standardizer</div>
+        <div class="tile-desc">Match a messy affiliation to its canonical institution + ROR ID. Via the ROR registry.</div>
+      </a>
+      <a class="tile" href="tools/dataset-finder.html" data-name="dataset finder data discovery datacite doi repository open data research datasets">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-database-search"></i></div>
+        <div class="tile-name">Dataset Finder</div>
+        <div class="tile-desc">Discover openly published datasets by topic — repository, year and DOI. Via DataCite.</div>
+      </a>
+      <a class="tile" href="tools/trend-analyzer.html" data-name="research trend analyzer hot topics publications per year growth emerging openalex momentum">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-chart-line"></i></div>
+        <div class="tile-name">Research Trend Analyzer</div>
+        <div class="tile-desc">Publications per year, growth rate and the hottest sub-topics for any query.</div>
+      </a>
+      <a class="tile" href="tools/citation-network.html" data-name="citation network visualizer references citing papers graph doi openalex foundations impact">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-binary-tree"></i></div>
+        <div class="tile-name">Citation Network</div>
+        <div class="tile-desc">A DOI → graph of what it cites and what cites it. Foundations vs impact.</div>
+      </a>
+      <a class="tile" href="tools/lit-timeline.html" data-name="literature timeline builder landmark papers field evolution most cited over time openalex">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-timeline"></i></div>
+        <div class="tile-name">Literature Timeline</div>
+        <div class="tile-desc">Plot a field's landmark papers across time, sized by citations.</div>
+      </a>
+      <a class="tile" href="tools/seminal-papers.html" data-name="missing seminal papers detector uncited important highly cited coverage reference list openalex">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-bulb"></i></div>
+        <div class="tile-name">Missing Seminal Papers</div>
+        <div class="tile-desc">Flags the field's most-cited works that your reference list hasn't cited.</div>
+      </a>
+      <a class="tile" href="tools/collab-finder.html" data-name="research collaboration finder collaborators labs prolific authors by topic openalex network">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-friends"></i></div>
+        <div class="tile-name">Collaboration Finder</div>
+        <div class="tile-desc">The most active researchers on your topic — potential collaborators or labs to follow.</div>
+      </a>
+      <a class="tile" href="tools/funding-matcher.html" data-name="funding opportunity matcher grants funders nih nsf erc wellcome horizon match keyword region career stage">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-cash"></i></div>
+        <div class="tile-name">Funding Matcher</div>
+        <div class="tile-desc">Describe your project → matching major funders ranked by fit, with links to calls.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="synthesis">
+    <div class="category-header">
+      <div class="category-title">Reading &amp; synthesis</div>
+      <div class="category-count">7 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/paper-summarizer.html" data-name="research paper summarizer extractive summary textrank sentence ranking condense abstract offline">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-text-decrease"></i></div>
+        <div class="tile-name">Paper Summarizer</div>
+        <div class="tile-desc">Extractive summary — keeps the most representative sentences. Adjustable length.</div>
+      </a>
+      <a class="tile" href="tools/key-findings.html" data-name="key findings extractor results contributions significant outcomes effects sentences highlight">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-key"></i></div>
+        <div class="tile-name">Key Findings Extractor</div>
+        <div class="tile-desc">Pulls out the result/finding sentences and statistics from a paper.</div>
+      </a>
+      <a class="tile" href="tools/methodology-extractor.html" data-name="methodology extractor methods design sample instruments analysis compare papers matrix">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-microscope"></i></div>
+        <div class="tile-name">Methodology Extractor</div>
+        <div class="tile-desc">Tags the methods sentences — design, sample, instruments, analysis.</div>
+      </a>
+      <a class="tile" href="tools/future-work.html" data-name="future work aggregator further research open directions limitations next steps multiple papers">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-arrow-forward-up"></i></div>
+        <div class="tile-name">Future Work Aggregator</div>
+        <div class="tile-desc">Collects every "future work / further research" statement from one or many papers.</div>
+      </a>
+      <a class="tile" href="tools/contradiction-finder.html" data-name="contradictory findings finder opposing claims conflicting results increase decrease no effect review">
+        <div class="tile-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-arrows-shuffle"></i></div>
+        <div class="tile-name">Contradiction Finder</div>
+        <div class="tile-desc">Flags pairs of findings about the same thing that point in opposite directions.</div>
+      </a>
+      <a class="tile" href="tools/litreview-generator.html" data-name="literature review generator themes clustering outline synthesis scaffold organize sources">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-list-tree"></i></div>
+        <div class="tile-name">Lit Review Generator</div>
+        <div class="tile-desc">Clusters your source notes into themes and builds a review outline with prompts.</div>
+      </a>
+      <a class="tile" href="tools/citation-context.html" data-name="citation context analyzer in-text citation purpose support contrast method background classify">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-quote"></i></div>
+        <div class="tile-name">Citation Context Analyzer</div>
+        <div class="tile-desc">Classifies each in-text citation — supporting, contrasting, method or background.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="ideation">
+    <div class="category-header">
+      <div class="category-title">Ideation &amp; grants</div>
+      <div class="category-count">7 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/research-question-gen.html" data-name="research question generator pico finer descriptive comparative causal phrasing">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-help-circle"></i></div>
+        <div class="tile-name">Research Question Generator</div>
+        <div class="tile-desc">PICO building blocks → well-formed research questions in several styles.</div>
+      </a>
+      <a class="tile" href="tools/hypothesis-gen.html" data-name="hypothesis generator null alternative directional variables iv dv statistical h0 h1">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-bulb-filled"></i></div>
+        <div class="tile-name">Hypothesis Generator</div>
+        <div class="tile-desc">Variables → properly stated null, alternative, operational & statistical hypotheses.</div>
+      </a>
+      <a class="tile" href="tools/idea-validator.html" data-name="research idea validator finer feasible interesting novel ethical relevant score checklist">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-checkup-list"></i></div>
+        <div class="tile-name">Research Idea Validator</div>
+        <div class="tile-desc">Score your idea against FINER and get a go / refine verdict.</div>
+      </a>
+      <a class="tile" href="tools/novelty-score.html" data-name="novelty score calculator prior work overlap tfidf cosine closest papers how novel">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-sparkles"></i></div>
+        <div class="tile-name">Novelty Score</div>
+        <div class="tile-desc">Compare your idea to prior work → a novelty score and the closest papers.</div>
+      </a>
+      <a class="tile" href="tools/novelty-analyzer.html" data-name="research novelty analyzer abstract novelty claims contribution statements articulation whats new">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-diamond"></i></div>
+        <div class="tile-name">Novelty Analyzer</div>
+        <div class="tile-desc">Does your abstract say what's new? Highlights & scores novelty articulation.</div>
+      </a>
+      <a class="tile" href="tools/grant-proposal-gen.html" data-name="grant proposal generator aims objectives methods work packages timeline budget impact risks template">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-file-dollar"></i></div>
+        <div class="tile-name">Grant Proposal Generator</div>
+        <div class="tile-desc">Fill the blocks → a structured proposal skeleton with work packages & budget.</div>
+      </a>
+      <a class="tile" href="tools/idea-similarity.html" data-name="research idea similarity detector duplicate overlap cosine rank existing projects">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-affiliate"></i></div>
+        <div class="tile-name">Idea Similarity Detector</div>
+        <div class="tile-desc">Check a new idea against existing ones to catch near-duplicates and overlaps.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="peerreview">
+    <div class="category-header">
+      <div class="category-title">Submission &amp; peer review</div>
+      <div class="category-count">11 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/journal-scope-matcher.html" data-name="journal scope matcher aims fit keyword overlap manuscript abstract shared themes">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-target-arrow"></i></div>
+        <div class="tile-name">Journal Scope Matcher</div>
+        <div class="tile-desc">Abstract vs a journal's aims & scope → fit score, shared themes, missing keywords.</div>
+      </a>
+      <a class="tile" href="tools/predatory-detector.html" data-name="predatory journal detector red flags think check submit beall fake impact factor risk">
+        <div class="tile-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-alert-hexagon"></i></div>
+        <div class="tile-name">Predatory Journal Detector</div>
+        <div class="tile-desc">Tick the red flags → a risk score and verdict before you submit.</div>
+      </a>
+      <a class="tile" href="tools/submission-readiness.html" data-name="manuscript submission readiness checker pre-submission audit figures references ethics authorship cover letter">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-clipboard-check"></i></div>
+        <div class="tile-name">Submission Readiness</div>
+        <div class="tile-desc">The final pre-submission audit — don't hit submit until you're green.</div>
+      </a>
+      <a class="tile" href="tools/reviewer-recommender.html" data-name="reviewer recommendation engine suggest reviewers by topic recent related work openalex exclude conflicts">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-user-star"></i></div>
+        <div class="tile-name">Reviewer Recommender</div>
+        <div class="tile-desc">Researchers who recently published closely related work, as candidate reviewers.</div>
+      </a>
+      <a class="tile" href="tools/reviewer-conflict.html" data-name="reviewer conflict detector shared affiliation surname coauthor screen editor conflict of interest">
+        <div class="tile-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-shield-x"></i></div>
+        <div class="tile-name">Reviewer Conflict Detector</div>
+        <div class="tile-desc">Cross-checks reviewers against your authors for shared affiliations & surnames.</div>
+      </a>
+      <a class="tile" href="tools/stat-test-recommender.html" data-name="statistical test recommender decision tree t-test anova chi-square regression mann whitney which test">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-sitemap"></i></div>
+        <div class="tile-name">Statistical Test Recommender</div>
+        <div class="tile-desc">Answer a few questions about your data → the right test + non-parametric alternative.</div>
+      </a>
+      <a class="tile" href="tools/figure-quality.html" data-name="figure quality checker resolution dpi print 300 600 dimensions format vector publication">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-photo-check"></i></div>
+        <div class="tile-name">Figure Quality Checker</div>
+        <div class="tile-desc">Drop a figure → its print DPI at column widths and whether it clears the bar.</div>
+      </a>
+      <a class="tile" href="tools/integrity-auditor.html" data-name="research integrity auditor data analysis authorship ethics reporting checklist score audit">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-scale"></i></div>
+        <div class="tile-name">Research Integrity Auditor</div>
+        <div class="tile-desc">A whole-project integrity audit across data, analysis, authorship & ethics.</div>
+      </a>
+      <a class="tile" href="tools/claim-evidence.html" data-name="claim to evidence verifier unsupported claims citation statistic pairing reviewer">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-scale-outline"></i></div>
+        <div class="tile-name">Claim-to-Evidence Verifier</div>
+        <div class="tile-desc">Pairs each claim with its evidence and flags the unsupported ones.</div>
+      </a>
+      <a class="tile" href="tools/plagiarism-similarity.html" data-name="plagiarism similarity checker text overlap n-gram matching passages self-plagiarism two documents">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-copy-check"></i></div>
+        <div class="tile-name">Plagiarism Similarity</div>
+        <div class="tile-desc">Compare two documents → overlap score and the exact shared phrases, highlighted.</div>
+      </a>
+      <a class="tile" href="tools/academic-translator.html" data-name="academic translator translate abstract language non-native english mymemory multilingual">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-language"></i></div>
+        <div class="tile-name">Academic Translator</div>
+        <div class="tile-desc">Translate abstracts and passages between 20 languages. Free MyMemory API.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="assistants">
+    <div class="category-header">
+      <div class="category-title">Research assistants</div>
+      <div class="category-count">3 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/knowledge-graph.html" data-name="paper to knowledge graph converter concepts entities co-occurrence concept map relations">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-hierarchy-2"></i></div>
+        <div class="tile-name">Paper → Knowledge Graph</div>
+        <div class="tile-desc">Extracts a paper's key concepts and links the ones that appear together.</div>
+      </a>
+      <a class="tile" href="tools/lit-review-agent.html" data-name="literature review agent cluster abstracts themes synthesis takeaways skeleton extractive">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-robot"></i></div>
+        <div class="tile-name">Lit Review Agent</div>
+        <div class="tile-desc">Paste abstracts → themed clusters, per-paper takeaways and a review skeleton.</div>
+      </a>
+      <a class="tile" href="tools/multi-paper-qa.html" data-name="multi-paper question answering retrieval tfidf ask question across papers passages sources extractive">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-messages"></i></div>
+        <div class="tile-name">Multi-Paper Q&amp;A</div>
+        <div class="tile-desc">Paste papers + a question → the most relevant passages ranked, with sources.</div>
       </a>
     </div>
   </section>
@@ -842,10 +1138,10 @@
         <div class="tile-name">QR Code</div>
         <div class="tile-desc">Encode URLs, Wi-Fi, or contact cards. Customize colors and export PNG/SVG.</div>
       </a>
-      <a class="tile" href="tools/random.html" data-name="random lorem ipsum uuid password number generator pick">
+      <a class="tile" href="tools/random.html" data-name="random lorem ipsum uuid nano id password number generator pick dice roll coin flip color hex rgb hsl date name string token gaussian normal distribution shuffle teams groups">
         <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-dice"></i></div>
         <div class="tile-name">Random Generator</div>
-        <div class="tile-desc">Lorem ipsum, UUIDs, secure passwords, numbers, and random picks.</div>
+        <div class="tile-desc">Lorem, UUIDs, passwords, numbers, dice, coins, colors, dates, names, strings, Gaussian values, picks &amp; teams.</div>
       </a>
     </div>
   </section>
@@ -861,67 +1157,180 @@
 <script>
   const search = document.getElementById('search');
   const main = document.getElementById('categories');
-  const tiles = Array.from(document.querySelectorAll('.tile'));
   const categories = Array.from(document.querySelectorAll('.category'));
   const noResults = document.getElementById('no-results');
   const showAllBtn = document.getElementById('showAllBtn');
   const luckyBtn = document.getElementById('luckyBtn');
+  const scopeSel = document.getElementById('scope');
+  const ac = document.getElementById('ac');
+  const advBtn = document.getElementById('advBtn');
+  const advPanel = document.getElementById('advPanel');
+  const matchSeg = document.getElementById('matchSeg');
+  const catChips = document.getElementById('catChips');
+  const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+  // ---- build an index of every tool from the tiles ----
+  const index = Array.from(document.querySelectorAll('.tile')).map(el => {
+    const cat = el.closest('.category');
+    const ic = el.querySelector('.tile-icon');
+    return {
+      el,
+      href: el.getAttribute('href'),
+      name: el.querySelector('.tile-name').textContent.trim(),
+      desc: el.querySelector('.tile-desc').textContent.trim(),
+      kw: (el.dataset.name || ''),
+      catCat: cat ? cat.dataset.cat : '',
+      catTitle: cat ? cat.querySelector('.category-title').textContent.trim() : '',
+      iconHTML: ic ? ic.innerHTML : '',
+      iconStyle: ic ? (ic.getAttribute('style') || '') : ''
+    };
+  });
+  search.placeholder = `Search ${index.length} tools…`;
+
+  // ---- populate scope select + category chips ----
+  const cats = [];
+  categories.forEach(c => cats.push({ cat: c.dataset.cat, title: c.querySelector('.category-title').textContent.trim() }));
+  scopeSel.innerHTML = '<option value="all">All categories</option>' +
+    cats.map(c => `<option value="${c.cat}">${esc(c.title)}</option>`).join('');
+  catChips.innerHTML = cats.map(c => `<button class="chip-f" data-cat="${c.cat}">${esc(c.title)}</button>`).join('');
+
   let revealed = false;
+  let matchMode = 'desc';       // 'name' | 'desc' | 'all'
+  let acItems = [], acActive = -1;
+
+  // which categories are active: chips (multi) take precedence, else scope (single), else all
+  function activeCats() {
+    const chips = Array.from(catChips.querySelectorAll('.chip-f.active')).map(b => b.dataset.cat);
+    if (chips.length) return new Set(chips);
+    if (scopeSel.value !== 'all') return new Set([scopeSel.value]);
+    return null; // all
+  }
+  function haystack(it) {
+    if (matchMode === 'name') return it.name.toLowerCase();
+    if (matchMode === 'all') return (it.name + ' ' + it.desc + ' ' + it.kw).toLowerCase();
+    return (it.name + ' ' + it.desc).toLowerCase();
+  }
+  function score(it, q) {
+    const n = it.name.toLowerCase();
+    if (n.startsWith(q)) return 4;
+    if (n.includes(q)) return 3;
+    if (matchMode !== 'name' && it.desc.toLowerCase().includes(q)) return 2;
+    if (matchMode === 'all' && it.kw.toLowerCase().includes(q)) return 1;
+    return 0;
+  }
+  function matches(q, set) {
+    return index.filter(it => (!set || set.has(it.catCat)) && (!q || haystack(it).includes(q)));
+  }
 
   function setRevealed(on) {
     revealed = on;
     main.style.display = on ? '' : 'none';
-    showAllBtn.innerHTML = on
-      ? '<i class="ti ti-x"></i> Hide tools'
-      : '<i class="ti ti-layout-grid"></i> Show all tools';
+    showAllBtn.innerHTML = on ? '<i class="ti ti-x"></i> Hide tools' : '<i class="ti ti-layout-grid"></i> Show all tools';
   }
 
-  function filter() {
+  // ---- filter the full grid (when revealed) ----
+  function filterGrid() {
     const q = search.value.trim().toLowerCase();
-    let anyVisible = false;
-    tiles.forEach(t => {
-      const hay = (t.dataset.name + ' ' + t.querySelector('.tile-name').textContent + ' ' + t.querySelector('.tile-desc').textContent).toLowerCase();
-      const match = !q || hay.includes(q);
-      t.classList.toggle('hidden', !match);
-      if (match) anyVisible = true;
+    const set = activeCats();
+    let any = false;
+    index.forEach(it => {
+      const m = (!set || set.has(it.catCat)) && (!q || haystack(it).includes(q));
+      it.el.classList.toggle('hidden', !m);
+      if (m) any = true;
     });
-    categories.forEach(c => {
-      const visibleInCat = c.querySelectorAll('.tile:not(.hidden)').length;
-      c.style.display = visibleInCat ? '' : 'none';
-    });
-    noResults.classList.toggle('show', !anyVisible);
+    categories.forEach(c => { c.style.display = c.querySelectorAll('.tile:not(.hidden)').length ? '' : 'none'; });
+    noResults.classList.toggle('show', !any);
   }
 
-  search.addEventListener('input', () => {
-    if (search.value.trim() && !revealed) setRevealed(true);
-    filter();
+  // ---- live autocomplete dropdown ----
+  function renderAC() {
+    const q = search.value.trim().toLowerCase();
+    const set = activeCats();
+    if (!q) { closeAC(); return; }
+    const res = matches(q, set).map(it => ({ it, s: score(it, q) }))
+      .sort((a, b) => b.s - a.s || a.it.name.localeCompare(b.it.name));
+    acItems = res.slice(0, 10).map(r => r.it);
+    acActive = -1;
+    if (!acItems.length) {
+      ac.innerHTML = '<div class="ac-empty">No tools match — try “Everything” in Advanced, or a different word.</div>';
+      ac.classList.add('show'); search.setAttribute('aria-expanded', 'true'); return;
+    }
+    const total = matches(q, set).length;
+    const rx = new RegExp('(' + reEsc(q) + ')', 'ig');
+    ac.innerHTML = (total > acItems.length ? `<div class="ac-head">${acItems.length} of ${total} matches · press Enter to see all</div>` : '') +
+      acItems.map((it, i) => `
+        <div class="ac-item" role="option" data-i="${i}">
+          <div class="ac-ic" style="${it.iconStyle}">${it.iconHTML}</div>
+          <div class="ac-main">
+            <div class="ac-name">${esc(it.name).replace(rx, '<mark>$1</mark>')}</div>
+            <div class="ac-desc">${esc(it.desc)}</div>
+          </div>
+          <span class="ac-cat">${esc(it.catTitle)}</span>
+        </div>`).join('');
+    ac.classList.add('show'); search.setAttribute('aria-expanded', 'true');
+    ac.querySelectorAll('.ac-item').forEach(row => {
+      row.addEventListener('mousedown', e => { e.preventDefault(); go(acItems[+row.dataset.i]); });
+    });
+  }
+  function closeAC() { ac.classList.remove('show'); ac.innerHTML = ''; acItems = []; acActive = -1; search.setAttribute('aria-expanded', 'false'); }
+  function highlight() { ac.querySelectorAll('.ac-item').forEach((r, i) => r.classList.toggle('active', i === acActive)); }
+  function go(it) { if (it) window.location.href = it.href; }
+
+  // ---- events ----
+  search.addEventListener('input', () => { renderAC(); if (revealed) filterGrid(); });
+  scopeSel.addEventListener('change', () => {
+    if (scopeSel.value !== 'all') catChips.querySelectorAll('.chip-f.active').forEach(b => b.classList.remove('active'));
+    renderAC(); if (revealed) filterGrid();
+  });
+  matchSeg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    matchMode = b.dataset.m;
+    matchSeg.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    renderAC(); if (revealed) filterGrid();
+  });
+  catChips.addEventListener('click', e => {
+    const b = e.target.closest('.chip-f'); if (!b) return;
+    b.classList.toggle('active');
+    if (catChips.querySelector('.chip-f.active')) scopeSel.value = 'all';
+    renderAC(); if (revealed) filterGrid();
+  });
+  advBtn.addEventListener('click', () => {
+    const open = advPanel.style.display === 'none';
+    advPanel.style.display = open ? '' : 'none';
+    advBtn.classList.toggle('btn-primary', open);
   });
 
   showAllBtn.addEventListener('click', () => {
     setRevealed(!revealed);
-    if (revealed) { filter(); main.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    if (revealed) { filterGrid(); closeAC(); main.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   });
 
-  // I'm Feeling Lucky → open a random tool (from current search results if any)
+  // I'm Feeling Lucky → random tool from the current matching set
   luckyBtn.addEventListener('click', () => {
-    const visible = tiles.filter(t => !t.classList.contains('hidden'));
-    const pool = (search.value.trim() && visible.length) ? visible : tiles;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
-    if (pick) window.location.href = pick.getAttribute('href');
+    const pool = matches(search.value.trim().toLowerCase(), activeCats());
+    const list = pool.length ? pool : index;
+    go(list[Math.floor(Math.random() * list.length)]);
   });
 
-  // Keyboard: '/' focuses search, Esc clears
-  document.addEventListener('keydown', (e) => {
-    if (e.key === '/' && document.activeElement !== search) {
-      e.preventDefault();
-      search.focus();
-    }
-    if (e.key === 'Escape' && document.activeElement === search) {
-      search.value = '';
-      filter();
-      search.blur();
+  // keyboard nav inside the search box
+  search.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); if (acItems.length) { acActive = (acActive + 1) % acItems.length; highlight(); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); if (acItems.length) { acActive = (acActive - 1 + acItems.length) % acItems.length; highlight(); } }
+    else if (e.key === 'Enter') {
+      if (acActive >= 0 && acItems[acActive]) { go(acItems[acActive]); }
+      else if (search.value.trim()) { setRevealed(true); filterGrid(); closeAC(); main.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    } else if (e.key === 'Escape') {
+      if (ac.classList.contains('show')) closeAC();
+      else { search.value = ''; renderAC(); if (revealed) filterGrid(); search.blur(); }
     }
   });
+
+  // global '/' focuses search; click outside closes the dropdown
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement !== search) { e.preventDefault(); search.focus(); }
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.hero-search') && !e.target.closest('.adv-panel')) closeAC(); });
 
   setRevealed(false);
 </script>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hypothesis Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-bulb-filled"></i></div><div>Hypothesis Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:840px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-bulb-filled"></i></div>
+      <div>
+        <div class="tool-title">Hypothesis Generator</div>
+        <div class="tool-desc">Turn your variables into properly stated null and alternative hypotheses — directional, non-directional and operational forms.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Independent variable (cause)<input id="iv" placeholder="e.g. caffeine dose"></label>
+      <label class="fld">Dependent variable (effect)<input id="dv" placeholder="e.g. reaction time"></label>
+      <label class="fld">Population<input id="pop" placeholder="e.g. adults"></label>
+      <label class="fld">Expected direction<select id="dir"><option value="dec">decreases / lowers</option><option value="inc">increases / raises</option><option value="none">no specific direction</option></select></label>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .h{padding:10px 13px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);margin-bottom:7px;font-size:14px;line-height:1.5}
+  .h .ty{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:3px;color:var(--amber)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const v=id=>$('#'+id).value.trim();
+
+function run(){
+  const iv=v('iv'),dv=v('dv'),pop=v('pop')||'the population',dir=$('#dir').value; const out=$('#out');
+  if(!iv||!dv){ out.innerHTML='<div class="muted" style="margin-top:6px">Enter both an independent and dependent variable.</div>'; return; }
+  const verb=dir==='inc'?'increase':dir==='dec'?'decrease':'change';
+  const rel=dir==='inc'?'a positive relationship':dir==='dec'?'a negative relationship':'a relationship';
+  const items=[
+    ['Null hypothesis (H₀)', `There is no relationship between ${iv} and ${dv} in ${pop}; ${iv} has no effect on ${dv}.`],
+    [dir==='none'?'Alternative (non-directional, H₁)':'Alternative (directional, H₁)',
+      dir==='none'? `There is a relationship between ${iv} and ${dv} in ${pop}.`
+                  : `Higher ${iv} will ${verb} ${dv} in ${pop} (${rel}).`],
+    ['Research hypothesis', `Among ${pop}, ${iv} ${dir==='none'?'is associated with':'is expected to '+verb} ${dv}.`],
+    ['Operational form', `As ${iv} (operationalised/measured) changes, the measured ${dv} will ${dir==='none'?'differ':verb} accordingly, controlling for relevant confounders.`],
+    ['Statistical form', dir==='none'? `H₀: ρ = 0  ·  H₁: ρ ≠ 0  (correlation between ${iv} and ${dv})`
+                                     : `H₀: β ≤ 0  ·  H₁: β ${dir==='inc'?'>':'<'} 0  (effect of ${iv} on ${dv})`],
+  ];
+  out.innerHTML=items.map(([t,h])=>`<div class="h"><div class="ty">${esc(t)}</div>${esc(h)}</div>`).join('')+
+    `<div class="muted" style="font-size:12px;margin-top:6px">A good hypothesis is testable, falsifiable and specifies variables, direction and population. Pre-register it before collecting data.</div>`;
+}
+['iv','dv','pop','dir'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

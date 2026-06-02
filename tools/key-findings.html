@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Key Findings Extractor — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-key"></i></div><div>Key Findings Extractor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-key"></i></div>
+      <div>
+        <div class="tool-title">Key Findings Extractor</div>
+        <div class="tool-desc">Pulls out the result/finding sentences — the contributions, effects and significant outcomes — from a paper's text.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste the paper (abstract, results, discussion…)
+      <textarea id="txt" style="min-height:200px" placeholder="Paste text here…"></textarea>
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .find{padding:8px 12px;border-left:3px solid var(--green);background:rgba(74,222,128,0.07);border-radius:4px;margin-bottom:7px;font-size:13.5px;line-height:1.5}
+  .hl{background:rgba(74,222,128,0.28);border-radius:3px;padding:0 2px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const CUES=/\b(we (found|find|observed|show|demonstrate|report|identified)|results? (show|showed|indicate|indicated|reveal|revealed|demonstrate|suggest)|findings (show|suggest|indicate)|significant(ly)?|was associated with|led to|resulted in|outperform\w*|achiev\w+|increase[ds]?|decrease[ds]?|reduc\w+|improv\w+|higher than|lower than|compared (to|with)|correlat\w+|p\s*[<>=]\s*0?\.\d)/i;
+const NUM=/\b\d+(\.\d+)?\s?(%|percent|fold|×|x)\b|\bp\s*[<>=]/i;
+
+function sentences(t){ return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)||[]).map(s=>s.trim()).filter(s=>s.split(' ').length>=4); }
+
+function run(){
+  const t=$('#txt').value.trim(); const out=$('#out');
+  if(!t){ out.innerHTML=''; return; }
+  const sents=sentences(t);
+  const found=sents.map(s=>({s,score:(CUES.test(s)?2:0)+(NUM.test(s)?1:0)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
+  if(!found.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No clear result sentences detected — try pasting the Results/Discussion or the abstract.</div>'; return; }
+  out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">Sentences scanned</div><div class="stat-value">${sents.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Key findings</div><div class="stat-value" style="color:var(--green)">${found.length}</div></div>
+      <div class="stat-card"><div class="stat-label">With statistics</div><div class="stat-value">${found.filter(x=>NUM.test(x.s)).length}</div></div>
+    </div>`+
+    found.map(x=>{ let h=esc(x.s).replace(/(\d+(\.\d+)?\s?%|p\s*[<>=]\s*0?\.\d+)/gi,'<span class="hl">$1</span>'); return `<div class="find">${h}</div>`; }).join('')+
+    `<div class="muted" style="font-size:12px;margin-top:8px">Heuristic — flags sentences with result/effect language and statistics. Skim to confirm; copy the ones that capture the real contributions.</div>`;
+}
+$('#txt').addEventListener('input',run);
+</script>
+
+</body>
+</html>

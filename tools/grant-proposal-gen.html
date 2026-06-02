@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grant Proposal Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-dollar"></i></div><div>Grant Proposal Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1180px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-file-dollar"></i></div>
+      <div>
+        <div class="tool-title">Grant Proposal Generator</div>
+        <div class="tool-desc">Fill the building blocks → a structured, funder-ready proposal skeleton (aims, methods, work packages, timeline, impact, risks). Copy or print.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workspace" style="grid-template-columns:380px 1fr;align-items:start">
+    <div class="panel" style="min-height:auto;max-height:78vh;overflow:auto">
+      <label class="fld">Project title<input id="title"></label>
+      <label class="fld">Applicant / team<input id="team"></label>
+      <label class="fld">Funder / call<input id="funder"></label>
+      <label class="fld">Duration (months)<input id="dur" type="number" value="36"></label>
+      <label class="fld">Problem / background<textarea id="bg" style="min-height:60px"></textarea></label>
+      <label class="fld">Overall aim (one sentence)<textarea id="aim" style="min-height:46px"></textarea></label>
+      <label class="fld">Specific objectives — one per line<textarea id="obj" style="min-height:70px" placeholder="Characterise…&#10;Develop…&#10;Validate…"></textarea></label>
+      <label class="fld">Methodology summary<textarea id="meth" style="min-height:60px"></textarea></label>
+      <label class="fld">Expected impact<textarea id="impact" style="min-height:46px"></textarea></label>
+      <label class="fld">Budget lines — "item: amount" per line<textarea id="budget" style="min-height:60px" placeholder="Salary (postdoc, 36m): 150000&#10;Equipment: 30000&#10;Consumables: 15000"></textarea></label>
+      <div class="row" style="margin-top:6px"><button class="btn btn-sm" id="copy"><i class="ti ti-copy"></i> Copy</button><button class="btn btn-sm" id="print"><i class="ti ti-printer"></i> Print</button></div>
+    </div>
+    <div class="panel" id="doc" style="min-height:auto;background:#fff;color:#1a1a22;padding:36px 42px;overflow:auto;max-height:78vh"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);margin-bottom:9px}
+  .fld input,.fld textarea{width:100%;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;outline:none}
+  .fld input:focus,.fld textarea:focus{border-color:var(--accent)}
+  #doc{font-family:Georgia,serif;font-size:13.5px;line-height:1.55}
+  #doc h1{font-size:22px;margin:0 0 4px;font-family:-apple-system,sans-serif}
+  #doc h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #1a1a22;padding-bottom:3px;margin:18px 0 7px;font-family:-apple-system,sans-serif}
+  #doc table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+  #doc td,#doc th{border:1px solid #ccc;padding:5px 8px;text-align:left}
+  #doc .wp{margin-bottom:5px}
+  @media print{ body *{visibility:hidden} #doc,#doc *{visibility:visible} #doc{position:absolute;left:0;top:0;width:100%;max-height:none} .topbar{display:none} }</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const v=id=>$('#'+id).value.trim();
+const lines=id=>v(id).split(/\n/).map(s=>s.trim()).filter(Boolean);
+
+function render(){
+  const dur=+v('dur')||36; const objs=lines('obj'); const budget=lines('budget');
+  let budgetRows='',total=0; budget.forEach(b=>{ const m=b.match(/^(.*?):\s*([\d,]+)/); if(m){ const amt=+m[2].replace(/,/g,''); total+=amt; budgetRows+=`<tr><td>${esc(m[1])}</td><td style="text-align:right">${amt.toLocaleString()}</td></tr>`; } else budgetRows+=`<tr><td>${esc(b)}</td><td></td></tr>`; });
+  // work packages from objectives, spread across duration
+  const wp=objs.map((o,i)=>{ const start=Math.round(i*dur/Math.max(objs.length,1))+1; const end=Math.round((i+1)*dur/Math.max(objs.length,1)); return `<div class="wp"><b>WP${i+1}</b> (months ${start}–${end}): ${esc(o)}</div>`; }).join('');
+  $('#doc').innerHTML=`
+    <h1>${esc(v('title'))||'Project Title'}</h1>
+    <div style="color:#555">${esc(v('team')||'Applicant')}${v('funder')?' · '+esc(v('funder')):''} · ${dur} months</div>
+    <h2>1. Background &amp; problem</h2><div>${esc(v('bg'))||'<i style="color:#999">Describe the problem, its significance, and the gap this project addresses.</i>'}</div>
+    <h2>2. Aim &amp; objectives</h2><div><b>Aim:</b> ${esc(v('aim'))||'<i style="color:#999">State the overall aim.</i>'}</div>
+    ${objs.length?`<ol style="margin:6px 0 0 4px">${objs.map(o=>`<li>${esc(o)}</li>`).join('')}</ol>`:''}
+    <h2>3. Methodology</h2><div>${esc(v('meth'))||'<i style="color:#999">Summarise design, data, methods and analysis.</i>'}</div>
+    <h2>4. Work plan</h2>${wp||'<i style="color:#999">Add objectives to auto-generate work packages.</i>'}
+    <h2>5. Timeline</h2><div>Total duration: ${dur} months across ${Math.max(objs.length,1)} work package(s); milestones at the end of each WP; mid-term review at month ${Math.round(dur/2)}.</div>
+    <h2>6. Expected impact</h2><div>${esc(v('impact'))||'<i style="color:#999">Scientific, societal and/or economic impact and dissemination plan.</i>'}</div>
+    <h2>7. Budget</h2>${budget.length?`<table><tr><th>Item</th><th style="text-align:right">Amount</th></tr>${budgetRows}<tr><td><b>Total</b></td><td style="text-align:right"><b>${total.toLocaleString()}</b></td></tr></table>`:'<i style="color:#999">Add budget lines as "item: amount".</i>'}
+    <h2>8. Risks &amp; mitigation</h2><table><tr><th>Risk</th><th>Likelihood</th><th>Mitigation</th></tr>
+      <tr><td>Recruitment / data shortfall</td><td>Medium</td><td>Backup sources; realistic targets; pilot phase</td></tr>
+      <tr><td>Technical/methodological difficulty</td><td>Medium</td><td>Expertise on team; staged go/no-go milestones</td></tr>
+      <tr><td>Timeline slippage</td><td>Low–Med</td><td>Buffer in schedule; parallel work packages</td></tr></table>`;
+}
+['title','team','funder','dur','bg','aim','obj','meth','impact','budget'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#copy').addEventListener('click',()=>{ navigator.clipboard.writeText($('#doc').innerText.trim()); const b=$('#copy'); b.innerHTML='<i class="ti ti-check"></i> Copied'; setTimeout(()=>b.innerHTML='<i class="ti ti-copy"></i> Copy',1400); });
+$('#print').addEventListener('click',()=>window.print());
+render();
+</script>
+
+</body>
+</html>

@@ -57,6 +57,10 @@
 <style>
   .fld{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text2);margin-bottom:10px}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  /* make all CV form fields legible (inputs here have no type attr, so the theme rule misses them) */
+  .fld input, .fld textarea, .item input, .item textarea{ width:100%; background:var(--bg2); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:9px 11px; font-size:13px; outline:none; transition:border-color .15s; }
+  .fld input:focus, .fld textarea:focus, .item input:focus, .item textarea:focus{ border-color:var(--accent); }
+  .fld input::placeholder, .fld textarea::placeholder, .item input::placeholder, .item textarea::placeholder{ color:var(--text3); }
   .sec-edit{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
   .sec-h{font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
   .addbtn{background:var(--surface);border:1px solid var(--border);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer}

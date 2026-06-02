@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reviewer Conflict Detector — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-shield-x"></i></div><div>Reviewer Conflict Detector</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-shield-x"></i></div>
+      <div>
+        <div class="tool-title">Reviewer Conflict Detector</div>
+        <div class="tool-desc">Cross-checks candidate reviewers against your author list for shared affiliations and surnames — the conflicts editors screen for.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Manuscript authors — "Name, Affiliation" per line
+        <textarea id="authors" style="min-height:120px" placeholder="Ada Lovelace, University of Cambridge&#10;Bo Lee, MIT"></textarea></label>
+      <label class="fld">Candidate reviewers — "Name, Affiliation" per line
+        <textarea id="revs" style="min-height:120px" placeholder="Charles Babbage, University of Cambridge&#10;Grace Hopper, Yale University"></textarea></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Check conflicts</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .rrow{padding:10px 13px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);margin-bottom:7px;font-size:13px}
+  .rrow.bad{border-color:rgba(248,113,113,0.45);background:rgba(248,113,113,0.06)}
+  .rrow.ok{border-color:rgba(74,222,128,0.35)}
+  .flag{font-size:11px;padding:1px 8px;border-radius:999px;background:rgba(248,113,113,0.18);color:var(--red);margin-right:6px;display:inline-block;margin-top:4px}
+  .clear{font-size:11px;padding:1px 8px;border-radius:999px;background:rgba(74,222,128,0.16);color:var(--green)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const norm = s => (s||'').toLowerCase().replace(/\b(university|univ|dept|department|of|the|college|institute|school|center|centre|for|and)\b/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+function parse(t){ return t.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{ const [name,...aff]=l.split(','); return {name:name.trim(), aff:aff.join(',').trim(), surname:(name.trim().split(/\s+/).pop()||'').toLowerCase()}; }); }
+
+$('#run').addEventListener('click',()=>{
+  const authors=parse($('#authors').value), revs=parse($('#revs').value); const out=$('#out');
+  if(!authors.length||!revs.length){ out.innerHTML='<div class="muted" style="margin-top:6px">Enter both author and reviewer lists.</div>'; return; }
+  const authAff=authors.map(a=>norm(a.aff)).filter(Boolean); const authSur=authors.map(a=>a.surname);
+  let conflicts=0;
+  const rows=revs.map(r=>{
+    const flags=[]; const ra=norm(r.aff);
+    if(ra && authAff.some(aa=>aa&&(aa===ra||aa.includes(ra)||ra.includes(aa)))) flags.push('shared affiliation');
+    if(r.surname && authSur.includes(r.surname)) flags.push('same surname as an author (possible relation/co-author)');
+    if(authors.some(a=>norm(a.name)===norm(r.name))) flags.push('reviewer IS an author');
+    if(flags.length) conflicts++;
+    return `<div class="rrow ${flags.length?'bad':'ok'}"><b>${esc(r.name)}</b> <span style="color:var(--text3)">— ${esc(r.aff||'no affiliation')}</span>
+      <div>${flags.length?flags.map(f=>`<span class="flag">⚠ ${f}</span>`).join(''):'<span class="clear">no flags found</span>'}</div></div>`;
+  });
+  out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">Reviewers checked</div><div class="stat-value">${revs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Flagged</div><div class="stat-value" style="color:var(--red)">${conflicts}</div></div>
+      <div class="stat-card"><div class="stat-label">Clear</div><div class="stat-value" style="color:var(--green)">${revs.length-conflicts}</div></div>
+    </div>${rows.join('')}
+    <div class="muted" style="font-size:12px;margin-top:8px">Detects shared affiliation &amp; surname only. It can't see recent <b>co-authorship</b> or advisor/advisee ties — check those manually (e.g. via the Citation Network or OpenAlex).</div>`;
+});
+</script>
+
+</body>
+</html>

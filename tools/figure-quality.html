@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figure Quality Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-photo-check"></i></div><div>Figure Quality Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:860px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-photo-check"></i></div>
+      <div>
+        <div class="tool-title">Figure Quality Checker</div>
+        <div class="tool-desc">Drop a figure → its resolution, the print DPI it would give at journal column widths, and whether it clears the usual 300/600 dpi bar. Stays on your device.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:30px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:30px;color:var(--text3)"></i>
+      <div style="margin-top:8px">Click or drop an image (PNG / JPG / etc.)</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--text2)}
+  .crow{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;font-size:13px}
+  .crow .v{margin-left:auto;font-weight:600}
+  .ok{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  td,th{padding:6px 9px;border-bottom:1px solid var(--border);text-align:left}
+  th{color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.5px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+$('#drop').addEventListener('click',()=>$('#file').click());
+$('#drop').addEventListener('dragover',e=>{e.preventDefault();$('#drop').style.borderColor='var(--accent)';});
+$('#drop').addEventListener('dragleave',()=>$('#drop').style.borderColor='var(--border)');
+$('#drop').addEventListener('drop',e=>{e.preventDefault();$('#drop').style.borderColor='var(--border)'; if(e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]); });
+$('#file').addEventListener('change',e=>{ if(e.target.files[0]) handle(e.target.files[0]); });
+
+const WIDTHS=[['Single column',3.5],['1.5 column',5.0],['Double column / full',7.0]];
+function handle(file){
+  const out=$('#out'); const url=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    const w=img.naturalWidth,h=img.naturalHeight,mp=(w*h/1e6);
+    const kb=file.size/1024; const type=file.type||'unknown';
+    const vector=/svg|pdf|eps/i.test(type);
+    const dpiRows=WIDTHS.map(([n,inch])=>{ const dpi=Math.round(w/inch); const cls=dpi>=600?'ok':dpi>=300?'warn':'bad'; const lab=dpi>=600?'excellent':dpi>=300?'OK for halftone':'too low'; return `<tr><td>${n} (${inch}″)</td><td class="${cls}">${dpi} dpi</td><td class="${cls}">${lab}</td></tr>`; });
+    const judge=(cond,t,f)=>cond?`<span class="ok"><i class="ti ti-check"></i> ${t}</span>`:`<span class="bad"><i class="ti ti-x"></i> ${f}</span>`;
+    out.innerHTML=`<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <img src="${url}" style="max-width:200px;max-height:160px;border-radius:8px;border:1px solid var(--border)">
+      <div style="flex:1;min-width:220px">
+        <div class="crow">Dimensions<span class="v">${w} × ${h} px</span></div>
+        <div class="crow">Megapixels<span class="v ${mp>=2?'ok':mp>=1?'warn':'bad'}">${mp.toFixed(2)} MP</span></div>
+        <div class="crow">File size<span class="v">${kb>1024?(kb/1024).toFixed(2)+' MB':kb.toFixed(0)+' KB'}</span></div>
+        <div class="crow">Format<span class="v ${/png|tif|svg/i.test(type)?'ok':'warn'}">${type.replace('image/','').toUpperCase()}${vector?' (vector ✓)':''}</span></div>
+      </div></div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:12px 0 4px">Effective print resolution at journal widths</div>
+      <table><tr><th>Placement</th><th>DPI</th><th>Verdict</th></tr>${dpiRows.join('')}</table>
+      <div style="margin-top:10px;font-size:13px;display:flex;flex-direction:column;gap:5px">
+        ${judge(w>=1050,'Meets ~300 dpi at single-column width','Below 300 dpi at single-column — may look pixelated in print')}
+        ${judge(!/jpe?g/i.test(type),'Lossless format (good for line art/plots)','JPEG — fine for photos, but use PNG/TIFF/PDF for plots & line art')}
+      </div>
+      <div class="muted" style="font-size:12px;margin-top:8px">DPI is computed as pixel width ÷ print width. Most journals want ≥300 dpi (photos/halftones) and ≥600–1200 dpi (line art). Vector formats (SVG/PDF/EPS) are resolution-independent — always preferred for charts.</div>`;
+  };
+  img.onerror=()=>{ out.innerHTML='<div class="muted">Couldn\'t read that image (vector formats like SVG/PDF can\'t be measured in-browser — but they\'re resolution-independent and safe to use).</div>'; };
+  img.src=url;
+}
+</script>
+
+</body>
+</html>

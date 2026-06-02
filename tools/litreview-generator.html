@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Literature Review Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-list-tree"></i></div><div>Literature Review Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-list-tree"></i></div>
+      <div>
+        <div class="tool-title">Literature Review Generator</div>
+        <div class="tool-desc">Paste one key point per source → it clusters them into themes and builds a structured review outline with synthesis prompts. Organises, doesn't fabricate.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">One source per line — "Author (Year): key finding/point"
+      <textarea id="txt" style="min-height:170px" placeholder="Smith (2020): deep learning improved diagnosis accuracy by 12%.&#10;Lee (2021): transfer learning reduced data needs for medical imaging.&#10;Garcia (2019): clinicians distrusted black-box model predictions.&#10;Patel (2022): explainable AI increased clinician trust in diagnoses."></textarea>
+    </label>
+    <label class="fld">Topic (for the intro)<input type="text" id="topic" placeholder="e.g. machine learning in medical diagnosis"></label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Build outline</button>
+      <button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button></div>
+    <div id="out" class="output-box" style="min-height:auto;white-space:normal"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #out h3{font-size:14px;margin:14px 0 6px;color:var(--accent3)}
+  #out h4{font-size:13px;margin:10px 0 4px}
+  #out ul{margin:4px 0 4px 4px;padding-left:18px}
+  #out li{font-size:13px;margin-bottom:3px}
+  #out .prompt{font-size:12px;color:var(--text3);font-style:italic;border-left:2px solid var(--border2);padding-left:8px;margin:4px 0}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on for with as by at from is are was were be this that these those it its their our we they not no into using used based improved increased reduced effect study studies paper research model models data results approach method methods showed shown found between among more most than then also'.split(' '));
+
+$('#run').addEventListener('click',()=>{
+  const lines=$('#txt').value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+  const topic=$('#topic').value.trim()||'this topic';
+  const out=$('#out');
+  if(lines.length<2){ out.innerHTML='<div class="muted">Paste at least two source points.</div>'; return; }
+  // keyword frequency across lines
+  const freq={};
+  const lineKw=lines.map(l=>{ const set=new Set((l.toLowerCase().match(/[a-z][a-z'-]{3,}/g)||[]).filter(w=>!STOP.has(w))); set.forEach(w=>freq[w]=(freq[w]||0)+1); return set; });
+  // themes = keywords appearing in >=2 lines, top 5
+  const themes=Object.entries(freq).filter(([w,c])=>c>=2).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0]);
+  const assigned=new Array(lines.length).fill(false);
+  const groups=themes.map(t=>({t,items:[]}));
+  lineKw.forEach((set,i)=>{ const g=groups.find(g=>set.has(g.t)); if(g){ g.items.push(i); assigned[i]=true; } });
+  const other=lines.map((_,i)=>i).filter(i=>!assigned[i]);
+  let html=`<h3>Working title</h3><div>A review of ${esc(topic)}</div>
+    <h3>1. Introduction</h3>
+    <div class="prompt">Define ${esc(topic)}, why it matters, and the scope of this review. State the organising themes below and the review's aim.</div>
+    <h3>2. Thematic synthesis</h3>`;
+  const usableGroups=groups.filter(g=>g.items.length);
+  usableGroups.forEach((g,gi)=>{
+    html+=`<h4>2.${gi+1} ${esc(g.t.charAt(0).toUpperCase()+g.t.slice(1))}</h4><ul>${g.items.map(i=>`<li>${esc(lines[i])}</li>`).join('')}</ul>
+      <div class="prompt">Synthesise these: where do they agree or conflict on "${esc(g.t)}"? What is the consensus and what remains contested?</div>`;
+  });
+  if(other.length){ html+=`<h4>2.${usableGroups.length+1} Other / cross-cutting</h4><ul>${other.map(i=>`<li>${esc(lines[i])}</li>`).join('')}</ul>`; }
+  html+=`<h3>3. Gaps &amp; open questions</h3>
+    <div class="prompt">Across the themes above, what hasn't been studied? Which findings need replication, which populations/methods are missing?</div>
+    <h3>4. Conclusion</h3>
+    <div class="prompt">Summarise the state of knowledge on ${esc(topic)} and how your work addresses an identified gap.</div>`;
+  out.innerHTML=html;
+});
+$('#copy').addEventListener('click',()=>{ const t=$('#out').innerText.trim(); if(t){ navigator.clipboard.writeText(t); const b=$('#copy'); b.innerHTML='<i class="ti ti-check"></i> Copied'; setTimeout(()=>b.innerHTML='<i class="ti ti-copy"></i> Copy',1400);} });
+</script>
+
+</body>
+</html>

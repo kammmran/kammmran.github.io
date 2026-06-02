@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contradictory Findings Finder — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrows-shuffle"></i></div><div>Contradiction Finder</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-arrows-shuffle"></i></div>
+      <div>
+        <div class="tool-title">Contradictory Findings Finder</div>
+        <div class="tool-desc">Paste findings/claims from several papers → it flags pairs that talk about the same thing but point in opposite directions.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Findings — one claim per line (paste from several papers)
+      <textarea id="txt" style="min-height:180px" placeholder="Vitamin D supplementation reduced the risk of fractures.&#10;Vitamin D supplementation had no significant effect on fracture risk.&#10;Higher screen time increased anxiety in adolescents.&#10;Screen time was not associated with adolescent anxiety."></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Find contradictions</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .pair{border:1px solid rgba(248,113,113,0.4);background:rgba(248,113,113,0.06);border-radius:9px;padding:10px 13px;margin-bottom:8px}
+  .c{font-size:13px;margin:3px 0;padding-left:18px;text-indent:-14px}
+  .pos{color:var(--green)} .neg{color:var(--red)}
+  .shared{font-size:11px;color:var(--text3);margin-top:5px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on for with as by at from is are was were be been this that these those it its their our we they not no effect significant study found showed associated risk had has have between among'.split(' '));
+const POS=/\b(increase[ds]?|increasing|higher|greater|improv\w+|positive\w*|enhanc\w+|reduc\w+ risk|effective|benefi\w+|associated with|significant\w* (increase|effect|associ)|raises?|elevat\w+|promot\w+|protect\w+)\b/i;
+const NEG=/\b(decrease[ds]?|lower\b|reduc\w+(?! risk)|no (significant )?(effect|association|difference|impact|change)|not (associated|significant|linked|related)|ineffective|harm\w+|negative\w*|worsen\w+|fail\w+|unrelated|null)\b/i;
+
+function polarity(s){ const p=POS.test(s), n=NEG.test(s); if(/\bno (significant )?(effect|association|difference)|not (associated|significant)|null|no link/i.test(s)) return 'null'; if(p&&!n) return 'pos'; if(n&&!p) return 'neg'; if(p&&n) return 'mixed'; return 'neutral'; }
+function keywords(s){ return new Set((s.toLowerCase().match(/[a-z][a-z'-]{3,}/g)||[]).filter(w=>!STOP.has(w))); }
+
+$('#run').addEventListener('click',()=>{
+  const lines=$('#txt').value.split(/\n/).map(s=>s.trim()).filter(Boolean); const out=$('#out');
+  if(lines.length<2){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste at least two findings.</div>'; return; }
+  const items=lines.map(s=>({s,pol:polarity(s),kw:keywords(s)}));
+  const pairs=[];
+  for(let i=0;i<items.length;i++)for(let j=i+1;j<items.length;j++){
+    const a=items[i],b=items[j];
+    const shared=[...a.kw].filter(w=>b.kw.has(w));
+    const opp=(a.pol==='pos'&&(b.pol==='neg'||b.pol==='null'))||(a.pol==='neg'&&(b.pol==='pos'))||((a.pol==='null')&&b.pol==='pos')||(a.pol==='pos'&&b.pol==='null');
+    if(shared.length>=2 && opp){ pairs.push({a,b,shared,score:shared.length}); }
+  }
+  pairs.sort((x,y)=>y.score-x.score);
+  if(!pairs.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No clear contradictions detected. Statements either agree, or don\'t share enough subject overlap.</div>'; return; }
+  out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${pairs.length} potentially conflicting pair${pairs.length>1?'s':''} (shared subject + opposite direction):</div>`+
+    pairs.map(p=>`<div class="pair">
+      <div class="c ${p.a.pol==='pos'?'pos':'neg'}">${p.a.pol==='pos'?'▲':'▼'} ${esc(p.a.s)}</div>
+      <div class="c ${p.b.pol==='pos'?'pos':'neg'}">${p.b.pol==='pos'?'▲':'▼'} ${esc(p.b.s)}</div>
+      <div class="shared">shared terms: ${p.shared.slice(0,6).map(esc).join(', ')}</div></div>`).join('')+
+    `<div class="muted" style="font-size:12px;margin-top:8px">Heuristic — based on direction words (increase/decrease/no effect) and shared keywords. Verify each pair; differences may reflect different populations or methods, not true contradiction.</div>`;
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reviewer Recommendation Engine — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-user-star"></i></div><div>Reviewer Recommender</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-user-star"></i></div>
+      <div>
+        <div class="tool-title">Reviewer Recommendation Engine</div>
+        <div class="tool-desc">Paste your title/abstract → researchers who recently published closely related work, ranked as candidate reviewers. Via OpenAlex.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paper title / abstract / keywords<textarea id="q" style="min-height:90px" placeholder="Paste your title and abstract…"></textarea></label>
+    <label class="fld">Exclude an institution (your own, to avoid conflicts) <span class="muted">opt.</span><input id="excl" placeholder="e.g. University of Cambridge"></label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Suggest reviewers</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .arow{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:9px;background:var(--bg2);margin-bottom:7px}
+  .rank{flex:none;width:26px;height:26px;border-radius:7px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--text2)}
+  .arow a{color:var(--accent3);text-decoration:none} .cnt{margin-left:auto;font-size:12px;color:var(--text3);white-space:nowrap}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MAIL='mailto=academy-tools@users.noreply.github.com';
+const STOP=new Set('the a an and or but of to in on for with as by at from is are was were be been this that these those it its their our we they not no using used based study research method models data results approach novel propose present develop paper'.split(' '));
+
+$('#run').addEventListener('click',async ()=>{
+  const raw=$('#q').value.trim(); const excl=$('#excl').value.trim().toLowerCase(); const out=$('#out');
+  if(!raw){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste your title/abstract.</div>'; return; }
+  // build a focused query from the most distinctive words
+  const words=[...new Set((raw.toLowerCase().match(/[a-z][a-z'-]{3,}/g)||[]).filter(w=>!STOP.has(w)))].slice(0,8);
+  const query=words.join(' ')||raw;
+  out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Finding researchers in this area…</div>';
+  try{
+    const r=await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(query)}&sort=relevance_score:desc&per_page=80&select=authorships,publication_year,relevance_score&${MAIL}`);
+    const d=await r.json(); const works=d.results||[];
+    if(!works.length){ out.innerHTML='<div class="muted">No related work found — try a longer abstract.</div>'; return; }
+    const NOW=new Date().getFullYear(); const tally={};
+    works.forEach(w=>{ const recency=Math.max(0.3,1-(NOW-(w.publication_year||NOW))/20); (w.authorships||[]).forEach(a=>{ const au=a.author; if(!au)return; const inst=(a.institutions||[]).map(i=>i.display_name).join(' ').toLowerCase(); if(excl&&inst.includes(excl))return; const id=au.id; if(!tally[id])tally[id]={name:au.display_name,id,score:0,inst:(a.institutions||[])[0]&&a.institutions[0].display_name||'',n:0}; tally[id].score+=recency; tally[id].n++; }); });
+    const ranked=Object.values(tally).filter(a=>a.n>=1).sort((a,b)=>b.score-a.score).slice(0,20);
+    if(!ranked.length){ out.innerHTML='<div class="muted">No candidates (all excluded?).</div>'; return; }
+    out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">Candidates ranked by volume &amp; recency of related work. <b>Verify each for conflicts</b> (co-authorship, same institution, advisor) before nominating.</div>`+
+      ranked.map((a,i)=>`<div class="arow"><div class="rank">${i+1}</div><div><a href="${esc(a.id)}" target="_blank" rel="noopener">${esc(a.name)}</a><div style="font-size:11px;color:var(--text3)">${esc(a.inst||'')}</div></div><span class="cnt">${a.n} related paper${a.n>1?'s':''}</span></div>`).join('');
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper-to-Knowledge-Graph — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-hierarchy-2"></i></div><div>Paper → Knowledge Graph</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-hierarchy-2"></i></div>
+      <div>
+        <div class="tool-title">Paper-to-Knowledge-Graph Converter</div>
+        <div class="tool-desc">Extracts the key concepts from a paper and links the ones that appear together — a quick concept map of what the text connects. Runs offline.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste the paper text (abstract or full)
+      <textarea id="txt" style="min-height:150px" placeholder="Paste text here…"></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-hierarchy-2"></i> Build graph</button></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('The This That These Those We Our It They There Here In On For With As By At From Is Are Was Were Be Been Has Have Had When Where While However Moreover Therefore Thus Although Because Since Also If Then So Such Their And But Or Not No An A Of To'.split(' '));
+
+function sentences(t){ return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)||[]).map(s=>s.trim()); }
+function entities(t){
+  const freq={}; const re=/\b([A-Z][a-zA-Z0-9-]+(?:\s+[A-Z][a-zA-Z0-9-]+){0,2}|[A-Z]{2,}[0-9]*)\b/g; let m;
+  while((m=re.exec(t))){ let e=m[1].trim(); const first=e.split(' ')[0]; if(STOP.has(first)&&e.split(' ').length===1) continue; if(e.length<3) continue; const key=e.toLowerCase(); freq[key]=freq[key]||{label:e,n:0}; freq[key].n++; }
+  return freq;
+}
+
+$('#run').addEventListener('click',()=>{
+  const t=$('#txt').value.trim(); const out=$('#out');
+  if(!t){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste some text.</div>'; return; }
+  const freq=entities(t);
+  const top=Object.entries(freq).map(([k,v])=>({k,...v})).sort((a,b)=>b.n-a.n).slice(0,12);
+  if(top.length<2){ out.innerHTML='<div class="muted" style="margin-top:6px">Not enough named concepts found — try a richer passage.</div>'; return; }
+  const idx={}; top.forEach((e,i)=>idx[e.k]=i);
+  const sents=sentences(t);
+  const edges={};
+  sents.forEach(s=>{ const present=top.filter(e=>new RegExp('\\b'+e.label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i').test(s)).map(e=>e.k);
+    for(let i=0;i<present.length;i++)for(let j=i+1;j<present.length;j++){ const key=[present[i],present[j]].sort().join('::'); edges[key]=(edges[key]||0)+1; } });
+  const edgeList=Object.entries(edges).map(([k,w])=>{ const [a,b]=k.split('::'); return {a:idx[a],b:idx[b],w}; });
+  const maxW=Math.max(1,...edgeList.map(e=>e.w)), maxN=Math.max(...top.map(e=>e.n));
+  // circular layout
+  const W=900,H=480,cx=W/2,cy=H/2,R=Math.min(cx,cy)-90;
+  const pos=top.map((e,i)=>{ const a=-Math.PI/2+i/top.length*2*Math.PI; return {x:cx+R*Math.cos(a),y:cy+R*Math.sin(a)}; });
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px">`;
+  edgeList.forEach(e=>{ svg+=`<line x1="${pos[e.a].x}" y1="${pos[e.a].y}" x2="${pos[e.b].x}" y2="${pos[e.b].y}" stroke="var(--accent3)" stroke-opacity="${0.18+0.5*e.w/maxW}" stroke-width="${1+3*e.w/maxW}"/>`; });
+  top.forEach((e,i)=>{ const r=12+14*e.n/maxN; const p=pos[i]; svg+=`<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="rgba(124,109,240,0.22)" stroke="var(--accent3)" stroke-width="1.5"><title>${esc(e.label)} — mentioned ${e.n}×</title></circle>`;
+    const tx=p.x, ty=p.y< cy ? p.y-r-4 : p.y+r+12; svg+=`<text x="${tx}" y="${ty}" text-anchor="middle" fill="var(--text)">${esc(e.label.length>20?e.label.slice(0,19)+'…':e.label)}</text>`; });
+  svg+='</svg>';
+  out.innerHTML=svg+`<div class="muted" style="font-size:12px;margin-top:8px">Nodes = the ${top.length} most-mentioned concepts (size = frequency). Edges link concepts that co-occur in a sentence (thicker = more often). A fast concept map — not a formal triple-extraction KG.</div>`;
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Literature Timeline Builder — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-timeline"></i></div><div>Literature Timeline</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-timeline"></i></div>
+      <div>
+        <div class="tool-title">Literature Timeline Builder</div>
+        <div class="tool-desc">Plot a field's landmark papers across time — each dot a highly-cited work, sized by its citation count. Powered by OpenAlex.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <form id="f" class="row" style="gap:8px">
+      <input type="text" id="q" placeholder="e.g. deep learning, gene editing, quantum computing" style="flex:1;min-width:220px">
+      <button class="btn btn-primary" type="submit"><i class="ti ti-timeline"></i> Build timeline</button>
+    </form>
+    <div id="out"><div class="muted">Enter a field to chart its most influential papers over time.</div></div>
+  </div>
+</main>
+
+<style>svg text{fill:var(--text3);font-size:11px}
+  .prow{padding:7px 11px;border-bottom:1px solid var(--border);font-size:13px}
+  .prow .yr{color:var(--teal);font-weight:600;margin-right:8px}
+  a.lnk{color:var(--accent3);text-decoration:none}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MAIL='mailto=academy-tools@users.noreply.github.com';
+
+$('#f').addEventListener('submit',async e=>{
+  e.preventDefault(); const q=$('#q').value.trim(); if(!q) return;
+  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Fetching landmark papers…</div>';
+  try{
+    const r=await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&sort=cited_by_count:desc&per_page=30&select=display_name,publication_year,cited_by_count,authorships,primary_location,doi&${MAIL}`);
+    const d=await r.json();
+    let w=(d.results||[]).filter(x=>x.publication_year);
+    if(!w.length){ out.innerHTML='<div class="muted">No papers found.</div>'; return; }
+    const years=w.map(x=>x.publication_year); const ymin=Math.min(...years), ymax=Math.max(...years);
+    const cmax=Math.max(...w.map(x=>x.cited_by_count||1));
+    const W=880,H=200,pl=20,pr=20,pt=30,pb=30,iw=W-pl-pr;
+    const X=y=>pl+(ymax===ymin?0.5:(y-ymin)/(ymax-ymin))*iw;
+    const baseY=H-pb;
+    let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px">`;
+    svg+=`<line x1="${pl}" y1="${baseY}" x2="${W-pr}" y2="${baseY}" stroke="var(--border2)"/>`;
+    for(let y=ymin;y<=ymax;y+=Math.max(1,Math.ceil((ymax-ymin)/8))){ svg+=`<line x1="${X(y)}" y1="${baseY}" x2="${X(y)}" y2="${baseY+4}" stroke="var(--border2)"/><text x="${X(y)}" y="${baseY+16}" text-anchor="middle">${y}</text>`; }
+    w.forEach(x=>{ const rad=4+ (x.cited_by_count/cmax)*16; const jitter=(Math.random()-0.5)*40; const cy=baseY-22-Math.abs(jitter);
+      svg+=`<circle cx="${X(x.publication_year)}" cy="${cy}" r="${rad.toFixed(1)}" fill="rgba(45,212,191,0.35)" stroke="var(--teal)"><title>${esc(x.display_name)} (${x.publication_year}) — ${x.cited_by_count.toLocaleString()} cites</title></circle>`; });
+    svg+=`<text x="${pl}" y="18">circle size = citation count · hover for title</text></svg>`;
+    const top=w.slice(0,12).map(x=>{ const a=x.authorships&&x.authorships[0]&&x.authorships[0].author.display_name||''; const doi=x.doi?x.doi:''; return `<div class="prow"><span class="yr">${x.publication_year}</span>${doi?`<a class="lnk" href="${esc(doi)}" target="_blank" rel="noopener">${esc(x.display_name)}</a>`:esc(x.display_name)} <span style="color:var(--text3)">— ${esc(a)}${a?' et al.':''} · ${x.cited_by_count.toLocaleString()} cites</span></div>`; }).join('');
+    out.innerHTML=svg+`<div style="margin-top:12px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Most-cited works</div>`+top;
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
+});
+</script>
+
+</body>
+</html>

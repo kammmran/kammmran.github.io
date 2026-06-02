@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Idea Validator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-checkup-list"></i></div><div>Research Idea Validator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:840px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-checkup-list"></i></div>
+      <div>
+        <div class="tool-title">Research Idea Validator</div>
+        <div class="tool-desc">Score your idea against the FINER criteria (Feasible, Interesting, Novel, Ethical, Relevant) and get a go / refine verdict.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:6px">
+    <div id="qs"></div>
+    <div id="out" style="margin-top:8px"></div>
+  </div>
+</main>
+
+<style>
+  .grp{margin-top:14px} .grp h4{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--accent3);margin:0 0 8px}
+  .item{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;cursor:pointer;font-size:13px;line-height:1.45}
+  .item input{margin-top:2px;width:16px;height:16px;flex:none}
+  .meter{height:16px;border-radius:8px;background:var(--bg3);overflow:hidden;margin:8px 0}
+  .meter>div{height:100%;transition:width .3s}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const GROUPS=[
+  ['Feasible',[ 'Adequate time, funding and equipment are available','Required sample size / data is attainable','The team has (or can acquire) the needed expertise','Scope is realistic for the timeframe' ]],
+  ['Interesting',[ 'The question genuinely intrigues you and the field','Peers/advisors react with curiosity, not "so what?"' ]],
+  ['Novel',[ 'It confirms, extends or refutes prior findings','A literature search shows it has not already been answered','It offers a new method, population, or angle' ]],
+  ['Ethical',[ 'It can obtain ethics/IRB approval','Risks to participants/animals are justified and minimised','Data handling complies with privacy law' ]],
+  ['Relevant',[ 'Results would matter to science, practice or policy','It can inform future research directions','It aligns with funding priorities or real-world needs' ]],
+];
+$('#qs').innerHTML=GROUPS.map((g,gi)=>`<div class="grp"><h4>${g[0]}</h4>${g[1].map((q,ii)=>`<label class="item"><input type="checkbox" data-g="${gi}" id="c${gi}_${ii}"><span>${q}</span></label>`).join('')}</div>`).join('');
+
+function run(){
+  let total=0,done=0; const per=GROUPS.map((g,gi)=>{ let n=0; g[1].forEach((_,ii)=>{ total++; if($('#c'+gi+'_'+ii).checked){done++;n++;} }); return {name:g[0],n,t:g[1].length}; });
+  const pct=Math.round(done/total*100);
+  const weak=per.filter(p=>p.n/p.t<0.5).map(p=>p.name);
+  const band=pct>=80?'--green':pct>=55?'--amber':'--red';
+  const verdict=pct>=80?'Strong idea — go for it':pct>=55?'Promising — refine the weak areas':'Needs rework before proceeding';
+  $('#out').innerHTML=`
+    <div class="row" style="justify-content:space-between"><b style="font-size:15px">FINER score</b><span style="color:var(${band})"><b>${pct}%</b></span></div>
+    <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>
+    <div class="stat-grid" style="margin:10px 0">${per.map(p=>{const r=p.n/p.t;const c=r>=0.7?'--green':r>=0.4?'--amber':'--red';return `<div class="stat-card"><div class="stat-label">${p.name}</div><div class="stat-value" style="color:var(${c})">${p.n}/${p.t}</div></div>`;}).join('')}</div>
+    <div style="font-weight:600;color:var(${band})">${verdict}</div>
+    ${weak.length?`<div class="muted" style="font-size:12px;margin-top:6px">Strengthen: ${weak.join(', ')}.</div>`:''}`;
+}
+document.querySelectorAll('#qs input').forEach(c=>c.addEventListener('change',run));
+run();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Translator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-language"></i></div><div>Academic Translator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-language"></i></div>
+      <div>
+        <div class="tool-title">Academic Translator</div>
+        <div class="tool-desc">Translate abstracts and passages between languages — especially handy for non-native English authors. Powered by the free MyMemory API.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px">
+      <label class="fld">From<select id="from"></select></label>
+      <button class="btn btn-sm" id="swap" title="swap"><i class="ti ti-arrows-left-right"></i></button>
+      <label class="fld">To<select id="to"></select></label>
+    </div>
+    <div class="grid2">
+      <label class="fld">Source text<textarea id="src" style="min-height:170px" placeholder="Paste text to translate…"></textarea></label>
+      <label class="fld">Translation<textarea id="dst" style="min-height:170px" placeholder="Translation appears here…" readonly></textarea></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-language"></i> Translate</button>
+      <button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button>
+      <span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const LANGS=[['en','English'],['es','Spanish'],['fr','French'],['de','German'],['it','Italian'],['pt','Portuguese'],['nl','Dutch'],['ru','Russian'],['zh','Chinese'],['ja','Japanese'],['ko','Korean'],['ar','Arabic'],['tr','Turkish'],['az','Azerbaijani'],['fa','Persian'],['hi','Hindi'],['pl','Polish'],['uk','Ukrainian'],['sv','Swedish'],['el','Greek']];
+$('#from').innerHTML=LANGS.map(l=>`<option value="${l[0]}">${l[1]}</option>`).join('');
+$('#to').innerHTML=LANGS.map(l=>`<option value="${l[0]}"${l[0]==='en'?' selected':''}>${l[1]}</option>`).join('');
+$('#from').value='az';
+$('#swap').addEventListener('click',()=>{ const a=$('#from').value,b=$('#to').value; $('#from').value=b; $('#to').value=a; const s=$('#src').value; $('#src').value=$('#dst').value; $('#dst').value=s; });
+
+function chunk(t){ // split into <=480-char chunks on sentence boundaries
+  const parts=t.match(/[^.!?\n]+[.!?\n]*/g)||[t]; const out=[]; let cur='';
+  parts.forEach(p=>{ if((cur+p).length>480){ if(cur)out.push(cur); cur=p; } else cur+=p; }); if(cur)out.push(cur); return out;
+}
+async function tr(text,pair){
+  const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${pair}`);
+  const d=await r.json(); if(d.responseStatus&&d.responseStatus!==200&&!d.responseData) throw new Error(d.responseDetails||'API error');
+  return (d.responseData&&d.responseData.translatedText)||'';
+}
+$('#run').addEventListener('click',async ()=>{
+  const text=$('#src').value.trim(); const from=$('#from').value,to=$('#to').value;
+  const st=$('#status');
+  if(!text){ st.textContent='Enter text first.'; return; }
+  if(from===to){ $('#dst').value=text; return; }
+  st.textContent='Translating…'; $('#dst').value='';
+  try{
+    const chunks=chunk(text); const res=[];
+    for(let i=0;i<chunks.length;i++){ st.textContent=`Translating ${i+1}/${chunks.length}…`; res.push(await tr(chunks[i],`${from}|${to}`)); }
+    $('#dst').value=res.join(''); st.textContent='Done · machine translation — proofread before use';
+  }catch(err){ st.textContent='Translation failed: '+err.message; }
+});
+$('#copy').addEventListener('click',()=>{ const t=$('#dst').value.trim(); if(t){ navigator.clipboard.writeText(t); $('#status').textContent='Copied.'; } });
+</script>
+
+</body>
+</html>

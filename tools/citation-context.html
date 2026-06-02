@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Citation Context Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-quote"></i></div><div>Citation Context Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-quote"></i></div>
+      <div>
+        <div class="tool-title">Citation Context Analyzer</div>
+        <div class="tool-desc">Finds the in-text citations in your draft and classifies how each is used — supporting, contrasting, methodological or background.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste text containing in-text citations
+      <textarea id="txt" style="min-height:190px" placeholder="Prior work showed strong gains (Smith, 2020). However, others found no effect (Lee et al., 2021). We follow the protocol of Garcia (2019). Deep learning is widely used [3]."></textarea>
+    </label>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .c{padding:8px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--border);margin-bottom:6px;font-size:13px;line-height:1.5;border-left:3px solid var(--text3)}
+  .c.support{border-left-color:var(--green)} .c.contrast{border-left-color:var(--red)} .c.method{border-left-color:var(--blue)} .c.background{border-left-color:var(--text3)}
+  .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:2px}
+  .lbl.support{color:var(--green)} .lbl.contrast{color:var(--red)} .lbl.method{color:var(--blue)} .lbl.background{color:var(--text3)}
+  .cite{background:rgba(45,212,191,0.2);border-radius:3px;padding:0 2px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const CITE=/\([^)]*\b(1[89]\d{2}|20\d{2})[a-z]?\)|\[\d+(\s*[,–-]\s*\d+)*\]|\b[A-Z][a-z]+\s+(et al\.?\s+)?\(\d{4}[a-z]?\)/g;
+function sentences(t){ return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)||[]).map(s=>s.trim()).filter(Boolean); }
+function classify(s){
+  if(/\b(however|but|although|whereas|in contrast|contrary|unlike|despite|nevertheless|conflict|disagree|fail(ed)? to|challenge[ds]?|question\w*)\b/i.test(s)) return 'contrast';
+  if(/\b(following|based on|using|we (use|used|adopt|apply|follow|employ)|as (in|described|proposed)|method of|approach of|implementation of|toolkit|framework of|protocol)\b/i.test(s)) return 'method';
+  if(/\b(show\w*|demonstrate\w*|confirm\w*|support\w*|consistent with|in (line|agreement) with|found that|reported that|evidence|similar\w*|corroborat\w*)\b/i.test(s)) return 'support';
+  return 'background';
+}
+
+function run(){
+  const t=$('#txt').value.trim(); const out=$('#out');
+  if(!t){ out.innerHTML=''; return; }
+  const sents=sentences(t);
+  const tally={support:0,contrast:0,method:0,background:0};
+  const rows=[];
+  sents.forEach(s=>{ CITE.lastIndex=0; if(CITE.test(s)){ const cat=classify(s); tally[cat]++; const hl=esc(s).replace(CITE,m=>`<span class="cite">${m}</span>`); rows.push(`<div class="c ${cat}"><div class="lbl ${cat}">${cat}</div>${hl}</div>`); } });
+  const total=rows.length;
+  if(!total){ out.innerHTML='<div class="muted" style="margin-top:6px">No in-text citations detected. Use formats like (Smith, 2020), Smith (2020) or [3].</div>'; return; }
+  const lbls={support:'--green',contrast:'--red',method:'--blue',background:'--text3'};
+  out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">Citations</div><div class="stat-value">${total}</div></div>
+      ${Object.entries(tally).map(([k,v])=>`<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value" style="color:var(${lbls[k]})">${v}</div></div>`).join('')}
+    </div>
+    ${rows.join('')}
+    <div class="muted" style="font-size:12px;margin-top:8px">A high share of "background" can signal shallow engagement; "contrast" and "support" citations show you're positioning your work. Heuristic classification — skim to confirm.</div>`;
+}
+$('#txt').addEventListener('input',run);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Funding Opportunity Matcher — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-cash"></i></div><div>Funding Matcher</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-cash"></i></div>
+      <div>
+        <div class="tool-title">Funding Opportunity Matcher</div>
+        <div class="tool-desc">Describe your project and career stage → matching major funders ranked by fit, with links to their open calls.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Describe your research (field, topic, goals)
+      <textarea id="desc" style="min-height:80px" placeholder="e.g. early-career project developing machine-learning models for climate adaptation in developing countries"></textarea>
+    </label>
+    <div class="row">
+      <label class="fld">Region<select id="region"><option value="any">Any</option><option value="eu">Europe</option><option value="us">United States</option><option value="uk">United Kingdom</option><option value="global">Global</option></select></label>
+      <label class="fld">Career stage<select id="stage"><option value="any">Any</option><option value="phd">PhD / student</option><option value="early">Early-career</option><option value="established">Established PI</option></select></label>
+      <button class="btn btn-primary" id="run" style="margin-top:18px"><i class="ti ti-search"></i> Match</button>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .frow{padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg2);margin-bottom:8px}
+  .frow h3{margin:0;font-size:15px}
+  .frow h3 a{color:var(--text);text-decoration:none}
+  .bar{height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;margin:6px 0;max-width:220px}
+  .bar>div{height:100%;background:var(--green)}
+  .pill{font-size:11px;padding:2px 9px;border-radius:999px;background:var(--surface2);color:var(--text2);margin-right:6px}
+  a.go{color:var(--accent3);text-decoration:none;font-size:12px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// curated major funders (not exhaustive)
+const FUNDERS=[
+  {n:'NIH (National Institutes of Health)',r:'us',s:['any'],url:'https://grants.nih.gov/funding/searchguide',kw:'health medicine biomedical disease clinical cancer neuroscience genetics public health drug'},
+  {n:'NSF (National Science Foundation)',r:'us',s:['any'],url:'https://www.nsf.gov/funding/',kw:'science engineering physics chemistry computer mathematics materials climate earth education data ai'},
+  {n:'ERC (European Research Council)',r:'eu',s:['early','established'],url:'https://erc.europa.eu/apply-grant',kw:'frontier basic any field excellence europe'},
+  {n:'Horizon Europe',r:'eu',s:['any'],url:'https://ec.europa.eu/info/funding-tenders/opportunities/portal/screen/home',kw:'innovation climate health digital energy society collaborative europe'},
+  {n:'Marie Skłodowska-Curie Actions',r:'eu',s:['phd','early'],url:'https://marie-sklodowska-curie-actions.ec.europa.eu/',kw:'mobility fellowship training early-career phd postdoc any'},
+  {n:'Wellcome Trust',r:'uk',s:['any'],url:'https://wellcome.org/grant-funding',kw:'health biomedical mental health infectious disease climate health discovery'},
+  {n:'UKRI (UK Research & Innovation)',r:'uk',s:['any'],url:'https://www.ukri.org/opportunity/',kw:'science engineering arts humanities social innovation any field uk'},
+  {n:'Gates Foundation',r:'global',s:['any'],url:'https://www.gatesfoundation.org/about/how-we-work/grant-opportunities',kw:'global health poverty development agriculture education developing countries vaccine'},
+  {n:'Chan Zuckerberg Initiative',r:'global',s:['any'],url:'https://chanzuckerberg.com/rfa/',kw:'biology medicine imaging neuroscience open science software disease'},
+  {n:'Simons Foundation',r:'us',s:['established'],url:'https://www.simonsfoundation.org/funding-opportunities/',kw:'mathematics physics theoretical computer life sciences autism'},
+  {n:'DFG (German Research Foundation)',r:'eu',s:['any'],url:'https://www.dfg.de/en/research_funding/',kw:'any field germany basic research collaborative'},
+  {n:'Templeton Foundation',r:'global',s:['any'],url:'https://www.templeton.org/grants',kw:'philosophy religion physics psychology character big questions'},
+];
+const REGION_OK=(f,reg)=> reg==='any'||f.r===reg||f.r==='global';
+
+$('#run').addEventListener('click',()=>{
+  const desc=($('#desc').value||'').toLowerCase(); const reg=$('#region').value; const stage=$('#stage').value;
+  const words=[...new Set(desc.match(/[a-z]{4,}/g)||[])];
+  if(!words.length){ $('#out').innerHTML='<div class="muted" style="margin-top:6px">Describe your research first.</div>'; return; }
+  const scored=FUNDERS.filter(f=>REGION_OK(f,reg) && (stage==='any'||f.s.includes('any')||f.s.includes(stage)))
+    .map(f=>{ const fw=f.kw.split(' '); let hits=0; words.forEach(w=>{ if(fw.some(k=>k.includes(w)||w.includes(k))) hits++; }); const score=Math.min(100, 25+hits*18); return {f,score,hits}; })
+    .sort((a,b)=>b.score-a.score);
+  $('#out').innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${scored.length} funders match your region & stage — ranked by topical fit. Always confirm eligibility & deadlines on the funder's site.</div>`+
+    scored.map(({f,score})=>`<div class="frow">
+      <h3><a href="${f.url}" target="_blank" rel="noopener">${esc(f.n)}</a></h3>
+      <div class="bar"><div style="width:${score}%"></div></div>
+      <div><span class="pill">${f.r.toUpperCase()}</span><span class="pill">fit ${score}%</span><a class="go" href="${f.url}" target="_blank" rel="noopener">open calls ↗</a></div>
+    </div>`).join('');
+});
+</script>
+
+</body>
+</html>

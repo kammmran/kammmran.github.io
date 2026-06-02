@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Paper Summarizer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-text-decrease"></i></div><div>Paper Summarizer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-text-decrease"></i></div>
+      <div>
+        <div class="tool-title">Research Paper Summarizer</div>
+        <div class="tool-desc">Extractive summary — ranks and keeps the most representative sentences (TextRank-style frequency scoring). Runs entirely offline.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paste the paper text (or abstract + sections)
+      <textarea id="txt" style="min-height:200px" placeholder="Paste the full text here…"></textarea>
+    </label>
+    <div class="row">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:8px">Length<input type="range" id="len" min="10" max="60" value="25" style="width:160px"><b id="lenlbl">25%</b></label>
+      <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Summarize</button>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #sum{line-height:1.7;font-size:14px} #sum .s{background:rgba(124,109,240,0.08);border-left:3px solid var(--accent3);padding:3px 8px;margin:5px 0;border-radius:4px;display:block}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on for with as by at from is are was were be been being this that these those it its their our we they he she you i not no can will may also such than then so into over under between within across our results study paper research method using used based show shown find found data'.split(' '));
+$('#len').addEventListener('input',()=>$('#lenlbl').textContent=$('#len').value+'%');
+
+function sentences(t){ return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+(?=\s|$)|[^.!?]+$/g)||[]).map(s=>s.trim()).filter(s=>s.split(' ').length>=4); }
+
+$('#run').addEventListener('click',()=>{
+  const t=$('#txt').value.trim(); const out=$('#out');
+  if(!t){ out.innerHTML='<div class="muted" style="margin-top:6px">Paste some text first.</div>'; return; }
+  const sents=sentences(t);
+  if(sents.length<3){ out.innerHTML='<div class="muted" style="margin-top:6px">Need at least a few sentences.</div>'; return; }
+  // word frequencies
+  const freq={}; let totalW=0;
+  sents.forEach(s=>s.toLowerCase().match(/[a-z][a-z'-]+/g)?.forEach(w=>{ if(!STOP.has(w)&&w.length>2){ freq[w]=(freq[w]||0)+1; totalW++; } }));
+  const maxF=Math.max(...Object.values(freq),1);
+  // score each sentence: sum normalized freq / sqrt(len); boost first sentences
+  const scored=sents.map((s,i)=>{ const ws=s.toLowerCase().match(/[a-z][a-z'-]+/g)||[]; let sc=0; ws.forEach(w=>{ if(freq[w]) sc+=freq[w]/maxF; }); sc=sc/Math.sqrt(ws.length||1); if(i===0)sc*=1.6; if(/\b(we (show|find|propose|present)|results? (show|indicate)|in conclusion|significant)\b/i.test(s)) sc*=1.3; return {s,i,sc}; });
+  const pct=+$('#len').value/100; const keep=Math.max(1,Math.round(sents.length*pct));
+  const top=new Set(scored.slice().sort((a,b)=>b.sc-a.sc).slice(0,keep).map(x=>x.i));
+  const summary=scored.filter(x=>top.has(x.i)).sort((a,b)=>a.i-b.i).map(x=>`<span class="s">${esc(x.s)}</span>`).join('');
+  const wIn=(t.match(/\b\w+\b/g)||[]).length, wOut=scored.filter(x=>top.has(x.i)).reduce((a,x)=>a+(x.s.match(/\b\w+\b/g)||[]).length,0);
+  const kws=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,10).map(x=>x[0]);
+  out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
+      <div class="stat-card"><div class="stat-label">Sentences kept</div><div class="stat-value">${keep} / ${sents.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Words</div><div class="stat-value">${wOut} / ${wIn}</div></div>
+      <div class="stat-card"><div class="stat-label">Compression</div><div class="stat-value" style="color:var(--accent3)">${Math.round((1-wOut/wIn)*100)}%</div></div>
+    </div>
+    <div id="sum">${summary}</div>
+    <div style="margin-top:10px;font-size:12px;color:var(--text3)"><b>Key terms:</b> ${kws.map(esc).join(' · ')}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Extractive (selects real sentences, never paraphrases) — so it won't hallucinate, but it won't rewrite either. Drag the slider for a shorter or longer summary.</div>`;
+});
+</script>
+
+</body>
+</html>
