@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compton Scattering — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-angle"></i></div><div>Compton Scattering</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-angle"></i></div>
+      <div>
+        <div class="tool-title">Compton Scattering</div>
+        <div class="tool-desc">Δλ = (h/mₑc)(1 − cos θ) — the wavelength shift of a photon scattering off an electron, and the recoil energy.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld">Incident wavelength λ (pm)<input type="number" id="wl" value="71.1" step="any" min="0"></label>
+      <label class="fld" style="flex:1">Scattering angle θ = <b id="albl">90°</b><input type="range" id="ang" min="0" max="180" value="90" style="width:100%"></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 280" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{fill:var(--text2);font-size:12px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const h=6.626e-34, c=2.998e8, me=9.109e-31, eV=1.602e-19;
+const lambdaC=h/(me*c); // 2.426e-12 m
+
+function run(){
+  const lam=+$('#wl').value*1e-12; const thetaDeg=+$('#ang').value; const theta=thetaDeg*Math.PI/180;
+  $('#albl').textContent=thetaDeg+'°';
+  const dLam=lambdaC*(1-Math.cos(theta));
+  const lamp=lam+dLam;
+  const Ei=h*c/lam, Ef=h*c/lamp, Erecoil=Ei-Ef;
+  // diagram
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=760,H=280, cx=300, cy=150;
+  const ln=(x1,y1,x2,y2,col,w,marker)=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',col);l.setAttribute('stroke-width',w||2.5);if(marker)l.setAttribute('marker-end','url(#a)');svg.appendChild(l);};
+  const tx=(x,y,t,a,fl)=>{const e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor',a||'middle');if(fl)e.setAttribute('fill',fl);e.textContent=t;svg.appendChild(e);};
+  const defs=document.createElementNS(NS,'defs');defs.innerHTML='<marker id="a" markerWidth="9" markerHeight="9" refX="5" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="currentColor"/></marker>';svg.appendChild(defs);
+  // electron at center
+  const el=document.createElementNS(NS,'circle');el.setAttribute('cx',cx);el.setAttribute('cy',cy);el.setAttribute('r',9);el.setAttribute('fill','rgba(96,165,250,0.3)');el.setAttribute('stroke','var(--blue)');svg.appendChild(el);
+  tx(cx,cy+26,'e⁻ (at rest)','middle','var(--blue)');
+  // incident photon (wavy from left)
+  let d=''; for(let x=40;x<cx-12;x+=2){ d+='M'+x+' '+(cy+Math.sin(x/5)*6)+' L'+(x+2)+' '+(cy+Math.sin((x+2)/5)*6)+' '; }
+  const w1=document.createElementNS(NS,'path');w1.setAttribute('d',d);w1.setAttribute('fill','none');w1.setAttribute('stroke','var(--amber)');w1.setAttribute('stroke-width','2');svg.appendChild(w1);
+  ln(cx-50,cy,cx-14,cy,'var(--amber)',0); const incArrow=document.createElementNS(NS,'path');incArrow.setAttribute('d',`M${cx-16} ${cy-5} L${cx-8} ${cy} L${cx-16} ${cy+5} z`);incArrow.setAttribute('fill','var(--amber)');svg.appendChild(incArrow);
+  tx(60,cy-12,'incident γ (λ)','start','var(--amber)');
+  // scattered photon at angle theta (up)
+  const Lp=180; const sx=cx+Lp*Math.cos(theta), sy=cy-Lp*Math.sin(theta);
+  const g2=document.createElementNS(NS,'g');g2.setAttribute('color','var(--red)');svg.appendChild(g2);
+  const scat=document.createElementNS(NS,'line');scat.setAttribute('x1',cx+12*Math.cos(theta));scat.setAttribute('y1',cy-12*Math.sin(theta));scat.setAttribute('x2',sx);scat.setAttribute('y2',sy);scat.setAttribute('stroke','var(--red)');scat.setAttribute('stroke-width','2.5');scat.setAttribute('marker-end','url(#a)');g2.appendChild(scat);
+  tx(sx,sy-8,"scattered γ (λ')",'middle','var(--red)');
+  // recoil electron (opposite-ish, down)
+  const re=document.createElementNS(NS,'line');re.setAttribute('x1',cx);re.setAttribute('y1',cy);re.setAttribute('x2',cx+120*Math.cos(-theta/2-0.2));re.setAttribute('y2',cy-120*Math.sin(-theta/2-0.2));re.setAttribute('stroke','var(--green)');re.setAttribute('stroke-width','2');re.setAttribute('stroke-dasharray','4 3');svg.appendChild(re);
+  tx(cx+130*Math.cos(-theta/2-0.2),cy-120*Math.sin(-theta/2-0.2)+14,'recoil e⁻','middle','var(--green)');
+  // angle arc
+  const arc=document.createElementNS(NS,'path');const r=40;arc.setAttribute('d',`M${cx+r} ${cy} A ${r} ${r} 0 ${theta>Math.PI?1:0} 0 ${cx+r*Math.cos(theta)} ${cy-r*Math.sin(theta)}`);arc.setAttribute('fill','none');arc.setAttribute('stroke','var(--text3)');svg.appendChild(arc);
+  tx(cx+r+14,cy-14,'θ','start','var(--text3)');
+
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Wavelength shift Δλ</div><div class="stat-value" style="color:var(--amber)">${(dLam*1e12).toFixed(4)} pm</div></div>
+      <div class="stat-card"><div class="stat-label">Scattered λ'</div><div class="stat-value">${(lamp*1e12).toFixed(3)} pm</div></div>
+      <div class="stat-card"><div class="stat-label">Photon energy lost</div><div class="stat-value">${(Erecoil/eV).toExponential(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">Electron recoil KE</div><div class="stat-value" style="color:var(--green)">${(Erecoil/eV).toExponential(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">Compton λ_C</div><div class="stat-value" style="font-size:13px">2.426 pm</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">The shift depends only on angle, never on λ — at θ = 0 there's no shift, at θ = 180° (back-scatter) it's the maximum 2λ_C. That a photon loses energy in a billiard-ball collision proved light carries momentum p = h/λ.</div>`;
+}
+['wl','ang'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

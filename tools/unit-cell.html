@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crystal Unit Cell — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-box"></i></div><div>Crystal Unit Cell</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-box"></i></div>
+      <div>
+        <div class="tool-title">Crystal Unit Cell Viewer</div>
+        <div class="tool-desc">Rotate simple, body-centred and face-centred cubic cells — with atoms per cell, coordination number and packing efficiency.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld">Structure<select id="type"><option value="scc">Simple cubic (SC)</option><option value="bcc" selected>Body-centred (BCC)</option><option value="fcc">Face-centred (FCC)</option></select></label>
+      <label class="fld" style="flex:1">Rotate<input type="range" id="rot" min="0" max="360" value="35" style="width:100%"></label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:7px;margin-top:18px"><input type="checkbox" id="spin" style="width:16px;height:16px"> Spin</label>
+    </div>
+    <svg id="svg" viewBox="0 0 380 380" style="width:100%;max-width:380px;display:block;margin:0 auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const DATA={
+  scc:{name:'Simple cubic',atoms:1,cn:6,pack:52.4,rel:'a = 2r',extra:[]},
+  bcc:{name:'Body-centred cubic',atoms:2,cn:8,pack:68.0,rel:'a = 4r/√3',extra:[[0.5,0.5,0.5]]},
+  fcc:{name:'Face-centred cubic',atoms:4,cn:12,pack:74.0,rel:'a = 2√2·r',extra:[[0.5,0.5,0],[0.5,0.5,1],[0.5,0,0.5],[0.5,1,0.5],[0,0.5,0.5],[1,0.5,0.5]]},
+};
+const corners=[]; for(let x=0;x<2;x++)for(let y=0;y<2;y++)for(let z=0;z<2;z++)corners.push([x,y,z]);
+const edges=[]; corners.forEach((a,i)=>corners.forEach((b,j)=>{ if(i<j){ const d=Math.abs(a[0]-b[0])+Math.abs(a[1]-b[1])+Math.abs(a[2]-b[2]); if(d===1) edges.push([i,j]); }}));
+
+function project(p,theta){
+  const cx=190,cy=200,scale=170, tilt=-0.45;
+  let x=p[0]-0.5,y=p[1]-0.5,z=p[2]-0.5;
+  let X=x*Math.cos(theta)+z*Math.sin(theta);
+  let z1=-x*Math.sin(theta)+z*Math.cos(theta);
+  let Y=y*Math.cos(tilt)-z1*Math.sin(tilt);
+  let depth=y*Math.sin(tilt)+z1*Math.cos(tilt);
+  return {sx:cx+X*scale, sy:cy-Y*scale, depth};
+}
+
+function render(){
+  const d=DATA[$('#type').value]; const theta=+$('#rot').value*Math.PI/180;
+  const svg=$('#svg'); svg.innerHTML='';
+  const cp=corners.map(c=>project(c,theta));
+  // edges
+  edges.forEach(([i,j])=>{ const l=document.createElementNS(NS,'line'); l.setAttribute('x1',cp[i].sx);l.setAttribute('y1',cp[i].sy);l.setAttribute('x2',cp[j].sx);l.setAttribute('y2',cp[j].sy);l.setAttribute('stroke','var(--border2)');l.setAttribute('stroke-width','1.5');svg.appendChild(l); });
+  // atoms: corners (r small) + extras
+  const atoms=[];
+  corners.forEach(c=>atoms.push({p:c,kind:'corner'}));
+  d.extra.forEach(c=>atoms.push({p:c,kind:c.filter(v=>v===0.5).length===3?'body':'face'}));
+  const proj=atoms.map(a=>({...a,...project(a.p,theta)})).sort((a,b)=>a.depth-b.depth);
+  const col={corner:['rgba(96,165,250,0.9)','#2563eb'],body:['rgba(244,114,182,0.95)','#db2777'],face:['rgba(74,222,128,0.95)','#16a34a']};
+  proj.forEach(a=>{ const r=a.kind==='corner'?15:17; const c=document.createElementNS(NS,'circle');c.setAttribute('cx',a.sx);c.setAttribute('cy',a.sy);c.setAttribute('r',r);c.setAttribute('fill',col[a.kind][0]);c.setAttribute('stroke',col[a.kind][1]);c.setAttribute('stroke-width','1.5');svg.appendChild(c); });
+
+  let legend = `<span style="color:#2563eb">●</span> corner (⅛ each)`;
+  if($('#type').value==='bcc') legend += ` · <span style="color:#db2777">●</span> body centre (1)`;
+  if($('#type').value==='fcc') legend += ` · <span style="color:#16a34a">●</span> face centre (½ each)`;
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Structure</div><div class="stat-value" style="font-size:14px">${d.name}</div></div>
+      <div class="stat-card"><div class="stat-label">Atoms / cell</div><div class="stat-value">${d.atoms}</div></div>
+      <div class="stat-card"><div class="stat-label">Coordination #</div><div class="stat-value">${d.cn}</div></div>
+      <div class="stat-card"><div class="stat-label">Packing efficiency</div><div class="stat-value" style="color:var(--green)">${d.pack}%</div></div>
+      <div class="stat-card"><div class="stat-label">Edge ↔ radius</div><div class="stat-value" style="font-size:15px">${d.rel}</div></div>
+    </div>
+    <div style="font-size:12px;margin-top:8px">${legend}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Atoms/cell = corners×⅛ + faces×½ + body×1. SC: 8×⅛=1. BCC: 8×⅛+1=2. FCC: 8×⅛+6×½=4.</div>`;
+}
+let spinR=null;
+$('#spin').addEventListener('change',()=>{
+  if($('#spin').checked){ spinR=setInterval(()=>{ let v=(+$('#rot').value+2)%360; $('#rot').value=v; render(); },50); }
+  else { clearInterval(spinR); }
+});
+['type','rot'].forEach(id=>$('#'+id).addEventListener('input',render));
+render();
+</script>
+
+</body>
+</html>

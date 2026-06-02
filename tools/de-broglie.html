@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>de Broglie Wavelength — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-ripple"></i></div><div>de Broglie Wavelength</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-ripple"></i></div>
+      <div>
+        <div class="tool-title">de Broglie Wavelength</div>
+        <div class="tool-desc">λ = h/p — the matter wavelength of a particle from its speed or kinetic energy.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid3">
+      <label class="fld">Particle<select id="preset"></select></label>
+      <label class="fld">Mass (kg)<input type="text" id="m" value="9.109e-31"></label>
+      <label class="fld">Input mode<select id="mode"><option value="v">Speed (m/s)</option><option value="ke">Kinetic energy (eV)</option></select></label>
+      <label class="fld" id="vWrap">Speed v (m/s)<input type="text" id="v" value="1e6"></label>
+      <label class="fld" id="keWrap" style="display:none">Kinetic energy (eV)<input type="text" id="ke" value="100"></label>
+    </div>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const h=6.626e-34, eV=1.602e-19, c=2.998e8;
+const presets=[['Electron',9.109e-31],['Proton',1.673e-27],['Neutron',1.675e-27],['He atom',6.646e-27],['C₆₀ molecule',1.196e-24],['Dust grain (1 µg)',1e-9],['Baseball (145 g)',0.145],['Custom…',null]];
+$('#preset').innerHTML=presets.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
+$('#preset').addEventListener('change',()=>{ const p=presets[+$('#preset').value]; if(p[1]!=null) $('#m').value=p[1].toExponential(3); run(); });
+$('#mode').addEventListener('change',()=>{ $('#vWrap').style.display=$('#mode').value==='v'?'':'none'; $('#keWrap').style.display=$('#mode').value==='ke'?'':'none'; run(); });
+
+const num=v=>{ const x=parseFloat(v); return Number.isFinite(x)?x:NaN; };
+function fmtLen(m){ if(!isFinite(m)) return '—'; if(m>=1) return m.toPrecision(4)+' m'; if(m>=1e-3) return (m*1e3).toPrecision(4)+' mm'; if(m>=1e-6) return (m*1e6).toPrecision(4)+' µm'; if(m>=1e-9) return (m*1e9).toPrecision(4)+' nm'; if(m>=1e-12) return (m*1e12).toPrecision(4)+' pm'; return m.toExponential(3)+' m'; }
+
+function run(){
+  const m=num($('#m').value); let v, ke;
+  if($('#mode').value==='v'){ v=num($('#v').value); ke=0.5*m*v*v; }
+  else { ke=num($('#ke').value)*eV; v=Math.sqrt(2*ke/m); }
+  const p=m*v; const lambda=h/p;
+  const info=$('#info');
+  if(!(m>0)||!(v>=0)||!isFinite(lambda)){ info.innerHTML='<div class="muted" style="margin-top:6px">Enter a positive mass and speed/energy.</div>'; return; }
+  const rel = v/c;
+  info.innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">de Broglie λ</div><div class="stat-value" style="color:var(--teal)">${fmtLen(lambda)}</div></div>
+      <div class="stat-card"><div class="stat-label">Momentum p</div><div class="stat-value" style="font-size:14px">${p.toExponential(3)} kg·m/s</div></div>
+      <div class="stat-card"><div class="stat-label">Speed</div><div class="stat-value" style="font-size:14px">${v.toExponential(3)} m/s</div></div>
+      <div class="stat-card"><div class="stat-label">Kinetic energy</div><div class="stat-value" style="font-size:14px">${(ke/eV).toExponential(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">v / c</div><div class="stat-value" style="color:${rel>0.1?'var(--amber)':'var(--text)'}">${(rel*100).toPrecision(3)}%</div></div>
+    </div>
+    ${rel>0.1?'<div class="muted" style="font-size:12px;margin-top:8px"><i class="ti ti-alert-triangle"></i> v exceeds 10% of c — the non-relativistic p = mv used here loses accuracy at these speeds.</div>':'<div class="muted" style="font-size:12px;margin-top:8px">Macroscopic objects have absurdly tiny wavelengths (≪ an atom) — that\'s why their wave nature is never observed.</div>'}`;
+}
+['m','v','ke'].forEach(id=>$('#'+id).addEventListener('input',()=>{ if(id==='m') $('#preset').value=String(presets.length-1); run(); }));
+run();
+</script>
+
+</body>
+</html>

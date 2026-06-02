@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MO Diagram & Bond Order — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrows-up-down"></i></div><div>MO Diagram</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-arrows-up-down"></i></div>
+      <div>
+        <div class="tool-title">MO Diagram &amp; Bond Order</div>
+        <div class="tool-desc">Molecular-orbital filling for second-period diatomics → bond order, and whether the molecule is para- or diamagnetic.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" style="max-width:280px">Diatomic molecule<select id="mol"></select></label>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <svg id="svg" viewBox="0 0 300 400" style="flex:none;width:300px;max-width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+      <div id="info" style="flex:1;min-width:220px"></div>
+    </div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+// molecules: valence electrons, ordering 'light'|'heavy'|'1s'
+const MOL=[
+  ['H₂',2,'1s'],['He₂',4,'1s'],
+  ['Li₂',2,'light'],['Be₂',4,'light'],['B₂',6,'light'],['C₂',8,'light'],['N₂',10,'light'],
+  ['O₂',12,'heavy'],['F₂',14,'heavy'],['Ne₂',16,'heavy'],
+  ['CO',10,'light'],['NO',11,'heavy'],['CN⁻',10,'light'],
+];
+$('#mol').innerHTML=MOL.map((m,i)=>`<option value="${i}"${m[0]==='O₂'?' selected':''}>${m[0]}</option>`).join('');
+
+// MO definitions per scheme: [label, capacity, type bonding/anti]
+const SCHEMES={
+  '1s':[['σ*1s',2,'a'],['σ1s',2,'b']],   // displayed top→bottom (high energy first)
+  'light':[['σ*2p',2,'a'],['π*2p',4,'a'],['σ2p',2,'b'],['π2p',4,'b'],['σ*2s',2,'a'],['σ2s',2,'b']],
+  'heavy':[['σ*2p',2,'a'],['π*2p',4,'a'],['π2p',4,'b'],['σ2p',2,'b'],['σ*2s',2,'a'],['σ2s',2,'b']],
+};
+
+function fillElectrons(scheme,total){
+  // fill from bottom (last in array) upward. Returns map label->electrons, respecting Hund for π (cap 4 = 2 orbitals)
+  const order=[...scheme].reverse(); // low energy first
+  let left=total; const occ={};
+  for(const [lab,cap] of order){ const e=Math.min(cap,left); occ[lab]=e; left-=e; if(left<=0)break; }
+  scheme.forEach(([lab])=>{ if(occ[lab]==null) occ[lab]=0; });
+  return occ;
+}
+
+function run(){
+  const m=MOL[+$('#mol').value]; const total=m[1]; const scheme=SCHEMES[m[2]];
+  const occ=fillElectrons(scheme,total);
+  // bond order
+  let bonding=0,anti=0; scheme.forEach(([lab,cap,t])=>{ if(t==='b')bonding+=occ[lab]; else anti+=occ[lab]; });
+  const bo=(bonding-anti)/2;
+  // unpaired: count in degenerate sets
+  let unpaired=0;
+  scheme.forEach(([lab,cap])=>{ const e=occ[lab]; const orbs=cap/2; // number of orbitals
+    // Hund: distribute e among orbs; unpaired = e if e<=orbs else 2*orbs-e
+    unpaired += e<=orbs ? e : (2*orbs-e); });
+  const magnetic = unpaired>0?'Paramagnetic':'Diamagnetic';
+
+  // draw
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=300,H=400, x=W/2, top=24, bottom=H-20, n=scheme.length, gap=(bottom-top)/(n-1);
+  scheme.forEach(([lab,cap,t],i)=>{
+    const y=top+i*gap; const e=occ[lab]; const orbs=cap/2;
+    const wTot=orbs*42; let startX=x-wTot/2;
+    for(let o=0;o<orbs;o++){ const lx=startX+o*44+ (orbs>1?2:0); const lw=38;
+      const l=document.createElementNS(NS,'line');l.setAttribute('x1',lx);l.setAttribute('y1',y);l.setAttribute('x2',lx+lw);l.setAttribute('y2',y);l.setAttribute('stroke',t==='b'?'var(--accent3)':'var(--red)');l.setAttribute('stroke-width','2.5');svg.appendChild(l);
+    }
+    // electrons (Hund): fill each orbital singly then pair
+    let ne=e; const arrows=[]; for(let o=0;o<orbs;o++)arrows.push(0); let idx=0; while(ne>0){ if(arrows[idx%orbs]<2){arrows[idx%orbs]++; ne--;} idx++; if(idx>20)break; }
+    arrows.forEach((cnt,o)=>{ const lx=startX+o*44+(orbs>1?2:0)+19; if(cnt>=1){ drawArrow(svg,lx-4,y,true);} if(cnt>=2){ drawArrow(svg,lx+4,y,false);} });
+    const tlab=document.createElementNS(NS,'text');tlab.setAttribute('x',8);tlab.setAttribute('y',y+3);tlab.setAttribute('text-anchor','start');tlab.setAttribute('fill',t==='b'?'var(--accent3)':'var(--red)');tlab.textContent=lab;svg.appendChild(tlab);
+  });
+  function drawArrow(svg,cx,cy,up){ const l=document.createElementNS(NS,'line');l.setAttribute('x1',cx);l.setAttribute('y1',cy+(up?7:-7));l.setAttribute('x2',cx);l.setAttribute('y2',cy+(up?-7:7));l.setAttribute('stroke','var(--text)');l.setAttribute('stroke-width','1.5');svg.appendChild(l); const a=document.createElementNS(NS,'path');const ty=cy+(up?-7:7);a.setAttribute('d',`M${cx-2.5} ${ty+(up?3:-3)} L${cx} ${ty} L${cx+2.5} ${ty+(up?3:-3)}`);a.setAttribute('stroke','var(--text)');a.setAttribute('fill','none');a.setAttribute('stroke-width','1.3');svg.appendChild(a); }
+
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Molecule</div><div class="stat-value">${m[0]}</div></div>
+      <div class="stat-card"><div class="stat-label">Valence e⁻</div><div class="stat-value">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Bonding / antibonding</div><div class="stat-value" style="font-size:15px">${bonding} / ${anti}</div></div>
+      <div class="stat-card"><div class="stat-label">Bond order</div><div class="stat-value" style="color:var(--accent3)">${bo}</div></div>
+      <div class="stat-card"><div class="stat-label">Unpaired e⁻</div><div class="stat-value">${unpaired}</div></div>
+      <div class="stat-card"><div class="stat-label">Magnetism</div><div class="stat-value" style="font-size:14px;color:${unpaired>0?'var(--amber)':'var(--green)'}">${magnetic}</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Bond order = (bonding − antibonding)/2. A higher bond order ⇒ stronger, shorter bond; 0 ⇒ no stable molecule. Any unpaired electrons make it paramagnetic — famously O₂ has 2 (which Lewis structures miss but MO theory predicts).</div>`;
+}
+$('#mol').addEventListener('change',run);
+run();
+</script>
+
+</body>
+</html>

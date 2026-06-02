@@ -6,6 +6,15 @@
 <title>Academy — tools for students & researchers</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="assets/theme.css">
+<style>
+  .hero-search { position: relative; max-width: 540px; margin: 26px auto 0; }
+  .hero-search i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 18px; }
+  .hero-search input { width: 100%; padding: 14px 16px 14px 46px; font-size: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; color: var(--text); outline: none; transition: all .15s; }
+  .hero-search input:focus { border-color: var(--accent); background: var(--surface2); }
+  .hero-search input::placeholder { color: var(--text3); }
+  .hero-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .hero-actions .btn { padding: 10px 18px; font-size: 14px; }
+</style>
 </head>
 <body>
 
@@ -14,19 +23,22 @@
     <div class="logo-icon"><i class="ti ti-book-2"></i></div>
     <div>Academy<span class="brand"> Tools</span></div>
   </div>
-  <div class="search-wrap">
-    <i class="ti ti-search"></i>
-    <input id="search" class="search-input" type="search" placeholder="Search tools…" autocomplete="off">
-  </div>
-  <div style="width:120px"></div>
 </header>
 
 <section class="hub-hero">
   <h1>Everything you need to <span>research, write & cite</span></h1>
   <p>A simple, modern hub of free academic tools. No accounts. No tracking. Runs entirely in your browser.</p>
+  <div class="hero-search">
+    <i class="ti ti-search"></i>
+    <input id="search" type="search" placeholder="Search tools…" autocomplete="off">
+  </div>
+  <div class="hero-actions">
+    <button id="luckyBtn" class="btn"><i class="ti ti-dice-5"></i> I'm Feeling Lucky</button>
+    <button id="showAllBtn" class="btn btn-primary"><i class="ti ti-layout-grid"></i> Show all tools</button>
+  </div>
 </section>
 
-<main id="categories">
+<main id="categories" style="display:none">
 
   <section class="category" data-cat="study">
     <div class="category-header">
@@ -387,7 +399,7 @@
   <section class="category" data-cat="chemistry">
     <div class="category-header">
       <div class="category-title">Chemistry</div>
-      <div class="category-count">25 tools</div>
+      <div class="category-count">35 tools</div>
     </div>
     <div class="tile-grid">
       <a class="tile" href="tools/periodic-table.html" data-name="periodic table elements interactive atomic number weight electronegativity category groups periods 118">
@@ -514,6 +526,140 @@
         <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-link"></i></div>
         <div class="tile-name">Bond Energy → ΔH</div>
         <div class="tile-desc">Estimate reaction enthalpy from average bond enthalpies: Σ broken − Σ formed.</div>
+      </a>
+      <a class="tile" href="tools/bohr-model.html" data-name="bohr model atom electron shells energy levels nucleus protons neutrons orbits animated visual">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-atom"></i></div>
+        <div class="tile-name">Bohr Atom Model</div>
+        <div class="tile-desc">Pick an element → animated electron shells, nucleus and shell-by-shell occupancy.</div>
+      </a>
+      <a class="tile" href="tools/energy-profile.html" data-name="reaction energy profile activation energy diagram transition state exothermic endothermic catalyst delta h ea">
+        <div class="tile-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-mountain"></i></div>
+        <div class="tile-name">Reaction Energy Profile</div>
+        <div class="tile-desc">Draw an activation-energy diagram → ΔH, reverse barrier and catalyst effect.</div>
+      </a>
+      <a class="tile" href="tools/maxwell-boltzmann.html" data-name="maxwell boltzmann distribution molecular speed temperature kinetic theory most probable rms mean gas">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-bell-curve"></i></div>
+        <div class="tile-name">Maxwell–Boltzmann</div>
+        <div class="tile-desc">Plot molecular speed distributions, compare temperatures, read vₚ / mean / rms.</div>
+      </a>
+      <a class="tile" href="tools/phase-diagram.html" data-name="phase diagram pressure temperature triple point critical point solid liquid gas water co2 sublimation">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-chart-dots-2"></i></div>
+        <div class="tile-name">Phase Diagram</div>
+        <div class="tile-desc">Interactive P–T diagram for water or CO₂ — click to find the phase at any point.</div>
+      </a>
+      <a class="tile" href="tools/heating-curve.html" data-name="heating cooling curve phase change melting boiling latent heat specific heat plateau temperature joules">
+        <div class="tile-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-temperature-celsius"></i></div>
+        <div class="tile-name">Heating &amp; Cooling Curve</div>
+        <div class="tile-desc">Heat a substance through its phase changes — curve with melting/boiling plateaus.</div>
+      </a>
+      <a class="tile" href="tools/spectrum.html" data-name="hydrogen emission spectrum rydberg balmer lyman paschen spectral lines wavelength visible colour">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-rainbow"></i></div>
+        <div class="tile-name">Emission Spectrum</div>
+        <div class="tile-desc">Rydberg formula → hydrogen's spectral lines, drawn in their true colours.</div>
+      </a>
+      <a class="tile" href="tools/vsepr.html" data-name="vsepr molecular geometry shape bond angle hybridization lone pairs tetrahedral bent linear trigonal octahedral">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-vector-triangle"></i></div>
+        <div class="tile-name">VSEPR Geometry</div>
+        <div class="tile-desc">Bonding groups + lone pairs → molecular shape, bond angle, hybridization & diagram.</div>
+      </a>
+      <a class="tile" href="tools/ph-scale.html" data-name="ph scale indicators acidic basic neutral litmus phenolphthalein methyl orange universal colour h+ oh-">
+        <div class="tile-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-test-pipe"></i></div>
+        <div class="tile-name">pH Scale &amp; Indicators</div>
+        <div class="tile-desc">Slide the 0–14 scale → acidity, indicator colours and [H⁺]/[OH⁻].</div>
+      </a>
+      <a class="tile" href="tools/unit-cell.html" data-name="crystal unit cell cubic bcc fcc simple body face centred packing efficiency coordination number lattice 3d">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-box"></i></div>
+        <div class="tile-name">Crystal Unit Cell</div>
+        <div class="tile-desc">Rotate SC / BCC / FCC cells — atoms per cell, coordination number, packing.</div>
+      </a>
+      <a class="tile" href="tools/gas-sim.html" data-name="gas particle simulator kinetic theory pressure temperature volume ideal gas law collisions animation">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-wind"></i></div>
+        <div class="tile-name">Gas Particle Simulator</div>
+        <div class="tile-desc">Kinetic theory in motion — change T, n and volume, watch pressure respond.</div>
+      </a>
+    </div>
+  </section>
+
+  <section class="category" data-cat="quantum">
+    <div class="category-header">
+      <div class="category-title">Quantum chemistry</div>
+      <div class="category-count">15 tools</div>
+    </div>
+    <div class="tile-grid">
+      <a class="tile" href="tools/particle-box.html" data-name="particle in a box infinite square well energy levels wavefunction probability density quantum number zero point">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-wave-sine"></i></div>
+        <div class="tile-name">Particle in a Box</div>
+        <div class="tile-desc">Eₙ = n²h²/8mL², the wavefunction ψₙ and |ψₙ|² for the infinite square well.</div>
+      </a>
+      <a class="tile" href="tools/quantum-numbers.html" data-name="quantum numbers n l ml ms principal azimuthal magnetic spin orbital subshell allowed sets validity">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-hash"></i></div>
+        <div class="tile-name">Quantum Numbers</div>
+        <div class="tile-desc">Validate n, ℓ, mℓ, mₛ → orbital name and all allowed quantum-number sets.</div>
+      </a>
+      <a class="tile" href="tools/de-broglie.html" data-name="de broglie wavelength matter wave momentum h/p electron particle kinetic energy">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-ripple"></i></div>
+        <div class="tile-name">de Broglie Wavelength</div>
+        <div class="tile-desc">λ = h/p — the matter wavelength of a particle from its speed or kinetic energy.</div>
+      </a>
+      <a class="tile" href="tools/uncertainty.html" data-name="heisenberg uncertainty principle position momentum energy time delta x delta p hbar">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-arrows-horizontal"></i></div>
+        <div class="tile-name">Uncertainty Principle</div>
+        <div class="tile-desc">Δx·Δp ≥ ħ/2 — minimum momentum / velocity spread and the energy–time form.</div>
+      </a>
+      <a class="tile" href="tools/photoelectric.html" data-name="photoelectric effect work function threshold frequency stopping voltage einstein ke = hf - phi metal">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-sun-electricity"></i></div>
+        <div class="tile-name">Photoelectric Effect</div>
+        <div class="tile-desc">KEmax = hf − φ — ejected-electron energy, threshold and stopping voltage, plotted.</div>
+      </a>
+      <a class="tile" href="tools/hydrogen-levels.html" data-name="hydrogen energy levels rydberg bohr transition emission photon balmer lyman n quantum z ionisation">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-stack-2"></i></div>
+        <div class="tile-name">Hydrogen Energy Levels</div>
+        <div class="tile-desc">Eₙ = −13.6·Z²/n² — energy-level diagram and the photon emitted in any transition.</div>
+      </a>
+      <a class="tile" href="tools/blackbody.html" data-name="blackbody radiation planck curve wien displacement stefan boltzmann spectral peak wavelength temperature">
+        <div class="tile-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-flame"></i></div>
+        <div class="tile-name">Blackbody Radiation</div>
+        <div class="tile-desc">Planck's curve, Wien's peak wavelength and Stefan–Boltzmann total power.</div>
+      </a>
+      <a class="tile" href="tools/harmonic-oscillator.html" data-name="quantum harmonic oscillator energy levels hbar omega wavefunction hermite vibration zero point equally spaced">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-chart-arcs"></i></div>
+        <div class="tile-name">Harmonic Oscillator</div>
+        <div class="tile-desc">Eₙ = (n+½)ħω in a parabolic well, with the wavefunction ψₙ or |ψₙ|².</div>
+      </a>
+      <a class="tile" href="tools/orbital-viewer.html" data-name="atomic orbital shapes s p d phase lobes angular nodes dumbbell cloverleaf boundary surface">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-atom-2"></i></div>
+        <div class="tile-name">Orbital Viewer</div>
+        <div class="tile-desc">Shapes of s, p and d orbitals with their phase lobes and angular nodes.</div>
+      </a>
+      <a class="tile" href="tools/tunneling.html" data-name="quantum tunneling transmission probability rectangular barrier alpha decay stm exponential kappa">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-wall"></i></div>
+        <div class="tile-name">Quantum Tunneling</div>
+        <div class="tile-desc">Transmission probability through a barrier a particle classically couldn't cross.</div>
+      </a>
+      <a class="tile" href="tools/radial-wavefunction.html" data-name="hydrogen radial wavefunction distribution function rnl shells radial nodes most probable bohr radius probability">
+        <div class="tile-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-area-line"></i></div>
+        <div class="tile-name">Radial Distribution</div>
+        <div class="tile-desc">Rₙₗ(r) and 4πr²R² for hydrogen — shells, radial nodes and most-likely radius.</div>
+      </a>
+      <a class="tile" href="tools/compton.html" data-name="compton scattering wavelength shift photon electron recoil angle h/mc momentum">
+        <div class="tile-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-angle"></i></div>
+        <div class="tile-name">Compton Scattering</div>
+        <div class="tile-desc">Δλ = (h/mₑc)(1 − cos θ) — photon wavelength shift and electron recoil energy.</div>
+      </a>
+      <a class="tile" href="tools/mo-diagram.html" data-name="molecular orbital diagram bond order paramagnetic diamagnetic diatomic homonuclear o2 n2 bonding antibonding">
+        <div class="tile-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-arrows-up-down"></i></div>
+        <div class="tile-name">MO Diagram</div>
+        <div class="tile-desc">MO filling for diatomics → bond order and para/diamagnetism.</div>
+      </a>
+      <a class="tile" href="tools/rigid-rotor.html" data-name="rigid rotor rotational energy levels rotational constant b moment of inertia reduced mass microwave spectroscopy diatomic">
+        <div class="tile-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-rotate-360"></i></div>
+        <div class="tile-name">Rigid Rotor</div>
+        <div class="tile-desc">E_J = B·J(J+1) — rotational constant B and microwave line spacing of a diatomic.</div>
+      </a>
+      <a class="tile" href="tools/term-symbol.html" data-name="term symbol hund rules ground state spin multiplicity orbital angular momentum russell saunders 2s+1 lj">
+        <div class="tile-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-superscript"></i></div>
+        <div class="tile-name">Term Symbol</div>
+        <div class="tile-desc">Hund's rules → the ground-state term symbol ²ˢ⁺¹L_J for any open subshell.</div>
       </a>
     </div>
   </section>
@@ -714,11 +860,23 @@
 
 <script>
   const search = document.getElementById('search');
+  const main = document.getElementById('categories');
   const tiles = Array.from(document.querySelectorAll('.tile'));
   const categories = Array.from(document.querySelectorAll('.category'));
   const noResults = document.getElementById('no-results');
+  const showAllBtn = document.getElementById('showAllBtn');
+  const luckyBtn = document.getElementById('luckyBtn');
+  let revealed = false;
 
-  search.addEventListener('input', () => {
+  function setRevealed(on) {
+    revealed = on;
+    main.style.display = on ? '' : 'none';
+    showAllBtn.innerHTML = on
+      ? '<i class="ti ti-x"></i> Hide tools'
+      : '<i class="ti ti-layout-grid"></i> Show all tools';
+  }
+
+  function filter() {
     const q = search.value.trim().toLowerCase();
     let anyVisible = false;
     tiles.forEach(t => {
@@ -732,9 +890,27 @@
       c.style.display = visibleInCat ? '' : 'none';
     });
     noResults.classList.toggle('show', !anyVisible);
+  }
+
+  search.addEventListener('input', () => {
+    if (search.value.trim() && !revealed) setRevealed(true);
+    filter();
   });
 
-  // Keyboard: '/' focuses search
+  showAllBtn.addEventListener('click', () => {
+    setRevealed(!revealed);
+    if (revealed) { filter(); main.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+
+  // I'm Feeling Lucky → open a random tool (from current search results if any)
+  luckyBtn.addEventListener('click', () => {
+    const visible = tiles.filter(t => !t.classList.contains('hidden'));
+    const pool = (search.value.trim() && visible.length) ? visible : tiles;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    if (pick) window.location.href = pick.getAttribute('href');
+  });
+
+  // Keyboard: '/' focuses search, Esc clears
   document.addEventListener('keydown', (e) => {
     if (e.key === '/' && document.activeElement !== search) {
       e.preventDefault();
@@ -742,10 +918,12 @@
     }
     if (e.key === 'Escape' && document.activeElement === search) {
       search.value = '';
-      search.dispatchEvent(new Event('input'));
+      filter();
       search.blur();
     }
   });
+
+  setRevealed(false);
 </script>
 
 </body>

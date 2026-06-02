@@ -157,7 +157,7 @@ function renderCV(){
 $('#print').addEventListener('click',()=>window.print());
 $('#html').addEventListener('click',()=>{
   const css=document.querySelector('style').textContent;
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(data.fields.name||'CV')}</title><style>body{margin:0;background:#fff}${css}</style></head><body><div id="cv" class="cv-doc">${$('#cv').innerHTML}</div></body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(data.fields.name||'CV')}<\/title><style>body{margin:0;background:#fff}${css}<\/style><\/head><body><div id="cv" class="cv-doc">${$('#cv').innerHTML}<\/div><\/body><\/html>`;
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));a.download=(data.fields.name||'cv').replace(/[^a-z0-9]/gi,'_')+'.html';a.click();toast('HTML downloaded');
 });
 $('#reset').addEventListener('click',()=>{ if(confirm('Clear the whole CV?')){ data=blank(); save(); fillForm(); FIELDS.forEach(f=>$('#f_'+f).value=''); renderEditors(); renderCV(); } });

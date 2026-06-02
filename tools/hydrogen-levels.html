@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hydrogen Energy Levels — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-stack-2"></i></div><div>Hydrogen Energy Levels</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-stack-2"></i></div>
+      <div>
+        <div class="tool-title">Hydrogen Energy Levels</div>
+        <div class="tool-desc">Eₙ = −13.6·Z²/n² eV — the energy-level diagram for a hydrogen-like ion and the photon emitted in any transition.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid4">
+      <label class="fld">Nuclear charge Z<input type="number" id="z" value="1" min="1" max="30"></label>
+      <label class="fld">Transition from n₂<input type="number" id="n2" value="3" min="2" max="12"></label>
+      <label class="fld">to n₁<input type="number" id="n1" value="2" min="1" max="11"></label>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <svg id="svg" viewBox="0 0 320 360" style="flex:none;width:320px;max-width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+      <div id="info" style="flex:1;min-width:220px"></div>
+    </div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  svg text{fill:var(--text3);font-size:10px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const h=6.626e-34, c=2.998e8, eV=1.602e-19, RyeV=13.606;
+function En(n,Z){ return -RyeV*Z*Z/(n*n); }
+
+function run(){
+  const Z=Math.max(1,Math.round(+$('#z').value));
+  let n1=Math.max(1,Math.round(+$('#n1').value)), n2=Math.max(n1+1,Math.round(+$('#n2').value));
+  $('#n1').value=n1; $('#n2').value=n2;
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=320,H=360,pl=46,pr=20,pt=18,pb=18,iw=W-pl-pr,ih=H-pt-pb;
+  // map energy (eV) to y: 0 at top (ionisation), E1 at bottom
+  const Emin=En(1,Z), Emax=0;
+  const Y=E=>pt+(E-Emax)/(Emin-Emax)*ih;
+  // levels 1..7 (compress high n near top)
+  const nmax=Math.max(7,n2);
+  for(let n=1;n<=nmax;n++){ const y=Y(En(n,Z)); const l=document.createElementNS(NS,'line');l.setAttribute('x1',pl);l.setAttribute('y1',y);l.setAttribute('x2',W-pr);l.setAttribute('y2',y);l.setAttribute('stroke',(n===n1||n===n2)?'var(--accent3)':'var(--border2)');l.setAttribute('stroke-width',(n===n1||n===n2)?2:1);svg.appendChild(l);
+    const t=document.createElementNS(NS,'text');t.setAttribute('x',pl-6);t.setAttribute('y',y+3);t.setAttribute('text-anchor','end');t.textContent='n='+n;svg.appendChild(t);
+    if(n<=4){ const e=document.createElementNS(NS,'text');e.setAttribute('x',W-pr);e.setAttribute('y',y-3);e.setAttribute('text-anchor','end');e.textContent=En(n,Z).toFixed(2)+' eV';svg.appendChild(e); } }
+  // ionisation
+  const t0=document.createElementNS(NS,'text');t0.setAttribute('x',W-pr);t0.setAttribute('y',Y(0)-3);t0.setAttribute('text-anchor','end');t0.setAttribute('fill','var(--text2)');t0.textContent='0 eV (ionised)';svg.appendChild(t0);
+  // transition arrow
+  const x=pl+iw*0.5; const y1=Y(En(n2,Z)), y2=Y(En(n1,Z));
+  const arr=document.createElementNS(NS,'line');arr.setAttribute('x1',x);arr.setAttribute('y1',y1);arr.setAttribute('x2',x);arr.setAttribute('y2',y2);arr.setAttribute('stroke','var(--amber)');arr.setAttribute('stroke-width','2.5');arr.setAttribute('marker-end','url(#ah)');svg.appendChild(arr);
+  const defs=document.createElementNS(NS,'defs');defs.innerHTML='<marker id="ah" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="var(--amber)"/></marker>';svg.appendChild(defs);
+
+  const dE=En(n1,Z)-En(n2,Z);           // negative for emission (energy released) ; photon energy = |dE|
+  const Ephoton=Math.abs(dE);            // eV
+  const lambda=h*c/(Ephoton*eV)*1e9;     // nm
+  const f=Ephoton*eV/h;
+  const series={1:'Lyman (UV)',2:'Balmer (visible/UV)',3:'Paschen (IR)',4:'Brackett (IR)'}[n1]||'higher series (IR)';
+  const region=lambda<380?'ultraviolet':lambda<=750?'visible':'infrared';
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">E(n=${n2})</div><div class="stat-value" style="font-size:14px">${En(n2,Z).toFixed(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">E(n=${n1})</div><div class="stat-value" style="font-size:14px">${En(n1,Z).toFixed(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">Photon energy</div><div class="stat-value" style="color:var(--amber)">${Ephoton.toFixed(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">Wavelength</div><div class="stat-value">${lambda.toFixed(1)} nm</div></div>
+      <div class="stat-card"><div class="stat-label">Frequency</div><div class="stat-value" style="font-size:14px">${(f/1e14).toFixed(2)}×10¹⁴ Hz</div></div>
+      <div class="stat-card"><div class="stat-label">Region</div><div class="stat-value" style="font-size:13px">${region}</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:13px"><b>${n2} → ${n1}</b> · ${series} series · ${Z===1?'hydrogen':'Z='+Z+' ion'}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Ionisation energy from the ground state = ${(-En(1,Z)).toFixed(2)} eV. Levels crowd together toward 0 eV (the continuum). Energy scales as Z².</div>`;
+}
+['z','n1','n2'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

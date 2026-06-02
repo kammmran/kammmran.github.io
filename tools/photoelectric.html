@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photoelectric Effect — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-sun-electricity"></i></div><div>Photoelectric Effect</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-sun-electricity"></i></div>
+      <div>
+        <div class="tool-title">Photoelectric Effect</div>
+        <div class="tool-desc">KEmax = hf − φ — find ejected-electron energy, threshold frequency and stopping voltage, with the KE-vs-frequency line.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid3">
+      <label class="fld">Metal (work function φ)<select id="metal"></select></label>
+      <label class="fld">φ (eV)<input type="number" id="phi" value="2.28" step="any" min="0"></label>
+      <label class="fld">Light wavelength (nm)<input type="number" id="wl" value="400" step="any" min="1"></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 320" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const h=6.626e-34, c=2.998e8, eV=1.602e-19;
+const metals=[['Cesium',2.14],['Sodium',2.28],['Potassium',2.30],['Calcium',2.87],['Zinc',4.33],['Copper',4.70],['Silver',4.73],['Gold',5.10],['Platinum',6.35],['Custom…',null]];
+$('#metal').innerHTML=metals.map((m,i)=>`<option value="${i}"${i===1?' selected':''}>${m[0]}</option>`).join('');
+$('#metal').addEventListener('change',()=>{ const m=metals[+$('#metal').value]; if(m[1]!=null) $('#phi').value=m[1]; run(); });
+
+function run(){
+  const phiEV=+$('#phi').value; const phi=phiEV*eV; const wl=+$('#wl').value*1e-9;
+  const f=c/wl; const Ephoton=h*f; const EphotonEV=Ephoton/eV;
+  const KE=Ephoton-phi; const emitted=KE>0;
+  const f0=phi/h; const wl0=c/f0*1e9; const Vstop=emitted?KE/eV:0;
+  // plot KE (eV) vs frequency (1e15 Hz)
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=760,H=320,pl=52,pr=20,pt=18,pb=40,iw=W-pl-pr,ih=H-pt-pb;
+  const fmaxHz=Math.max(f*1.3, f0*1.6, 1e15); const KEmaxEV=Math.max(KE/eV*1.4, 1, h*fmaxHz/eV-phiEV);
+  const X=hz=>pl+hz/fmaxHz*iw, Y=ke=>pt+(1-ke/KEmaxEV)*ih;
+  const ln=(x1,y1,x2,y2,c,d,w)=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',c);l.setAttribute('stroke-width',w||1.3);if(d)l.setAttribute('stroke-dasharray',d);svg.appendChild(l);};
+  const tx=(x,y,t,a,fl)=>{const e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor',a||'middle');if(fl)e.setAttribute('fill',fl);e.textContent=t;svg.appendChild(e);};
+  ln(pl,pt,pl,H-pb,'var(--border2)'); ln(pl,Y(0),W-pr,Y(0),'var(--border2)');
+  // KE line: KE=hf-phi for f>f0 (zero below)
+  ln(X(f0),Y(0),X(fmaxHz),Y(h*fmaxHz/eV-phiEV),'var(--amber)',null,3);
+  ln(pl,Y(0),X(f0),Y(0),'var(--red)',null,3); // below threshold no emission
+  // threshold marker
+  ln(X(f0),pt,X(f0),H-pb,'var(--red)','3 3');
+  tx(X(f0),pt+12,'f₀','middle','var(--red)');
+  // current frequency point
+  const cy=emitted?Y(KE/eV):Y(0); const dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',X(f));dot.setAttribute('cy',cy);dot.setAttribute('r',6);dot.setAttribute('fill','var(--accent3)');dot.setAttribute('stroke','#fff');dot.setAttribute('stroke-width','1.5');svg.appendChild(dot);
+  ln(X(f),H-pb,X(f),cy,'var(--accent3)','2 3');
+  tx(pl+iw/2,H-4,'Frequency (Hz)  →','middle','var(--text3)');
+  tx(15,pt+ih/2,'KEmax (eV)','middle','var(--text3)').setAttribute('transform',`rotate(-90 15 ${pt+ih/2})`);
+  // x ticks
+  for(let k=0;k<=5;k++){ const hz=fmaxHz*k/5; tx(X(hz),H-pb+15,(hz/1e15).toFixed(2)+'e15','middle','var(--text3)'); }
+
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Photon energy</div><div class="stat-value">${EphotonEV.toFixed(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">KEmax</div><div class="stat-value" style="color:${emitted?'var(--green)':'var(--red)'}">${emitted?KE/eV<0.001?(KE).toExponential(2)+' J':(KE/eV).toFixed(3)+' eV':'no emission'}</div></div>
+      <div class="stat-card"><div class="stat-label">Threshold freq f₀</div><div class="stat-value" style="font-size:14px">${(f0/1e15).toFixed(3)}×10¹⁵ Hz</div></div>
+      <div class="stat-card"><div class="stat-label">Threshold λ₀</div><div class="stat-value">${wl0.toFixed(0)} nm</div></div>
+      <div class="stat-card"><div class="stat-label">Stopping voltage</div><div class="stat-value">${Vstop.toFixed(3)} V</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">${emitted?'Photon energy exceeds the work function, so electrons are ejected with the leftover energy as KE.':'Photon energy is below φ — no electrons are emitted, no matter how intense the light. Use a shorter wavelength.'} The line\'s slope is Planck\'s constant h; its x-intercept is f₀.</div>`;
+}
+['phi','wl'].forEach(id=>$('#'+id).addEventListener('input',()=>{ if(id==='phi') $('#metal').value=String(metals.length-1); run(); }));
+run();
+</script>
+
+</body>
+</html>

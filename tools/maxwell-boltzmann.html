@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maxwell–Boltzmann Distribution — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-bell-curve"></i></div><div>Maxwell–Boltzmann</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-bell-curve"></i></div>
+      <div>
+        <div class="tool-title">Maxwell–Boltzmann Distribution</div>
+        <div class="tool-desc">Plot molecular speed distributions for a gas, compare two temperatures, and read off the most-probable, mean and rms speeds.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid3">
+      <label class="fld">Gas / molar mass
+        <select id="gas"></select>
+      </label>
+      <label class="fld">Molar mass (g/mol)<input type="number" id="mm" value="32" step="any" min="0.1"></label>
+      <label class="fld">Temperature T₁ (K)<input type="number" id="t1" value="300" step="any" min="1"></label>
+      <label class="fld">Temperature T₂ (K) <span class="muted">opt.</span><input type="number" id="t2" value="1000" step="any" min="0"></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 360" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const R=8.314;
+const gases=[['O₂',32],['N₂',28.01],['H₂',2.016],['He',4.003],['CO₂',44.01],['H₂O',18.02],['Ar',39.95],['CH₄',16.04],['Cl₂',70.9],['Ne',20.18]];
+$('#gas').innerHTML=gases.map(([n,m],i)=>`<option value="${m}">${n} — ${m} g/mol</option>`).join('')+'<option value="custom">Custom…</option>';
+$('#gas').addEventListener('change',()=>{ if($('#gas').value!=='custom'){ $('#mm').value=$('#gas').value; } run(); });
+
+function f(v,M,T){ return 4*Math.PI*Math.pow(M/(2*Math.PI*R*T),1.5)*v*v*Math.exp(-M*v*v/(2*R*T)); }
+function speeds(M,T){ return { vp:Math.sqrt(2*R*T/M), mean:Math.sqrt(8*R*T/(Math.PI*M)), rms:Math.sqrt(3*R*T/M) }; }
+
+function curve(M,T,Y,X,color,N){ let d=''; for(let i=0;i<=N;i++){ const v=i/N*X.max; d+=(i?'L':'M')+X.px(v).toFixed(1)+' '+Y(f(v,M,T)).toFixed(1)+' '; } const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width','2.5'); return p; }
+function line(x1,y1,x2,y2,c,dash){ const p=document.createElementNS(NS,'line'); p.setAttribute('x1',x1);p.setAttribute('y1',y1);p.setAttribute('x2',x2);p.setAttribute('y2',y2);p.setAttribute('stroke',c);p.setAttribute('stroke-width','1.3'); if(dash)p.setAttribute('stroke-dasharray',dash); return p; }
+function txt(x,y,s,a,fill){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',a||'middle'); if(fill)t.setAttribute('fill',fill); t.textContent=s; return t; }
+
+function run(){
+  const Mg=+$('#mm').value; const M=Mg/1000;
+  const T1=+$('#t1').value; const T2v=$('#t2').value; const T2=T2v!==''&&+T2v>0?+T2v:null;
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=760,H=360,pl=50,pr=20,pt=18,pb=40,iw=W-pl-pr,ih=H-pt-pb;
+  const Tmax=Math.max(T1,T2||0);
+  const vmax=Math.sqrt(2*R*Tmax/M)*3;     // axis range
+  const fmax=Math.max(f(speeds(M,T1).vp,M,T1), T2?f(speeds(M,T2).vp,M,T2):0)*1.12;
+  const X={max:vmax, px:v=>pl+v/vmax*iw};
+  const Y=p=>pt+(1-p/fmax)*ih;
+  // axes
+  svg.appendChild(line(pl,pt,pl,H-pb,'var(--border2)',null));
+  svg.appendChild(line(pl,H-pb,W-pr,H-pb,'var(--border2)',null));
+  for(let k=0;k<=5;k++){ const v=vmax*k/5; svg.appendChild(line(X.px(v),H-pb,X.px(v),H-pb+4,'var(--border2)')); svg.appendChild(txt(X.px(v),H-pb+16,Math.round(v))); }
+  svg.appendChild(txt(pl+iw/2,H-4,'Molecular speed (m/s)','middle','var(--text3)'));
+  // curves
+  const s1=speeds(M,T1);
+  svg.appendChild(curve(M,T1,Y,X,'var(--blue)',220));
+  svg.appendChild(line(X.px(s1.vp),Y(f(s1.vp,M,T1)),X.px(s1.vp),H-pb,'var(--blue)','3 3'));
+  if(T2){ svg.appendChild(curve(M,T2,Y,X,'var(--red)',220)); const s2=speeds(M,T2); svg.appendChild(line(X.px(s2.vp),Y(f(s2.vp,M,T2)),X.px(s2.vp),H-pb,'var(--red)','3 3')); }
+  // legend
+  svg.appendChild(txt(W-pr-6,pt+8,`T₁ = ${T1} K`,'end','var(--blue)'));
+  if(T2) svg.appendChild(txt(W-pr-6,pt+24,`T₂ = ${T2} K`,'end','var(--red)'));
+
+  const row=(s,T,c)=>`<div class="stat-card"><div class="stat-label" style="color:var(${c})">@ ${T} K</div><div class="stat-value" style="font-size:13px">vₚ ${s.vp.toFixed(0)} · v̄ ${s.mean.toFixed(0)} · v_rms ${s.rms.toFixed(0)} m/s</div></div>`;
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      ${row(s1,T1,'--blue')}
+      ${T2?row(speeds(M,T2),T2,'--red'):''}
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">As T rises the curve flattens and shifts right (faster, more spread out); total area (probability) stays 1. vₚ &lt; v̄ &lt; v_rms always. Lighter gases sit further right.</div>`;
+}
+$('#mm').addEventListener('input',()=>{ $('#gas').value='custom'; run(); });
+['t1','t2'].forEach(id=>$('#'+id).addEventListener('input',run));
+$('#gas').value='32'; run();
+</script>
+
+</body>
+</html>

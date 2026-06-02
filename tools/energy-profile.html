@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction Energy Profile — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-mountain"></i></div><div>Reaction Energy Profile</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-mountain"></i></div>
+      <div>
+        <div class="tool-title">Reaction Energy Profile</div>
+        <div class="tool-desc">Draw an activation-energy diagram from reactant/product energies and Eₐ — see ΔH, the reverse barrier and catalysis effect.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid3">
+      <label class="fld">Reactant energy (kJ/mol)<input type="number" id="er" value="100" step="any"></label>
+      <label class="fld">Product energy (kJ/mol)<input type="number" id="ep" value="40" step="any"></label>
+      <label class="fld">Activation energy Eₐ (kJ/mol)<input type="number" id="ea" value="80" step="any" min="0"></label>
+      <label class="fld">Catalysed Eₐ <span class="muted">opt.</span><input type="number" id="eac" step="any" min="0" placeholder="e.g. 45"></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 380" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  svg text{fill:var(--text2);font-size:12px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+
+function path(d,stroke,w,dash){ const p=document.createElementNS(NS,'path'); p.setAttribute('d',d); p.setAttribute('fill','none'); p.setAttribute('stroke',stroke); p.setAttribute('stroke-width',w); if(dash)p.setAttribute('stroke-dasharray',dash); return p; }
+function txt(x,y,s,anchor,fill,size){ const t=document.createElementNS(NS,'text'); t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('text-anchor',anchor||'middle'); if(fill)t.setAttribute('fill',fill); if(size)t.setAttribute('font-size',size); t.textContent=s; return t; }
+
+function run(){
+  const Er=+$('#er').value, Ep=+$('#ep').value, Ea=Math.max(0,+$('#ea').value);
+  const Eac=$('#eac').value!==''?Math.max(0,+$('#eac').value):null;
+  const peak=Er+Ea;                 // transition-state energy (uncatalysed)
+  const dH=Ep-Er;
+  const EaRev=peak-Ep;
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=760,H=380, pl=58,pr=24,pt=24,pb=44, iw=W-pl-pr, ih=H-pt-pb;
+  const all=[Er,Ep,peak, Eac!=null?Er+Eac:peak]; const lo=Math.min(...all), hi=Math.max(...all);
+  const pad=(hi-lo)*0.15||10; const ymin=lo-pad, ymax=hi+pad;
+  const Y=e=>pt+(ymax-e)/(ymax-ymin)*ih;
+  // axes
+  svg.appendChild(path(`M${pl} ${pt} L${pl} ${H-pb} L${W-pr} ${H-pb}`,'var(--border2)',1.5));
+  svg.appendChild(txt(16,pt+ih/2,'Energy (kJ/mol)','middle','var(--text3)',12)).setAttribute('transform',`rotate(-90 16 ${pt+ih/2})`);
+  svg.appendChild(txt(pl+iw/2,H-10,'Reaction progress →','middle','var(--text3)',12));
+  // x positions
+  const xR=pl+iw*0.10, xT=pl+iw*0.5, xP=pl+iw*0.90;
+  // energy reference gridlines for reactant & product
+  [['R',Er,'var(--blue)'],['P',Ep,'var(--green)']].forEach(([l,e,c])=>{
+    svg.appendChild(path(`M${pl} ${Y(e)} L${W-pr} ${Y(e)}`,'var(--border)',1,'3 4'));
+    svg.appendChild(txt(W-pr,Y(e)-5,e.toFixed(0),'end',c,11));
+  });
+  // catalysed curve
+  if(Eac!=null){ const pkc=Er+Eac; svg.appendChild(path(`M${xR} ${Y(Er)} C ${xR+iw*0.2} ${Y(Er)}, ${xT-iw*0.12} ${Y(pkc)}, ${xT} ${Y(pkc)} S ${xP-iw*0.2} ${Y(Ep)}, ${xP} ${Y(Ep)}`,'var(--amber)',2.5,'6 4'));
+    svg.appendChild(txt(xT,Y(pkc)-8,'catalysed','middle','var(--amber)',11)); }
+  // main curve (smooth bump)
+  svg.appendChild(path(`M${xR} ${Y(Er)} C ${xR+iw*0.2} ${Y(Er)}, ${xT-iw*0.12} ${Y(peak)}, ${xT} ${Y(peak)} S ${xP-iw*0.2} ${Y(Ep)}, ${xP} ${Y(Ep)}`,'var(--accent3)',3));
+  // markers
+  svg.appendChild(txt(xR,Y(Er)+( Er>=Ep?-10:18),'Reactants','middle','var(--blue)',12));
+  svg.appendChild(txt(xP,Y(Ep)+( Ep>Er?-10:18),'Products','middle','var(--green)',12));
+  svg.appendChild(txt(xT,Y(peak)-10,'Transition state','middle','var(--text2)',11));
+  // Ea arrow
+  svg.appendChild(path(`M${xR+iw*0.02} ${Y(Er)} L${xR+iw*0.02} ${Y(peak)}`,'var(--red)',1.5,'2 2'));
+  svg.appendChild(txt(xR+iw*0.05,Y((Er+peak)/2),'Eₐ='+Ea.toFixed(0),'start','var(--red)',12));
+  // dH arrow
+  svg.appendChild(path(`M${xP-iw*0.02} ${Y(Er)} L${xP-iw*0.02} ${Y(Ep)}`,'var(--teal)',1.5,'2 2'));
+  svg.appendChild(txt(xP-iw*0.05,Y((Er+Ep)/2),'ΔH='+(dH>0?'+':'')+dH.toFixed(0),'end','var(--teal)',12));
+
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">ΔH</div><div class="stat-value" style="color:${dH<0?'var(--green)':'var(--red)'}">${dH>0?'+':''}${dH.toFixed(1)} kJ/mol</div></div>
+      <div class="stat-card"><div class="stat-label">Reaction type</div><div class="stat-value" style="font-size:14px;color:${dH<0?'var(--green)':'var(--red)'}">${dH<0?'Exothermic':'Endothermic'}</div></div>
+      <div class="stat-card"><div class="stat-label">Eₐ forward</div><div class="stat-value">${Ea.toFixed(1)}</div></div>
+      <div class="stat-card"><div class="stat-label">Eₐ reverse</div><div class="stat-value">${EaRev.toFixed(1)}</div></div>
+      ${Eac!=null?`<div class="stat-card"><div class="stat-label">Catalyst lowers Eₐ by</div><div class="stat-value" style="color:var(--amber)">${(Ea-Eac).toFixed(1)}</div></div>`:''}
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">A catalyst lowers Eₐ (both directions) but never changes ΔH — the reactant and product levels stay put.</div>`;
+}
+['er','ep','ea','eac'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

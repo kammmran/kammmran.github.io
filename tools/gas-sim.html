@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gas Particle Simulator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-wind"></i></div><div>Gas Particle Simulator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-wind"></i></div>
+      <div>
+        <div class="tool-title">Gas Particle Simulator</div>
+        <div class="tool-desc">Kinetic theory in motion — change temperature, particle count and volume, and watch pressure respond in real time.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="controls">
+      <label class="fld">Temperature <b id="tlbl">300 K</b><input type="range" id="temp" min="50" max="1000" value="300"></label>
+      <label class="fld">Particles <b id="nlbl">80</b><input type="range" id="n" min="5" max="250" value="80"></label>
+      <label class="fld">Volume <b id="vlbl">100%</b><input type="range" id="vol" min="40" max="100" value="100"></label>
+    </div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+      <canvas id="cv" width="440" height="340" style="flex:1;min-width:280px;max-width:480px;background:#0c0c1a;border:1px solid var(--border);border-radius:12px"></canvas>
+      <div id="gauges" style="flex:1;min-width:200px"></div>
+    </div>
+    <div class="muted" style="font-size:12px">Pressure ∝ collisions with the walls per second. Heating speeds particles up (P↑); shrinking the box raises collision frequency (P↑); adding particles raises P — the three faces of the ideal gas law, PV = nRT.</div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+  .controls input[type=range]{width:100%}
+  .gauge{margin-bottom:12px}
+  .gauge .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:4px}
+  .gauge .track{height:14px;background:var(--bg3);border-radius:7px;overflow:hidden}
+  .gauge .fill{height:100%;border-radius:7px;transition:width .2s}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const cv=$('#cv'), ctx=cv.getContext('2d');
+const W=cv.width, H=cv.height;
+let parts=[]; let pressureWindow=[]; let frame=0;
+
+function boxRect(){ const vp=+$('#vol').value/100; const bw=W*vp, bh=H*vp; return {x:(W-bw)/2,y:(H-bh)/2,w:bw,h:bh}; }
+function speedForTemp(){ return Math.sqrt(+$('#temp').value)/8; } // px/frame scale
+
+function rebuild(){
+  const n=+$('#n').value; const box=boxRect(); const sp=speedForTemp();
+  parts=[]; for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2; parts.push({ x:box.x+Math.random()*box.w, y:box.y+Math.random()*box.h, vx:Math.cos(a)*sp*(0.6+Math.random()*0.8), vy:Math.sin(a)*sp*(0.6+Math.random()*0.8) }); }
+}
+function retemp(){ const sp=speedForTemp(); parts.forEach(p=>{ const cur=Math.hypot(p.vx,p.vy)||1; const k=sp/cur; p.vx*=k; p.vy*=k; }); }
+
+let wallHits=0;
+function step(){
+  const box=boxRect(); const r=4;
+  parts.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<box.x+r){ p.x=box.x+r; p.vx*=-1; wallHits++; }
+    if(p.x>box.x+box.w-r){ p.x=box.x+box.w-r; p.vx*=-1; wallHits++; }
+    if(p.y<box.y+r){ p.y=box.y+r; p.vy*=-1; wallHits++; }
+    if(p.y>box.y+box.h-r){ p.y=box.y+box.h-r; p.vy*=-1; wallHits++; }
+  });
+  // draw
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=2; ctx.strokeRect(box.x,box.y,box.w,box.h);
+  const sp=speedForTemp();
+  parts.forEach(p=>{ const v=Math.hypot(p.vx,p.vy); const t=Math.min(1,v/(sp*1.8)); // colour by speed
+    const cr=Math.round(80+175*t), cb=Math.round(220-150*t);
+    ctx.fillStyle=`rgb(${cr},${Math.round(120+60*(1-t))},${cb})`; ctx.beginPath(); ctx.arc(p.x,p.y,r,0,7); ctx.fill(); });
+  frame++;
+  if(frame%12===0){ // sample pressure ~ wall hits per unit wall length
+    const box2=boxRect(); const perim=2*(box2.w+box2.h);
+    pressureWindow.push(wallHits/ (perim/100) ); if(pressureWindow.length>8) pressureWindow.shift(); wallHits=0;
+    updateGauges();
+  }
+  raf=requestAnimationFrame(step);
+}
+
+function updateGauges(){
+  const T=+$('#temp').value, n=+$('#n').value, vol=+$('#vol').value/100;
+  const avgKE = T; // ∝ T
+  const P = pressureWindow.length? pressureWindow.reduce((a,b)=>a+b,0)/pressureWindow.length : 0;
+  const sp=speedForTemp()*8; // back to ~sqrt(T)
+  const g=(lab,val,pct,c,unit)=>`<div class="gauge"><div class="lab"><span>${lab}</span><span>${val}${unit||''}</span></div><div class="track"><div class="fill" style="width:${Math.max(2,Math.min(100,pct))}%;background:var(${c})"></div></div></div>`;
+  $('#gauges').innerHTML =
+    g('Pressure (relative)', P.toFixed(1), P*3.0, '--pink','') +
+    g('Avg kinetic energy ∝ T', T, T/10, '--red',' u') +
+    g('RMS speed ∝ √T', sp.toFixed(0), sp/3.3, '--amber',' u') +
+    g('Particles (n)', n, n/2.5, '--blue','') +
+    g('Volume', (vol*100).toFixed(0)+'%', vol*100, '--teal','') +
+    `<div class="muted" style="font-size:11px;margin-top:4px">Particle colour shows speed: blue = slow, pink = fast.</div>`;
+}
+
+let raf=null;
+$('#temp').addEventListener('input',()=>{ $('#tlbl').textContent=$('#temp').value+' K'; retemp(); });
+$('#n').addEventListener('input',()=>{ $('#nlbl').textContent=$('#n').value; rebuild(); });
+$('#vol').addEventListener('input',()=>{ $('#vlbl').textContent=$('#vol').value+'%'; const box=boxRect(); parts.forEach(p=>{ p.x=Math.max(box.x+4,Math.min(box.x+box.w-4,p.x)); p.y=Math.max(box.y+4,Math.min(box.y+box.h-4,p.y)); }); });
+rebuild(); step();
+</script>
+
+</body>
+</html>

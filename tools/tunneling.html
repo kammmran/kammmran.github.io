@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Tunneling — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-wall"></i></div><div>Quantum Tunneling</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-wall"></i></div>
+      <div>
+        <div class="tool-title">Quantum Tunneling</div>
+        <div class="tool-desc">Transmission probability of a particle through a rectangular barrier it classically could not cross.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid4">
+      <label class="fld">Particle<select id="mass"><option value="9.109e-31">Electron</option><option value="1.673e-27">Proton</option><option value="6.645e-27">Alpha particle</option></select></label>
+      <label class="fld">Particle energy E (eV)<input type="number" id="E" value="1" step="any" min="0"></label>
+      <label class="fld">Barrier height V₀ (eV)<input type="number" id="V" value="5" step="any" min="0"></label>
+      <label class="fld">Barrier width L (nm)<input type="number" id="L" value="0.5" step="any" min="0"></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 300" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const hbar=1.0546e-34, eV=1.602e-19;
+
+function transmission(E,V0,L,m){ // E,V0 in J, L in m
+  if(E<=0) return 0;
+  if(E<V0){
+    const kappa=Math.sqrt(2*m*(V0-E))/hbar;
+    const arg=kappa*L;
+    // exact for E<V0: T = 1/(1 + (V0² sinh²(κL))/(4E(V0-E)))
+    const sh=Math.sinh(arg);
+    return 1/(1 + (V0*V0*sh*sh)/(4*E*(V0-E)));
+  } else if(E>V0){
+    const k=Math.sqrt(2*m*(E-V0))/hbar; const arg=k*L; const sn=Math.sin(arg);
+    return 1/(1 + (V0*V0*sn*sn)/(4*E*(E-V0)));
+  }
+  return 1/(1 + (m*V0*L*L)/(2*hbar*hbar)); // E==V0 limit
+}
+
+function run(){
+  const m=+$('#mass').value, E=+$('#E').value*eV, V0=+$('#V').value*eV, L=+$('#L').value*1e-9;
+  const T=transmission(E,V0,L,m); const R=1-T;
+  const classical = E>=V0;
+  // diagram: barrier + wave
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=760,H=300,pl=20,pr=20,pt=20,pb=24,iw=W-pl-pr,ih=H-pt-pb;
+  const Vh=ih*0.6; const baseY=H-pb; const barX1=pl+iw*0.42, barX2=pl+iw*0.58;
+  const ln=(x1,y1,x2,y2,c,w,d)=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',c);l.setAttribute('stroke-width',w||1.5);if(d)l.setAttribute('stroke-dasharray',d);svg.appendChild(l);};
+  const tx=(x,y,t,a,fl)=>{const e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor',a||'middle');if(fl)e.setAttribute('fill',fl);e.textContent=t;svg.appendChild(e);};
+  // barrier
+  const rect=document.createElementNS(NS,'rect');rect.setAttribute('x',barX1);rect.setAttribute('y',baseY-Vh);rect.setAttribute('width',barX2-barX1);rect.setAttribute('height',Vh);rect.setAttribute('fill','rgba(124,109,240,0.18)');rect.setAttribute('stroke','var(--accent3)');svg.appendChild(rect);
+  tx((barX1+barX2)/2,baseY-Vh-6,'V₀ = '+(V0/eV).toFixed(2)+' eV','middle','var(--accent3)');
+  // energy line
+  const Ey=baseY-(E/V0)*Vh; ln(pl,Ey,W-pr,Ey,'var(--amber)',1.5,'4 3'); tx(pl+4,Ey-4,'E = '+(E/eV).toFixed(2)+' eV','start','var(--amber)');
+  // incoming wave (left), decaying in barrier, smaller transmitted (right)
+  const ampIn=22, k=18;
+  let d1=''; for(let x=pl;x<barX1;x+=2){ const y=baseY-Vh*0.15 + Math.sin((x-pl)/k)*ampIn; d1+=(d1===''?'M':'L')+x+' '+y+' '; }
+  const w1=document.createElementNS(NS,'path');w1.setAttribute('d',d1);w1.setAttribute('fill','none');w1.setAttribute('stroke','var(--blue)');w1.setAttribute('stroke-width','2');svg.appendChild(w1);
+  // decaying envelope inside the barrier (amplitude e^(-κx), here from 1 → √T)
+  let d2=''; const decay=Math.max(0.03,Math.sqrt(Math.max(T,1e-6)));
+  for(let x=barX1;x<=barX2;x+=2){ const f=(x-barX1)/(barX2-barX1); const a=ampIn*Math.pow(decay,f); const y=baseY-Vh*0.15 - a; d2+=(d2===''?'M':'L')+x+' '+y+' '; }
+  const w2=document.createElementNS(NS,'path');w2.setAttribute('d',d2);w2.setAttribute('fill','none');w2.setAttribute('stroke','var(--red)');w2.setAttribute('stroke-width','2');w2.setAttribute('stroke-dasharray','3 2');svg.appendChild(w2);
+  // transmitted
+  const ampOut=ampIn*Math.sqrt(Math.max(T,1e-6)); let d3=''; for(let x=barX2;x<W-pr;x+=2){ const y=baseY-Vh*0.15 + Math.sin((x-pl)/k)*ampOut; d3+=(d3===''?'M':'L')+x+' '+y+' '; }
+  const w3=document.createElementNS(NS,'path');w3.setAttribute('d',d3);w3.setAttribute('fill','none');w3.setAttribute('stroke','var(--teal)');w3.setAttribute('stroke-width','2');svg.appendChild(w3);
+  tx(barX1-6,baseY-Vh*0.15-ampIn-6,'incident','end','var(--blue)');
+  tx(barX2+6,baseY-Vh*0.15-Math.max(ampOut,6)-6,'transmitted','start','var(--teal)');
+
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Transmission T</div><div class="stat-value" style="color:var(--teal)">${T<1e-4?T.toExponential(2):(T*100).toFixed(3)+'%'}</div></div>
+      <div class="stat-card"><div class="stat-label">Reflection R</div><div class="stat-value">${(R*100).toFixed(3)}%</div></div>
+      <div class="stat-card"><div class="stat-label">E / V₀</div><div class="stat-value">${(E/V0).toFixed(2)}</div></div>
+      <div class="stat-card"><div class="stat-label">Classical</div><div class="stat-value" style="font-size:13px;color:${classical?'var(--green)':'var(--red)'}">${classical?'passes':'blocked'}</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">${classical?'E ≥ V₀: classically it always passes, yet quantum reflection still gives R > 0.':'E < V₀: classically forbidden — yet there is a finite chance the particle appears on the far side. T falls off roughly exponentially with barrier width and √(mass·(V₀−E)). This drives radioactive α-decay and the scanning tunneling microscope.'}</div>`;
+}
+['mass','E','V','L'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

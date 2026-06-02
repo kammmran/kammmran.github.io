@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rotational Energy Levels — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-rotate-360"></i></div><div>Rigid Rotor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-rotate-360"></i></div>
+      <div>
+        <div class="tool-title">Rotational Energy Levels</div>
+        <div class="tool-desc">Rigid-rotor model of a diatomic — E_J = B·J(J+1), the rotational constant B and the spacing of microwave lines.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid3">
+      <label class="fld">Molecule<select id="mol"></select></label>
+      <label class="fld">Atom 1 mass (u)<input type="number" id="m1" value="12" step="any" min="0"></label>
+      <label class="fld">Atom 2 mass (u)<input type="number" id="m2" value="16" step="any" min="0"></label>
+      <label class="fld">Bond length (pm)<input type="number" id="r" value="112.8" step="any" min="0"></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 320" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const h=6.626e-34, hbar=1.0546e-34, c=2.998e8, u=1.6605e-27, kB=1.381e-23;
+const presets=[['Custom…',null,null,null],['CO',12,15.995,112.8],['HCl',1.008,34.97,127.5],['H₂',1.008,1.008,74.1],['N₂',14.003,14.003,109.8],['O₂',15.995,15.995,120.8],['HF',1.008,18.998,91.7],['CO₂ (C=O)',12,15.995,116.0]];
+$('#mol').innerHTML=presets.map((p,i)=>`<option value="${i}"${i===1?' selected':''}>${p[0]}</option>`).join('');
+$('#mol').addEventListener('change',()=>{ const p=presets[+$('#mol').value]; if(p[1]!=null){ $('#m1').value=p[1]; $('#m2').value=p[2]; $('#r').value=p[3]; } run(); });
+
+function run(){
+  const m1=+$('#m1').value*u, m2=+$('#m2').value*u, r=+$('#r').value*1e-12;
+  const out=$('#info'); const svg=$('#svg'); svg.innerHTML='';
+  if(!(m1>0&&m2>0&&r>0)){ out.innerHTML='<div class="muted">Enter positive masses and bond length.</div>'; return; }
+  const mu=m1*m2/(m1+m2);             // reduced mass
+  const I=mu*r*r;                      // moment of inertia
+  const B_J=hbar*hbar/(2*I);          // energy of B in Joules (E_J = B J(J+1))
+  const B_Hz=h/(8*Math.PI*Math.PI*I); // rotational constant in Hz
+  const B_cm=B_Hz/(c*100);            // in cm^-1
+  // levels J=0..6 ; E_J = B_J * J(J+1) ; degeneracy 2J+1
+  const Jmax=6; const E=j=>B_J*j*(j+1);
+  const W=760,H=320,pl=60,pr=180,pt=18,pb=20,iw=W-pl-pr,ih=H-pt-pb;
+  const Emax=E(Jmax)*1.05;
+  const Y=e=>pt+(1-e/Emax)*ih;
+  const ln=(x1,y1,x2,y2,col,w,d)=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',col);l.setAttribute('stroke-width',w||1.5);if(d)l.setAttribute('stroke-dasharray',d);svg.appendChild(l);};
+  const tx=(x,y,t,a,fl)=>{const e2=document.createElementNS(NS,'text');e2.setAttribute('x',x);e2.setAttribute('y',y);e2.setAttribute('text-anchor',a||'middle');if(fl)e2.setAttribute('fill',fl);e2.textContent=t;svg.appendChild(e2);};
+  ln(pl,pt,pl,H-pb,'var(--border2)');
+  for(let j=0;j<=Jmax;j++){ const y=Y(E(j)); ln(pl,y,pl+iw,y,'var(--teal)',2); tx(pl-6,y+3,'J='+j,'end','var(--text2)'); tx(pl+iw+6,y+3,`g=${2*j+1}`,'start','var(--text3)'); }
+  // transitions J->J+1 spacing increases by 2B
+  for(let j=0;j<Jmax;j++){ const x=pl+iw*0.55+j*8; ln(x,Y(E(j)),x,Y(E(j+1)),'var(--amber)',1.2,'2 2'); }
+  tx(pl+iw/2,pt+10,'E_J = B·J(J+1)','middle','var(--text2)');
+
+  out.innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Reduced mass µ</div><div class="stat-value" style="font-size:14px">${(mu/u).toFixed(4)} u</div></div>
+      <div class="stat-card"><div class="stat-label">Moment of inertia I</div><div class="stat-value" style="font-size:13px">${I.toExponential(3)} kg·m²</div></div>
+      <div class="stat-card"><div class="stat-label">Rotational constant B</div><div class="stat-value" style="color:var(--teal)">${B_cm.toFixed(3)} cm⁻¹</div></div>
+      <div class="stat-card"><div class="stat-label">B in GHz</div><div class="stat-value">${(B_Hz/1e9).toFixed(2)}</div></div>
+      <div class="stat-card"><div class="stat-label">Line spacing (2B)</div><div class="stat-value">${(2*B_cm).toFixed(3)} cm⁻¹</div></div>
+      <div class="stat-card"><div class="stat-label">J=1 energy</div><div class="stat-value" style="font-size:13px">${(2*B_J/(h*c*100)).toFixed(3)} cm⁻¹</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Levels spread apart with J (∝ J(J+1)); each is (2J+1)-fold degenerate. Pure-rotation (microwave) absorption lines are <b>equally spaced by 2B</b> — measuring that spacing yields the bond length. Larger I (heavier/longer molecule) ⇒ smaller B, closely packed levels.</div>`;
+}
+['m1','m2','r'].forEach(id=>$('#'+id).addEventListener('input',()=>{ $('#mol').value='0'; run(); }));
+run();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Numbers — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-hash"></i></div><div>Quantum Numbers</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-hash"></i></div>
+      <div>
+        <div class="tool-title">Quantum Numbers Explorer</div>
+        <div class="tool-desc">Enter n, ℓ, mℓ, mₛ → validity, the orbital name, and all allowed quantum-number sets for a shell or subshell.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid4">
+      <label class="fld">n (principal)<input type="number" id="n" value="2" min="1" max="7"></label>
+      <label class="fld">ℓ (azimuthal)<input type="number" id="l" value="1" min="0" max="6"></label>
+      <label class="fld">mℓ (magnetic)<input type="number" id="ml" value="0" min="-6" max="6"></label>
+      <label class="fld">mₛ (spin)<select id="ms"><option value="0.5">+½</option><option value="-0.5">−½</option></select></label>
+    </div>
+    <div id="verdict"></div>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+  .v{padding:12px 14px;border-radius:10px;font-weight:600;display:flex;gap:8px;align-items:center}
+  .v.ok{background:rgba(74,222,128,0.12);color:var(--green);border:1px solid rgba(74,222,128,0.4)}
+  .v.bad{background:rgba(248,113,113,0.12);color:var(--red);border:1px solid rgba(248,113,113,0.4)}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  td,th{padding:6px 9px;border-bottom:1px solid var(--border);text-align:center}
+  th{color:var(--text3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .sub{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--surface2);margin:2px;font-size:12px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const Lname=['s','p','d','f','g','h','i'];
+
+function run(){
+  const n=Math.round(+$('#n').value), l=Math.round(+$('#l').value), ml=Math.round(+$('#ml').value), ms=+$('#ms').value;
+  const errs=[];
+  if(!(n>=1)) errs.push('n must be a positive integer (1, 2, 3, …).');
+  if(!(l>=0&&l<=n-1)) errs.push(`ℓ must be between 0 and n−1 (here 0 to ${n-1}).`);
+  if(!(ml>=-l&&ml<=l)) errs.push(`mℓ must be between −ℓ and +ℓ (here −${l} to +${l}).`);
+  if(Math.abs(ms)!==0.5) errs.push('mₛ must be +½ or −½.');
+  const ok=errs.length===0;
+  $('#verdict').innerHTML = ok
+    ? `<div class="v ok"><i class="ti ti-circle-check"></i> Valid set → describes one electron in the <b>&nbsp;${n}${Lname[l]||'?'}</b>&nbsp; subshell, orbital mℓ=${ml>0?'+':''}${ml}, spin ${ms>0?'+½':'−½'}.</div>`
+    : `<div class="v bad"><i class="ti ti-circle-x"></i> Invalid: ${errs[0]}</div>`;
+
+  // shell / subshell breakdown
+  const orbitalsInSub = 2*l+1;
+  const subshells=[]; for(let li=0;li<n;li++) subshells.push(`${n}${Lname[li]} (${2*li+1} orbital${li?'s':''}, ${2*(2*li+1)}e⁻)`);
+  // table of allowed mℓ for this ℓ
+  let rows='';
+  if(l>=0){ for(let m=l;m>=-l;m--){ rows+=`<tr><td>${n}</td><td>${l} (${Lname[l]||'?'})</td><td>${m>0?'+':''}${m}</td><td>±½</td><td>${(m===ml)?'◄ selected':''}</td></tr>`; } }
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Subshell</div><div class="stat-value">${n}${Lname[l]||'?'}</div></div>
+      <div class="stat-card"><div class="stat-label">Orbitals in subshell</div><div class="stat-value">${orbitalsInSub}</div></div>
+      <div class="stat-card"><div class="stat-label">Max e⁻ in subshell</div><div class="stat-value">${2*orbitalsInSub}</div></div>
+      <div class="stat-card"><div class="stat-label">Max e⁻ in shell n</div><div class="stat-value">${2*n*n}</div></div>
+    </div>
+    <div style="margin-top:10px;font-size:13px"><b>Subshells in shell n=${n}:</b><br>${subshells.map(s=>`<span class="sub">${s}</span>`).join('')}</div>
+    <div style="margin-top:6px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Allowed mℓ for ${n}${Lname[l]||'?'}</div>
+    <table><tr><th>n</th><th>ℓ</th><th>mℓ</th><th>mₛ</th><th></th></tr>${rows}</table>`;
+}
+['n','l','ml','ms'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

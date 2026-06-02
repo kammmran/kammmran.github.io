@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blackbody Radiation — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-flame"></i></div><div>Blackbody Radiation</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-flame"></i></div>
+      <div>
+        <div class="tool-title">Blackbody Radiation</div>
+        <div class="tool-desc">Planck's spectral curve at a chosen temperature, with Wien's peak wavelength and the Stefan–Boltzmann total power.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld" style="flex:1">Temperature <b id="tlbl">5778 K</b><input type="range" id="t" min="300" max="12000" value="5778" step="10" style="width:100%"></label>
+      <label class="fld">Preset<select id="preset"></select></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 320" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const h=6.626e-34, c=2.998e8, kB=1.381e-23, sigma=5.670e-8, b=2.898e-3;
+const presets=[['Sun (5778 K)',5778],['Incandescent bulb',2800],['Human body (310 K)',310],['Red giant',3500],['Blue star',10000],['Earth (288 K)',288]];
+$('#preset').innerHTML='<option value="">Preset…</option>'+presets.map(p=>`<option value="${p[1]}">${p[0]}</option>`).join('');
+$('#preset').addEventListener('change',()=>{ if($('#preset').value){ $('#t').value=$('#preset').value; } run(); });
+
+// spectral radiance (per wavelength), arbitrary units, returns relative
+function planck(wl,T){ const x=h*c/(wl*kB*T); return (1/(Math.pow(wl,5)))*(1/(Math.exp(x)-1)); }
+function wlToRGB(wl){ // nm
+  let r=0,g=0,b2=0; if(wl<380)return'#6a3a8a'; if(wl>780)return'#7a1a1a';
+  if(wl<440){r=-(wl-440)/60;b2=1;} else if(wl<490){g=(wl-440)/50;b2=1;} else if(wl<510){g=1;b2=-(wl-510)/20;} else if(wl<580){r=(wl-510)/70;g=1;} else if(wl<645){r=1;g=-(wl-645)/65;} else {r=1;}
+  const C=x=>Math.round(255*Math.max(0,x)); return `rgb(${C(r)},${C(g)},${C(b2)})`;
+}
+
+function run(){
+  const T=+$('#t').value; $('#tlbl').textContent=T+' K';
+  const peakWl=b/T*1e9;                 // nm (Wien)
+  const power=sigma*Math.pow(T,4);      // W/m²
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=760,H=320,pl=54,pr=20,pt=18,pb=40,iw=W-pl-pr,ih=H-pt-pb;
+  const wlMaxNm=Math.max(2500, peakWl*3.2);
+  const X=nm=>pl+nm/wlMaxNm*iw;
+  // find max radiance for scaling (at peak)
+  const fmax=planck(peakWl*1e-9,T)*1.08;
+  const Y=val=>pt+(1-val/fmax)*ih;
+  // visible band shading 380-750
+  for(let nm=380;nm<=750&&nm<wlMaxNm;nm+=4){ const r=document.createElementNS(NS,'rect');r.setAttribute('x',X(nm));r.setAttribute('y',pt);r.setAttribute('width',iw/wlMaxNm*4+0.6);r.setAttribute('height',ih);r.setAttribute('fill',wlToRGB(nm));r.setAttribute('opacity','0.13');svg.appendChild(r); }
+  const ln=(x1,y1,x2,y2,col,d)=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',col);l.setAttribute('stroke-width','1.2');if(d)l.setAttribute('stroke-dasharray',d);svg.appendChild(l);};
+  const tx=(x,y,t,a,fl)=>{const e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor',a||'middle');if(fl)e.setAttribute('fill',fl);e.textContent=t;svg.appendChild(e);};
+  ln(pl,pt,pl,H-pb,'var(--border2)'); ln(pl,H-pb,W-pr,H-pb,'var(--border2)');
+  // curve
+  let d=''; const N=300; for(let i=1;i<=N;i++){ const nm=wlMaxNm*i/N; const val=planck(nm*1e-9,T); d+=(i===1?'M':'L')+X(nm).toFixed(1)+' '+Y(val).toFixed(1)+' '; }
+  const fill=document.createElementNS(NS,'path');fill.setAttribute('d',d+`L${X(wlMaxNm)} ${H-pb} L${X(0.01)} ${H-pb} Z`);fill.setAttribute('fill','rgba(248,113,113,0.12)');svg.appendChild(fill);
+  const p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke','var(--red)');p.setAttribute('stroke-width','2.5');svg.appendChild(p);
+  // peak line
+  ln(X(peakWl),pt,X(peakWl),H-pb,'var(--accent3)','3 3'); tx(X(peakWl),pt+12,'λpeak','middle','var(--accent3)');
+  // ticks
+  for(let k=0;k<=5;k++){ const nm=wlMaxNm*k/5; tx(X(nm),H-pb+15,Math.round(nm),'middle','var(--text3)'); }
+  tx(pl+iw/2,H-3,'Wavelength (nm)  ·  shaded = visible','middle','var(--text3)');
+  tx(15,pt+ih/2,'Spectral radiance','middle','var(--text3)').setAttribute('transform',`rotate(-90 15 ${pt+ih/2})`);
+
+  const region=peakWl<380?'ultraviolet':peakWl<=750?'visible':'infrared';
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Peak wavelength (Wien)</div><div class="stat-value" style="color:var(--accent3)">${peakWl.toFixed(0)} nm</div></div>
+      <div class="stat-card"><div class="stat-label">Peak in</div><div class="stat-value" style="font-size:14px">${region}</div></div>
+      <div class="stat-card"><div class="stat-label">Total power (Stefan–B.)</div><div class="stat-value" style="font-size:14px">${power.toExponential(3)} W/m²</div></div>
+      <div class="stat-card"><div class="stat-label">vs 300 K</div><div class="stat-value">${(power/(sigma*Math.pow(300,4))).toExponential(2)}×</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Hotter ⇒ peak shifts to shorter wavelength (λpeak·T = 2.898×10⁻³ m·K) and total power explodes as T⁴. This curve — and its failure under classical physics — is what Planck's quantum hypothesis fixed.</div>`;
+}
+$('#t').addEventListener('input',()=>{ $('#preset').value=''; run(); });
+run();
+</script>
+
+</body>
+</html>

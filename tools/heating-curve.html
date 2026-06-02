@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heating & Cooling Curve — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-temperature-celsius"></i></div><div>Heating Curve</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-temperature-celsius"></i></div>
+      <div>
+        <div class="tool-title">Heating &amp; Cooling Curve</div>
+        <div class="tool-desc">Add heat to a substance through its phase changes — see the temperature-vs-heat curve with melting and boiling plateaus.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld">Substance<select id="sub"></select></label>
+      <label class="fld">Mass (g)<input type="number" id="m" value="100" step="any" min="0"></label>
+      <label class="fld">Start T (°C)<input type="number" id="ti" value="-25" step="any"></label>
+      <label class="fld">End T (°C)<input type="number" id="tf" value="125" step="any"></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 360" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{fill:var(--text3);font-size:11px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+  td,th{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+  th{color:var(--text3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+// mp,bp (°C); c_solid,c_liq,c_gas (J/g·°C); Hfus,Hvap (J/g)
+const SUB={
+  water:{name:'Water',mp:0,bp:100,cs:2.09,cl:4.18,cg:2.01,hf:334,hv:2260},
+  ethanol:{name:'Ethanol',mp:-114,bp:78,cs:0.97,cl:2.44,cg:1.43,hf:108,hv:846},
+  iron:{name:'Iron',mp:1538,bp:2862,cs:0.45,cl:0.82,cg:0.45,hf:247,hv:6090},
+  mercury:{name:'Mercury',mp:-39,bp:357,cs:0.14,cl:0.14,cg:0.10,hf:11.4,hv:295},
+  nitrogen:{name:'Nitrogen',mp:-210,bp:-196,cs:1.0,cl:2.04,cg:1.04,hf:25.7,hv:199},
+};
+$('#sub').innerHTML=Object.entries(SUB).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
+
+function segments(s,m,Ti,Tf){
+  // returns list of {q (cumulative J at end), Tstart, Tend, phase, dq}
+  const segs=[]; let q=0; let T=Ti;
+  const push=(dq,Tend,phase)=>{ if(dq<=0) return; segs.push({q0:q,q1:q+dq,T0:T,T1:Tend,phase,dq}); q+=dq; T=Tend; };
+  // solid heating up to mp (if applicable)
+  if(Ti<s.mp){ const top=Math.min(Tf,s.mp); push(m*s.cs*(top-Ti), top, 'solid'); }
+  if(Tf>s.mp && Ti<=s.mp){ push(m*s.hf, s.mp, 'melting'); }      // fusion plateau
+  // liquid heating between mp and bp
+  const lstart=Math.max(Ti,s.mp), lend=Math.min(Tf,s.bp);
+  if(Tf>s.mp){ const a=Math.max(lstart,s.mp), b=Math.min(Tf,s.bp); if(b>a){ T=a; push(m*s.cl*(b-a), b, 'liquid'); } }
+  if(Tf>s.bp && Ti<s.bp){ T=s.bp; push(m*s.hv, s.bp, 'boiling'); } // vaporization plateau
+  if(Tf>s.bp){ const a=Math.max(Ti,s.bp); T=a; push(m*s.cg*(Tf-a), Tf, 'gas'); }
+  // handle case entirely within one phase above mp etc. fallback if no segs
+  if(!segs.length){ // single-phase
+    let c=Ti<s.mp?s.cs:(Ti<s.bp?s.cl:s.cg); let phase=Ti<s.mp?'solid':(Ti<s.bp?'liquid':'gas'); push(m*c*(Tf-Ti),Tf,phase); }
+  return segs;
+}
+
+function run(){
+  const s=SUB[$('#sub').value]; const m=+$('#m').value; let Ti=+$('#ti').value, Tf=+$('#tf').value;
+  const svg=$('#svg'); svg.innerHTML='';
+  if(!(m>0)||!(Tf>Ti)){ $('#info').innerHTML='<div class="muted">Enter a positive mass and an end temperature above the start.</div>'; return; }
+  const segs=segments(s,m,Ti,Tf);
+  const Qtot=segs.length?segs[segs.length-1].q1:0;
+  const W=760,H=360,pl=52,pr=20,pt=18,pb=40,iw=W-pl-pr,ih=H-pt-pb;
+  const Tlo=Math.min(Ti,...segs.map(x=>x.T0)), Thi=Math.max(Tf,...segs.map(x=>x.T1));
+  const X=q=>pl+(Qtot?q/Qtot:0)*iw, Y=T=>pt+(Thi-T)/((Thi-Tlo)||1)*ih;
+  const ln=(x1,y1,x2,y2,c,dash,wd)=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);l.setAttribute('stroke',c);l.setAttribute('stroke-width',wd||1.2);if(dash)l.setAttribute('stroke-dasharray',dash);svg.appendChild(l);};
+  const tx=(x,y,t,a,fill,sz)=>{const e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor',a||'middle');if(fill)e.setAttribute('fill',fill);if(sz)e.setAttribute('font-size',sz);e.textContent=t;svg.appendChild(e);};
+  ln(pl,pt,pl,H-pb,'var(--border2)'); ln(pl,H-pb,W-pr,H-pb,'var(--border2)');
+  // y ticks
+  for(let k=0;k<=5;k++){ const T=Tlo+(Thi-Tlo)*k/5; ln(pl-4,Y(T),pl,Y(T),'var(--border2)'); tx(pl-7,Y(T)+3,Math.round(T),'end','var(--text3)',10); ln(pl,Y(T),W-pr,Y(T),'var(--border)',''); }
+  tx(pl+iw/2,H-4,'Heat added (kJ) →','middle','var(--text3)',12);
+  tx(15,pt+ih/2,'Temperature (°C)','middle','var(--text3)',12).setAttribute('transform',`rotate(-90 15 ${pt+ih/2})`);
+  // mark mp/bp lines if in range
+  [['mp',s.mp,'melt'],['bp',s.bp,'boil']].forEach(([k,T])=>{ if(T>=Tlo&&T<=Thi){ ln(pl,Y(T),W-pr,Y(T),'var(--teal)','4 3'); tx(W-pr,Y(T)-4,(k==='mp'?'mp ':'bp ')+T+'°C','end','var(--teal)',10);} });
+  // curve
+  const colors={solid:'var(--blue)',melting:'var(--teal)',liquid:'var(--green)',boiling:'var(--pink)',gas:'var(--amber)'};
+  segs.forEach(sg=>{ ln(X(sg.q0),Y(sg.T0),X(sg.q1),Y(sg.T1),colors[sg.phase]||'var(--accent3)',null,3); });
+  // x ticks (kJ)
+  for(let k=0;k<=5;k++){ const q=Qtot*k/5; tx(X(q),H-pb+15,(q/1000).toFixed(1),'middle','var(--text3)',10); }
+
+  const rows=segs.map(sg=>`<tr><td style="color:${colors[sg.phase]}">${sg.phase}</td><td>${sg.T0.toFixed(0)} → ${sg.T1.toFixed(0)} °C</td><td>${(sg.dq/1000).toFixed(2)} kJ</td></tr>`).join('');
+  $('#info').innerHTML=`
+    <div class="stat-grid" style="margin-bottom:8px">
+      <div class="stat-card"><div class="stat-label">Total heat</div><div class="stat-value" style="color:var(--red)">${(Qtot/1000).toFixed(2)} kJ</div></div>
+      <div class="stat-card"><div class="stat-label">Melting pt</div><div class="stat-value">${s.mp} °C</div></div>
+      <div class="stat-card"><div class="stat-label">Boiling pt</div><div class="stat-value">${s.bp} °C</div></div>
+    </div>
+    <table><tr><th>Stage</th><th>Range</th><th>Heat</th></tr>${rows}</table>
+    <div class="muted" style="font-size:12px;margin-top:8px">Flat plateaus = phase changes: heat goes into breaking intermolecular forces (latent heat) so temperature holds constant. Sloped parts = q = m·c·ΔT.</div>`;
+}
+['sub','m','ti','tf'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

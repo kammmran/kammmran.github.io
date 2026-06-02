@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VSEPR Geometry Viewer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-vector-triangle"></i></div><div>VSEPR Geometry</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-vector-triangle"></i></div>
+      <div>
+        <div class="tool-title">VSEPR Geometry Viewer</div>
+        <div class="tool-desc">Set bonding groups and lone pairs on the central atom → molecular shape, bond angle, hybridization and a diagram.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld">Preset molecule<select id="preset"></select></label>
+      <label class="fld">Bonding groups (X)<input type="number" id="x" value="4" min="1" max="6"></label>
+      <label class="fld">Lone pairs (E)<input type="number" id="e" value="0" min="0" max="3"></label>
+    </div>
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:center">
+      <svg id="svg" viewBox="0 0 340 340" style="width:100%;max-width:340px;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    </div>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{font-size:13px;font-weight:600}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+// key X_E -> data
+const TABLE={
+  '2_0':{shape:'Linear',ang:'180°',hyb:'sp',ex:'CO₂, BeCl₂'},
+  '3_0':{shape:'Trigonal planar',ang:'120°',hyb:'sp²',ex:'BF₃, CO₃²⁻'},
+  '2_1':{shape:'Bent',ang:'≈118°',hyb:'sp²',ex:'SO₂, O₃'},
+  '4_0':{shape:'Tetrahedral',ang:'109.5°',hyb:'sp³',ex:'CH₄, NH₄⁺'},
+  '3_1':{shape:'Trigonal pyramidal',ang:'≈107°',hyb:'sp³',ex:'NH₃, H₃O⁺'},
+  '2_2':{shape:'Bent',ang:'≈104.5°',hyb:'sp³',ex:'H₂O, H₂S'},
+  '5_0':{shape:'Trigonal bipyramidal',ang:'90° & 120°',hyb:'sp³d',ex:'PCl₅'},
+  '4_1':{shape:'Seesaw',ang:'≈90°, 120°',hyb:'sp³d',ex:'SF₄'},
+  '3_2':{shape:'T-shaped',ang:'≈90°',hyb:'sp³d',ex:'ClF₃'},
+  '2_3':{shape:'Linear',ang:'180°',hyb:'sp³d',ex:'XeF₂, I₃⁻'},
+  '6_0':{shape:'Octahedral',ang:'90°',hyb:'sp³d²',ex:'SF₆'},
+  '5_1':{shape:'Square pyramidal',ang:'≈90°',hyb:'sp³d²',ex:'BrF₅'},
+  '4_2':{shape:'Square planar',ang:'90°',hyb:'sp³d²',ex:'XeF₄'},
+};
+const EDOM=['','','Linear','Trigonal planar','Tetrahedral','Trigonal bipyramidal','Octahedral'];
+const presets=[['Custom…','',''],['CO₂',2,0],['BF₃',3,0],['SO₂',2,1],['CH₄',4,0],['NH₃',3,1],['H₂O',2,2],['PCl₅',5,0],['SF₄',4,1],['ClF₃',3,2],['XeF₂',2,3],['SF₆',6,0],['BrF₅',5,1],['XeF₄',4,2]];
+$('#preset').innerHTML=presets.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
+$('#preset').addEventListener('change',()=>{ const p=presets[+$('#preset').value]; if(p[1]!==''){ $('#x').value=p[1]; $('#e').value=p[2]; } run(); });
+
+function draw(X,E){
+  const svg=$('#svg'); svg.innerHTML=''; const cx=170,cy=170,L=120;
+  const n=X+E;
+  // central atom
+  const c=document.createElementNS(NS,'circle');c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r',20);c.setAttribute('fill','rgba(124,109,240,0.2)');c.setAttribute('stroke','var(--accent3)');c.setAttribute('stroke-width','1.5');svg.appendChild(c);
+  const a=document.createElementNS(NS,'text');a.setAttribute('x',cx);a.setAttribute('y',cy+5);a.setAttribute('text-anchor','middle');a.setAttribute('fill','var(--text)');a.textContent='A';svg.appendChild(a);
+  for(let i=0;i<n;i++){
+    const deg=90 - i*360/n; const rad=deg*Math.PI/180;
+    const dx=Math.cos(rad), dy=-Math.sin(rad);
+    const ex=cx+dx*L, ey=cy+dy*L;
+    const isLone = i<E; // lone pairs placed first (top)
+    if(isLone){
+      // lobe near the atom
+      const lx=cx+dx*46, ly=cy+dy*46;
+      const lobe=document.createElementNS(NS,'ellipse');lobe.setAttribute('cx',lx);lobe.setAttribute('cy',ly);lobe.setAttribute('rx',18);lobe.setAttribute('ry',11);lobe.setAttribute('transform',`rotate(${-deg} ${lx} ${ly})`);lobe.setAttribute('fill','rgba(248,113,113,0.18)');lobe.setAttribute('stroke','var(--red)');lobe.setAttribute('stroke-dasharray','3 2');svg.appendChild(lobe);
+      [-6,6].forEach(off=>{ const px=cx+dx*46 - dy*off, py=cy+dy*46 + dx*off; const d=document.createElementNS(NS,'circle');d.setAttribute('cx',px);d.setAttribute('cy',py);d.setAttribute('r',2.4);d.setAttribute('fill','var(--red)');svg.appendChild(d); });
+    } else {
+      const ln=document.createElementNS(NS,'line');ln.setAttribute('x1',cx+dx*20);ln.setAttribute('y1',cy+dy*20);ln.setAttribute('x2',ex-dx*16);ln.setAttribute('y2',ey-dy*16);ln.setAttribute('stroke','var(--text2)');ln.setAttribute('stroke-width','2.5');svg.appendChild(ln);
+      const o=document.createElementNS(NS,'circle');o.setAttribute('cx',ex);o.setAttribute('cy',ey);o.setAttribute('r',16);o.setAttribute('fill','rgba(45,212,191,0.18)');o.setAttribute('stroke','var(--teal)');o.setAttribute('stroke-width','1.5');svg.appendChild(o);
+      const t=document.createElementNS(NS,'text');t.setAttribute('x',ex);t.setAttribute('y',ey+4);t.setAttribute('text-anchor','middle');t.setAttribute('fill','var(--text)');t.textContent='X';svg.appendChild(t);
+    }
+  }
+}
+
+function run(){
+  let X=Math.max(1,Math.min(6,Math.round(+$('#x').value||0)));
+  let E=Math.max(0,Math.min(4,Math.round(+$('#e').value||0)));
+  $('#x').value=X; $('#e').value=E;
+  const key=X+'_'+E; const d=TABLE[key]; const SN=X+E;
+  draw(X,E);
+  if(!d){ $('#info').innerHTML=`<div class="muted" style="margin-top:6px">AX${X}E${E} (steric number ${SN}) is not a standard VSEPR case — try X 1–6 with E 0–3 in a valid combination.</div>`; return; }
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Notation</div><div class="stat-value">AX${X}E${E}</div></div>
+      <div class="stat-card"><div class="stat-label">Molecular shape</div><div class="stat-value" style="font-size:15px;color:var(--green)">${d.shape}</div></div>
+      <div class="stat-card"><div class="stat-label">Bond angle</div><div class="stat-value">${d.ang}</div></div>
+      <div class="stat-card"><div class="stat-label">Hybridization</div><div class="stat-value">${d.hyb}</div></div>
+      <div class="stat-card"><div class="stat-label">Steric number</div><div class="stat-value">${SN}</div></div>
+      <div class="stat-card"><div class="stat-label">Electron geometry</div><div class="stat-value" style="font-size:13px">${EDOM[SN]}</div></div>
+    </div>
+    <div style="margin-top:8px;font-size:13px"><b>Examples:</b> ${d.ex}</div>
+    <div class="muted" style="font-size:12px;margin-top:6px">Lone pairs (red lobes) push bonds closer together, shrinking the angle below the ideal. The diagram shows the electron-domain arrangement as a 2D schematic; angles above are the true ideal values.</div>`;
+}
+['x','e'].forEach(id=>$('#'+id).addEventListener('input',()=>{ $('#preset').value='0'; run(); }));
+run();
+</script>
+
+</body>
+</html>

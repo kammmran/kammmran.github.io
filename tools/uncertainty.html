@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heisenberg Uncertainty — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrows-horizontal"></i></div><div>Uncertainty Principle</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-arrows-horizontal"></i></div>
+      <div>
+        <div class="tool-title">Heisenberg Uncertainty Principle</div>
+        <div class="tool-desc">Δx·Δp ≥ ħ/2 — the minimum momentum (and velocity) spread implied by a position uncertainty, and the energy–time form.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-t="xp">Position ↔ momentum</button>
+    <button class="tab" data-t="et">Energy ↔ time</button>
+  </div>
+
+  <div class="panel" id="p-xp" style="min-height:auto;gap:14px">
+    <div class="grid3">
+      <label class="fld">Position uncertainty Δx (m)<input type="text" id="dx" value="1e-10"></label>
+      <label class="fld">Particle mass (kg)<select id="mass"><option value="9.109e-31">Electron</option><option value="1.673e-27">Proton</option><option value="6.646e-27">He atom</option></select></label>
+    </div>
+    <div id="xpout"></div>
+  </div>
+
+  <div class="panel" id="p-et" style="min-height:auto;gap:14px;display:none">
+    <div class="grid3">
+      <label class="fld">Lifetime / time Δt (s)<input type="text" id="dt" value="1e-9"></label>
+    </div>
+    <div id="etout"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const hbar=1.0546e-34, eV=1.602e-19;
+const num=v=>{ const x=parseFloat(v); return Number.isFinite(x)?x:NaN; };
+
+function xp(){
+  const dx=num($('#dx').value), m=+$('#mass').value;
+  const out=$('#xpout');
+  if(!(dx>0)){ out.innerHTML='<div class="muted">Enter a positive Δx.</div>'; return; }
+  const dp=hbar/(2*dx); const dv=dp/m;
+  out.innerHTML=`
+    <div style="font-family:ui-monospace,Menlo,monospace;background:var(--bg3);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:10px">Δp ≥ ħ / (2·Δx)</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Min Δp</div><div class="stat-value" style="color:var(--accent3);font-size:15px">${dp.toExponential(3)} kg·m/s</div></div>
+      <div class="stat-card"><div class="stat-label">Min Δv</div><div class="stat-value" style="font-size:15px">${dv.toExponential(3)} m/s</div></div>
+      <div class="stat-card"><div class="stat-label">Energy scale (Δp)²/2m</div><div class="stat-value" style="font-size:14px">${(dp*dp/(2*m)/eV).toExponential(2)} eV</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">Pin a particle to a smaller region and its momentum becomes more uncertain. Confining an electron to ~atomic size (10⁻¹⁰ m) forces a velocity spread of millions of m/s.</div>`;
+}
+function et(){
+  const dt=num($('#dt').value); const out=$('#etout');
+  if(!(dt>0)){ out.innerHTML='<div class="muted">Enter a positive Δt.</div>'; return; }
+  const dE=hbar/(2*dt);
+  out.innerHTML=`
+    <div style="font-family:ui-monospace,Menlo,monospace;background:var(--bg3);padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:10px">ΔE ≥ ħ / (2·Δt)</div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Min ΔE</div><div class="stat-value" style="color:var(--accent3);font-size:15px">${dE.toExponential(3)} J</div></div>
+      <div class="stat-card"><div class="stat-label">in eV</div><div class="stat-value" style="font-size:15px">${(dE/eV).toExponential(3)} eV</div></div>
+      <div class="stat-card"><div class="stat-label">Line width (ΔE/h)</div><div class="stat-value" style="font-size:14px">${(dE/6.626e-34).toExponential(2)} Hz</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">A short-lived excited state (small Δt) has a large energy uncertainty — this is the natural linewidth seen in spectroscopy.</div>`;
+}
+['dx','mass'].forEach(id=>$('#'+id).addEventListener('input',xp));
+$('#dt').addEventListener('input',et);
+document.querySelectorAll('#tabs .tab').forEach(t=>t.addEventListener('click',()=>{ document.querySelectorAll('#tabs .tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); $('#p-xp').style.display=t.dataset.t==='xp'?'':'none'; $('#p-et').style.display=t.dataset.t==='et'?'':'none'; }));
+xp(); et();
+</script>
+
+</body>
+</html>

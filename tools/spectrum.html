@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hydrogen Emission Spectrum — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-rainbow"></i></div><div>Emission Spectrum</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-rainbow"></i></div>
+      <div>
+        <div class="tool-title">Hydrogen Emission Spectrum</div>
+        <div class="tool-desc">Rydberg formula → the spectral lines of hydrogen, drawn in their true colours on the visible spectrum.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld">Series (final level n₁)
+        <select id="series">
+          <option value="1">Lyman (n₁=1, UV)</option>
+          <option value="2" selected>Balmer (n₁=2, visible)</option>
+          <option value="3">Paschen (n₁=3, IR)</option>
+          <option value="4">Brackett (n₁=4, IR)</option>
+        </select>
+      </label>
+      <label class="fld">Highest n₂ shown<input type="number" id="nmax" value="7" min="2" max="20"></label>
+    </div>
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Visible spectrum (380–750 nm)</div>
+    <svg id="vis" viewBox="0 0 760 120" style="width:100%;height:auto;border:1px solid var(--border);border-radius:10px"></svg>
+    <div id="lines"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{font-size:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left}
+  th{color:var(--text3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .swatch{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle;margin-right:6px;border:1px solid var(--border)}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+const Rh=1.0967757e7; // m^-1
+// wavelength (nm) -> approx RGB (Bruton's algorithm)
+function wlToRGB(wl){
+  let r=0,g=0,b=0;
+  if(wl>=380&&wl<440){r=-(wl-440)/(440-380);b=1;}
+  else if(wl<490){g=(wl-440)/(490-440);b=1;}
+  else if(wl<510){g=1;b=-(wl-510)/(510-490);}
+  else if(wl<580){r=(wl-510)/(580-510);g=1;}
+  else if(wl<645){r=1;g=-(wl-645)/(645-580);}
+  else if(wl<=780){r=1;}
+  let f=1; if(wl<420)f=0.3+0.7*(wl-380)/40; else if(wl>700)f=0.3+0.7*(780-wl)/80;
+  const C=x=>Math.round(255*Math.pow(Math.max(0,x)*f,0.8));
+  return `rgb(${C(r)},${C(g)},${C(b)})`;
+}
+
+function run(){
+  const n1=+$('#series').value; const nmax=Math.max(n1+1,Math.min(30,+$('#nmax').value||7));
+  const lines=[];
+  for(let n2=n1+1;n2<=nmax;n2++){
+    const inv=Rh*(1/(n1*n1)-1/(n2*n2)); const wl=1/inv*1e9; // nm
+    const E=1240/wl; // eV (hc/λ with hc=1240 eV·nm)
+    lines.push({n2,wl,E,visible:wl>=380&&wl<=750});
+  }
+  // visible spectrum band
+  const svg=$('#vis'); svg.innerHTML=''; const W=760,H=120,pl=40,pr=16,pt=10,pb=26,iw=W-pl-pr,ih=H-pt-pb;
+  const lo=380,hi=750; const X=wl=>pl+(wl-lo)/(hi-lo)*iw;
+  // rainbow gradient via slices
+  for(let wl=lo;wl<hi;wl+=2){ const r=document.createElementNS(NS,'rect'); r.setAttribute('x',X(wl));r.setAttribute('y',pt);r.setAttribute('width',(iw/(hi-lo))*2+0.6);r.setAttribute('height',ih);r.setAttribute('fill',wlToRGB(wl));r.setAttribute('opacity','0.85');svg.appendChild(r); }
+  // axis
+  for(let wl=400;wl<=750;wl+=50){ const l=document.createElementNS(NS,'line');l.setAttribute('x1',X(wl));l.setAttribute('y1',pt+ih);l.setAttribute('x2',X(wl));l.setAttribute('y2',pt+ih+4);l.setAttribute('stroke','var(--text3)');svg.appendChild(l); const t=document.createElementNS(NS,'text');t.setAttribute('x',X(wl));t.setAttribute('y',pt+ih+16);t.setAttribute('text-anchor','middle');t.setAttribute('fill','var(--text3)');t.textContent=wl;svg.appendChild(t); }
+  // emission lines on the band
+  lines.filter(l=>l.visible).forEach(l=>{ const ln=document.createElementNS(NS,'line');ln.setAttribute('x1',X(l.wl));ln.setAttribute('y1',pt-2);ln.setAttribute('x2',X(l.wl));ln.setAttribute('y2',pt+ih+2);ln.setAttribute('stroke','#000');ln.setAttribute('stroke-width','2');svg.appendChild(ln);
+    const t=document.createElementNS(NS,'text');t.setAttribute('x',X(l.wl));t.setAttribute('y',pt-4);t.setAttribute('text-anchor','middle');t.setAttribute('fill','var(--text2)');t.textContent=l.n2+'→'+n1;svg.appendChild(t); });
+
+  const rows=lines.map(l=>`<tr>
+    <td>${l.n2} → ${n1}</td>
+    <td>${l.wl.toFixed(1)} nm</td>
+    <td>${l.E.toFixed(3)} eV</td>
+    <td>${l.visible?`<span class="swatch" style="background:${wlToRGB(l.wl)}"></span>visible`:(l.wl<380?'UV':'IR')}</td></tr>`).join('');
+  $('#lines').innerHTML=`<table><tr><th>Transition</th><th>Wavelength</th><th>Photon energy</th><th>Region</th></tr>${rows}</table>
+    <div class="muted" style="font-size:12px;margin-top:8px">1/λ = R<sub>H</sub>(1/n₁² − 1/n₂²), R<sub>H</sub> = 1.097×10⁷ m⁻¹. Only the Balmer series (n₁=2) falls in the visible range — that's the familiar red/cyan/blue/violet H lines.</div>`;
+}
+['series','nmax'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>

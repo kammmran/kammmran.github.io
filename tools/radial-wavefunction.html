@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hydrogen Radial Distribution — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-area-line"></i></div><div>Radial Distribution</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:820px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-area-line"></i></div>
+      <div>
+        <div class="tool-title">Hydrogen Radial Distribution</div>
+        <div class="tool-desc">The radial wavefunction Rₙₗ(r) and probability 4πr²R² for hydrogen — see shells, radial nodes and where the electron most likely is.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row">
+      <label class="fld">n<input type="number" id="n" value="2" min="1" max="4"></label>
+      <label class="fld">ℓ<input type="number" id="l" value="0" min="0" max="4"></label>
+      <label class="fld">Plot<select id="mode"><option value="rdf">Radial distribution 4πr²R²</option><option value="r">Wavefunction Rₙₗ(r)</option></select></label>
+    </div>
+    <svg id="svg" viewBox="0 0 760 320" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:12px"></svg>
+    <div id="info"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  svg text{fill:var(--text3);font-size:11px}</style>
+
+<script>
+const $ = s => document.querySelector(s);
+const NS='http://www.w3.org/2000/svg';
+// Hydrogen radial wavefunctions R_nl(r), r in units of a0 (Bohr radius), Z=1. Unnormalised-ish constants ok for shape.
+function R(n,l,r){
+  const a=1; const rho=r/a;
+  switch(n+'_'+l){
+    case '1_0': return 2*Math.exp(-rho);
+    case '2_0': return (1/(2*Math.SQRT2))*(2-rho)*Math.exp(-rho/2);
+    case '2_1': return (1/(2*Math.SQRT2*Math.sqrt(3)))*rho*Math.exp(-rho/2);
+    case '3_0': return (2/(81*Math.sqrt(3)))*(27-18*rho+2*rho*rho)*Math.exp(-rho/3);
+    case '3_1': return (4/(81*Math.sqrt(6)))*(6*rho-rho*rho)*Math.exp(-rho/3);
+    case '3_2': return (4/(81*Math.sqrt(30)))*rho*rho*Math.exp(-rho/3);
+    case '4_0': return (1/768)*(192-144*rho+24*rho*rho-rho*rho*rho)*Math.exp(-rho/4);
+    case '4_1': return (1/(256*Math.sqrt(15)))*(80*rho-20*rho*rho+rho*rho*rho)*Math.exp(-rho/4);
+    case '4_2': return (1/(768*Math.sqrt(35)))*(12*rho*rho-rho*rho*rho)*Math.exp(-rho/4);
+    case '4_3': return (1/(768*Math.sqrt(35)))*rho*rho*rho*Math.exp(-rho/4);
+    default: return null;
+  }
+}
+
+function run(){
+  let n=Math.max(1,Math.min(4,Math.round(+$('#n').value))), l=Math.max(0,Math.min(n-1,Math.round(+$('#l').value)));
+  if(+$('#l').value>n-1) l=n-1;
+  $('#n').value=n; $('#l').value=l;
+  const mode=$('#mode').value;
+  // sample
+  const rmax=Math.max(20, n*n*3.5);
+  const N=400; const xs=[], ys=[];
+  let valid=true;
+  for(let i=0;i<=N;i++){ const r=rmax*i/N; let Rv; try{ Rv=R(n,l,r); }catch(e){ Rv=null; } if(Rv==null){ valid=false; break; } const y=mode==='rdf'?4*Math.PI*r*r*Rv*Rv:Rv; xs.push(r); ys.push(y); }
+  const svg=$('#svg'); svg.innerHTML='';
+  const W=760,H=320,pl=50,pr=20,pt=18,pb=38,iw=W-pl-pr,ih=H-pt-pb;
+  if(!valid){ $('#info').innerHTML='<div class="muted">That (n,ℓ) combination isn\'t tabulated here — try n = 1–4 with ℓ = 0…n−1.</div>'; return; }
+  const ymin=Math.min(0,...ys), ymax=Math.max(...ys); const span=(ymax-ymin)||1;
+  const X=r=>pl+r/rmax*iw, Y=y=>pt+(ymax-y)/span*ih;
+  const ln=(x1,y1,x2,y2,c,d)=>{const l2=document.createElementNS(NS,'line');l2.setAttribute('x1',x1);l2.setAttribute('y1',y1);l2.setAttribute('x2',x2);l2.setAttribute('y2',y2);l2.setAttribute('stroke',c);l2.setAttribute('stroke-width','1.2');if(d)l2.setAttribute('stroke-dasharray',d);svg.appendChild(l2);};
+  const tx=(x,y,t,a,fl)=>{const e=document.createElementNS(NS,'text');e.setAttribute('x',x);e.setAttribute('y',y);e.setAttribute('text-anchor',a||'middle');if(fl)e.setAttribute('fill',fl);e.textContent=t;svg.appendChild(e);};
+  ln(pl,pt,pl,H-pb,'var(--border2)'); ln(pl,Y(0),W-pr,Y(0),'var(--border2)');
+  let d=''; xs.forEach((r,i)=>{ d+=(i?'L':'M')+X(r).toFixed(1)+' '+Y(ys[i]).toFixed(1)+' '; });
+  if(mode==='rdf'){ const fill=document.createElementNS(NS,'path');fill.setAttribute('d',d+`L${X(rmax)} ${Y(0)} L${X(0)} ${Y(0)} Z`);fill.setAttribute('fill','rgba(96,165,250,0.14)');svg.appendChild(fill); }
+  const p=document.createElementNS(NS,'path');p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke',mode==='rdf'?'var(--blue)':'var(--accent3)');p.setAttribute('stroke-width','2.5');svg.appendChild(p);
+  // peak (most probable radius) for rdf
+  let peakR=0,peakV=-1; if(mode==='rdf'){ xs.forEach((r,i)=>{ if(ys[i]>peakV){peakV=ys[i];peakR=r;} }); ln(X(peakR),pt,X(peakR),Y(0),'var(--green)','3 3'); tx(X(peakR),pt+12,'most likely r','middle','var(--green)'); }
+  for(let k=0;k<=5;k++){ const r=rmax*k/5; tx(X(r),H-pb+15,r.toFixed(0),'middle','var(--text3)'); }
+  tx(pl+iw/2,H-3,'Radius r (Bohr radii, a₀)','middle','var(--text3)');
+  // radial nodes count
+  let nodes=0; for(let i=2;i<xs.length;i++){ const a=R(n,l,xs[i-1]), b=R(n,l,xs[i]); if(a*b<0) nodes++; }
+
+  $('#info').innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Orbital</div><div class="stat-value">${n}${['s','p','d','f','g'][l]}</div></div>
+      <div class="stat-card"><div class="stat-label">Radial nodes (n−ℓ−1)</div><div class="stat-value">${n-l-1}</div></div>
+      ${mode==='rdf'?`<div class="stat-card"><div class="stat-label">Most probable r</div><div class="stat-value" style="color:var(--green)">${peakR.toFixed(1)} a₀</div></div>`:''}
+      <div class="stat-card"><div class="stat-label">⟨shell⟩ ≈ n²a₀</div><div class="stat-value">${(n*n)} a₀</div></div>
+    </div>
+    <div class="muted" style="font-size:12px;margin-top:8px">a₀ = 0.529 Å. The radial distribution 4πr²R² gives the probability of finding the electron in a thin shell at radius r — its peaks are the orbital "shells". Radial nodes = n − ℓ − 1.</div>`;
+}
+['n','l','mode'].forEach(id=>$('#'+id).addEventListener('input',run));
+run();
+</script>
+
+</body>
+</html>
