@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistical Script Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-code"></i></div><div>Statistical Script Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-file-code"></i></div>
+      <div>
+        <div class="tool-title">Statistical Script Generator</div>
+        <div class="tool-desc">Pick a statistical test and your variable/column names, and get a runnable analysis script in Python (pandas + scipy/statsmodels) or R — including loading data, assumption checks, the test, effect size and a plot. A reproducible starting point you can adapt. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Language<select id="lang"><option value="py">Python</option><option value="r">R</option></select></label>
+      <label class="fld">Test<select id="test">
+        <option value="ttest">Independent t-test</option>
+        <option value="paired">Paired t-test</option>
+        <option value="anova">One-way ANOVA</option>
+        <option value="corr">Correlation (Pearson)</option>
+        <option value="linreg">Linear regression (OLS)</option>
+        <option value="chisq">Chi-square (categorical)</option>
+        <option value="mannw">Mann–Whitney U</option>
+        <option value="logreg">Logistic regression</option>
+      </select></label>
+      <label class="fld">Data file<input id="file" value="data.csv" style="width:140px"></label>
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Outcome / Y column<input id="y" value="score" style="width:140px"></label>
+      <label class="fld">Group / X column<input id="x" value="group" style="width:140px"></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate script</button><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><button class="btn" id="dl"><i class="ti ti-download"></i> Download</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <pre id="out" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;overflow:auto;font-size:12.5px;line-height:1.5;max-height:50vh"></pre>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+function py(){const t=$('#test').value,f=$('#file').value,y=$('#y').value,x=$('#x').value;
+  const head=`import pandas as pd\nimport numpy as np\nimport matplotlib.pyplot as plt\nfrom scipy import stats\n\ndf = pd.read_csv("${f}")\nprint(df.describe())\n\n`;
+  const T={
+    ttest:`# Independent-samples t-test: ${y} by ${x}\ngroups = df.groupby("${x}")["${y}"]\na, b = [g.values for _, g in groups]\nprint("Normality (Shapiro):", stats.shapiro(a).pvalue, stats.shapiro(b).pvalue)\nprint("Levene equal-var:", stats.levene(a, b).pvalue)\nt, p = stats.ttest_ind(a, b, equal_var=False)\nd = (a.mean() - b.mean()) / np.sqrt((a.std(ddof=1)**2 + b.std(ddof=1)**2) / 2)\nprint(f"t = {t:.3f}, p = {p:.4f}, Cohen's d = {d:.3f}")\ndf.boxplot("${y}", by="${x}"); plt.show()`,
+    paired:`# Paired t-test (wide format: two columns)\nt, p = stats.ttest_rel(df["${y}"], df["${x}"])\nprint(f"t = {t:.3f}, p = {p:.4f}")`,
+    anova:`# One-way ANOVA: ${y} across ${x}\ngroups = [g["${y}"].values for _, g in df.groupby("${x}")]\nF, p = stats.f_oneway(*groups)\nprint(f"F = {F:.3f}, p = {p:.4f}")\n# Post-hoc Tukey\nfrom statsmodels.stats.multicomp import pairwise_tukeyhsd\nprint(pairwise_tukeyhsd(df["${y}"], df["${x}"]))`,
+    corr:`# Pearson correlation: ${y} vs ${x}\nr, p = stats.pearsonr(df["${x}"], df["${y}"])\nprint(f"r = {r:.3f}, p = {p:.4f}")\nplt.scatter(df["${x}"], df["${y}"]); plt.xlabel("${x}"); plt.ylabel("${y}"); plt.show()`,
+    linreg:`# OLS linear regression: ${y} ~ ${x}\nimport statsmodels.formula.api as smf\nmodel = smf.ols("${y} ~ ${x}", data=df).fit()\nprint(model.summary())`,
+    chisq:`# Chi-square test of independence: ${y} x ${x}\nct = pd.crosstab(df["${y}"], df["${x}"])\nchi2, p, dof, exp = stats.chi2_contingency(ct)\nprint(ct)\nprint(f"chi2 = {chi2:.3f}, dof = {dof}, p = {p:.4f}")`,
+    mannw:`# Mann-Whitney U (non-parametric): ${y} by ${x}\ngroups = df.groupby("${x}")["${y}"]\na, b = [g.values for _, g in groups]\nu, p = stats.mannwhitneyu(a, b, alternative="two-sided")\nprint(f"U = {u:.1f}, p = {p:.4f}")`,
+    logreg:`# Logistic regression: ${y} ~ ${x}\nimport statsmodels.formula.api as smf\nmodel = smf.logit("${y} ~ ${x}", data=df).fit()\nprint(model.summary())\nprint("Odds ratios:\\n", np.exp(model.params))`
+  };
+  return head+T[t];
+}
+function r(){const t=$('#test').value,f=$('#file').value,y=$('#y').value,x=$('#x').value;
+  const head=`library(tidyverse)\ndf <- read_csv("${f}")\nsummary(df)\n\n`;
+  const T={
+    ttest:`# Independent t-test\nshapiro.test(df$${y})\nt.test(${y} ~ ${x}, data = df, var.equal = FALSE)\nlibrary(effsize); cohen.d(${y} ~ ${x}, data = df)\nggplot(df, aes(${x}, ${y})) + geom_boxplot()`,
+    paired:`t.test(df$${y}, df$${x}, paired = TRUE)`,
+    anova:`fit <- aov(${y} ~ ${x}, data = df)\nsummary(fit)\nTukeyHSD(fit)`,
+    corr:`cor.test(df$${x}, df$${y}, method = "pearson")\nggplot(df, aes(${x}, ${y})) + geom_point() + geom_smooth(method = "lm")`,
+    linreg:`fit <- lm(${y} ~ ${x}, data = df)\nsummary(fit)\nconfint(fit)`,
+    chisq:`tbl <- table(df$${y}, df$${x})\nprint(tbl)\nchisq.test(tbl)`,
+    mannw:`wilcox.test(${y} ~ ${x}, data = df)`,
+    logreg:`fit <- glm(${y} ~ ${x}, data = df, family = binomial)\nsummary(fit)\nexp(coef(fit))  # odds ratios`
+  };
+  return head+T[t];
+}
+function gen(){$('#out').textContent=$('#lang').value==='py'?py():r();$('#status').textContent='Generated';}
+['lang','test','file','y','x'].forEach(id=>$('#'+id).addEventListener('input',gen));
+$('#gen').onclick=gen;
+$('#copy').onclick=()=>{navigator.clipboard.writeText($('#out').textContent);$('#status').textContent='Copied.';};
+$('#dl').onclick=()=>{const ext=$('#lang').value==='py'?'py':'R';const b=new Blob([$('#out').textContent],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='analysis.'+ext;a.click();};
+gen();
+</script>
+</body>
+</html>

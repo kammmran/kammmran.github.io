@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scientific Illustration Editor — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-vector"></i></div><div>Scientific Illustration Editor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1040px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-vector"></i></div>
+      <div>
+        <div class="tool-title">Scientific Illustration Editor</div>
+        <div class="tool-desc">A lightweight vector editor for building simple scientific diagrams — boxes, circles, arrows, lines and text labels. Add shapes, drag to position, recolour, and layer them into a schematic. Drop in a background image to annotate a photo or micrograph. Export SVG or PNG. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:12px">
+    <div class="row" style="gap:6px;flex-wrap:wrap">
+      <button class="btn btn-sm" data-add="rect"><i class="ti ti-square"></i> Box</button>
+      <button class="btn btn-sm" data-add="circle"><i class="ti ti-circle"></i> Circle</button>
+      <button class="btn btn-sm" data-add="arrow"><i class="ti ti-arrow-right"></i> Arrow</button>
+      <button class="btn btn-sm" data-add="line"><i class="ti ti-line"></i> Line</button>
+      <button class="btn btn-sm" data-add="text"><i class="ti ti-typography"></i> Text</button>
+      <button class="btn btn-sm" id="bgBtn"><i class="ti ti-photo"></i> Background</button>
+      <input type="file" id="bgFile" accept="image/*" style="display:none">
+      <span class="muted" style="font-size:12px;margin-left:auto">Click a shape to select · drag to move</span>
+    </div>
+    <div id="editbar" class="row" style="gap:8px;flex-wrap:wrap;display:none;font-size:12px">
+      <label class="fld">Fill<input type="color" id="fill" value="#7fd1c8"></label>
+      <label class="fld">Stroke<input type="color" id="stroke" value="#0d4f4a"></label>
+      <label class="fld">Text<input id="label" placeholder="label" style="width:140px"></label>
+      <button class="btn btn-sm" id="front"><i class="ti ti-stack-front"></i></button>
+      <button class="btn btn-sm" id="del"><i class="ti ti-trash"></i></button>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff">
+      <svg id="svg" width="900" height="540" style="display:block;cursor:default;background:#fff"></svg>
+    </div>
+    <div class="row"><button class="btn" id="dlsvg"><i class="ti ti-download"></i> SVG</button><button class="btn" id="png"><i class="ti ti-photo-down"></i> PNG</button><button class="btn" id="clear"><i class="ti ti-trash"></i> Clear</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const NS='http://www.w3.org/2000/svg';const svg=$('#svg');
+let shapes=[],sel=-1,bg=null,uid=1;
+function add(type){
+  const cx=200+Math.random()*200,cy=150+Math.random()*120;
+  const base={id:uid++,type,fill:$('#fill').value,stroke:$('#stroke').value,label:type==='text'?'Label':''};
+  if(type==='rect')Object.assign(base,{x:cx,y:cy,w:140,h:80});
+  else if(type==='circle')Object.assign(base,{x:cx,y:cy,r:45});
+  else if(type==='arrow'||type==='line')Object.assign(base,{x:cx,y:cy,x2:cx+140,y2:cy});
+  else if(type==='text')Object.assign(base,{x:cx,y:cy,size:22});
+  shapes.push(base);sel=shapes.length-1;draw();openEdit();
+}
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));
+function draw(){
+  let inner=`<defs><marker id="ah" markerWidth="12" markerHeight="12" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="context-stroke"/></marker></defs>`;
+  if(bg)inner+=`<image href="${bg}" x="0" y="0" width="900" height="540" preserveAspectRatio="xMidYMid meet"/>`;
+  shapes.forEach((s,i)=>{
+    const selAttr=i===sel?'stroke-dasharray="0" data-sel="1"':'';
+    if(s.type==='rect')inner+=`<g data-i="${i}"><rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="8" fill="${s.fill}" stroke="${s.stroke}" stroke-width="2.5"/>${s.label?`<text x="${s.x+s.w/2}" y="${s.y+s.h/2+5}" text-anchor="middle" font-size="15" font-weight="600" fill="${txtColor(s.fill)}">${esc(s.label)}</text>`:''}${i===sel?selRing(s.x-3,s.y-3,s.w+6,s.h+6):''}</g>`;
+    else if(s.type==='circle')inner+=`<g data-i="${i}"><circle cx="${s.x}" cy="${s.y}" r="${s.r}" fill="${s.fill}" stroke="${s.stroke}" stroke-width="2.5"/>${s.label?`<text x="${s.x}" y="${s.y+5}" text-anchor="middle" font-size="14" font-weight="600" fill="${txtColor(s.fill)}">${esc(s.label)}</text>`:''}${i===sel?selRing(s.x-s.r-3,s.y-s.r-3,s.r*2+6,s.r*2+6):''}</g>`;
+    else if(s.type==='arrow'||s.type==='line')inner+=`<g data-i="${i}"><line x1="${s.x}" y1="${s.y}" x2="${s.x2}" y2="${s.y2}" stroke="${s.stroke}" stroke-width="3" ${s.type==='arrow'?'marker-end="url(#ah)"':''}/>${i===sel?`<circle cx="${s.x}" cy="${s.y}" r="5" fill="#7c6df0"/><circle cx="${s.x2}" cy="${s.y2}" r="5" fill="#7c6df0"/>`:''}</g>`;
+    else if(s.type==='text')inner+=`<g data-i="${i}"><text x="${s.x}" y="${s.y}" font-size="${s.size}" font-weight="600" fill="${s.stroke}">${esc(s.label)}</text>${i===sel?selRing(s.x-4,s.y-s.size,s.label.length*s.size*0.6+8,s.size+8):''}</g>`;
+  });
+  svg.innerHTML=inner;
+}
+function selRing(x,y,w,h){return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="none" stroke="#7c6df0" stroke-width="1.5" stroke-dasharray="5 3"/>`;}
+function txtColor(hex){const n=parseInt(hex.slice(1),16);const l=0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255);return l>140?'#111':'#fff';}
+let drag=null;
+function pt(e){const r=svg.getBoundingClientRect();return {x:(e.clientX-r.left)*(900/r.width),y:(e.clientY-r.top)*(540/r.height)};}
+svg.addEventListener('mousedown',e=>{const g=e.target.closest('g[data-i]');if(g){sel=+g.dataset.i;const p=pt(e);const s=shapes[sel];drag={ox:p.x,oy:p.y,s:JSON.parse(JSON.stringify(s))};openEdit();draw();}else{sel=-1;$('#editbar').style.display='none';draw();}});
+svg.addEventListener('mousemove',e=>{if(!drag)return;const p=pt(e);const dx=p.x-drag.ox,dy=p.y-drag.oy;const s=shapes[sel];const o=drag.s;s.x=o.x+dx;s.y=o.y+dy;if(s.x2!=null){s.x2=o.x2+dx;s.y2=o.y2+dy;}draw();});
+window.addEventListener('mouseup',()=>drag=null);
+function openEdit(){if(sel<0)return;const s=shapes[sel];$('#editbar').style.display='flex';$('#fill').value=s.fill||'#7fd1c8';$('#stroke').value=s.stroke||'#0d4f4a';$('#label').value=s.label||'';}
+$('#fill').oninput=()=>{if(sel>=0){shapes[sel].fill=$('#fill').value;draw();}};
+$('#stroke').oninput=()=>{if(sel>=0){shapes[sel].stroke=$('#stroke').value;draw();}};
+$('#label').oninput=()=>{if(sel>=0){shapes[sel].label=$('#label').value;draw();}};
+$('#del').onclick=()=>{if(sel>=0){shapes.splice(sel,1);sel=-1;$('#editbar').style.display='none';draw();}};
+$('#front').onclick=()=>{if(sel>=0){const s=shapes.splice(sel,1)[0];shapes.push(s);sel=shapes.length-1;draw();}};
+$('#bgBtn').onclick=()=>$('#bgFile').click();
+$('#bgFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const fr=new FileReader();fr.onload=()=>{bg=fr.result;draw();};fr.readAsDataURL(f);};
+$('#clear').onclick=()=>{shapes=[];bg=null;sel=-1;$('#editbar').style.display='none';draw();};
+$('#dlsvg').onclick=()=>{sel=-1;draw();const s=new XMLSerializer().serializeToString(svg);const b=new Blob([s],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='illustration.svg';a.click();};
+$('#png').onclick=()=>{sel=-1;draw();const s=new XMLSerializer().serializeToString(svg);const b=new Blob([s],{type:'image/svg+xml'});const url=URL.createObjectURL(b);const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=1800;c.height=1080;const cx=c.getContext('2d');cx.scale(2,2);cx.fillStyle='#fff';cx.fillRect(0,0,900,540);cx.drawImage(img,0,0);c.toBlob(bb=>{const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='illustration.png';a.click();});};img.src=url;};
+add('rect');shapes[0].label='Input';add('arrow');add('circle');shapes[2].label='Model';shapes[2].x=520;shapes[2].y=190;sel=-1;draw();
+</script>
+</body>
+</html>

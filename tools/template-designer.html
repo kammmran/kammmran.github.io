@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Template Designer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-template"></i></div><div>Academic Template Designer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-template"></i></div>
+      <div>
+        <div class="tool-title">Academic Template Designer</div>
+        <div class="tool-desc">Design a reusable document template — letterhead, report or memo — with your institution's header, colours, fonts and footer. Edit the body in place, then export a self-contained HTML file you can reopen, fill in and print to PDF whenever you need it. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Type<select id="type"><option value="letter">Letterhead</option><option value="report">Report cover + body</option><option value="memo">Memo</option></select></label>
+      <label class="fld">Org name<input id="org" value="Department of Plant Science" style="width:240px"></label>
+      <label class="fld">Tagline / address<input id="tag" value="State University · Vienna" style="width:200px"></label>
+      <label class="fld">Primary<input type="color" id="c1" value="#0b2545"></label>
+      <label class="fld">Accent<input type="color" id="c2" value="#e8b84b"></label>
+      <label class="fld">Heading font<select id="hf"><option>Georgia, serif</option><option>'Helvetica Neue',Arial,sans-serif</option><option>'Times New Roman',serif</option></select></label>
+      <label class="fld">Body font<select id="bf"><option>'Helvetica Neue',Arial,sans-serif</option><option>Georgia, serif</option><option>'Times New Roman',serif</option></select></label>
+      <label class="fld">Footer<input id="footer" value="plant-science.uni.edu · +43 1 234 5678" style="width:240px"></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="exportHtml"><i class="ti ti-download"></i> Export HTML template</button><button class="btn" id="print"><i class="ti ti-printer"></i> Print / PDF</button><span class="muted" style="font-size:12px;margin-left:auto">The preview body is editable — click and type.</span></div>
+  </div>
+
+  <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#888;padding:18px"><div id="preview"></div></div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #preview .doc{width:210mm;min-height:160mm;background:#fff;margin:auto;box-shadow:0 2px 10px rgba(0,0,0,.3)}
+  @media print{.no-print{display:none!important}@page{margin:0}#preview .doc{box-shadow:none;margin:0;width:auto}body{background:#fff}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function tmpl(){
+  const type=$('#type').value,c1=$('#c1').value,c2=$('#c2').value,hf=$('#hf').value,bf=$('#bf').value;
+  const org=$('#org').value,tag=$('#tag').value,footer=$('#footer').value;
+  const head=`<div style="border-bottom:4px solid ${c2};padding:24px 30px;display:flex;align-items:center;justify-content:space-between"><div><div style="font-family:${hf};font-size:22px;font-weight:800;color:${c1}">${esc(org)}</div><div style="font-size:13px;color:#555">${esc(tag)}</div></div><div style="width:54px;height:54px;border-radius:10px;background:${c1};display:flex;align-items:center;justify-content:center;color:${c2};font-weight:800;font-family:${hf}">${esc(org.replace(/[^A-Za-z ]/g,'').split(' ').map(w=>w[0]).join('').slice(0,3).toUpperCase())}</div></div>`;
+  const foot=`<div style="border-top:2px solid ${c2};padding:12px 30px;font-size:11px;color:#777;text-align:center">${esc(footer)}</div>`;
+  let body='';
+  if(type==='letter')body=`<div style="padding:30px;font-family:${bf};font-size:14px;line-height:1.6;color:#1a1a1a" contenteditable="true"><p>${new Date().toLocaleDateString()}</p><p>Dear …,</p><p>[Your letter text here. This area is editable — type directly, then print or export.]</p><p>Sincerely,</p><p style="margin-top:36px">Name<br>Title</p></div>`;
+  else if(type==='memo')body=`<div style="padding:30px;font-family:${bf};font-size:14px;line-height:1.6" contenteditable="true"><div style="border:1px solid #ddd;border-radius:8px;padding:12px;margin-bottom:16px"><b style="color:${c1}">TO:</b> …<br><b style="color:${c1}">FROM:</b> …<br><b style="color:${c1}">DATE:</b> ${new Date().toLocaleDateString()}<br><b style="color:${c1}">RE:</b> …</div><p>[Memo body — editable.]</p></div>`;
+  else body=`<div style="padding:60px 40px;text-align:center;font-family:${hf}" contenteditable="true"><div style="font-size:13px;letter-spacing:3px;color:${c2};font-weight:700">TECHNICAL REPORT</div><h1 style="font-size:34px;color:${c1};margin:20px 0">Report Title Goes Here</h1><div style="font-size:16px;color:#555">Author Name · ${new Date().getFullYear()}</div></div><div style="padding:0 40px 40px;font-family:${bf};font-size:14px;line-height:1.6" contenteditable="true"><h2 style="color:${c1}">1. Introduction</h2><p>[Body text — editable.]</p></div>`;
+  return `<div class="doc" style="display:flex;flex-direction:column">${head}<div style="flex:1">${body}</div>${foot}</div>`;
+}
+function render(){$('#preview').innerHTML=tmpl();}
+['type','org','tag','c1','c2','hf','bf','footer'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#print').onclick=()=>window.print();
+$('#exportHtml').onclick=()=>{
+  const doc=tmpl();
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc($('#org').value)} template</title><style>body{margin:0;background:#eee;font-family:${$('#bf').value}}@media print{body{background:#fff}@page{margin:0}.doc{box-shadow:none!important}}</style></head><body style="padding:20px">${doc}</body></html>`;
+  const b=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='template.html';a.click();
+};
+render();
+</script>
+</body>
+</html>

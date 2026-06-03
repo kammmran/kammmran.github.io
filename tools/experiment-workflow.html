@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Experiment Workflow Designer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrow-guide"></i></div><div>Experiment Workflow Designer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-arrow-guide"></i></div>
+      <div>
+        <div class="tool-title">Experiment Workflow Designer</div>
+        <div class="tool-desc">Lay out an experimental protocol as a left-to-right workflow of numbered stages, each with a short description and optional duration or sample size. Great for the "experimental design" panel of a paper or a methods slide. Export SVG/PNG. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Stages — one per line: <b>Stage name | detail | meta (e.g. 2 h, n=30)</b>
+      <textarea id="src" style="min-height:150px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">Sample prep | extract leaf tissue | n=400
+Spectral scan | hyperspectral imaging | 5 min/sample
+Preprocess | normalize & QC | automated
+Model | self-supervised + fine-tune | GPU, 6 h
+Validate | held-out field trial | n=120
+Report | metrics & figures | —</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Wrap per row<select id="per"><option value="0">Single row</option><option value="3">3 per row</option><option value="4">4 per row</option></select></label>
+      <label class="fld">Theme<select id="theme"><option value="#0d4f4a,#2dd4bf">Teal</option><option value="#0b2545,#60a5fa">Navy</option><option value="#3b2a5e,#c4b7ff">Purple</option><option value="#5e1322,#e0a96d">Maroon</option></select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff"><div id="chart"></div></div>
+    <div class="row"><button class="btn" id="svg"><i class="ti ti-download"></i> SVG</button><button class="btn" id="png"><i class="ti ti-photo-down"></i> PNG</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let lastSVG='';
+function items(){return $('#src').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split('|').map(x=>x.trim());return {name:p[0],detail:p[1]||'',meta:p[2]||''};});}
+function wrapT(text,maxChars,x,dy,start){const words=String(text||'').split(/\s+/);const lines=[];let cur='';words.forEach(w=>{if((cur+' '+w).length>maxChars&&cur){lines.push(cur);cur=w;}else cur=cur?cur+' '+w:w;});if(cur)lines.push(cur);return lines.map((l,i)=>`<tspan x="${x}" dy="${i===0?start:dy}">${esc(l)}</tspan>`).join('');}
+function render(){
+  const its=items();if(!its.length){$('#status').textContent='Add stages.';return;}
+  const [c1,c2]=$('#theme').value.split(',');
+  const bw=190,bh=120,gapX=56,gapY=70;let per=+$('#per').value||its.length;
+  const rows=Math.ceil(its.length/per);const W=per*bw+(per-1)*gapX+60,H=rows*bh+(rows-1)*gapY+60;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" font-family="Arial,sans-serif"><defs><marker id="a" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="${c1}"/></marker></defs>`;
+  const pos=its.map((_,i)=>{const r=Math.floor(i/per),c=i%per;const leftToRight=r%2===0;const col=leftToRight?c:(per-1-c);return {x:30+col*(bw+gapX),y:30+r*(bh+gapY)};});
+  // arrows
+  for(let i=0;i<its.length-1;i++){const a=pos[i],b=pos[i+1];if(a.y===b.y){const x1=Math.min(a.x,b.x)+bw,x2=Math.max(a.x,b.x);const dir=b.x>a.x;svg+=`<line x1="${dir?a.x+bw:a.x}" y1="${a.y+bh/2}" x2="${dir?b.x-6:b.x+bw+6}" y2="${b.y+bh/2}" stroke="${c1}" stroke-width="3" marker-end="url(#a)"/>`;}else{svg+=`<line x1="${a.x+bw/2}" y1="${a.y+bh}" x2="${b.x+bw/2}" y2="${b.y-6}" stroke="${c1}" stroke-width="3" marker-end="url(#a)"/>`;}}
+  its.forEach((s,i)=>{const {x,y}=pos[i];
+    svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${bh}" rx="14" fill="#f3f7f7" stroke="${c1}" stroke-width="2.5"/>`;
+    svg+=`<circle cx="${x+22}" cy="${y+22}" r="15" fill="${c1}"/><text x="${x+22}" y="${y+27}" text-anchor="middle" font-size="15" font-weight="700" fill="#fff">${i+1}</text>`;
+    svg+=`<text x="${x+44}" y="${y+27}" font-size="15" font-weight="800" fill="${c1}">${esc(s.name.slice(0,16))}</text>`;
+    svg+=`<text x="${x+14}" y="${y+50}" font-size="12.5" fill="#333">${wrapT(s.detail,26,x+14,15,0)}</text>`;
+    if(s.meta&&s.meta!=='—')svg+=`<text x="${x+14}" y="${y+bh-14}" font-size="12" font-weight="700" fill="${c2.replace('#','#')}"><tspan fill="${c1}">▸ ${esc(s.meta)}</tspan></text>`;
+  });
+  svg+='</svg>';lastSVG=svg;$('#chart').innerHTML=svg;$('#status').textContent=its.length+' stages';
+}
+['src','per','theme'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#svg').onclick=()=>{const b=new Blob([lastSVG],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='workflow.svg';a.click();};
+$('#png').onclick=()=>{const b=new Blob([lastSVG],{type:'image/svg+xml'});const url=URL.createObjectURL(b);const img=new Image();img.onload=()=>{const m=lastSVG.match(/width="(\d+)" height="(\d+)"/);const c=document.createElement('canvas');c.width=m[1]*2;c.height=m[2]*2;const cx=c.getContext('2d');cx.scale(2,2);cx.fillStyle='#fff';cx.fillRect(0,0,+m[1],+m[2]);cx.drawImage(img,0,0);c.toBlob(bb=>{const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='workflow.png';a.click();});};img.src=url;};
+render();
+</script>
+</body>
+</html>

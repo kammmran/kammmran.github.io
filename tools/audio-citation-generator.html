@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio Citation Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-quote"></i></div><div>Audio Citation Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-quote"></i></div>
+      <div>
+        <div class="tool-title">Audio Citation Generator</div>
+        <div class="tool-desc">Build correct references for podcasts, interviews, audio archives, and recorded talks. Fill in the details once and get APA, MLA, and Chicago citations side by side, with an optional timestamp for the exact moment you're citing.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Source type<select id="type">
+      <option value="podcast">Podcast episode</option>
+      <option value="interview">Interview / personal recording</option>
+      <option value="archive">Audio archive recording</option>
+      <option value="talk">Recorded talk / lecture</option>
+    </select></label>
+    <div class="grid2">
+      <label class="fld">Speaker / author (Last, First)<input id="author" placeholder="Doe, Jane"></label>
+      <label class="fld">Role<select id="role"><option>Host</option><option>Speaker</option><option>Interviewee</option><option>Narrator</option><option>Producer</option></select></label>
+      <label class="fld">Title of episode/recording<input id="title" placeholder="The Future of Open Science"></label>
+      <label class="fld">Series / program / archive<input id="series" placeholder="Science Talks Podcast"></label>
+      <label class="fld">Publisher / platform<input id="pub" placeholder="Apple Podcasts"></label>
+      <label class="fld">Date (YYYY-MM-DD)<input id="date" type="date"></label>
+      <label class="fld">URL<input id="url" placeholder="https://…"></label>
+      <label class="fld">Timestamp (optional, mm:ss)<input id="ts" placeholder="14:32"></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-quote"></i> Generate citations</button><span class="muted" id="status" style="font-size:12px"></span></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .cit{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:12px 14px;margin-bottom:8px;position:relative}
+  .cit .style{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent3);font-weight:700;margin-bottom:5px}
+  .cit .body{font-size:14px;line-height:1.6} .cit .body i{font-style:italic}
+  .cit .cp{position:absolute;top:10px;right:10px;color:var(--text3);cursor:pointer} .cit .cp:hover{color:var(--teal)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const v=id=>$('#'+id).value.trim();
+function fmtDate(d,style){if(!d)return'n.d.';const dt=new Date(d+'T00:00');if(isNaN(dt))return d;const M=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  if(style==='apa')return `${dt.getFullYear()}, ${M[dt.getMonth()]} ${dt.getDate()}`;
+  if(style==='mla')return `${dt.getDate()} ${M[dt.getMonth()].slice(0,3)}. ${dt.getFullYear()}`;
+  return `${M[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}`;}
+function firstLast(a){if(!a)return['',''];const p=a.split(',');return p.length>1?[p[0].trim(),p[1].trim()]:[a.trim(),''];}
+$('#gen').onclick=()=>{
+  const author=v('author'),[last,first]=firstLast(author),role=v('role').toLowerCase();
+  const title=v('title'),series=v('series'),pub=v('pub'),date=v('date'),url=v('url'),ts=v('ts'),type=v('type');
+  if(!title&&!series){$('#status').textContent='Add at least a title or series.';return;}
+  const yr=date?new Date(date+'T00:00').getFullYear():'n.d.';
+  const medium={podcast:'Audio podcast episode',interview:'Personal interview',archive:'Audio recording',talk:'Audio recording'}[type];
+  const tsNote=ts?` at ${ts}`:'';
+  // APA
+  const apaAuthor=last?`${last}, ${first?first[0]+'.':''}`:'';
+  const apa=`${apaAuthor?apaAuthor+' ':''}${role&&apaAuthor?`(${role.charAt(0).toUpperCase()+role.slice(1)}). `:''}(${fmtDate(date,'apa')}). <i>${esc(title||series)}</i>${title&&series?` [${medium}]. ${esc(series)}`:` [${medium}]`}.${pub?' '+esc(pub)+'.':''}${url?' '+esc(url):''}`;
+  // MLA
+  const mlaAuthor=last?`${last}${first?', '+first:''}. `:'';
+  const mla=`${mlaAuthor}"${esc(title||series)}." <i>${esc(series||pub)}</i>, ${pub?esc(pub)+', ':''}${fmtDate(date,'mla')}${url?', '+esc(url):''}.${ts?` Timestamp ${esc(ts)}.`:''}`;
+  // Chicago
+  const chiAuthor=last?`${last}${first?', '+first:''}. `:'';
+  const chi=`${chiAuthor}"${esc(title||series)}." ${role?role.charAt(0).toUpperCase()+role.slice(1)+', ':''}<i>${esc(series||pub)}</i>. ${medium}, ${fmtDate(date,'chicago')}.${url?' '+esc(url)+'.':''}${ts?` ${esc(ts)}.`:''}`;
+  const cits=[['APA 7',apa],['MLA 9',mla],['Chicago',chi]];
+  $('#out').innerHTML=cits.map(([s,c])=>`<div class="cit"><div class="style">${s}</div><div class="body">${c}</div><i class="ti ti-copy cp" title="copy"></i></div>`).join('');
+  $('#status').textContent='Generated';
+};
+$('#out').addEventListener('click',e=>{const cp=e.target.closest('.cp');if(cp){const b=cp.parentElement.querySelector('.body');navigator.clipboard.writeText(b.innerText);$('#status').textContent='Copied.';}});
+$('#date').value=new Date().toISOString().slice(0,10);
+</script>
+</body>
+</html>

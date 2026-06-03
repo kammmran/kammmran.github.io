@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statistical Results Visualizer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-dots-2"></i></div><div>Statistical Results Visualizer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-dots-2"></i></div>
+      <div>
+        <div class="tool-title">Statistical Results Visualizer</div>
+        <div class="tool-desc">Plot the kind of figures stats papers need: means with error bars (95% CI / SE / SD), or a forest plot of effect sizes with confidence intervals. Type your summary values and get a clean, labelled SVG you can drop straight into a manuscript. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px"><label class="fld">Chart type<select id="type"><option value="bar">Means ± error bars</option><option value="forest">Forest plot (effect ± CI)</option></select></label>
+      <label class="fld" id="errWrap">Error bars are<select id="err"><option>95% CI</option><option>SE</option><option>SD</option></select></label>
+      <label class="fld">Title<input id="title" value="Detection accuracy by method" style="width:220px"></label>
+    </div>
+    <label class="fld" id="lblBar">Data — <b>Group | mean | error</b> (error = half-length of the bar)
+      <textarea id="src" style="min-height:130px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">Baseline | 78 | 4
+Augmented | 85 | 3.5
+Ours | 94 | 2.2</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Y-axis label<input id="ylab" value="Accuracy (%)" style="width:180px"></label>
+      <label class="fld">Color<select id="theme"><option value="#60a5fa">Blue</option><option value="#2dd4bf">Teal</option><option value="#7c6df0">Purple</option><option value="#f472b6">Pink</option></select></label>
+      <label class="fld" id="refWrap" style="display:none">Null line at<input id="refline" type="number" value="1" style="width:80px"></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff"><div id="chart"></div></div>
+    <div class="row"><button class="btn" id="svg"><i class="ti ti-download"></i> SVG</button><button class="btn" id="png"><i class="ti ti-photo-down"></i> PNG</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">For the forest plot use <b>Label | effect | lower | upper</b> per line (e.g. odds ratio and its CI). A vertical null line marks no effect.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let lastSVG='';
+function syncType(){const f=$('#type').value==='forest';$('#refWrap').style.display=f?'flex':'none';$('#errWrap').style.display=f?'none':'flex';$('#lblBar').firstChild.textContent=f?'Data — ':'Data — ';if(f&&!$('#src').dataset.forest){$('#src').value='Study A | 1.4 | 1.1 | 1.8\nStudy B | 0.9 | 0.6 | 1.3\nStudy C | 1.7 | 1.2 | 2.4\nPooled | 1.3 | 1.05 | 1.6';$('#src').dataset.forest='1';$('#refline').value='1';}render();}
+function bar(){
+  const rows=$('#src').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]&&p[1]);
+  if(!rows.length)return '';
+  const col=$('#theme').value;const W=120+rows.length*120,H=440,padB=70,padL=70,padT=50;
+  const vals=rows.map(r=>+r[1]),errs=rows.map(r=>+r[2]||0);const maxV=Math.max(...vals.map((v,i)=>v+errs[i]))*1.1,minV=Math.min(0,...vals.map((v,i)=>v-errs[i]));
+  const plotH=H-padB-padT,plotW=W-padL-30;const yOf=v=>padT+plotH-(v-minV)/(maxV-minV)*plotH;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" font-family="Arial,sans-serif"><text x="${W/2}" y="26" text-anchor="middle" font-size="16" font-weight="700">${esc($('#title').value)}</text>`;
+  // y axis
+  svg+=`<line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT+plotH}" stroke="#888"/><line x1="${padL}" y1="${padT+plotH}" x2="${W-30}" y2="${padT+plotH}" stroke="#888"/>`;
+  for(let t=0;t<=4;t++){const v=minV+(maxV-minV)*t/4;const yy=yOf(v);svg+=`<line x1="${padL-4}" y1="${yy}" x2="${padL}" y2="${yy}" stroke="#888"/><text x="${padL-8}" y="${yy+4}" text-anchor="end" font-size="11" fill="#555">${(+v.toFixed(1))}</text>`;}
+  svg+=`<text transform="translate(18,${padT+plotH/2}) rotate(-90)" text-anchor="middle" font-size="13" fill="#333">${esc($('#ylab').value)}</text>`;
+  const bw=plotW/rows.length*0.55;
+  rows.forEach((r,i)=>{const cx=padL+plotW/rows.length*(i+0.5);const v=+r[1],e=+r[2]||0;const top=yOf(v),base=yOf(Math.max(0,minV));
+    svg+=`<rect x="${cx-bw/2}" y="${Math.min(top,base)}" width="${bw}" height="${Math.abs(base-top)}" fill="${col}" rx="4"/>`;
+    if(e){svg+=`<line x1="${cx}" y1="${yOf(v-e)}" x2="${cx}" y2="${yOf(v+e)}" stroke="#222" stroke-width="2"/><line x1="${cx-7}" y1="${yOf(v+e)}" x2="${cx+7}" y2="${yOf(v+e)}" stroke="#222" stroke-width="2"/><line x1="${cx-7}" y1="${yOf(v-e)}" x2="${cx+7}" y2="${yOf(v-e)}" stroke="#222" stroke-width="2"/>`;}
+    svg+=`<text x="${cx}" y="${padT+plotH+20}" text-anchor="middle" font-size="12" fill="#333">${esc(r[0])}</text>`;
+    svg+=`<text x="${cx}" y="${top-8}" text-anchor="middle" font-size="11" font-weight="700" fill="#222">${v}</text>`;
+  });
+  svg+=`<text x="${W-30}" y="${H-8}" text-anchor="end" font-size="10" fill="#999">error bars: ${esc($('#err').value)}</text></svg>`;
+  return svg;
+}
+function forest(){
+  const rows=$('#src').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p.length>=4);
+  if(!rows.length)return '';
+  const col=$('#theme').value;const W=620,rowH=44,H=90+rows.length*rowH,padL=170,plotW=W-padL-50;
+  const ref=+$('#refline').value;
+  const all=rows.flatMap(r=>[+r[2],+r[3]]);const min=Math.min(...all,ref)*0.95,max=Math.max(...all,ref)*1.05;const xOf=v=>padL+(v-min)/(max-min)*plotW;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" font-family="Arial,sans-serif"><text x="${W/2}" y="26" text-anchor="middle" font-size="16" font-weight="700">${esc($('#title').value)}</text>`;
+  svg+=`<line x1="${xOf(ref)}" y1="50" x2="${xOf(ref)}" y2="${H-30}" stroke="#bbb" stroke-dasharray="4 3"/><text x="${xOf(ref)}" y="${H-14}" text-anchor="middle" font-size="11" fill="#777">${ref}</text>`;
+  rows.forEach((r,i)=>{const y=70+i*rowH;const eff=+r[1],lo=+r[2],hi=+r[3];const pooled=/pool|summary|overall|total/i.test(r[0]);
+    svg+=`<text x="20" y="${y+4}" font-size="13" font-weight="${pooled?700:400}" fill="#222">${esc(r[0])}</text>`;
+    svg+=`<line x1="${xOf(lo)}" y1="${y}" x2="${xOf(hi)}" y2="${y}" stroke="#333" stroke-width="2"/><line x1="${xOf(lo)}" y1="${y-5}" x2="${xOf(lo)}" y2="${y+5}" stroke="#333" stroke-width="2"/><line x1="${xOf(hi)}" y1="${y-5}" x2="${xOf(hi)}" y2="${y+5}" stroke="#333" stroke-width="2"/>`;
+    if(pooled)svg+=`<polygon points="${xOf(eff)},${y-9} ${xOf(hi)},${y} ${xOf(eff)},${y+9} ${xOf(lo)},${y}" fill="${col}"/>`;
+    else svg+=`<rect x="${xOf(eff)-6}" y="${y-6}" width="12" height="12" fill="${col}"/>`;
+    svg+=`<text x="${W-20}" y="${y+4}" text-anchor="end" font-size="12" fill="#444">${eff} [${lo}, ${hi}]</text>`;
+  });
+  svg+='</svg>';return svg;
+}
+function render(){lastSVG=$('#type').value==='forest'?forest():bar();$('#chart').innerHTML=lastSVG;$('#status').textContent='Rendered';}
+$('#type').onchange=syncType;['src','title','ylab','theme','err','refline'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#svg').onclick=()=>{const b=new Blob([lastSVG],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='stats-figure.svg';a.click();};
+$('#png').onclick=()=>{const b=new Blob([lastSVG],{type:'image/svg+xml'});const url=URL.createObjectURL(b);const img=new Image();img.onload=()=>{const m=lastSVG.match(/width="(\d+)" height="(\d+)"/);const c=document.createElement('canvas');c.width=m[1]*2;c.height=m[2]*2;const cx=c.getContext('2d');cx.scale(2,2);cx.fillStyle='#fff';cx.fillRect(0,0,+m[1],+m[2]);cx.drawImage(img,0,0);c.toBlob(bb=>{const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='stats-figure.png';a.click();});};img.src=url;};
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Readability-by-Voice Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-ear"></i></div><div>Readability-by-Voice</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-ear"></i></div>
+      <div>
+        <div class="tool-title">Readability-by-Voice Analyzer</div>
+        <div class="tool-desc">Hear your manuscript read aloud while awkward, overlong, and hard-to-say sentences are flagged in real time. Reading sentences aloud is the oldest editing trick — this one does the reading and points at the rough spots.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Your text
+      <textarea id="txt" style="min-height:150px" placeholder="Paste a paragraph or section…">The implementation of the aforementioned methodology, which was developed in order to facilitate the comprehensive analysis of the multifaceted datasets that were collected over the course of the longitudinal study, necessitated the utilization of a substantial computational infrastructure. Results were good. We observed improvements.</textarea>
+    </label>
+    <div class="row" style="gap:10px">
+      <label class="fld" style="flex:1;min-width:160px">Voice<select id="voice"></select></label>
+      <label class="fld">Rate <input type="range" id="rate" min="0.7" max="1.3" step="0.05" value="0.95"></label>
+      <button class="btn btn-primary" id="play" style="margin-left:auto"><i class="ti ti-player-play"></i> Read aloud</button>
+      <button class="btn" id="stop"><i class="ti ti-player-stop"></i> Stop</button>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Sentences</div><div class="stat-value" id="sc">0</div></div>
+      <div class="stat-card"><div class="stat-label">Avg words/sentence</div><div class="stat-value" id="avg">0</div></div>
+      <div class="stat-card"><div class="stat-label">Flagged</div><div class="stat-value" id="fl" style="color:var(--amber)">0</div></div>
+      <div class="stat-card"><div class="stat-label">Flesch ease</div><div class="stat-value" id="fre">—</div></div>
+    </div>
+    <div id="out" style="border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg2);font-size:15px;line-height:1.9;max-height:40vh;overflow:auto"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Flags: <b style="color:var(--red)">long</b> (&gt;28 words), <b style="color:var(--amber)">awkward</b> (heavy clause stacking / tongue-twisters), <b style="color:var(--blue)">passive</b>. Hover a sentence to read why.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .sent{cursor:pointer;border-radius:4px;padding:1px 2px} .sent.cur{outline:2px solid var(--pink)}
+  .sent.long{background:rgba(248,113,113,0.18)} .sent.awk{background:rgba(251,191,36,0.18)} .sent.pass{background:rgba(96,165,250,0.16)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let voices=[];
+function lv(){voices=speechSynthesis.getVoices();$('#voice').innerHTML=voices.map((v,i)=>`<option value="${i}"${/en[-_]?(US|GB)/i.test(v.lang)&&v.default?' selected':''}>${esc(v.name)} (${v.lang})</option>`).join('');}
+lv();speechSynthesis.onvoiceschanged=lv;
+function syll(w){w=w.toLowerCase().replace(/[^a-z]/g,'');if(w.length<=3)return 1;w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,'');const m=w.match(/[aeiouy]{1,2}/g);return m?m.length:1;}
+let sents=[];
+function analyze(){
+  const t=$('#txt').value.trim();
+  sents=(t.match(/[^.!?]+[.!?]+|\S[^.!?]*$/g)||[]).map(s=>s.trim()).filter(Boolean);
+  let flagged=0,totW=0,totS=0;
+  const html=sents.map((s,i)=>{
+    const words=s.match(/\b[\w''-]+\b/g)||[];const wc=words.length;totW+=wc;words.forEach(w=>totS+=syll(w));
+    const cls=[];const reasons=[];
+    if(wc>28){cls.push('long');reasons.push(`${wc} words — consider splitting`);}
+    const commas=(s.match(/,/g)||[]).length;const conj=(s.match(/\b(which|that|and|or|because|although|while|whereas)\b/gi)||[]).length;
+    if((commas>=3||conj>=4)&&wc>18){cls.push('awk');reasons.push('clause-heavy — hard to follow aloud');}
+    if(/\b(was|were|is|are|been|be|being)\b\s+\w+(ed|en)\b/i.test(s)){cls.push('pass');reasons.push('passive voice');}
+    if(cls.length)flagged++;
+    return `<span class="sent ${cls.join(' ')}" id="s${i}" title="${esc(reasons.join('; ')||'reads cleanly')}">${esc(s)} </span>`;
+  }).join('');
+  $('#out').innerHTML=html||'<span class="muted">Your text appears here…</span>';
+  $('#sc').textContent=sents.length;
+  $('#avg').textContent=sents.length?Math.round(totW/sents.length):0;
+  $('#fl').textContent=flagged;
+  if(totW){const fre=206.835-1.015*(totW/sents.length)-84.6*(totS/totW);$('#fre').textContent=Math.round(fre);$('#fre').style.color=fre>=50?'var(--green)':fre>=30?'var(--amber)':'var(--red)';}
+}
+$('#txt').addEventListener('input',analyze);analyze();
+$('#play').onclick=()=>{
+  speechSynthesis.cancel();let i=0;
+  function next(){if(i>=sents.length)return;const u=new SpeechSynthesisUtterance(sents[i]);const v=voices[$('#voice').value];if(v)u.voice=v;u.rate=parseFloat($('#rate').value);document.querySelectorAll('.sent.cur').forEach(e=>e.classList.remove('cur'));const el=$('#s'+i);if(el){el.classList.add('cur');el.scrollIntoView({block:'nearest'});}u.onend=()=>{i++;next();};u.onerror=()=>{i++;next();};speechSynthesis.speak(u);}
+  next();
+};
+$('#stop').onclick=()=>{speechSynthesis.cancel();document.querySelectorAll('.sent.cur').forEach(e=>e.classList.remove('cur'));};
+$('#out').addEventListener('click',e=>{const s=e.target.closest('.sent');if(s){const u=new SpeechSynthesisUtterance(sents[+s.id.slice(1)]);const v=voices[$('#voice').value];if(v)u.voice=v;u.rate=parseFloat($('#rate').value);speechSynthesis.cancel();speechSynthesis.speak(u);}});
+</script>
+</body>
+</html>

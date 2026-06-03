@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reproducibility Audit Checklist — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-checkup-list"></i></div><div>Reproducibility Audit</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-checkup-list"></i></div>
+      <div>
+        <div class="tool-title">Reproducibility / Environment Audit</div>
+        <div class="tool-desc">Score how reproducible your computational research is against a checklist covering code, data, environment, randomness, and documentation. Tick what you've done, see a weighted readiness score with the highest-impact gaps highlighted, and print the report. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <div id="overall" class="stat-grid"></div>
+    <div id="list"></div>
+    <button class="btn" id="print"><i class="ti ti-printer"></i> Print report</button>
+  </div>
+  <div id="report"></div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .sec{margin-bottom:14px} .sec h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent3);margin:0 0 6px}
+  .item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px}
+  .item input{margin-top:3px} .item .t{flex:1;font-size:13px} .item .w{font-size:11px;color:var(--text3)}
+  @media print{.no-print{display:none!important}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const SECTIONS={
+  'Code availability':[['Code is in version control (git)',3],['Code is publicly archived (GitHub/Zenodo) with a DOI',3],['A README explains how to run it',2],['Code has an open-source license',2]],
+  'Data':[['Raw/processed data is archived and accessible',3],['Data has a documented schema / data dictionary',2],['Data-processing steps are scripted (not manual)',3]],
+  'Environment':[['All dependencies are pinned to exact versions',3],['Language/runtime version is recorded',2],['Environment is captured (requirements.txt / env.yml / Dockerfile)',3]],
+  'Randomness & determinism':[['Random seeds are set and recorded',3],['Hardware/library nondeterminism is noted (e.g. GPU)',1]],
+  'Results & docs':[['A single command/script reproduces the main results',3],['Figures/tables are generated from code, not hand-edited',2],['Parameters/configs are stored in files, not hard-coded',2]]
+};
+const state={};
+function render(){
+  let html='';let got=0,total=0;
+  Object.entries(SECTIONS).forEach(([sec,items])=>{
+    html+=`<div class="sec"><h3>${esc(sec)}</h3>`;
+    items.forEach(([t,w],i)=>{const key=sec+i;total+=w;if(state[key])got+=w;html+=`<label class="item"><input type="checkbox" data-k="${key}" ${state[key]?'checked':''}><span class="t">${esc(t)}</span><span class="w">+${w}</span></label>`;});
+    html+='</div>';
+  });
+  $('#list').innerHTML=html;
+  const pct=Math.round(got/total*100);
+  const lvl=pct>=85?'Excellent':pct>=65?'Good':pct>=40?'Partial':'At risk';
+  const col=pct>=85?'var(--green)':pct>=65?'var(--teal)':pct>=40?'var(--amber)':'var(--red)';
+  // top gaps
+  const gaps=[];Object.entries(SECTIONS).forEach(([sec,items])=>items.forEach(([t,w],i)=>{if(!state[sec+i])gaps.push([t,w]);}));
+  gaps.sort((a,b)=>b[1]-a[1]);
+  $('#overall').innerHTML=`<div class="stat-card"><div class="stat-label">Score</div><div class="stat-value" style="color:${col}">${got}/${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Readiness</div><div class="stat-value" style="color:${col}">${pct}%</div></div>
+    <div class="stat-card"><div class="stat-label">Level</div><div class="stat-value" style="font-size:16px;color:${col}">${lvl}</div></div>
+    <div class="stat-card"><div class="stat-label">Top gap</div><div class="stat-value" style="font-size:13px">${gaps.length?esc(gaps[0][0].slice(0,24))+'…':'none 🎉'}</div></div>`;
+  $('#report').innerHTML=`<div style="background:#fff;color:#111;border-radius:8px;padding:24px;font-family:Georgia,serif"><h2 style="margin:0 0 6px">Reproducibility Audit — ${pct}% (${lvl})</h2><p style="font-size:13px;color:#555">Score ${got}/${total}. ${gaps.length?'Highest-impact gaps:':'All items complete.'}</p><ul style="font-size:13.5px">${gaps.slice(0,5).map(g=>`<li>${esc(g[0])} (+${g[1]})</li>`).join('')}</ul></div>`;
+}
+$('#list').addEventListener('change',e=>{const k=e.target.dataset.k;if(k!=null){state[k]=e.target.checked;render();}});
+$('#print').onclick=()=>window.print();
+render();
+</script>
+</body>
+</html>

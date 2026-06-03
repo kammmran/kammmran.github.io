@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Protein Sequence Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-protein"></i></div><div>Protein Sequence Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-protein"></i></div>
+      <div>
+        <div class="tool-title">Protein Sequence Analyzer</div>
+        <div class="tool-desc">Paste an amino-acid sequence and compute its molecular weight, theoretical isoelectric point (pI), net charge at a chosen pH, GRAVY hydropathy, aromaticity, and full residue composition. Accepts FASTA. A quick ProtParam-style readout that runs entirely in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Protein sequence (one-letter codes, FASTA header optional)
+      <textarea id="seq" style="min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13px">>example
+MAIVMGRWKGAR</textarea>
+    </label>
+    <div class="row" style="gap:10px"><button class="btn btn-primary" id="run"><i class="ti ti-flask"></i> Analyze</button><label class="fld" style="flex-direction:row;align-items:center;gap:6px">Charge at pH<input id="ph" type="number" value="7" step="0.1" style="width:70px"></label><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="stats" class="stat-grid"></div>
+    <div id="comp"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">MW uses average isotopic masses; pI/charge use standard pKa values (EMBOSS set) and are theoretical estimates for the unmodified sequence. GRAVY &gt; 0 suggests hydrophobic, &lt; 0 hydrophilic.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .aa{display:inline-flex;flex-direction:column;align-items:center;width:46px;padding:6px 0;border-radius:6px;background:var(--bg2);border:1px solid var(--border);margin:0 4px 6px 0;font-size:12px}
+  .aa b{font-size:14px} .aa .p{color:var(--text3);font-size:11px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+// average residue masses (water already excluded; add 18.015 for full peptide)
+const MW={A:71.0788,R:156.1875,N:114.1038,D:115.0886,C:103.1388,E:129.1155,Q:128.1307,G:57.0519,H:137.1411,I:113.1594,L:113.1594,K:128.1741,M:131.1926,F:147.1766,P:97.1167,S:87.0782,T:101.1051,W:186.2132,Y:163.1760,V:99.1326};
+const NAMES={A:'Ala',R:'Arg',N:'Asn',D:'Asp',C:'Cys',E:'Glu',Q:'Gln',G:'Gly',H:'His',I:'Ile',L:'Leu',K:'Lys',M:'Met',F:'Phe',P:'Pro',S:'Ser',T:'Thr',W:'Trp',Y:'Tyr',V:'Val'};
+const KD={A:1.8,R:-4.5,N:-3.5,D:-3.5,C:2.5,E:-3.5,Q:-3.5,G:-0.4,H:-3.2,I:4.5,L:3.8,K:-3.9,M:1.9,F:2.8,P:-1.6,S:-0.8,T:-0.7,W:-0.9,Y:-1.3,V:4.2};
+// pKa: Nterm, Cterm, and side chains
+const pKa={Nterm:9.69,Cterm:2.34,C:8.33,D:3.65,E:4.25,H:6.0,K:10.53,R:12.48,Y:10.07};
+function clean(raw){return raw.replace(/^>.*$/gm,'').replace(/[^A-Za-z]/g,'').toUpperCase().replace(/[^ARNDCEQGHILKMFPSTWYV]/g,'');}
+function charge(seq,pH,counts){
+  let c=0;
+  c+=1/(1+Math.pow(10,pH-pKa.Nterm));c-=1/(1+Math.pow(10,pKa.Cterm-pH));
+  c+=(counts.K||0)/(1+Math.pow(10,pH-pKa.K));
+  c+=(counts.R||0)/(1+Math.pow(10,pH-pKa.R));
+  c+=(counts.H||0)/(1+Math.pow(10,pH-pKa.H));
+  c-=(counts.D||0)/(1+Math.pow(10,pKa.D-pH));
+  c-=(counts.E||0)/(1+Math.pow(10,pKa.E-pH));
+  c-=(counts.C||0)/(1+Math.pow(10,pKa.C-pH));
+  c-=(counts.Y||0)/(1+Math.pow(10,pKa.Y-pH));
+  return c;
+}
+function pI(counts){let lo=0,hi=14;for(let i=0;i<100;i++){const mid=(lo+hi)/2;charge(null,mid,counts)>0?lo=mid:hi=mid;}return (lo+hi)/2;}
+$('#run').onclick=()=>{
+  const s=clean($('#seq').value);if(!s){$('#status').textContent='Enter a protein sequence.';return;}
+  const counts={};for(const a of s)counts[a]=(counts[a]||0)+1;
+  let mw=18.015;for(const a of s)mw+=MW[a]||0;
+  const gravy=s.split('').reduce((t,a)=>t+(KD[a]||0),0)/s.length;
+  const arom=((counts.F||0)+(counts.W||0)+(counts.Y||0))/s.length*100;
+  const isoP=pI(counts);
+  const ph=+$('#ph').value;const netCharge=charge(null,ph,counts);
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Length</div><div class="stat-value">${s.length} aa</div></div>
+    <div class="stat-card"><div class="stat-label">Mol. weight</div><div class="stat-value" style="font-size:18px">${(mw/1000).toFixed(2)} kDa</div></div>
+    <div class="stat-card"><div class="stat-label">Theoretical pI</div><div class="stat-value" style="color:var(--teal)">${isoP.toFixed(2)}</div></div>
+    <div class="stat-card"><div class="stat-label">Charge @ pH ${ph}</div><div class="stat-value" style="color:${netCharge>0?'var(--blue)':'var(--red)'}">${netCharge>0?'+':''}${netCharge.toFixed(1)}</div></div>
+    <div class="stat-card"><div class="stat-label">GRAVY</div><div class="stat-value" style="color:${gravy>0?'var(--amber)':'var(--green)'}">${gravy.toFixed(2)}</div></div>
+    <div class="stat-card"><div class="stat-label">Aromaticity</div><div class="stat-value">${arom.toFixed(1)}%</div></div>`;
+  const order=Object.keys(MW).sort((a,b)=>(counts[b]||0)-(counts[a]||0));
+  $('#comp').innerHTML='<div class="panel-label" style="margin:8px 0 6px">Residue composition</div>'+order.filter(a=>counts[a]).map(a=>`<span class="aa"><b>${a}</b><span>${counts[a]}</span><span class="p">${(counts[a]/s.length*100).toFixed(0)}%</span></span>`).join('');
+  $('#status').textContent='Analyzed';
+};
+$('#run').click();
+</script>
+</body>
+</html>

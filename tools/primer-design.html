@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Primer Design Assistant — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-arrows-join-2"></i></div><div>Primer Design Assistant</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-arrows-join-2"></i></div>
+      <div>
+        <div class="tool-title">Primer Design Assistant</div>
+        <div class="tool-desc">Design PCR primers from a template. The tool scans candidate forward and reverse primers within your length and Tm window, scores them on GC content, GC clamp, self-complementarity and runs, and reports the resulting amplicon. Tm is computed with the nearest-neighbour model. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Template DNA (5'→3', FASTA header optional)
+      <textarea id="seq" style="min-height:100px;font-family:ui-monospace,Menlo,monospace;font-size:13px">>template
+ATGAGTAAAGGAGAAGAACTTTTCACTGGAGTTGTCCCAATTCTTGTTGAATTAGATGGTGATGTTAATGGGCACAAATTTTCTGTCAGTGGAGAGGGTGAAGGTGATGCAACATACGGAAAACTTACCCTTAAATTTATTTGCACTACTGGAAAACTACCTGTTCCATGG</textarea>
+    </label>
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Length min<input id="lmin" type="number" value="18" style="width:64px"></label>
+      <label class="fld">max<input id="lmax" type="number" value="24" style="width:64px"></label>
+      <label class="fld">Tm min<input id="tmin" type="number" value="57" style="width:64px"></label>
+      <label class="fld">Tm max<input id="tmax" type="number" value="63" style="width:64px"></label>
+      <button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-wand"></i> Design primers</button>
+    </div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">A screening aid, not a replacement for Primer3 — it doesn't check the primers against a whole genome for specificity. Always BLAST candidate primers before ordering.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .pr{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:12px;margin-bottom:10px}
+  .pr h4{margin:0 0 8px;font-size:13px} .pr .seq{font-family:ui-monospace,monospace;font-size:13px;word-break:break-all}
+  .pr .m{font-size:12px;color:var(--text2);margin-top:5px;display:flex;gap:14px;flex-wrap:wrap} .pr .m b{color:var(--text)}
+  .fwd{border-left:3px solid var(--blue)} .rev{border-left:3px solid var(--red)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const COMP={A:'T',T:'A',G:'C',C:'G'};
+function clean(r){return r.replace(/^>.*$/gm,'').replace(/[^ACGTacgt]/g,'').toUpperCase();}
+function rc(s){return s.split('').reverse().map(b=>COMP[b]).join('');}
+// nearest-neighbour Tm (SantaLucia 1998), 50mM Na+, 0.25uM primer
+const NN={AA:[-7.9,-22.2],AT:[-7.2,-20.4],TA:[-7.2,-21.3],CA:[-8.5,-22.7],GT:[-8.4,-22.4],CT:[-7.8,-21.0],GA:[-8.2,-22.2],CG:[-10.6,-27.2],GC:[-9.8,-24.4],GG:[-8.0,-19.9],TT:[-7.9,-22.2],TG:[-8.5,-22.7],AC:[-8.4,-22.4],AG:[-7.8,-21.0],TC:[-8.2,-22.2],CC:[-8.0,-19.9]};
+function tm(s){let dH=0.2,dS=-5.7;for(let i=0;i<s.length-1;i++){const p=NN[s.substr(i,2)];if(p){dH+=p[0];dS+=p[1];}}const R=1.987,C=0.25e-6;let t=(dH*1000)/(dS+R*Math.log(C/4))-273.15;t+=16.6*Math.log10(0.05);return t;}
+function gc(s){return (s.match(/[GC]/g)||[]).length/s.length*100;}
+function maxRun(s){return Math.max(...(s.match(/(.)\1*/g)||['']).map(x=>x.length));}
+function selfComp(s){const r=rc(s);let m=0;for(let i=0;i<s.length;i++){let k=0;while(i+k<s.length&&s[i+k]===r[i+k])k++;m=Math.max(m,k);}return m;}
+function gcClamp(s){return /[GC]$/.test(s)&&!/[GC]{4}$/.test(s);}
+function score(p){let sc=0;const g=gc(p);if(g>=40&&g<=60)sc+=2;else sc-=1;if(gcClamp(p))sc+=1;if(maxRun(p)<=4)sc+=1;else sc-=2;if(selfComp(p)<=4)sc+=1;else sc-=1;return sc;}
+function candidates(seq,fromStart){
+  const lmin=+$('#lmin').value,lmax=+$('#lmax').value,tmin=+$('#tmin').value,tmax=+$('#tmax').value;
+  const out=[];const region=fromStart?seq.slice(0,80):seq.slice(-80);
+  for(let i=0;i<region.length-lmin;i++)for(let L=lmin;L<=lmax&&i+L<=region.length;L++){
+    let p=region.substr(i,L);if(fromStart){}else p=rc(p);
+    const t=tm(fromStart?p:rc(p));if(t<tmin||t>tmax)continue;
+    out.push({p,tm:t,gc:gc(p),pos:fromStart?i:seq.length-80+i,sc:score(p),run:maxRun(p),self:selfComp(p)});
+  }
+  return out.sort((a,b)=>b.sc-a.sc||Math.abs(a.tm-60)-Math.abs(b.tm-60)).slice(0,3);
+}
+$('#run').onclick=()=>{
+  const seq=clean($('#seq').value);if(seq.length<50){$('#status').textContent='Need a longer template (≥50 nt).';return;}
+  const fwd=candidates(seq,true),rev=candidates(seq,false);
+  if(!fwd.length||!rev.length){$('#status').textContent='No primers met the Tm window — widen it.';return;}
+  const render=(p,cls,lbl)=>`<div class="pr ${cls}"><h4>${lbl}</h4><div class="seq">5'-${esc(p.p)}-3'</div><div class="m"><span>Tm <b>${p.tm.toFixed(1)}°C</b></span><span>GC <b>${p.gc.toFixed(0)}%</b></span><span>len <b>${p.p.length}</b></span><span>max run <b>${p.run}</b></span><span>self-comp <b>${p.self}</b></span><span>score <b>${p.sc}</b></span></div></div>`;
+  const f=fwd[0],r=rev[0];const ampLen=(r.pos+r.p.length)-f.pos;
+  $('#out').innerHTML=`<div class="stat-grid" style="margin-bottom:12px"><div class="stat-card"><div class="stat-label">Amplicon size</div><div class="stat-value" style="color:var(--green)">${ampLen} bp</div></div><div class="stat-card"><div class="stat-label">ΔTm (F vs R)</div><div class="stat-value">${Math.abs(f.tm-r.tm).toFixed(1)}°C</div></div></div>`+
+    render(f,'fwd','Forward primer (best)')+render(r,'rev','Reverse primer (best)')+
+    '<div class="panel-label" style="margin:10px 0 6px">Alternatives</div>'+fwd.slice(1).map(p=>render(p,'fwd','Forward — alt')).join('')+rev.slice(1).map(p=>render(p,'rev','Reverse — alt')).join('');
+  $('#status').textContent='Designed';
+};
+$('#run').click();
+</script>
+</body>
+</html>

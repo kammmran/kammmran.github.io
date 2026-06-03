@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Interview Transcriber — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-microphone-2"></i></div><div>Research Interview Transcriber</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-microphone-2"></i></div>
+      <div>
+        <div class="tool-title">Research Interview Transcriber</div>
+        <div class="tool-desc">Transcribe qualitative interviews live with speaker separation and timestamps. Tag who's speaking, then export as text or VTT. Runs on the browser's built-in speech recognition — audio never leaves your device.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px">
+      <button class="btn btn-primary" id="rec"><i class="ti ti-microphone"></i> Start recording</button>
+      <label class="fld">Language<select id="lang"></select></label>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div class="row" id="speakers" style="gap:6px">
+      <span class="muted" style="font-size:12px">Active speaker:</span>
+    </div>
+    <div id="out" style="min-height:200px;border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg2);font-size:14px;line-height:1.6;overflow:auto;max-height:50vh"></div>
+    <div id="interim" class="muted" style="font-size:13px;font-style:italic;min-height:18px"></div>
+    <div class="row">
+      <button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button>
+      <button class="btn" id="txt"><i class="ti ti-file-text"></i> .txt</button>
+      <button class="btn" id="vtt"><i class="ti ti-badge-cc"></i> .vtt</button>
+      <button class="btn" id="clear"><i class="ti ti-trash"></i> Clear</button>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Tip: switch the active speaker tag whenever a new person talks — speech recognition can't separate voices on its own, so you steer the labels. Double-click a tag to rename. Works best in Chrome/Edge in a quiet room.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .sp{padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:12px;font-weight:600;color:var(--text)}
+  .sp.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .line{margin-bottom:8px} .line .who{font-weight:700;font-size:12px} .line .ts{color:var(--text3);font-size:11px;margin-left:6px}
+  .s0 .who{color:var(--teal)} .s1 .who{color:var(--blue)} .s2 .who{color:var(--amber)} .s3 .who{color:var(--pink)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const LANGS=[['en-US','English (US)'],['en-GB','English (UK)'],['es-ES','Spanish'],['fr-FR','French'],['de-DE','German'],['it-IT','Italian'],['pt-PT','Portuguese'],['ru-RU','Russian'],['tr-TR','Turkish'],['az-AZ','Azerbaijani'],['ar-SA','Arabic'],['zh-CN','Chinese'],['ja-JP','Japanese'],['ko-KR','Korean'],['hi-IN','Hindi']];
+$('#lang').innerHTML=LANGS.map(l=>`<option value="${l[0]}">${l[1]}</option>`).join('');
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null, recording=false, t0=0, lines=[], speakers=['Interviewer','Participant'], cur=0;
+
+function renderSpeakers(){
+  const box=$('#speakers');
+  box.querySelectorAll('.sp,.addsp').forEach(e=>e.remove());
+  speakers.forEach((n,i)=>{
+    const b=document.createElement('button'); b.className='sp s'+(i%4)+(i===cur?' on':''); b.textContent=n;
+    b.onclick=()=>{cur=i;renderSpeakers();};
+    b.ondblclick=()=>{const v=prompt('Rename speaker',n); if(v){speakers[i]=v.trim()||n; render();renderSpeakers();}};
+    box.appendChild(b);
+  });
+  const add=document.createElement('button'); add.className='sp addsp'; add.innerHTML='<i class="ti ti-plus"></i>';
+  add.onclick=()=>{speakers.push('Speaker '+(speakers.length+1)); cur=speakers.length-1; renderSpeakers();};
+  box.appendChild(add);
+}
+function fmt(ms){const s=Math.floor(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function escapeHtml(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+function render(){
+  $('#out').innerHTML=lines.map(l=>`<div class="line s${l.sp%4}"><span class="who">${escapeHtml(speakers[l.sp]||'Speaker')}</span><span class="ts">${fmt(l.t)}</span><div>${escapeHtml(l.text)}</div></div>`).join('')||'<span class="muted">Transcript will appear here…</span>';
+  $('#out').scrollTop=$('#out').scrollHeight;
+}
+function addLine(text){
+  const t=recording?Date.now()-t0:0;
+  const last=lines[lines.length-1];
+  if(last&&last.sp===cur&&Date.now()-last.end<4000){ last.text+=' '+text; last.end=Date.now(); }
+  else lines.push({sp:cur,t,text,end:Date.now()});
+  render();
+}
+function start(){
+  if(!SR){$('#status').textContent='Speech recognition not supported — use Chrome or Edge.';return;}
+  rec=new SR(); rec.continuous=true; rec.interimResults=true; rec.lang=$('#lang').value;
+  if(!t0)t0=Date.now();
+  rec.onresult=e=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i];
+      if(r.isFinal) addLine(r[0].transcript.trim());
+      else interim+=r[0].transcript;
+    }
+    $('#interim').textContent=interim;
+  };
+  rec.onerror=e=>{$('#status').textContent='Error: '+e.error;};
+  rec.onend=()=>{ if(recording){try{rec.start();}catch(_){}} };
+  try{rec.start();recording=true;$('#rec').innerHTML='<i class="ti ti-player-stop"></i> Stop';$('#rec').classList.remove('btn-primary');$('#status').textContent='Listening…';}
+  catch(e){$('#status').textContent='Could not start: '+e.message;}
+}
+function stop(){recording=false;if(rec)rec.stop();$('#rec').innerHTML='<i class="ti ti-microphone"></i> Start recording';$('#rec').classList.add('btn-primary');$('#status').textContent='Stopped · '+lines.length+' segments';$('#interim').textContent='';}
+$('#rec').onclick=()=>recording?stop():start();
+$('#clear').onclick=()=>{lines=[];t0=0;render();$('#status').textContent='';};
+function plain(){return lines.map(l=>`[${fmt(l.t)}] ${speakers[l.sp]}: ${l.text}`).join('\n\n');}
+$('#copy').onclick=()=>{navigator.clipboard.writeText(plain());$('#status').textContent='Copied.';};
+function dl(name,text,type){const b=new Blob([text],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+$('#txt').onclick=()=>dl('interview.txt',plain(),'text/plain');
+function fmtVtt(ms){const s=ms/1000;const h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=(s%60).toFixed(3);return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(6,'0');}
+$('#vtt').onclick=()=>{
+  let v='WEBVTT\n\n';
+  lines.forEach((l,i)=>{const end=(lines[i+1]?lines[i+1].t:l.t+4000);v+=`${fmtVtt(l.t)} --> ${fmtVtt(end)}\n<v ${speakers[l.sp]}>${l.text}\n\n`;});
+  dl('interview.vtt',v,'text/vtt');
+};
+renderSpeakers();render();
+</script>
+</body>
+</html>

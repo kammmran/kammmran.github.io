@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Branding Tool — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-stamp"></i></div><div>Presentation Branding Tool</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-stamp"></i></div>
+      <div>
+        <div class="tool-title">Presentation Branding Tool</div>
+        <div class="tool-desc">Generate branded title and section slides with your logo, institution colours and a consistent footer. Upload a logo, set your details, and export ready-to-use title/divider slide images plus a footer strip you can drop on every slide. Local, no upload.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Presentation title<input id="title" value="Spectral Deep Learning for Crop Disease"></label>
+      <label class="fld">Subtitle / event<input id="sub" value="12th ICPS · Vienna 2026"></label>
+      <label class="fld">Presenter<input id="presenter" value="Dr. Jane Researcher"></label>
+      <label class="fld">Institution<input id="inst" value="Plant AI Lab · State University"></label>
+      <label class="fld">Footer text<input id="footer" value="Plant AI Lab · plant-ai.lab"></label>
+      <label class="fld">Logo<input type="file" id="logo" accept="image/*"></label>
+    </div>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Primary<input type="color" id="c1" value="#0b2545"></label>
+      <label class="fld">Accent<input type="color" id="c2" value="#e8b84b"></label>
+      <label class="fld">Slide<select id="which"><option value="title">Title slide</option><option value="section">Section divider</option><option value="footer">Footer strip</option></select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#333"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export current</button><button class="btn" id="all"><i class="ti ti-download"></i> Export all 3</button></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');let logo=null;
+$('#logo').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);logo=new Image();logo.onload=draw;logo.src=u;};
+function txtColor(hex){const n=parseInt(hex.slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>140?'#111':'#fff';}
+function drawLogo(x,y,maxH){if(!logo)return 0;const s=maxH/logo.naturalHeight;const w=logo.naturalWidth*s;ctx.drawImage(logo,x,y,w,maxH);return w;}
+function draw(){
+  const which=$('#which').value;const c1=$('#c1').value,c2=$('#c2').value;
+  if(which==='footer'){cv.width=1920;cv.height=80;ctx.fillStyle=c1;ctx.fillRect(0,0,1920,80);ctx.fillStyle=c2;ctx.fillRect(0,0,1920,5);ctx.fillStyle=txtColor(c1);ctx.font='600 26px Arial';ctx.textAlign='left';ctx.textBaseline='middle';let lx=40;if(logo){lx+=drawLogo(40,18,44)+18;}ctx.fillText($('#footer').value,lx,44);ctx.textAlign='right';ctx.fillStyle=c2;ctx.fillText('●',1890,44);return;}
+  cv.width=1920;cv.height=1080;
+  if(which==='section'){ctx.fillStyle=c2;ctx.fillRect(0,0,1920,1080);ctx.fillStyle=c1;ctx.fillRect(0,460,1920,160);ctx.fillStyle=txtColor(c2);ctx.font='800 84px Arial';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillStyle='#fff';ctx.fillText($('#title').value.split(/[:.]/)[0].slice(0,40),960,560);if(logo)drawLogo(40,40,60);return;}
+  // title
+  const g=ctx.createLinearGradient(0,0,1920,1080);g.addColorStop(0,c1);g.addColorStop(1,shade(c1,-16));ctx.fillStyle=g;ctx.fillRect(0,0,1920,1080);
+  ctx.fillStyle=c2;ctx.fillRect(160,360,12,300);
+  if(logo)drawLogo(160,140,90);
+  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='800 76px Arial';
+  wrap($('#title').value,1500,86,200,420);
+  ctx.fillStyle=c2;ctx.font='700 38px Arial';ctx.fillText($('#sub').value,200,700);
+  ctx.fillStyle='rgba(255,255,255,0.92)';ctx.font='600 34px Arial';ctx.fillText($('#presenter').value,200,840);
+  ctx.fillStyle='rgba(255,255,255,0.65)';ctx.font='28px Arial';ctx.fillText($('#inst').value,200,884);
+  ctx.fillStyle=c2;ctx.fillRect(0,1064,1920,16);
+}
+function wrap(text,maxW,lh,x,y){ctx.save();const words=text.split(/\s+/);let line='';words.forEach(w=>{if(ctx.measureText(line+' '+w).width>maxW&&line){ctx.fillText(line,x,y);y+=lh;line=w;}else line=line?line+' '+w:w;});if(line)ctx.fillText(line,x,y);ctx.restore();}
+function shade(hex,p){const n=parseInt(hex.slice(1),16);const cl=v=>Math.max(0,Math.min(255,Math.round(v)));return `rgb(${cl((n>>16)+p*2.55)},${cl(((n>>8)&255)+p*2.55)},${cl((n&255)+p*2.55)})`;}
+['title','sub','presenter','inst','footer','c1','c2','which'].forEach(id=>$('#'+id).addEventListener('input',draw));
+$('#png').onclick=()=>{cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='brand-'+$('#which').value+'.png';a.click();});};
+$('#all').onclick=async()=>{for(const w of ['title','section','footer']){$('#which').value=w;draw();await new Promise(r=>cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='brand-'+w+'.png';a.click();setTimeout(r,200);}));}};
+draw();
+</script>
+</body>
+</html>

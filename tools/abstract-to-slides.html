@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abstract-to-Presentation Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-presentation"></i></div><div>Abstract → Presentation</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-presentation"></i></div>
+      <div>
+        <div class="tool-title">Abstract-to-Presentation Generator</div>
+        <div class="tool-desc">Turn an abstract into a starter slide outline. The tool maps sentences to the standard talk arc — Title, Background, Question, Methods, Results, Conclusion — and drafts bullet points for each. Edit, then copy as Markdown ready for the Slide Deck Generator. Heuristic, local, a starting point not a finished deck.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Talk title<input id="title" value="Spectral Deep Learning for Crop Disease"></label>
+      <label class="fld">Presenter · affiliation<input id="by" value="Jane Researcher · Plant AI Lab"></label>
+    </div>
+    <label class="fld">Abstract
+      <textarea id="abs" style="min-height:140px">Crop diseases cause major yield losses, and visible symptoms often appear too late for intervention. We ask whether disease can be detected from leaf spectra before symptoms emerge. We developed a self-supervised model pretrained on 12,400 unlabeled hyperspectral leaf scans and fine-tuned on a small labeled set. The model achieved 94% balanced accuracy at the pre-symptomatic stage while using 8x less labeled data than supervised baselines, and generalized across six crop species in a held-out field trial. These results suggest spectral deep learning can enable earlier, cheaper disease surveillance with handheld scanners.</textarea>
+    </label>
+    <button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate outline</button>
+    <div id="out"></div>
+    <div class="row" id="exrow" style="display:none"><button class="btn" id="copy"><i class="ti ti-markdown"></i> Copy as Markdown</button><a class="btn" href="slide-deck.html"><i class="ti ti-external-link"></i> Open Slide Deck Generator</a><span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .slide{border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:8px;background:var(--bg2);padding:12px 14px;margin-bottom:8px}
+  .slide h3{margin:0 0 6px;font-size:14px;color:var(--blue)} .slide ul{margin:0;padding-left:18px;font-size:13px;line-height:1.5}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function sentences(t){return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+/g)||[]).map(s=>s.trim()).filter(Boolean);}
+let md='';
+function classify(s){const l=s.toLowerCase();
+  if(/\b(we ask|whether|question|hypothes|aim|objective|goal|investigate)\b/.test(l))return 'question';
+  if(/\b(we develop|we propose|we present|method|approach|using|pretrain|fine-tun|trained|model|dataset|collected|n=|experiment|protocol)\b/.test(l))return 'methods';
+  if(/\b(achiev|result|accuracy|found|observ|showed|improv|outperform|%|increase|reduc|demonstrat)\b/.test(l))return 'results';
+  if(/\b(suggest|conclud|imply|enable|future|these results|we conclude|overall|impact|potential)\b/.test(l))return 'conclusion';
+  return 'background';
+}
+$('#gen').onclick=()=>{
+  const sents=sentences($('#abs').value);if(!sents.length){$('#status')&&($('#status').textContent='');return;}
+  const buckets={background:[],question:[],methods:[],results:[],conclusion:[]};
+  sents.forEach(s=>buckets[classify(s)].push(s));
+  // ensure question/background fallback
+  if(!buckets.question.length&&buckets.background.length>1)buckets.question.push(buckets.background.pop());
+  const bullets=arr=>arr.flatMap(s=>splitBullets(s));
+  const slides=[
+    {h:'Title',type:'title'},
+    {h:'Background & Motivation',b:bullets(buckets.background).slice(0,4)},
+    {h:'Research Question',b:bullets(buckets.question).slice(0,3)},
+    {h:'Methods',b:bullets(buckets.methods).slice(0,5)},
+    {h:'Results',b:bullets(buckets.results).slice(0,5)},
+    {h:'Conclusions',b:bullets(buckets.conclusion).slice(0,4)},
+    {h:'Thank You',b:['Questions?','Contact / data availability']}
+  ];
+  let html='',mdAcc=[];
+  slides.forEach(s=>{
+    if(s.type==='title'){html+=`<div class="slide"><h3>Title slide</h3><ul><li><b>${esc($('#title').value)}</b></li><li>${esc($('#by').value)}</li></ul></div>`;mdAcc.push(`# ${$('#title').value}\n## ${$('#by').value}`);return;}
+    const b=(s.b&&s.b.length)?s.b:['(add a point here)'];
+    html+=`<div class="slide"><h3>${esc(s.h)}</h3><ul>${b.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`;
+    mdAcc.push(`# ${s.h}\n`+b.map(x=>`- ${x}`).join('\n'));
+  });
+  $('#out').innerHTML=html;md=mdAcc.join('\n---\n');$('#exrow').style.display='flex';$('#status').textContent=slides.length+' slides';
+};
+function splitBullets(s){
+  // shorten a sentence into 1-2 bullet fragments
+  s=s.replace(/\s+/g,' ').trim();
+  if(s.length<90)return [s.replace(/[.;]$/,'')];
+  const parts=s.split(/,\s+(?:and|while|but|whereas)\s+|;\s+/);
+  return parts.map(p=>p.replace(/^(and|but|while|whereas)\s+/i,'').replace(/[.;]$/,'').trim()).filter(Boolean).slice(0,2);
+}
+$('#copy').onclick=()=>{if(md){navigator.clipboard.writeText(md);$('#status').textContent='Markdown copied — paste into Slide Deck Generator.';}};
+$('#gen').click();
+</script>
+</body>
+</html>

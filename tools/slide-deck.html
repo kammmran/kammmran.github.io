@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slide Deck Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-presentation-analytics"></i></div><div>Slide Deck Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1040px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-presentation-analytics"></i></div>
+      <div>
+        <div class="tool-title">Slide Deck Generator</div>
+        <div class="tool-desc">Write slides in Markdown and present them instantly. Separate slides with <code>---</code>, use <code>#</code> for the slide title and <code>-</code> for bullets. Get a live thumbnail grid, a full-screen presenter mode (arrow keys to navigate), and print-to-PDF export. No software, no upload.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <label class="fld">Markdown — slides separated by a line with just <code>---</code>
+      <textarea id="src" style="min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"># Spectral Deep Learning for Crop Disease
+## Jane Researcher · Plant AI Lab
+ICPS 2026
+---
+# The Problem
+- Crop disease causes major yield loss
+- Visible symptoms appear too late
+- Labelled data is scarce and expensive
+---
+# Our Approach
+- Self-supervised pretraining on leaf spectra
+- Fine-tune on a small labelled set
+- Deploy on handheld scanners
+---
+# Results
+- **94%** accuracy pre-symptomatically
+- **8×** less labelled data
+- Robust across 6 crop species
+---
+# Thank You
+Questions?
+contact@plant-ai.lab</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Theme<select id="theme"><option value="#0b2545,#e8b84b,#ffffff">Navy/Gold</option><option value="#11100f,#7c6df0,#f0eff8">Dark/Purple</option><option value="#0d4f4a,#2dd4bf,#ffffff">Teal</option><option value="#ffffff,#0b2545,#111111">Light</option></select></label>
+      <label class="fld">Aspect<select id="aspect"><option value="16">16:9</option><option value="4">4:3</option></select></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="present"><i class="ti ti-player-play"></i> Present</button><button class="btn" id="print"><i class="ti ti-printer"></i> Print / PDF</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px"></div>
+  </div>
+
+  <div id="stage" style="display:none;position:fixed;inset:0;background:#000;z-index:1000;align-items:center;justify-content:center">
+    <div id="slideHost"></div>
+    <div style="position:absolute;bottom:14px;right:20px;color:#888;font-size:13px" id="counter"></div>
+    <button class="btn no-print" id="exit" style="position:absolute;top:14px;right:16px"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="printArea"></div>
+</main>
+
+<style>
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+.slide{box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;padding:7%;overflow:hidden}
+.slide h1{font-size:2.4em;margin:0 0 .3em;line-height:1.1} .slide h2{font-size:1.3em;margin:0 0 .2em;font-weight:600;opacity:.85}
+.slide ul{margin:.4em 0;padding-left:1.1em} .slide li{font-size:1.25em;line-height:1.5;margin:.25em 0} .slide p{font-size:1.2em;margin:.2em 0}
+.thumb{border-radius:8px;overflow:hidden;border:1px solid var(--border);cursor:pointer;position:relative}
+.thumb .num{position:absolute;top:4px;left:6px;font-size:11px;color:#999;background:rgba(0,0,0,.4);padding:0 5px;border-radius:4px}
+@media print{.no-print{display:none!important}@page{size:landscape;margin:0}.slide{page-break-after:always;width:100vw;height:100vh}}
+</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const inline=s=>esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\*([^*]+)\*/g,'<i>$1</i>');
+let slides=[],cur=0;
+function parse(){return $('#src').value.split(/\n-{3,}\n/).map(block=>{
+  let html='',inList=false;
+  block.split('\n').forEach(l=>{const t=l.trimEnd();
+    if(t.startsWith('## '))html+=`<h2>${inline(t.slice(3))}</h2>`;
+    else if(t.startsWith('# '))html+=`<h1>${inline(t.slice(2))}</h1>`;
+    else if(t.trim().startsWith('- ')){if(!inList){html+='<ul>';inList=true;}html+=`<li>${inline(t.trim().slice(2))}</li>`;}
+    else{if(inList){html+='</ul>';inList=false;}if(t.trim())html+=`<p>${inline(t)}</p>`;}
+  });if(inList)html+='</ul>';return html;
+});}
+function styleFor(){const [bg,acc,txt]=$('#theme').value.split(',');return {bg,acc,txt};}
+function render(){
+  slides=parse();const {bg,acc,txt}=styleFor();const ar=$('#aspect').value==='4'?'4 / 3':'16 / 9';
+  $('#grid').innerHTML=slides.map((s,i)=>`<div class="thumb" data-i="${i}"><div class="slide" style="aspect-ratio:${ar};background:${bg};color:${txt};font-size:9px"><div style="border-left:4px solid ${acc};padding-left:8px">${s}</div></div><span class="num">${i+1}</span></div>`).join('');
+  $('#status').textContent=slides.length+' slides';
+}
+function slideHtml(i,fontBase){const {bg,acc,txt}=styleFor();const ar=$('#aspect').value==='4'?'4 / 3':'16 / 9';return `<div class="slide" style="aspect-ratio:${ar};background:${bg};color:${txt};font-size:${fontBase}"><div style="border-left:6px solid ${acc};padding-left:18px">${slides[i]}</div></div>`;}
+$('#grid').addEventListener('click',e=>{const t=e.target.closest('.thumb');if(t){cur=+t.dataset.i;present();}});
+function sizeStage(){const ar=$('#aspect').value==='4'?4/3:16/9;const w=Math.min(window.innerWidth*0.96,(window.innerHeight*0.92)*ar);$('#slideHost').style.width=w+'px';$('#slideHost').innerHTML=slideHtml(cur,(w/40)+'px');$('#counter').textContent=`${cur+1} / ${slides.length}`;}
+function present(){$('#stage').style.display='flex';sizeStage();}
+$('#present').onclick=()=>{cur=0;present();};
+$('#exit').onclick=()=>$('#stage').style.display='none';
+document.addEventListener('keydown',e=>{if($('#stage').style.display==='none')return;if(e.key==='ArrowRight'||e.key===' '){cur=Math.min(slides.length-1,cur+1);sizeStage();}if(e.key==='ArrowLeft'){cur=Math.max(0,cur-1);sizeStage();}if(e.key==='Escape')$('#exit').click();});
+window.addEventListener('resize',()=>{if($('#stage').style.display==='flex')sizeStage();});
+$('#print').onclick=()=>{$('#printArea').innerHTML=slides.map((_,i)=>slideHtml(i,'28px')).join('');window.print();};
+['src','theme','aspect'].forEach(id=>$('#'+id).addEventListener('input',render));
+render();
+</script>
+</body>
+</html>

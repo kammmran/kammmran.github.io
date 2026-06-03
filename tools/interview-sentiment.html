@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentiment Analyzer for Interviews — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-mood-smile"></i></div><div>Interview Sentiment Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-mood-smile"></i></div>
+      <div>
+        <div class="tool-title">Sentiment Analyzer for Interviews</div>
+        <div class="tool-desc">Gauge emotional tone across an interview transcript. Scores each turn with a lexicon-based method, breaks sentiment down per speaker, and highlights the most positive and negative moments. Local, transparent, no AI black box.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Transcript ("Name: text" lines recommended)
+      <textarea id="txt" style="min-height:150px" placeholder="Interviewer: How did the new system feel?&#10;Participant: Honestly it was frustrating and confusing at first, but later I loved how fast it became.">Interviewer: How did you find the new workflow?
+Participant: At first it was really frustrating and confusing. I hated the setup.
+Participant: But once it clicked, I absolutely loved it — it felt fast and empowering.
+Interviewer: Any concerns going forward?
+Participant: I'm a bit worried about reliability, though overall I'm optimistic and excited.</textarea>
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Analyze sentiment</button>
+    <div id="overall" class="stat-grid"></div>
+    <div id="speakers"></div>
+    <div id="timeline"></div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Lexicon-based scoring with negation handling. It catches polarity, not sarcasm or context — treat scores as signposts and read the flagged turns yourself.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .turn{padding:8px 10px;border-radius:7px;background:var(--bg2);border-left:3px solid var(--text3);margin-bottom:6px;font-size:13px;line-height:1.5}
+  .turn.pos{border-left-color:var(--green)} .turn.neg{border-left-color:var(--red)}
+  .turn .who{font-weight:700;font-size:12px} .turn .sc{float:right;font-weight:700;font-size:12px}
+  .spk{display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:13px} .bar{flex:1;height:12px;border-radius:6px;background:var(--bg3);overflow:hidden;position:relative}
+  .bar .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border2)} .bar .fill{position:absolute;top:0;bottom:0;border-radius:6px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const POS='good great excellent amazing wonderful love loved like enjoy enjoyed happy glad excited exciting positive helpful useful easy fast clear confident comfortable satisfied pleased impressed empowering empowered optimistic hopeful brilliant perfect awesome fantastic nice better best smooth reliable trust delighted grateful proud fun engaging intuitive'.split(' ');
+const NEG='bad terrible awful horrible hate hated dislike difficult hard confusing confused frustrating frustrated annoying annoyed angry sad worried worry anxious afraid scared disappointing disappointed slow unclear broken buggy useless boring tedious painful stressful overwhelming concern concerned problem problems issue issues fail failed failure worse worst clunky unreliable distrust uncomfortable struggle struggled'.split(' ');
+const POSS=new Set(POS),NEGS=new Set(NEG);
+const NEGATORS=new Set("not no never n't without hardly barely don't didn't doesn't isn't wasn't aren't can't couldn't won't".split(' '));
+function score(text){
+  const words=text.toLowerCase().match(/\b[\w']+\b/g)||[];let s=0,hits=0;
+  for(let i=0;i<words.length;i++){let w=words[i],val=0;if(POSS.has(w))val=1;else if(NEGS.has(w))val=-1;if(val){const prev=words.slice(Math.max(0,i-3),i);if(prev.some(p=>NEGATORS.has(p)||p.endsWith("n't")))val*=-1;s+=val;hits++;}}
+  return {raw:s,norm:words.length?s/Math.sqrt(words.length):0,hits};
+}
+function parse(t){return t.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([A-Z][\w.\- ]{0,28}?):\s*(.+)$/);return m?{sp:m[1].trim(),text:m[2]}:{sp:'(unlabelled)',text:l};});}
+function col(n){return n>0.15?'var(--green)':n<-0.15?'var(--red)':'var(--text2)';}
+$('#run').onclick=()=>{
+  const turns=parse($('#txt').value.trim());if(!turns.length){$('#status').textContent='Paste a transcript first.';return;}
+  let tot=0,n=0;const bySp={};
+  turns.forEach(tn=>{const sc=score(tn.text);tn.sc=sc.norm;if(sc.hits){tot+=sc.norm;n++;}bySp[tn.sp]=bySp[tn.sp]||{sum:0,c:0};bySp[tn.sp].sum+=sc.norm;bySp[tn.sp].c++;});
+  const avg=n?tot/n:0;
+  const label=avg>0.15?'Positive':avg<-0.15?'Negative':'Neutral';
+  const pos=[...turns].filter(t=>t.sc>0).sort((a,b)=>b.sc-a.sc)[0];
+  const neg=[...turns].filter(t=>t.sc<0).sort((a,b)=>a.sc-b.sc)[0];
+  $('#overall').innerHTML=`<div class="stat-card"><div class="stat-label">Overall tone</div><div class="stat-value" style="color:${col(avg)}">${label}</div></div>
+    <div class="stat-card"><div class="stat-label">Mean score</div><div class="stat-value" style="color:${col(avg)}">${avg.toFixed(2)}</div></div>
+    <div class="stat-card"><div class="stat-label">Most positive</div><div class="stat-value" style="color:var(--green);font-size:14px">${pos?esc(pos.text.slice(0,30))+'…':'—'}</div></div>
+    <div class="stat-card"><div class="stat-label">Most negative</div><div class="stat-value" style="color:var(--red);font-size:14px">${neg?esc(neg.text.slice(0,30))+'…':'—'}</div></div>`;
+  $('#speakers').innerHTML='<div class="panel-label" style="margin:8px 0 6px">By speaker</div>'+Object.entries(bySp).map(([sp,d])=>{const m=d.sum/d.c;const w=Math.min(50,Math.abs(m)*60);return `<div class="spk"><div style="width:120px;font-weight:600">${esc(sp)}</div><div class="bar"><div class="mid"></div><div class="fill" style="${m>=0?'left:50%':'right:50%'};width:${w}%;background:${col(m)}"></div></div><div style="width:48px;text-align:right;color:${col(m)}">${m.toFixed(2)}</div></div>`;}).join('');
+  $('#timeline').innerHTML='<div class="panel-label" style="margin:10px 0 6px">Turn by turn</div>'+turns.map(t=>`<div class="turn ${t.sc>0.15?'pos':t.sc<-0.15?'neg':''}"><span class="who">${esc(t.sp)}</span><span class="sc" style="color:${col(t.sc)}">${t.sc.toFixed(2)}</span><div>${esc(t.text)}</div></div>`).join('');
+  $('#status').textContent='Analyzed '+turns.length+' turns';
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper-to-Podcast Converter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-microphone-2"></i></div><div>Paper-to-Podcast Converter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-microphone-2"></i></div>
+      <div>
+        <div class="tool-title">Paper-to-Podcast Converter</div>
+        <div class="tool-desc">Turn a paper into a two-host podcast-style conversation and listen to it narrated by two distinct voices. Paste your text, generate the dialogue script, then press play — a friendly way to review a paper on a commute.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Paper text (abstract, sections, or full body)
+      <textarea id="txt" style="min-height:150px" placeholder="Paste the paper text here…"></textarea>
+    </label>
+    <div class="row" style="gap:10px">
+      <label class="fld" style="flex:1;min-width:140px">Host A voice<select id="vA"></select></label>
+      <label class="fld" style="flex:1;min-width:140px">Host B voice<select id="vB"></select></label>
+      <label class="fld">Rate <input type="range" id="rate" min="0.7" max="1.3" step="0.05" value="1"></label>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate script</button>
+      <button class="btn" id="play"><i class="ti ti-player-play"></i> Play</button>
+      <button class="btn" id="stop"><i class="ti ti-player-stop"></i> Stop</button>
+      <button class="btn" id="copy"><i class="ti ti-copy"></i> Copy script</button>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div id="script" style="border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg2);font-size:14px;line-height:1.7;max-height:45vh;overflow:auto"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">The script is built locally with simple heuristics — it paraphrases lightly and adds conversational connective tissue, but it doesn't fact-check or add information beyond your text. Read through before relying on it.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .turn{margin-bottom:10px} .turn b{font-weight:700} .a b{color:var(--accent3)} .b b{color:var(--teal)}
+  .turn.cur{background:rgba(124,109,240,0.12);border-radius:6px;padding:2px 6px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let voices=[];
+function loadVoices(){voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!voices.length)voices=speechSynthesis.getVoices();const o=voices.map((v,i)=>`<option value="${i}">${esc(v.name)} (${v.lang})</option>`).join('');$('#vA').innerHTML=o;$('#vB').innerHTML=o;if(voices[1])$('#vB').value=1;}
+loadVoices();speechSynthesis.onvoiceschanged=loadVoices;
+
+const OPEN=["So, let's dig into this one.","Alright, what's this paper about?","I read this one — it's interesting.","Let's break this down for everyone."];
+const A_LEAD=["So the core idea here is that","What they're claiming is that","The setup is this:","Here's the gist —","The authors found that","Basically,"];
+const B_REACT=["Interesting — so why does that matter?","Got it. And how did they show it?","Okay, that makes sense.","Right, so what's the takeaway?","Huh, that's a neat result.","And does that hold up?"];
+const A_FOLLOW=["Good question. Essentially,","Well,","The way I read it,","Right, so","What stands out is that"];
+const CLOSE=["So overall, a solid contribution worth a closer read.","That's the paper in a nutshell.","Worth keeping on your radar.","A neat result — thanks for walking through it."];
+let turns=[];
+function sentences(t){return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+/g)||[t]).map(s=>s.trim()).filter(s=>s.length>15);}
+function pick(a,i){return a[i%a.length];}
+$('#gen').onclick=()=>{
+  const t=$('#txt').value.trim();if(!t){$('#status').textContent='Paste some text first.';return;}
+  const ss=sentences(t);if(!ss.length){$('#status').textContent='Need at least one full sentence.';return;}
+  turns=[];turns.push({sp:'A',text:pick(OPEN,0)});
+  let bi=0;
+  ss.forEach((s,i)=>{
+    if(i%2===0){turns.push({sp:'A',text:pick(A_LEAD,i)+' '+lower(s)});}
+    else{turns.push({sp:'B',text:pick(B_REACT,bi++)});turns.push({sp:'A',text:pick(A_FOLLOW,i)+' '+lower(s)});}
+  });
+  turns.push({sp:'B',text:pick(CLOSE,turns.length)});
+  render();$('#status').textContent=turns.length+' turns generated';
+};
+function lower(s){return s.charAt(0).toLowerCase()+s.slice(1);}
+function render(cur){
+  $('#script').innerHTML=turns.map((t,i)=>`<div class="turn ${t.sp==='A'?'a':'b'}${i===cur?' cur':''}" id="turn${i}"><b>${t.sp==='A'?'Host A':'Host B'}:</b> ${esc(t.text)}</div>`).join('');
+}
+let speaking=false;
+$('#play').onclick=()=>{
+  if(!turns.length){$('#status').textContent='Generate a script first.';return;}
+  speechSynthesis.cancel();speaking=true;let i=0;
+  function next(){
+    if(!speaking||i>=turns.length){$('#status').textContent='Done';return;}
+    const t=turns[i];const u=new SpeechSynthesisUtterance(t.text);
+    const v=voices[t.sp==='A'?$('#vA').value:$('#vB').value];if(v)u.voice=v;
+    u.rate=parseFloat($('#rate').value);u.pitch=t.sp==='A'?1:0.92;
+    render(i);const el=$('#turn'+i);if(el)el.scrollIntoView({block:'nearest'});
+    u.onend=()=>{i++;next();};u.onerror=()=>{i++;next();};
+    speechSynthesis.speak(u);
+  }
+  $('#status').textContent='Playing…';next();
+};
+$('#stop').onclick=()=>{speaking=false;speechSynthesis.cancel();$('#status').textContent='Stopped';render();};
+$('#copy').onclick=()=>{navigator.clipboard.writeText(turns.map(t=>(t.sp==='A'?'Host A':'Host B')+': '+t.text).join('\n\n'));$('#status').textContent='Copied.';};
+</script>
+</body>
+</html>

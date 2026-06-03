@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eigenvalue Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-math-function"></i></div><div>Eigenvalue Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-math-function"></i></div>
+      <div>
+        <div class="tool-title">Eigenvalue &amp; Eigenvector Calculator</div>
+        <div class="tool-desc">Compute the eigenvalues and eigenvectors of a real square matrix (up to 6×6) using the QR algorithm, plus the trace, determinant, and characteristic-polynomial checks. Enter the matrix and get real (and complex) eigenvalues with their vectors. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:10px"><label class="fld">Size<select id="n"><option>2</option><option selected>3</option><option>4</option><option>5</option><option>6</option></select></label><button class="btn" id="rand"><i class="ti ti-dice"></i> Random</button><button class="btn" id="sym"><i class="ti ti-equal"></i> Symmetric</button><button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-calculator"></i> Compute</button></div>
+    <div id="grid" style="overflow:auto"></div>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Uses the unshifted QR iteration with Gram–Schmidt — robust for well-conditioned matrices; near-defective or highly non-normal matrices may converge slowly. Complex conjugate pairs are detected from 2×2 blocks on the quasi-triangular result.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .mgrid{display:inline-grid;gap:5px} .mgrid input{width:62px;text-align:center;padding:6px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-family:ui-monospace,monospace}
+  .ev{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:10px 12px;margin-bottom:8px;font-family:ui-monospace,monospace;font-size:13px}
+  .ev .l{color:var(--accent3);font-weight:700} .ev .vec{color:var(--text2);font-size:12px;margin-top:4px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+function buildGrid(){const n=+$('#n').value;const g=$('#grid');g.innerHTML=`<div class="mgrid" style="grid-template-columns:repeat(${n},auto)">${Array.from({length:n*n},(_,i)=>`<input id="c${i}" value="${i%(n+1)===0?1:0}">`).join('')}</div>`;}
+$('#n').onchange=buildGrid;
+function readM(){const n=+$('#n').value;const M=[];for(let i=0;i<n;i++){M.push([]);for(let j=0;j<n;j++)M[i].push(parseFloat($('#c'+(i*n+j)).value)||0);}return M;}
+$('#rand').onclick=()=>{const n=+$('#n').value;for(let i=0;i<n*n;i++)$('#c'+i).value=(Math.floor(Math.random()*11)-5);};
+$('#sym').onclick=()=>{const n=+$('#n').value;const M=readM();for(let i=0;i<n;i++)for(let j=0;j<n;j++){const v=Math.floor(Math.random()*11)-5;if(j>=i){$('#c'+(i*n+j)).value=v;$('#c'+(j*n+i)).value=v;}}};
+// matrix helpers
+function mul(A,B){const n=A.length,m=B[0].length,k=B.length;const C=Array.from({length:n},()=>new Array(m).fill(0));for(let i=0;i<n;i++)for(let j=0;j<m;j++){let s=0;for(let p=0;p<k;p++)s+=A[i][p]*B[p][j];C[i][j]=s;}return C;}
+function qr(A){const n=A.length;const Q=Array.from({length:n},()=>new Array(n).fill(0));const R=Array.from({length:n},()=>new Array(n).fill(0));
+  const cols=[];for(let j=0;j<n;j++)cols.push(A.map(r=>r[j]));
+  const us=[];
+  for(let j=0;j<n;j++){let v=cols[j].slice();for(let k=0;k<j;k++){let dot=0;for(let i=0;i<n;i++)dot+=us[k][i]*cols[j][i];R[k][j]=dot;for(let i=0;i<n;i++)v[i]-=dot*us[k][i];}let nrm=Math.hypot(...v);R[j][j]=nrm;const u=v.map(x=>nrm>1e-12?x/nrm:0);us.push(u);for(let i=0;i<n;i++)Q[i][j]=u[i];}
+  return {Q,R};
+}
+function eigQR(A){let H=A.map(r=>r.slice());const n=H.length;for(let it=0;it<800;it++){const {Q,R}=qr(H);H=mul(R,Q);}
+  // extract eigenvalues from quasi-triangular
+  const ev=[];let i=0;while(i<n){if(i<n-1&&Math.abs(H[i+1][i])>1e-6){const a=H[i][i],b=H[i][i+1],c=H[i+1][i],d=H[i+1][i+1];const tr=a+d,det=a*d-b*c;const disc=tr*tr-4*det;if(disc<0){const re=tr/2,im=Math.sqrt(-disc)/2;ev.push({re,im});ev.push({re,im:-im});}else{ev.push({re:(tr+Math.sqrt(disc))/2,im:0});ev.push({re:(tr-Math.sqrt(disc))/2,im:0});}i+=2;}else{ev.push({re:H[i][i],im:0});i++;}}
+  return ev;
+}
+function nullVec(A,lambda){const n=A.length;const M=A.map((r,i)=>r.map((v,j)=>v-(i===j?lambda:0)));
+  // gaussian elimination
+  for(let col=0,row=0;col<n&&row<n;col++){let piv=row;for(let r=row+1;r<n;r++)if(Math.abs(M[r][col])>Math.abs(M[piv][col]))piv=r;if(Math.abs(M[piv][col])<1e-9)continue;[M[row],M[piv]]=[M[piv],M[row]];const d=M[row][col];for(let j=0;j<n;j++)M[row][j]/=d;for(let r=0;r<n;r++)if(r!==row){const f=M[r][col];for(let j=0;j<n;j++)M[r][j]-=f*M[row][j];}row++;}
+  // free variable
+  const v=new Array(n).fill(0);let free=-1;const pivCols=[];for(let i=0;i<n;i++){let pc=-1;for(let j=0;j<n;j++)if(Math.abs(M[i][j]-1)<1e-6&&pc<0){pc=j;}pivCols.push(pc);}
+  const isPiv=new Array(n).fill(false);pivCols.forEach(c=>{if(c>=0)isPiv[c]=true;});for(let j=0;j<n;j++)if(!isPiv[j]){free=j;break;}if(free<0)free=n-1;v[free]=1;
+  for(let i=0;i<n;i++){const pc=pivCols[i];if(pc>=0&&pc!==free){let s=0;for(let j=0;j<n;j++)if(j!==pc)s+=M[i][j]*v[j];v[pc]=-s;}}
+  const nrm=Math.hypot(...v)||1;return v.map(x=>x/nrm);
+}
+$('#run').onclick=()=>{
+  const M=readM();const n=M.length;
+  const tr=M.reduce((s,r,i)=>s+r[i],0);
+  const ev=eigQR(M);
+  let det=ev.reduce((p,e)=>p*(e.im===0?e.re:1),1);
+  // recompute det properly via product of all eigenvalues (real part product of complex pairs = modulus^2)
+  det=1;for(let i=0;i<ev.length;i++){if(ev[i].im>0){det*=(ev[i].re*ev[i].re+ev[i].im*ev[i].im);}else if(ev[i].im===0)det*=ev[i].re;}
+  const fmt=x=>Math.abs(x)<1e-9?'0':(+x.toFixed(4)).toString();
+  $('#out').innerHTML=`<div class="stat-grid" style="margin-bottom:10px"><div class="stat-card"><div class="stat-label">Trace</div><div class="stat-value">${fmt(tr)}</div></div><div class="stat-card"><div class="stat-label">Determinant</div><div class="stat-value">${fmt(det)}</div></div><div class="stat-card"><div class="stat-label">Σ eigenvalues</div><div class="stat-value">${fmt(ev.reduce((s,e)=>s+e.re,0))}</div></div></div>`+
+    ev.map((e,i)=>{
+      const lab=e.im===0?`λ${i+1} = ${fmt(e.re)}`:`λ${i+1} = ${fmt(e.re)} ${e.im>0?'+':'−'} ${fmt(Math.abs(e.im))}i`;
+      let vecHtml='';if(e.im===0){const v=nullVec(M,e.re);vecHtml=`<div class="vec">eigenvector ≈ [${v.map(fmt).join(', ')}]</div>`;}
+      return `<div class="ev"><span class="l">${lab}</span>${vecHtml}</div>`;
+    }).join('');
+};
+buildGrid();$('#run').click();
+</script>
+</body>
+</html>

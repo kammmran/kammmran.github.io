@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interview Theme Extractor — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-bulb"></i></div><div>Interview Theme Extractor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-bulb"></i></div>
+      <div>
+        <div class="tool-title">Interview Theme Extractor</div>
+        <div class="tool-desc">Surface recurring themes from interview transcripts. Extracts the most salient keywords and two-word phrases, groups them, and shows where each theme appears — a fast first pass for qualitative coding. Runs locally.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Interview transcript(s)
+      <textarea id="txt" style="min-height:160px" placeholder="Paste one or more interview transcripts…"></textarea>
+    </label>
+    <div class="row">
+      <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Extract themes</button>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px">Top <input type="number" id="n" value="15" min="5" max="40" style="width:64px"></label>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div id="cloud" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .kw{border:1px solid var(--border);border-radius:16px;padding:4px 12px;cursor:pointer;background:var(--bg2)}
+  .kw:hover{border-color:var(--amber)} .kw .c{color:var(--amber);font-weight:700;margin-left:5px}
+  .theme{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:12px;margin-bottom:8px}
+  .theme h3{margin:0 0 6px;font-size:14px;color:var(--amber)} .q{font-size:13px;line-height:1.5;color:var(--text2);border-left:2px solid var(--border);padding-left:8px;margin:4px 0}
+  mark{background:rgba(251,191,36,0.3);color:var(--amber)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on at for with as is are was were be been being this that these those it its they them their he she his her you your we our i my me do does did so if then than not no yes just like really very much more most some any all can could would should will shall may might must have has had get got going go went said says say think thing things know knew well kind sort actually basically okay yeah um uh from by about into over under again also too only own same such each other up down out off who whom which what when where why how there here because while during before after between'.split(' '));
+function sentences(t){return (t.replace(/\n+/g,' ').match(/[^.!?]+[.!?]+|\S[^.!?]*$/g)||[]).map(s=>s.trim()).filter(Boolean);}
+$('#run').onclick=()=>{
+  const t=$('#txt').value.replace(/^[A-Z][\w .]{0,28}:/gm,' ').trim();
+  if(!t){$('#status').textContent='Paste a transcript first.';return;}
+  const words=(t.toLowerCase().match(/\b[a-z][a-z'-]{2,}\b/g)||[]).filter(w=>!STOP.has(w));
+  const uni={};words.forEach(w=>uni[w]=(uni[w]||0)+1);
+  const bi={};for(let i=0;i<words.length-1;i++){if(STOP.has(words[i])||STOP.has(words[i+1]))continue;const p=words[i]+' '+words[i+1];bi[p]=(bi[p]||0)+1;}
+  const terms=[...Object.entries(bi).filter(([,c])=>c>1).map(([k,c])=>[k,c*2.2]),...Object.entries(uni).filter(([,c])=>c>1).map(([k,c])=>[k,c])];
+  terms.sort((a,b)=>b[1]-a[1]);
+  const top=[];const seen=new Set();
+  for(const [term,score] of terms){if(top.length>=+$('#n').value)break;if([...seen].some(s=>s.includes(term)||term.includes(s)))continue;seen.add(term);top.push([term,Math.round(score)]);}
+  const max=top[0]?top[0][1]:1;
+  $('#cloud').innerHTML=top.map(([term,c])=>`<span class="kw" data-t="${esc(term)}" style="font-size:${12+Math.round(c/max*10)}px">${esc(term)}<span class="c">${uni[term]||bi[term]||c}</span></span>`).join('');
+  const sents=sentences($('#txt').value);
+  window._sents=sents;window._top=top;
+  $('#out').innerHTML='<div class="muted" style="font-size:12px">Click a theme above to see the quotes where it appears.</div>';
+  $('#status').textContent=top.length+' themes';
+};
+$('#cloud').addEventListener('click',e=>{
+  const k=e.target.closest('.kw');if(!k)return;const term=k.dataset.t;
+  const re=new RegExp('\\b'+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
+  const hits=window._sents.filter(s=>re.test(s)).slice(0,12);
+  const hre=new RegExp('('+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','ig');
+  $('#out').innerHTML=`<div class="theme"><h3>${esc(term)} · ${hits.length} mentions</h3>${hits.map(s=>`<div class="q">${esc(s).replace(hre,'<mark>$1</mark>')}</div>`).join('')}</div>`;
+});
+</script>
+</body>
+</html>

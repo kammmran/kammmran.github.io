@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Figure Compliance Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-clipboard-check"></i></div><div>Figure Compliance Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-clipboard-check"></i></div>
+      <div>
+        <div class="tool-title">Journal Figure Compliance Checker</div>
+        <div class="tool-desc">Check a figure against a journal's submission rules before you upload. Pick a publisher preset (or set your own), drop the image, and get a pass/fail report on column-width fit, effective DPI, file format, and file size. Everything is computed locally.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:10px;flex-wrap:wrap">
+      <label class="fld">Preset<select id="preset"></select></label>
+      <label class="fld">Intended width<select id="width"></select></label>
+      <label class="fld">Figure type<select id="kind"><option value="line">Line art / plot</option><option value="halftone">Photo / halftone</option><option value="combo">Combination</option></select></label>
+    </div>
+    <div class="row" id="custom" style="gap:10px;flex-wrap:wrap;font-size:12px;display:none">
+      <label class="fld">Min DPI<input id="cdpi" type="number" value="300" style="width:80px"></label>
+      <label class="fld">Max width (mm)<input id="cmm" type="number" value="180" style="width:90px"></label>
+      <label class="fld">Max size (MB)<input id="cmb" type="number" value="10" style="width:80px"></label>
+    </div>
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop a figure</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Presets approximate common publisher guidance and may change — always confirm against the journal's current author instructions. Vector formats (SVG/PDF/EPS) are resolution-independent and pass DPI checks by default.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .crow{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;font-size:13px}
+  .crow .v{margin-left:auto;font-weight:600} .crow i{font-size:16px}
+  .ok{color:var(--green)} .warn{color:var(--amber)} .bad{color:var(--red)}
+  .verdict{font-size:18px;font-weight:700;text-align:center;padding:10px;border-radius:8px;margin-bottom:8px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+// preset: [name, minDPI line, minDPI halftone, maxWidthMM, [width options mm], maxMB, formats ok]
+const PRESETS={
+  generic:{name:'Generic (most journals)',line:600,half:300,combo:500,widths:[['Single column',90],['1.5 column',140],['Double column',190]],mb:10,fmt:['tiff','png','eps','pdf','jpeg']},
+  nature:{name:'Nature',line:600,half:300,combo:600,widths:[['Single column',89],['Double column',183]],mb:10,fmt:['tiff','eps','pdf','png','jpeg']},
+  elsevier:{name:'Elsevier',line:1000,half:300,combo:500,widths:[['Minimal',30],['Single column',90],['1.5 column',140],['Double column',190]],mb:10,fmt:['tiff','eps','pdf','jpeg','png']},
+  ieee:{name:'IEEE',line:600,half:300,combo:600,widths:[['Single column',88],['Double column',181]],mb:10,fmt:['tiff','eps','pdf','png']},
+  plos:{name:'PLOS',line:300,half:300,combo:300,widths:[['Single column',83],['Full width',173]],mb:10,fmt:['tiff','eps']},
+  acs:{name:'ACS',line:1200,half:300,combo:600,widths:[['Single column',82.5],['Double column',177.8]],mb:20,fmt:['tiff','eps','pdf','png']},
+  custom:{name:'Custom…',custom:true}
+};
+$('#preset').innerHTML=Object.entries(PRESETS).map(([k,p])=>`<option value="${k}">${p.name}</option>`).join('');
+function fillWidths(){const p=PRESETS[$('#preset').value];$('#custom').style.display=p.custom?'flex':'none';if(p.custom){$('#width').innerHTML='<option value="custom">Custom max</option>';return;}$('#width').innerHTML=p.widths.map(([n,mm])=>`<option value="${mm}">${n} (${mm} mm)</option>`).join('');}
+$('#preset').onchange=()=>{fillWidths();if(lastFile)handle(lastFile);};
+$('#width').onchange=()=>{if(lastFile)handle(lastFile);};
+$('#kind').onchange=()=>{if(lastFile)handle(lastFile);};
+['cdpi','cmm','cmb'].forEach(id=>$('#'+id).addEventListener('input',()=>{if(lastFile)handle(lastFile);}));
+fillWidths();
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])handle(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])handle(e.target.files[0]);};
+let lastFile=null;
+function row(ok,label,val){const cls=ok===1?'ok':ok===0?'warn':'bad';const ic=ok===1?'ti-circle-check':ok===0?'ti-alert-triangle':'ti-circle-x';return `<div class="crow"><i class="ti ${ic} ${cls}"></i>${label}<span class="v ${cls}">${val}</span></div>`;}
+function handle(file){
+  lastFile=file;const out=$('#out');const url=URL.createObjectURL(file);
+  const type=(file.type||'').replace('image/','').toLowerCase();const vector=/svg|pdf|eps/i.test(type);
+  const p=PRESETS[$('#preset').value];
+  const widthMM=p.custom?+$('#cmm').value:+$('#width').value;
+  const kind=$('#kind').value;
+  const needDPI=p.custom?+$('#cdpi').value:(kind==='line'?p.line:kind==='halftone'?p.half:p.combo);
+  const maxMB=p.custom?+$('#cmb').value:p.mb;
+  const okFmts=p.custom?['tiff','png','eps','pdf','jpeg']:p.fmt;
+  const img=new Image();
+  img.onload=()=>render(img.naturalWidth,img.naturalHeight);
+  img.onerror=()=>render(null,null);
+  img.src=url;
+  function render(w,h){
+    const mb=file.size/1048576;
+    const widthIn=widthMM/25.4;
+    const dpi=w?Math.round(w/widthIn):null;
+    const fmtOk=okFmts.includes(type)||(type==='tif'&&okFmts.includes('tiff'))||(type==='jpg'&&okFmts.includes('jpeg'));
+    const dpiState=vector?1:dpi===null?0:dpi>=needDPI?1:dpi>=needDPI*0.85?0:-1;
+    const sizeState=mb<=maxMB?1:-1;
+    const fmtState=fmtOk?1:0;
+    const states=[dpiState,sizeState,fmtState];
+    const pass=states.every(s=>s===1);
+    const anyBad=states.some(s=>s===-1);
+    out.innerHTML=`<div class="verdict ${pass?'ok':anyBad?'bad':'warn'}" style="background:${pass?'rgba(74,222,128,0.12)':anyBad?'rgba(248,113,113,0.12)':'rgba(251,191,36,0.12)'}">${pass?'✓ Looks compliant':anyBad?'✗ Not compliant':'⚠ Review warnings'}</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+        <img src="${url}" style="max-width:170px;max-height:140px;border-radius:8px;border:1px solid var(--border)">
+        <div style="flex:1;min-width:240px">
+          ${row(vector?1:dpiState,`Effective DPI at ${widthMM} mm (need ≥${needDPI})`,vector?'vector ✓':(dpi?dpi+' dpi':'n/a'))}
+          ${row(fmtState,`File format (accepts ${okFmts.join(', ')})`,type.toUpperCase()||'?')}
+          ${row(sizeState,`File size (max ${maxMB} MB)`,mb<1?(mb*1024).toFixed(0)+' KB':mb.toFixed(2)+' MB')}
+          ${w?`<div class="crow">Pixel dimensions<span class="v">${w} × ${h}</span></div>`:''}
+        </div>
+      </div>
+      ${(!vector&&dpi&&dpi<needDPI)?`<div class="muted" style="font-size:12px;margin-top:8px">To hit ${needDPI} dpi at ${widthMM} mm, you need a width of ≈ <b>${Math.ceil(needDPI*widthIn)} px</b> (currently ${w}). Re-export at higher resolution rather than upscaling.</div>`:''}`;
+  }
+}
+</script>
+</body>
+</html>

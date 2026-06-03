@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pairwise Sequence Alignment — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-align-justified"></i></div><div>Pairwise Sequence Alignment</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-align-justified"></i></div>
+      <div>
+        <div class="tool-title">Pairwise Sequence Alignment</div>
+        <div class="tool-desc">Align two DNA or protein sequences with the Needleman–Wunsch (global) or Smith–Waterman (local) algorithm. Reports percent identity, similarity and gaps, with a colour-coded alignment view and match track. Local — your sequences never leave the page.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Sequence A<textarea id="a" style="min-height:90px;font-family:ui-monospace,monospace;font-size:13px">GATTACA</textarea></label>
+      <label class="fld">Sequence B<textarea id="b" style="min-height:90px;font-family:ui-monospace,monospace;font-size:13px">GCATGCU</textarea></label>
+    </div>
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Type<select id="type"><option value="dna">DNA</option><option value="protein">Protein</option></select></label>
+      <label class="fld">Mode<select id="mode"><option value="global">Global (Needleman–Wunsch)</option><option value="local">Local (Smith–Waterman)</option></select></label>
+      <label class="fld">Match<input id="match" type="number" value="2" style="width:60px"></label>
+      <label class="fld">Mismatch<input id="mis" type="number" value="-1" style="width:60px"></label>
+      <label class="fld">Gap<input id="gap" type="number" value="-2" style="width:60px"></label>
+      <button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-arrows-join"></i> Align</button>
+    </div>
+    <div id="stats" class="stat-grid"></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .aln{font-family:ui-monospace,monospace;font-size:14px;line-height:1.5;white-space:pre;overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px}
+  .aln .m{color:var(--green)} .aln .x{color:var(--red)} .aln .g{color:var(--text3)} .aln .mid{color:var(--text3)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function clean(r,type){return r.replace(/^>.*$/gm,'').replace(type==='dna'?/[^ACGTUacgtu]/g:/[^A-Za-z]/g,'').toUpperCase();}
+// simple similarity groups for protein
+const SIMG=[['G','A','S','T'],['I','L','M','V'],['F','Y','W'],['K','R','H'],['D','E','N','Q'],['C']];
+function similar(x,y){return SIMG.some(g=>g.includes(x)&&g.includes(y));}
+function align(a,b,o){
+  const n=a.length,m=b.length;const local=o.mode==='local';
+  const H=Array.from({length:n+1},()=>new Float64Array(m+1));
+  const T=Array.from({length:n+1},()=>new Int8Array(m+1));
+  if(!local){for(let i=1;i<=n;i++){H[i][0]=i*o.gap;T[i][0]=1;}for(let j=1;j<=m;j++){H[0][j]=j*o.gap;T[0][j]=2;}}
+  let best=0,bi=0,bj=0;
+  for(let i=1;i<=n;i++)for(let j=1;j<=m;j++){
+    const s=a[i-1]===b[j-1]?o.match:o.mis;
+    let d=H[i-1][j-1]+s,up=H[i-1][j]+o.gap,lf=H[i][j-1]+o.gap;
+    let v=Math.max(d,up,lf);let t=v===d?0:v===up?1:2;
+    if(local&&v<0){v=0;t=3;}
+    H[i][j]=v;T[i][j]=t;
+    if(local&&v>=best){best=v;bi=i;bj=j;}
+  }
+  let A='',B='',i=local?bi:n,j=local?bj:m;
+  while((local?H[i][j]>0:(i>0||j>0))){
+    const t=T[i][j];
+    if(t===0){A=a[i-1]+A;B=b[j-1]+B;i--;j--;}
+    else if(t===1){A=a[i-1]+A;B='-'+B;i--;}
+    else if(t===2){A='-'+A;B=b[j-1]+B;j--;}
+    else break;
+  }
+  return {A,B,score:local?best:H[n][m]};
+}
+$('#run').onclick=()=>{
+  const type=$('#type').value;const a=clean($('#a').value,type),b=clean($('#b').value,type);
+  if(!a||!b){$('#status')&&($('#status').textContent='');return;}
+  const o={mode:$('#mode').value,match:+$('#match').value,mis:+$('#mis').value,gap:+$('#gap').value};
+  const {A,B,score}=align(a,b,o);
+  let ident=0,sim=0,gaps=0;let mid='';
+  for(let k=0;k<A.length;k++){if(A[k]==='-'||B[k]==='-'){gaps++;mid+=' ';}else if(A[k]===B[k]){ident++;sim++;mid+='|';}else if(type==='protein'&&similar(A[k],B[k])){sim++;mid+=':';}else mid+=' ';}
+  const L=A.length||1;
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Score</div><div class="stat-value">${score}</div></div>
+    <div class="stat-card"><div class="stat-label">Identity</div><div class="stat-value" style="color:var(--green)">${(ident/L*100).toFixed(1)}%</div></div>
+    ${type==='protein'?`<div class="stat-card"><div class="stat-label">Similarity</div><div class="stat-value" style="color:var(--teal)">${(sim/L*100).toFixed(1)}%</div></div>`:''}
+    <div class="stat-card"><div class="stat-label">Gaps</div><div class="stat-value">${(gaps/L*100).toFixed(1)}%</div></div>
+    <div class="stat-card"><div class="stat-label">Aln length</div><div class="stat-value">${A.length}</div></div>`;
+  // chunked display 60/line
+  let html='';for(let s=0;s<A.length;s+=60){const ca=A.slice(s,s+60),cb=B.slice(s,s+60),cm=mid.slice(s,s+60);
+    html+=`A ${color(ca,cb)}\n  <span class="mid">${esc(cm)}</span>\nB ${color(cb,ca)}\n\n`;}
+  $('#out').innerHTML=`<div class="aln">${html}</div>`;
+};
+function color(seq,other){let o='';for(let k=0;k<seq.length;k++){const ch=seq[k];const cls=ch==='-'?'g':(ch===other[k]?'m':'x');o+=`<span class="${cls}">${esc(ch)}</span>`;}return o;}
+$('#run').click();
+</script>
+</body>
+</html>

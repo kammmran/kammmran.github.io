@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Methodology Flowchart Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-sitemap"></i></div><div>Flowchart Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-sitemap"></i></div>
+      <div>
+        <div class="tool-title">Methodology Flowchart Generator</div>
+        <div class="tool-desc">Turn a numbered list of steps into a clean methodology or experiment-workflow flowchart. Write one step per line, use indentation for sub-steps and <code>?</code> for decisions; the tool lays out boxes and arrows automatically. Export as SVG (vector, editable) or PNG. Also builds PRISMA-style screening diagrams.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Steps — one per line. End a line with <b>?</b> for a decision; prefix <b>-&gt;</b> for a Yes branch and <b>=&gt;</b> for a No branch.
+        <textarea id="src" style="min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:13px">Collect leaf spectra (n=12,400)
+Quality control & normalization
+Enough labelled data?
+-> Supervised fine-tuning
+=> Self-supervised pretraining
+Train deep model
+5-fold cross-validation
+Field validation
+Report results</textarea>
+      </label>
+      <div>
+        <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px;margin-bottom:8px">
+          <label class="fld">Direction<select id="dir"><option value="v">Top → bottom</option><option value="h">Left → right</option></select></label>
+          <label class="fld">Theme<select id="theme"><option value="#0b2545,#cfe0f5">Navy</option><option value="#0d4f4a,#cdeeea">Teal</option><option value="#3b2a5e,#e7dcfb">Purple</option><option value="#333,#eee">Mono</option></select></label>
+          <label class="fld">Box width<input id="bw" type="number" value="200" style="width:70px"></label>
+        </div>
+        <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff;max-height:46vh"><div id="chart"></div></div>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="render"><i class="ti ti-refresh"></i> Render</button>
+      <button class="btn" id="svg"><i class="ti ti-download"></i> SVG</button>
+      <button class="btn" id="png"><i class="ti ti-photo-down"></i> PNG</button>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Syntax: a normal line is a process box. A line ending in <b>?</b> becomes a diamond decision; the next lines starting with <b>-&gt;</b> (Yes) and <b>=&gt;</b> (No) become its branches that rejoin the main flow. SVG export stays crisp at any size and can be edited in Illustrator/Inkscape.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:12px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function parse(t){
+  const nodes=[];const lines=t.split('\n').map(l=>l.replace(/\s+$/,'')).filter(l=>l.trim());
+  lines.forEach(l=>{
+    const s=l.trim();
+    if(s.startsWith('->')){nodes.push({type:'branch',side:'yes',text:s.slice(2).trim()});}
+    else if(s.startsWith('=>')){nodes.push({type:'branch',side:'no',text:s.slice(2).trim()});}
+    else if(s.endsWith('?')){nodes.push({type:'decision',text:s});}
+    else nodes.push({type:'process',text:s});
+  });
+  return nodes;
+}
+let lastSVG='';
+function render(){
+  const nodes=parse($('#src').value);if(!nodes.length){$('#status').textContent='Add some steps.';return;}
+  const [stroke,fill]=$('#theme').value.split(',');
+  const bw=+$('#bw').value,bh=58,vgap=44,branchGap=40;
+  const horiz=$('#dir').value==='h';
+  // layout: main spine; branches placed left(no)/right(yes) of their decision
+  let y=30,maxX=0;const placed=[];const main=[];
+  for(let i=0;i<nodes.length;i++){
+    const n=nodes[i];
+    if(n.type==='branch'){
+      // attach to previous decision
+      const dec=placed.filter(p=>p.type==='decision').pop();
+      if(dec){const side=n.side==='yes'?1:-1;const bx=dec.x+side*(bw*0.7+branchGap);const by=dec.y;placed.push({...n,x:bx,y:by,w:bw*0.78,h:bh,dec});maxX=Math.max(maxX,bx+bw);continue;}
+    }
+    const cx=Math.round((bw+200)/2)+60;
+    const node={...n,x:cx-bw/2,y,w:bw,h:n.type==='decision'?bh+14:bh};
+    placed.push(node);main.push(node);y+=node.h+vgap;maxX=Math.max(maxX,node.x+bw);
+  }
+  const W=Math.max(maxX+220,520),H=y+10;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" font-family="Arial, sans-serif">
+    <defs><marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="${stroke}"/></marker></defs>`;
+  // edges along main spine
+  for(let i=0;i<main.length-1;i++){const a=main[i],b=main[i+1];svg+=`<line x1="${a.x+a.w/2}" y1="${a.y+a.h}" x2="${b.x+b.w/2}" y2="${b.y-2}" stroke="${stroke}" stroke-width="2" marker-end="url(#arr)"/>`;}
+  // branch edges + labels
+  placed.filter(p=>p.type==='branch').forEach(p=>{const d=p.dec;const mx=d.x+d.w/2,my=d.y+d.h/2;const tx=p.x+(p.x>d.x?0:p.w),ty=p.y+p.h/2;svg+=`<line x1="${p.x>d.x?d.x+d.w:d.x}" y1="${my}" x2="${tx}" y2="${ty}" stroke="${stroke}" stroke-width="2" marker-end="url(#arr)"/><text x="${(mx+tx)/2}" y="${my-6}" font-size="11" fill="${stroke}" text-anchor="middle">${p.side==='yes'?'Yes':'No'}</text>`;
+    // rejoin to next main node
+    const idx=main.findIndex(m=>m.y>d.y);if(idx>=0){const nx=main[idx];svg+=`<line x1="${p.x+p.w/2}" y1="${p.y+p.h}" x2="${nx.x+nx.w/2}" y2="${nx.y-2}" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr)"/>`;}
+  });
+  // nodes
+  placed.forEach(n=>{
+    const label=wrapSvg(n.text.replace(/\?$/,''),n.w-16);
+    if(n.type==='decision'){const cx=n.x+n.w/2,cy=n.y+n.h/2;svg+=`<polygon points="${cx},${n.y} ${n.x+n.w},${cy} ${cx},${n.y+n.h} ${n.x},${cy}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;}
+    else if(n.type==='branch')svg+=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="8" fill="#fff" stroke="${stroke}" stroke-width="2"/>`;
+    else svg+=`<rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="10" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;
+    const fs=13,lh=15,startY=n.y+n.h/2-(label.length-1)*lh/2+4;
+    label.forEach((ln,j)=>svg+=`<text x="${n.x+n.w/2}" y="${startY+j*lh}" font-size="${fs}" fill="#1a1a1a" text-anchor="middle">${esc(ln)}</text>`);
+  });
+  svg+='</svg>';
+  lastSVG=svg;$('#chart').innerHTML=svg;$('#status').textContent=placed.length+' nodes';
+}
+function wrapSvg(text,maxW){const approx=Math.floor(maxW/7);const words=text.split(/\s+/);const lines=[];let cur='';words.forEach(w=>{if((cur+' '+w).length>approx&&cur){lines.push(cur);cur=w;}else cur=cur?cur+' '+w:w;});if(cur)lines.push(cur);return lines.slice(0,4);}
+$('#render').onclick=render;
+['src','dir','theme','bw'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#svg').onclick=()=>{if(!lastSVG)return;const b=new Blob([lastSVG],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='flowchart.svg';a.click();};
+$('#png').onclick=()=>{if(!lastSVG)return;const b=new Blob([lastSVG],{type:'image/svg+xml'});const url=URL.createObjectURL(b);const img=new Image();img.onload=()=>{const size=lastSVG.match(/width="(\d+)" height="(\d+)"/);const w=+size[1],h=+size[2];const c=document.createElement('canvas');c.width=w*2;c.height=h*2;const cx=c.getContext('2d');cx.scale(2,2);cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(img,0,0);c.toBlob(bb=>{const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='flowchart.png';a.click();});};img.src=url;};
+render();
+</script>
+</body>
+</html>

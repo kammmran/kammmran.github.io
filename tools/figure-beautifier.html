@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publication Figure Beautifier — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-sparkles"></i></div><div>Publication Figure Beautifier</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:960px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-sparkles"></i></div>
+      <div>
+        <div class="tool-title">Publication Figure Beautifier</div>
+        <div class="tool-desc">Tidy a figure for submission: flatten transparency onto white, auto-trim surrounding whitespace, add consistent padding and an optional thin border, nudge brightness/contrast, and stamp a panel label (A, B, …). Export a clean PNG at the size you want. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:22px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:24px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop a figure</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div id="ctrls" style="display:none;flex-direction:column;gap:10px">
+      <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px">
+        <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="trim" checked> auto-trim whitespace</label>
+        <label class="fld">Padding<input type="range" id="pad" min="0" max="80" value="24"></label>
+        <label class="fld">Border<input type="range" id="border" min="0" max="8" value="0"></label>
+        <label class="fld">Brightness<input type="range" id="bright" min="-40" max="40" value="0"></label>
+        <label class="fld">Contrast<input type="range" id="contrast" min="-40" max="40" value="0"></label>
+        <label class="fld">Panel label<input id="label" placeholder="A" style="width:56px"></label>
+        <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="white" checked> white background</label>
+      </div>
+      <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:repeating-conic-gradient(#222 0 25%,#1a1a22 0 50%) 50%/18px 18px"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+      <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button><label class="fld" style="flex-direction:row;align-items:center;gap:6px">Scale <select id="scale"><option value="1">1×</option><option value="2" selected>2×</option></select></label><span class="muted" id="status" style="font-size:12px"></span></div>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Auto-trim removes uniform white/transparent margins so panels align tightly in a composite. Brightness/contrast are gentle, presentation-only adjustments — never use them to alter the data a figure reports.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');let img=null;
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])load(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+function load(f){const u=URL.createObjectURL(f);img=new Image();img.onload=()=>{$('#ctrls').style.display='flex';render();};img.src=u;}
+['trim','pad','border','bright','contrast','label','white','scale'].forEach(id=>$('#'+id).addEventListener('input',render));
+function render(){
+  if(!img)return;
+  // draw to temp to analyze trim
+  const t=document.createElement('canvas');t.width=img.naturalWidth;t.height=img.naturalHeight;const tc=t.getContext('2d');tc.drawImage(img,0,0);
+  let x0=0,y0=0,x1=t.width,y1=t.height;
+  if($('#trim').checked){const d=tc.getImageData(0,0,t.width,t.height).data;const isBg=(i)=>{const a=d[i+3];return a<10||(d[i]>245&&d[i+1]>245&&d[i+2]>245);};
+    let top=t.height,bot=0,left=t.width,right=0;
+    for(let y=0;y<t.height;y++)for(let x=0;x<t.width;x++){const i=(y*t.width+x)*4;if(!isBg(i)){if(y<top)top=y;if(y>bot)bot=y;if(x<left)left=x;if(x>right)right=x;}}
+    if(right>left&&bot>top){x0=left;y0=top;x1=right+1;y1=bot+1;}
+  }
+  const cw=x1-x0,ch=y1-y0;const pad=+$('#pad').value,bd=+$('#border').value,sc=+$('#scale').value;
+  cv.width=(cw+pad*2+bd*2)*sc;cv.height=(ch+pad*2+bd*2)*sc;ctx.setTransform(sc,0,0,sc,0,0);
+  const W=cw+pad*2+bd*2,H=ch+pad*2+bd*2;
+  if($('#white').checked){ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);}else ctx.clearRect(0,0,W,H);
+  if(bd>0){ctx.strokeStyle='#222';ctx.lineWidth=bd;ctx.strokeRect(bd/2,bd/2,W-bd,H-bd);}
+  ctx.drawImage(t,x0,y0,cw,ch,pad+bd,pad+bd,cw,ch);
+  const b=+$('#bright').value,con=+$('#contrast').value;
+  if(b||con){const id=ctx.getImageData(0,0,W*sc,H*sc);const dd=id.data;const cf=(259*(con+255))/(255*(259-con));for(let i=0;i<dd.length;i+=4){for(let k=0;k<3;k++){let v=dd[i+k]+b;v=cf*(v-128)+128;dd[i+k]=Math.max(0,Math.min(255,v));}}ctx.putImageData(id,0,0);}
+  const lab=$('#label').value.trim();
+  if(lab){ctx.setTransform(sc,0,0,sc,0,0);ctx.font='bold 28px Arial';ctx.textBaseline='top';const tw=ctx.measureText(lab).width;ctx.fillStyle='rgba(255,255,255,0.85)';ctx.fillRect(pad+bd+2,pad+bd+2,tw+10,32);ctx.fillStyle='#000';ctx.fillText(lab,pad+bd+6,pad+bd+5);}
+  $('#status').textContent=`${cv.width}×${cv.height}px`;
+}
+$('#png').onclick=()=>{cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='figure-clean.png';a.click();});};
+</script>
+</body>
+</html>

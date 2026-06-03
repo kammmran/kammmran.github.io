@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Set Theory Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-circles"></i></div><div>Set Theory Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-circles"></i></div>
+      <div>
+        <div class="tool-title">Set Theory Calculator</div>
+        <div class="tool-desc">Work with up to three sets: compute union, intersection, difference, symmetric difference, complement (vs a universe), Cartesian product, power set, and subset relations — with a live Venn diagram. Enter comma-separated elements. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid3">
+      <label class="fld">Set A<input id="A" value="1, 2, 3, 4"></label>
+      <label class="fld">Set B<input id="B" value="3, 4, 5, 6"></label>
+      <label class="fld">Set C (optional)<input id="C" value="4, 6, 7"></label>
+    </div>
+    <label class="fld">Universe U (for complement, optional)<input id="U" value="1, 2, 3, 4, 5, 6, 7, 8, 9, 10"></label>
+    <div id="out"></div>
+    <canvas id="venn" width="520" height="300" style="max-width:100%;background:#fff;border-radius:8px;border:1px solid var(--border)"></canvas>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}@media(max-width:640px){.grid3{grid-template-columns:1fr}}
+  .op{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:8px 12px;margin-bottom:6px;font-size:13px}
+  .op .l{color:var(--accent3);font-weight:700;font-family:ui-monospace,monospace} .op .v{font-family:ui-monospace,monospace}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function parse(id){return [...new Set($('#'+id).value.split(/[,\s]+/).map(s=>s.trim()).filter(Boolean))];}
+const U_=(a,b)=>[...new Set([...a,...b])];
+const I_=(a,b)=>a.filter(x=>b.includes(x));
+const D_=(a,b)=>a.filter(x=>!b.includes(x));
+const SD=(a,b)=>[...D_(a,b),...D_(b,a)];
+const sub=(a,b)=>a.every(x=>b.includes(x));
+function fmt(s){return '{ '+s.join(', ')+' }';}
+function power(s){const r=[[]];for(const e of s){const len=r.length;for(let i=0;i<len;i++)r.push([...r[i],e]);}return r;}
+function render(){
+  const A=parse('A'),B=parse('B'),C=parse('C'),U=parse('U');
+  const rows=[];
+  const add=(l,v)=>rows.push(`<div class="op"><span class="l">${esc(l)}</span> = <span class="v">${esc(fmt(v))}</span> &nbsp;<span class="muted">(|·| = ${v.length})</span></div>`);
+  add('A ∪ B',U_(A,B));add('A ∩ B',I_(A,B));add('A \\ B',D_(A,B));add('B \\ A',D_(B,A));add('A △ B',SD(A,B));
+  if(U.length){add("A' (U∖A)",D_(U,A));}
+  if(C.length){add('A ∪ B ∪ C',U_(U_(A,B),C));add('A ∩ B ∩ C',I_(I_(A,B),C));}
+  // relations
+  const rel=[];rel.push(`A ⊆ B: <b style="color:${sub(A,B)?'var(--green)':'var(--red)'}">${sub(A,B)}</b>`);rel.push(`B ⊆ A: <b style="color:${sub(B,A)?'var(--green)':'var(--red)'}">${sub(B,A)}</b>`);rel.push(`disjoint: <b style="color:${I_(A,B).length===0?'var(--green)':'var(--red)'}">${I_(A,B).length===0}</b>`);
+  rows.push(`<div class="op">${rel.join(' &nbsp;·&nbsp; ')}</div>`);
+  // power set of A (cap size)
+  if(A.length<=5){const ps=power(A);rows.push(`<div class="op"><span class="l">P(A)</span> &nbsp;<span class="muted">(${ps.length} subsets)</span><br><span class="v" style="font-size:12px">${esc(ps.map(s=>'{'+s.join(',')+'}').join(', '))}</span></div>`);}
+  if(A.length<=4&&B.length<=4){const cart=[];A.forEach(a=>B.forEach(b=>cart.push(`(${a},${b})`)));rows.push(`<div class="op"><span class="l">A × B</span> = <span class="v" style="font-size:12px">{ ${esc(cart.join(', '))} }</span></div>`);}
+  $('#out').innerHTML=rows.join('');
+  venn(A,B,C);
+}
+function venn(A,B,C){const cv=$('#venn'),ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);ctx.font='13px Arial';ctx.textAlign='center';
+  const three=C.length>0;
+  ctx.globalCompositeOperation='source-over';
+  const circ=(x,y,col,lab)=>{ctx.beginPath();ctx.arc(x,y,85,0,7);ctx.fillStyle=col;ctx.globalAlpha=0.4;ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=col.replace('0.4','1');ctx.stroke();};
+  if(!three){circ(200,150,'rgba(96,165,250,0.4)');circ(320,150,'rgba(45,212,191,0.4)');ctx.fillStyle='#333';
+    ctx.fillText('A∖B',150,155);ctx.fillText('A∩B',260,155);ctx.fillText('B∖A',370,155);
+    ctx.fillText(D_(A,B).length,150,175);ctx.fillText(I_(A,B).length,260,175);ctx.fillText(D_(B,A).length,370,175);
+    ctx.fillText('A',150,75);ctx.fillText('B',370,75);}
+  else{circ(210,120,'rgba(96,165,250,0.4)');circ(310,120,'rgba(45,212,191,0.4)');circ(260,200,'rgba(251,191,36,0.4)');ctx.fillStyle='#333';ctx.fillText('A',150,90);ctx.fillText('B',370,90);ctx.fillText('C',260,265);
+    ctx.fillText('|A∩B∩C| = '+I_(I_(A,B),C).length,260,150);}
+}
+['A','B','C','U'].forEach(id=>$('#'+id).addEventListener('input',render));
+render();
+</script>
+</body>
+</html>

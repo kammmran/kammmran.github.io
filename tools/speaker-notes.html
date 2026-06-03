@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speaker Notes Designer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-notes"></i></div><div>Speaker Notes Designer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:980px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-notes"></i></div>
+      <div>
+        <div class="tool-title">Speaker Notes Designer</div>
+        <div class="tool-desc">Write and rehearse speaker notes per slide. Set a per-slide time budget, then use the big teleprompter view with a running timer that turns red when you overrun. Print a clean notes handout or export. Your script never leaves the browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <label class="fld">Notes — one slide per <code>---</code> block. First line = slide title; optionally start with <code>(90s)</code> to set that slide's time.
+      <textarea id="src" style="min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">(20s) Title slide
+Welcome everyone, thanks for coming. Today I'll show how spectral deep learning detects crop disease before it's visible.
+---
+(120s) The Problem
+Start with the stakes: crop disease costs billions. The key issue is that by the time we SEE symptoms, it's too late. And labelled data is scarce. Pause here for effect.
+---
+(150s) Our Approach
+Walk through the three steps slowly. Emphasise the self-supervised pretraining — that's the novel bit. Point to the diagram.
+---
+(120s) Results
+Land the numbers: 94 percent, 8x less data. Let them sink in. Mention robustness across species.
+---
+(40s) Conclusions
+Recap the one-sentence takeaway. Invite questions. Smile, thank the audience.</textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="present"><i class="ti ti-player-play"></i> Teleprompter</button><button class="btn" id="print"><i class="ti ti-printer"></i> Print notes</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+
+  <div id="handout"></div>
+
+  <div id="stage" style="display:none;position:fixed;inset:0;background:#0a0a0e;z-index:1000;flex-direction:column;color:#eee;padding:30px">
+    <div style="display:flex;align-items:center;gap:20px;margin-bottom:14px">
+      <div id="stTitle" style="font-size:24px;font-weight:700;color:var(--teal);flex:1"></div>
+      <div id="stTimer" style="font-size:40px;font-weight:800;font-variant-numeric:tabular-nums"></div>
+      <div id="stCount" style="color:#888"></div>
+    </div>
+    <div id="stNote" style="flex:1;font-size:34px;line-height:1.5;overflow:auto"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:12px">
+      <button class="btn" id="prev"><i class="ti ti-chevron-left"></i> Prev</button>
+      <button class="btn" id="playpause"><i class="ti ti-player-play"></i> Start</button>
+      <button class="btn" id="next">Next <i class="ti ti-chevron-right"></i></button>
+      <button class="btn" id="exit"><i class="ti ti-x"></i> Exit</button>
+    </div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  #handout{margin-top:14px}
+  .nh{background:#fff;color:#111;border-radius:8px;padding:24px 28px;font-family:Georgia,serif;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+  .ns{break-inside:avoid;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #eee} .ns h3{margin:0 0 4px;font-size:16px;display:flex;justify-content:space-between} .ns h3 .tm{color:#777;font-size:13px} .ns p{margin:0;font-size:13.5px;line-height:1.55}
+  @media print{.no-print{display:none!important}@page{margin:14mm}body{background:#fff}.nh{box-shadow:none;border-radius:0;padding:0}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let slides=[],cur=0,timer=null,elapsed=0,running=false;
+function parse(){return $('#src').value.split(/\n-{3,}\n/).map(b=>{const lines=b.trim().split('\n');let first=lines[0]||'';let sec=0;const m=first.match(/^\((\d+)\s*s?\)\s*(.*)$/);if(m){sec=+m[1];first=m[2];}return {title:first,note:lines.slice(1).join('\n').trim(),sec};});}
+function render(){slides=parse();$('#handout').innerHTML=`<div class="nh">${slides.map((s,i)=>`<div class="ns"><h3>${i+1}. ${esc(s.title)}<span class="tm">${s.sec?fmt(s.sec):''}</span></h3><p>${esc(s.note).replace(/\n/g,'<br>')}</p></div>`).join('')}</div>`;$('#status').textContent=slides.length+' slides · '+fmt(slides.reduce((a,s)=>a+s.sec,0))+' total';}
+function fmt(s){s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function showSlide(){const s=slides[cur];$('#stTitle').textContent=`${cur+1}. ${s.title}`;$('#stNote').textContent=s.note;$('#stCount').textContent=`${cur+1}/${slides.length}`;elapsed=0;updTimer();}
+function updTimer(){const s=slides[cur];const left=(s.sec||0)-elapsed;$('#stTimer').textContent=(s.sec?fmt(Math.abs(left)):fmt(elapsed));$('#stTimer').style.color=s.sec&&left<0?'#f87171':s.sec&&left<10?'#fbbf24':'#eee';$('#stTimer').textContent=(s.sec?(left<0?'-':'')+fmt(Math.abs(left)):fmt(elapsed));}
+$('#present').onclick=()=>{render();if(!slides.length)return;cur=0;$('#stage').style.display='flex';showSlide();};
+$('#exit').onclick=()=>{$('#stage').style.display='none';stop();};
+$('#next').onclick=()=>{if(cur<slides.length-1){cur++;showSlide();}};
+$('#prev').onclick=()=>{if(cur>0){cur--;showSlide();}};
+function stop(){running=false;clearInterval(timer);$('#playpause').innerHTML='<i class="ti ti-player-play"></i> Start';}
+$('#playpause').onclick=()=>{if(running){stop();}else{running=true;$('#playpause').innerHTML='<i class="ti ti-player-pause"></i> Pause';timer=setInterval(()=>{elapsed++;updTimer();},1000);}};
+document.addEventListener('keydown',e=>{if($('#stage').style.display!=='flex')return;if(e.key==='ArrowRight')$('#next').click();if(e.key==='ArrowLeft')$('#prev').click();if(e.key===' '){e.preventDefault();$('#playpause').click();}if(e.key==='Escape')$('#exit').click();});
+$('#print').onclick=()=>{render();window.print();};
+$('#src').addEventListener('input',render);
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphical Abstract Maker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-layout-collage"></i></div><div>Graphical Abstract Maker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-layout-collage"></i></div>
+      <div>
+        <div class="tool-title">Graphical / Visual Abstract Maker</div>
+        <div class="tool-desc">Compose a graphical abstract or TOC graphic from labelled panels connected by arrows. Add your own images, type captions, drop in stage labels, and arrange a left-to-right or input→method→result story. Export a journal-ready PNG at the size you choose — all in the browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:12px">
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Canvas<select id="size">
+        <option value="1200,675">Wide 16:9 (1200×675)</option>
+        <option value="1200,1200" selected>Square (1200×1200)</option>
+        <option value="900,1100">Portrait TOC (900×1100)</option>
+        <option value="1600,500">Banner (1600×500)</option>
+      </select></label>
+      <label class="fld">Theme<select id="theme">
+        <option value="#0d4f4a,#7fd1c8">Teal</option>
+        <option value="#0b2545,#e8b84b">Navy/Gold</option>
+        <option value="#3b2a5e,#b79cf0">Purple</option>
+        <option value="#5e1322,#e0a96d">Maroon</option>
+      </select></label>
+      <label class="fld">Title (optional)<input id="title" placeholder="Graphical abstract title" style="width:240px"></label>
+    </div>
+    <div class="row" style="gap:8px">
+      <button class="btn btn-sm" id="addPanel"><i class="ti ti-square-plus"></i> Add panel</button>
+      <button class="btn btn-sm" id="addImg"><i class="ti ti-photo-plus"></i> Add image panel</button>
+      <input type="file" id="imgFile" accept="image/*" style="display:none">
+      <span class="muted" style="font-size:12px;margin-left:auto">Click a panel to edit · drag to move</span>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#333"><canvas id="cv" style="display:block;max-width:100%;margin:auto;cursor:default"></canvas></div>
+    <div id="editor" style="display:none;gap:10px;flex-wrap:wrap" class="row">
+      <label class="fld">Caption<input id="eCap" style="width:240px"></label>
+      <label class="fld">Stage label<input id="eStage" placeholder="e.g. Input / Method / Result" style="width:160px"></label>
+      <label class="fld">Shape<select id="eShape"><option value="round">Rounded</option><option value="rect">Square</option><option value="circle">Circle</option></select></label>
+      <button class="btn btn-sm" id="eArrow"><i class="ti ti-arrow-right"></i> Arrow to next</button>
+      <button class="btn btn-sm" id="eDel"><i class="ti ti-trash"></i> Delete</button>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px">Scale <select id="scale"><option value="1">1×</option><option value="2" selected>2×</option></select></label>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Build a clear narrative: keep it to 3–5 panels, use a stage label on each (Input → Method → Result), and let arrows carry the eye. Many journals cap the graphical abstract at a square or wide format around 1200 px — check your target's guidelines.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');
+let theme=['#0d4f4a','#7fd1c8'],panels=[],sel=-1,drag=null;
+$('#theme').onchange=()=>{theme=$('#theme').value.split(',').slice(0,2);draw();};
+$('#size').onchange=()=>{resize();draw();};
+$('#title').oninput=draw;
+function resize(){const [w,h]=$('#size').value.split(',').map(Number);cv.width=w;cv.height=h;}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function wrap(text,maxW,fs){ctx.font=fs+'px Arial';const words=String(text||'').split(/\s+/);const lines=[];let cur='';words.forEach(w=>{if(ctx.measureText(cur+' '+w).width>maxW&&cur){lines.push(cur);cur=w;}else cur=cur?cur+' '+w:w;});if(cur)lines.push(cur);return lines;}
+function draw(){
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);
+  let top=20;
+  if($('#title').value.trim()){ctx.fillStyle=theme[0];ctx.font='bold '+Math.round(cv.width/26)+'px Arial';ctx.textAlign='center';const ls=wrap($('#title').value,cv.width-80,Math.round(cv.width/26));ls.forEach((l,i)=>ctx.fillText(l,cv.width/2,40+i*cv.width/24));top=40+ls.length*cv.width/24;}
+  // arrows first (under panels)
+  panels.forEach((p,i)=>{if(p.arrow&&panels[i+1]){const a=p,b=panels[i+1];const x1=a.x+a.w,y1=a.y+a.h/2,x2=b.x,y2=b.y+b.h/2;ctx.strokeStyle=theme[0];ctx.fillStyle=theme[0];ctx.lineWidth=Math.max(4,cv.width/220);ctx.beginPath();ctx.moveTo(x1+6,y1);ctx.lineTo(x2-16,y2);ctx.stroke();const ang=Math.atan2(y2-y1,x2-x1);ctx.beginPath();ctx.moveTo(x2-4,y2);ctx.lineTo(x2-22,y2-10);ctx.lineTo(x2-22,y2+10);ctx.closePath();ctx.fill();}});
+  panels.forEach((p,i)=>{
+    ctx.save();
+    if(p.shape==='circle'){ctx.beginPath();ctx.arc(p.x+p.w/2,p.y+p.h/2,Math.min(p.w,p.h)/2,0,7);ctx.closePath();}
+    else roundRect(p.x,p.y,p.w,p.h,p.shape==='rect'?4:18);
+    ctx.fillStyle=i===sel?theme[1]+'55':'#f2f5f6';ctx.fill();
+    ctx.lineWidth=i===sel?5:3;ctx.strokeStyle=theme[0];ctx.stroke();ctx.clip();
+    if(p.img){const s=Math.min(p.w/p.img.naturalWidth,p.h/p.img.naturalHeight)*0.86;const iw=p.img.naturalWidth*s,ih=p.img.naturalHeight*s;ctx.drawImage(p.img,p.x+(p.w-iw)/2,p.y+(p.h-ih)/2-10,iw,ih);}
+    ctx.restore();
+    if(p.stage){ctx.fillStyle=theme[0];const fs=Math.round(cv.width/40);ctx.font='bold '+fs+'px Arial';ctx.textAlign='center';ctx.fillText(p.stage,p.x+p.w/2,p.y-8);}
+    if(p.cap){ctx.fillStyle='#222';const fs=Math.round(cv.width/46);const ls=wrap(p.cap,p.w-24,fs);ctx.font=fs+'px Arial';ctx.textAlign='center';const baseY=p.img?p.y+p.h-ls.length*fs*1.2-6:p.y+p.h/2-(ls.length-1)*fs*0.6;ls.forEach((l,j)=>ctx.fillText(l,p.x+p.w/2,baseY+j*fs*1.2));}
+  });
+}
+function addPanel(img){
+  const n=panels.length;const w=cv.width*0.26,h=cv.height*0.3;
+  const x=40+n*(w+cv.width*0.05)%(cv.width-w-40),y=cv.height*0.4;
+  panels.push({x:Math.min(x,cv.width-w-20),y,w,h,cap:img?'':'Caption text',stage:['Input','Method','Result','Output'][n]||'',shape:'round',arrow:n<3,img:img||null});
+  sel=panels.length-1;openEditor();draw();
+}
+$('#addPanel').onclick=()=>addPanel(null);
+$('#addImg').onclick=()=>$('#imgFile').click();
+$('#imgFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);const im=new Image();im.onload=()=>addPanel(im);im.src=u;};
+function at(x,y){for(let i=panels.length-1;i>=0;i--){const p=panels[i];if(x>=p.x&&x<=p.x+p.w&&y>=p.y&&y<=p.y+p.h)return i;}return -1;}
+function evt(e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*(cv.width/r.width),(e.clientY-r.top)*(cv.height/r.height)];}
+cv.addEventListener('mousedown',e=>{const [x,y]=evt(e);const i=at(x,y);sel=i;if(i>=0){drag={i,dx:x-panels[i].x,dy:y-panels[i].y};openEditor();}else $('#editor').style.display='none';draw();});
+cv.addEventListener('mousemove',e=>{if(!drag)return;const [x,y]=evt(e);panels[drag.i].x=Math.max(0,Math.min(cv.width-panels[drag.i].w,x-drag.dx));panels[drag.i].y=Math.max(0,Math.min(cv.height-panels[drag.i].h,y-drag.dy));draw();});
+window.addEventListener('mouseup',()=>drag=null);
+function openEditor(){if(sel<0)return;const p=panels[sel];$('#editor').style.display='flex';$('#eCap').value=p.cap;$('#eStage').value=p.stage;$('#eShape').value=p.shape;}
+$('#eCap').oninput=()=>{panels[sel].cap=$('#eCap').value;draw();};
+$('#eStage').oninput=()=>{panels[sel].stage=$('#eStage').value;draw();};
+$('#eShape').onchange=()=>{panels[sel].shape=$('#eShape').value;draw();};
+$('#eArrow').onclick=()=>{panels[sel].arrow=!panels[sel].arrow;draw();};
+$('#eDel').onclick=()=>{panels.splice(sel,1);sel=-1;$('#editor').style.display='none';draw();};
+$('#png').onclick=()=>{
+  const sc=+$('#scale').value;const out=document.createElement('canvas');out.width=cv.width*sc;out.height=cv.height*sc;const o=out.getContext('2d');o.scale(sc,sc);
+  const tmp=ctx;/* redraw onto out */ o.drawImage(cv,0,0);
+  out.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='graphical-abstract.png';a.click();});
+};
+resize();
+panels=[{x:60,y:cv.height*0.4,w:cv.width*0.24,h:cv.height*0.28,cap:'Leaf spectra collected',stage:'Input',shape:'round',arrow:true,img:null},
+        {x:cv.width*0.38,y:cv.height*0.4,w:cv.width*0.24,h:cv.height*0.28,cap:'Self-supervised model',stage:'Method',shape:'round',arrow:true,img:null},
+        {x:cv.width*0.70,y:cv.height*0.4,w:cv.width*0.24,h:cv.height*0.28,cap:'94% early detection',stage:'Result',shape:'round',arrow:false,img:null}];
+$('#title').value='Spectral deep learning detects crop disease early';
+draw();
+</script>
+</body>
+</html>

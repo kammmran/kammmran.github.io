@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unit Test Skeleton Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-test-pipe"></i></div><div>Unit Test Skeleton Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-test-pipe"></i></div>
+      <div>
+        <div class="tool-title">Unit Test Skeleton Generator</div>
+        <div class="tool-desc">Paste Python or JavaScript function definitions and get ready-to-fill test skeletons — pytest/unittest for Python, Jest for JS — one stub per function with argument placeholders and TODO assertions, plus edge-case reminders. Removes the boilerplate so you actually write the tests. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:10px"><label class="fld">Language<select id="lang"><option value="py">Python (pytest)</option><option value="pyu">Python (unittest)</option><option value="js">JavaScript (Jest)</option></select></label><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <label class="fld">Source — paste your functions
+      <textarea id="src" style="min-height:150px;font-family:ui-monospace,monospace;font-size:12.5px">def normalize(values, lo=0.0, hi=1.0):
+    ...
+
+def gc_content(seq):
+    ...
+
+def merge_intervals(intervals):
+    ...</textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate tests</button><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><button class="btn" id="dl"><i class="ti ti-download"></i> Download</button></div>
+    <pre id="out" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;overflow:auto;font-size:12.5px;line-height:1.5;max-height:50vh"></pre>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">These are skeletons, not generated assertions — the tool can't know what your functions should return, so it leaves TODOs and edge-case prompts (empty input, boundaries, types). Fill them in with expected values.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+function parsePy(src){const re=/def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)/g;const fns=[];let m;while((m=re.exec(src))){const name=m[1];const args=m[2].split(',').map(a=>a.trim().split(/[:=]/)[0].trim()).filter(a=>a&&a!=='self');fns.push({name,args});}return fns;}
+function parseJs(src){const fns=[];let m;
+  const re1=/function\s+([A-Za-z_$]\w*)\s*\(([^)]*)\)/g;while((m=re1.exec(src)))fns.push({name:m[1],args:argList(m[2])});
+  const re2=/(?:const|let|var)\s+([A-Za-z_$]\w*)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>/g;while((m=re2.exec(src)))fns.push({name:m[1],args:argList(m[2])});
+  const re3=/([A-Za-z_$]\w*)\s*\(([^)]*)\)\s*{/g;// methods — best effort, skip keywords
+  return fns;
+}
+function argList(s){return s.split(',').map(a=>a.trim().split(/[=:]/)[0].trim().replace(/^\.\.\./,'')).filter(Boolean);}
+const EDGE=['empty / zero-length input','boundary values (min/max)','negative or unexpected types','single-element input'];
+function gen(){
+  const lang=$('#lang').value;const src=$('#src').value;
+  const fns=lang==='js'?parseJs(src):parsePy(src);
+  if(!fns.length){$('#out').textContent='// No function definitions found.';return;}
+  let out='';
+  if(lang==='py'){out='import pytest\n# from your_module import '+fns.map(f=>f.name).join(', ')+'\n\n';
+    fns.forEach(f=>{out+=`def test_${f.name}():\n    # Arrange\n${f.args.map(a=>`    ${a} = None  # TODO`).join('\n')||'    pass'}\n    # Act\n    result = ${f.name}(${f.args.join(', ')})\n    # Assert\n    assert result == None  # TODO expected\n\n@pytest.mark.parametrize("case", [\n    # ${EDGE.join(', ')}\n])\ndef test_${f.name}_edge_cases(case):\n    pass  # TODO\n\n`;});
+  } else if(lang==='pyu'){out='import unittest\n# from your_module import '+fns.map(f=>f.name).join(', ')+'\n\nclass Tests(unittest.TestCase):\n';
+    fns.forEach(f=>{out+=`    def test_${f.name}(self):\n${f.args.map(a=>`        ${a} = None  # TODO`).join('\n')||'        pass'}\n        result = ${f.name}(${f.args.join(', ')})\n        self.assertEqual(result, None)  # TODO\n        # edge cases: ${EDGE.join(', ')}\n\n`;});
+    out+='\nif __name__ == "__main__":\n    unittest.main()\n';
+  } else {out='// import { '+fns.map(f=>f.name).join(', ')+' } from "./module";\n\n';
+    fns.forEach(f=>{out+=`describe("${f.name}", () => {\n  test("works for typical input", () => {\n${f.args.map(a=>`    const ${a} = null; // TODO`).join('\n')}\n    const result = ${f.name}(${f.args.join(', ')});\n    expect(result).toBe(null); // TODO expected\n  });\n\n  test.each([\n    // ${EDGE.join(', ')}\n  ])("edge case %p", (input) => {\n    // TODO\n  });\n});\n\n`;});
+  }
+  $('#out').textContent=out;$('#status').textContent=fns.length+' function(s)';
+}
+['lang','src'].forEach(id=>$('#'+id).addEventListener('input',gen));
+$('#gen').onclick=gen;
+$('#copy').onclick=()=>{navigator.clipboard.writeText($('#out').textContent);$('#status').textContent='Copied.';};
+$('#dl').onclick=()=>{const ext=$('#lang').value==='js'?'test.js':'test_generated.py';const b=new Blob([$('#out').textContent],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=ext;a.click();};
+gen();
+</script>
+</body>
+</html>

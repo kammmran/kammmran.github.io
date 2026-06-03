@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conference Program Designer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-calendar-event"></i></div><div>Conference Program Designer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-calendar-event"></i></div>
+      <div>
+        <div class="tool-title">Conference Program Designer</div>
+        <div class="tool-desc">Type your schedule in a simple text format and get a clean, printable conference program. Days, sessions, time slots, speakers and rooms are parsed and laid out automatically, with session headers and break styling. Print to PDF or export. Everything stays in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <label class="fld">Program — see syntax below
+      <textarea id="src" style="min-height:240px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"># 12th International Conference on Plant Science
+## Day 1 — 14 June 2026
+= Opening Session | Main Hall
+09:00 | Registration & coffee | break
+09:30 | Welcome address | Prof. A. Chair
+10:00 | Keynote: The future of crop genomics | Dr. M. Keynote | Main Hall
+10:45 | Coffee break | break
+= Session A: Phenotyping | Room 201
+11:00 | Hyperspectral disease detection | J. Researcher
+11:20 | Drone-based field surveys | T. Lee
+12:00 | Lunch | break
+## Day 2 — 15 June 2026
+= Session B: Genetics | Main Hall
+09:00 | GWAS in wheat | M. Garcia
+09:20 | Panel discussion | All speakers</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Accent<select id="accent"><option value="#0b2545">Navy</option><option value="#0d4f4a">Teal</option><option value="#5e1322">Maroon</option><option value="#3b2a5e">Purple</option></select></label>
+      <label class="fld">Columns<select id="cols"><option value="1">1 (single)</option><option value="2" selected>2 (booklet)</option></select></label>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="render"><i class="ti ti-refresh"></i> Build program</button>
+      <button class="btn" id="print"><i class="ti ti-printer"></i> Print / PDF</button>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div class="muted" style="font-size:12px"><b>Syntax:</b> <code># Title</code> · <code>## Day heading</code> · <code>= Session title | Room</code> · <code>time | item | speaker | room</code>. Add <code>| break</code> at the end of a line to style it as a break/meal.</div>
+  </div>
+
+  <div id="out" class="prog"></div>
+</main>
+
+<style>
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+.prog{margin-top:14px;background:#fff;color:#111;border-radius:10px;padding:24px 28px;font-family:'Helvetica Neue',Arial,sans-serif}
+.prog .ptitle{font-size:26px;font-weight:800;text-align:center;margin:0 0 14px}
+.prog .cols{column-gap:30px}
+.prog .day{font-size:18px;font-weight:700;margin:14px 0 8px;padding-bottom:5px;border-bottom:2px solid currentColor;break-after:avoid}
+.prog .sess{font-size:13px;font-weight:700;color:#fff;padding:5px 12px;border-radius:6px;margin:12px 0 6px;break-after:avoid;display:flex;justify-content:space-between}
+.prog .sess .room{font-weight:500;opacity:.9}
+.prog .item{display:flex;gap:10px;padding:5px 4px;font-size:13px;border-bottom:1px solid #eee;break-inside:avoid}
+.prog .item .t{font-variant-numeric:tabular-nums;font-weight:700;width:54px;flex-shrink:0}
+.prog .item .d{flex:1} .prog .item .sp{color:#555;font-size:12px} .prog .item .rm{color:#888;font-size:11px}
+.prog .item.brk{background:#f3f4f6;border-radius:6px;border-bottom:none;font-style:italic;color:#555}
+@media print{.no-print{display:none!important}@page{margin:14mm}body{background:#fff}.prog{padding:0}}
+</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function render(){
+  const accent=$('#accent').value;const lines=$('#src').value.split('\n');
+  let title='Conference Program',html='';
+  lines.forEach(raw=>{
+    const l=raw.trim();if(!l)return;
+    if(l.startsWith('## ')){html+=`<div class="day" style="color:${accent}">${esc(l.slice(3))}</div>`;}
+    else if(l.startsWith('# ')){title=l.slice(2);}
+    else if(l.startsWith('= ')){const [t,room]=l.slice(2).split('|').map(x=>x.trim());html+=`<div class="sess" style="background:${accent}"><span>${esc(t)}</span>${room?`<span class="room">${esc(room)}</span>`:''}</div>`;}
+    else if(l.includes('|')){
+      const parts=l.split('|').map(x=>x.trim());const isBreak=parts[parts.length-1].toLowerCase()==='break';
+      if(isBreak)parts.pop();
+      const [time,item,sp,room]=parts;
+      html+=`<div class="item ${isBreak?'brk':''}"><div class="t">${esc(time||'')}</div><div class="d">${esc(item||'')}${sp?` <span class="sp">— ${esc(sp)}</span>`:''}${room?` <span class="rm">· ${esc(room)}</span>`:''}</div></div>`;
+    }
+  });
+  const cols=$('#cols').value==='2';
+  $('#out').innerHTML=`<div class="ptitle" style="color:${accent}">${esc(title)}</div><div class="${cols?'cols':''}" style="column-count:${cols?2:1}">${html}</div>`;
+  $('#status').textContent='Program built';
+}
+$('#render').onclick=render;
+['src','accent','cols'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#print').onclick=()=>{render();window.print();};
+render();
+</script>
+</body>
+</html>

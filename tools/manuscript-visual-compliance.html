@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manuscript Visual Compliance Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-check"></i></div><div>Manuscript Visual Compliance</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:960px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-file-check"></i></div>
+      <div>
+        <div class="tool-title">Manuscript Visual Compliance Checker</div>
+        <div class="tool-desc">Run every figure in your manuscript against the journal's visual rules in one pass: minimum DPI at the chosen width, accepted file formats, and maximum file size. Get a per-figure pass/fail report plus an overall submission-readiness verdict you can print as a checklist. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-photo-plus" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop all manuscript figures</div>
+      <input type="file" id="file" accept="image/*" multiple style="display:none">
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Min DPI<input id="dpi" type="number" value="300" style="width:80px"></label>
+      <label class="fld">At width (mm)<input id="wmm" type="number" value="190" style="width:90px"></label>
+      <label class="fld">Max size (MB)<input id="mb" type="number" value="10" style="width:80px"></label>
+      <label class="fld">Accepted formats<input id="fmts" value="tiff, png, eps, pdf" style="width:180px"></label>
+    </div>
+    <button class="btn" id="print"><i class="ti ti-printer"></i> Print checklist</button>
+  </div>
+  <div id="summary" class="stat-grid"></div>
+  <div id="report"></div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .fig{display:flex;gap:12px;align-items:center;border:1px solid var(--border);border-left:4px solid var(--green);border-radius:8px;background:var(--bg2);padding:10px 12px;margin-bottom:8px}
+  .fig.fail{border-left-color:var(--red)} .fig img{width:64px;height:48px;object-fit:contain;background:var(--bg3);border-radius:5px}
+  .fig .nm{flex:1;font-size:13px} .fig .checks{display:flex;flex-wrap:wrap;gap:6px} .chk{font-size:11px;padding:2px 8px;border-radius:10px}
+  .chk.ok{background:rgba(74,222,128,0.15);color:var(--green)} .chk.no{background:rgba(248,113,113,0.15);color:var(--red)}
+  @media print{.no-print{display:none!important}body{background:#fff;color:#000}.fig{background:#fff}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let figs=[];
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files.length)add(e.dataTransfer.files);}));
+$('#file').onchange=e=>{if(e.target.files.length)add(e.target.files);};
+['dpi','wmm','mb','fmts'].forEach(id=>$('#'+id).addEventListener('input',render));
+async function add(files){for(const f of files){const url=URL.createObjectURL(f);await new Promise(res=>{const im=new Image();im.onload=()=>{figs.push({name:f.name,url,w:im.naturalWidth,h:im.naturalHeight,type:(f.type||'').replace('image/','')||f.name.split('.').pop().toLowerCase(),size:f.size});res();};im.onerror=()=>{figs.push({name:f.name,url,w:null,h:null,type:f.name.split('.').pop().toLowerCase(),size:f.size,vector:true});res();};im.src=url;});}render();}
+function render(){
+  if(!figs.length)return;
+  const needDpi=+$('#dpi').value,widthIn=+$('#wmm').value/25.4,maxMB=+$('#mb').value;
+  const okFmts=$('#fmts').value.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
+  let passCount=0;
+  const html=figs.map(f=>{
+    const vector=/svg|pdf|eps/i.test(f.type);
+    const dpi=f.w?Math.round(f.w/widthIn):null;
+    const dpiOk=vector||(dpi!=null&&dpi>=needDpi);
+    const fmtOk=okFmts.includes(f.type.toLowerCase())||(f.type.toLowerCase()==='jpg'&&okFmts.includes('jpeg'))||(f.type.toLowerCase()==='tif'&&okFmts.includes('tiff'));
+    const sizeOk=f.size/1048576<=maxMB;
+    const pass=dpiOk&&fmtOk&&sizeOk;if(pass)passCount++;
+    const chk=(ok,t)=>`<span class="chk ${ok?'ok':'no'}"><i class="ti ${ok?'ti-check':'ti-x'}"></i> ${t}</span>`;
+    return `<div class="fig ${pass?'':'fail'}"><img src="${f.url}"><div class="nm"><b>${esc(f.name)}</b><div class="checks" style="margin-top:5px">${chk(dpiOk,vector?'vector ✓':`${dpi||'?'} dpi`)}${chk(fmtOk,f.type.toUpperCase())}${chk(sizeOk,(f.size/1048576).toFixed(1)+' MB')}</div></div></div>`;
+  }).join('');
+  const allPass=passCount===figs.length;
+  $('#summary').innerHTML=`<div class="stat-card"><div class="stat-label">Figures</div><div class="stat-value">${figs.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Compliant</div><div class="stat-value" style="color:var(--green)">${passCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Need fixing</div><div class="stat-value" style="color:${figs.length-passCount?'var(--red)':'var(--green)'}">${figs.length-passCount}</div></div>
+    <div class="stat-card"><div class="stat-label">Submission ready</div><div class="stat-value" style="font-size:15px;color:${allPass?'var(--green)':'var(--red)'}">${allPass?'Yes ✓':'Not yet'}</div></div>`;
+  $('#report').innerHTML=html;
+}
+$('#print').onclick=()=>window.print();
+</script>
+</body>
+</html>

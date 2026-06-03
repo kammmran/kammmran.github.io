@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Computational Cost Estimator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-server-bolt"></i></div><div>Computational Cost Estimator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-server-bolt"></i></div>
+      <div>
+        <div class="tool-title">Computational Cost Estimator</div>
+        <div class="tool-desc">Estimate the compute, wall-clock time, energy and carbon footprint of a training run. Enter model size, dataset size, epochs and your GPU; the tool uses the standard 6·N·D FLOPs rule and a hardware-utilisation factor to project cost — useful for grant budgets and the "compute &amp; carbon" statement reviewers now ask for. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Parameters (B)<input id="params" type="number" value="0.5" step="0.1" style="width:90px"></label>
+      <label class="fld">Tokens/samples (B)<input id="tokens" type="number" value="10" step="0.1" style="width:90px"></label>
+      <label class="fld">Epochs<input id="epochs" type="number" value="1" style="width:70px"></label>
+      <label class="fld">GPU<select id="gpu"></select></label>
+      <label class="fld"># GPUs<input id="ngpu" type="number" value="4" style="width:70px"></label>
+      <label class="fld">Utilisation %<input id="util" type="number" value="40" style="width:80px"></label>
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">$/GPU-hour<input id="price" type="number" value="2.0" step="0.1" style="width:90px"></label>
+      <label class="fld">Grid carbon (g/kWh)<input id="carbon" type="number" value="400" style="width:100px"></label>
+    </div>
+    <div id="stats" class="stat-grid"></div>
+    <div id="note" class="muted" style="font-size:12.5px"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Uses FLOPs ≈ 6 · N · D (forward+backward) for training, divided by the GPU's peak throughput × utilisation. Real utilisation is often 30–50%. Carbon = energy × grid intensity; look up your region's gCO₂/kWh for accuracy.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+// GPU: [name, FP16 TFLOPS, watts]
+const GPUS=[['A100 80GB',312,400],['A100 40GB',312,400],['H100 80GB',989,700],['V100 32GB',125,300],['RTX 4090',330,450],['RTX 3090',142,350],['L4',242,72],['T4',65,70]];
+$('#gpu').innerHTML=GPUS.map((g,i)=>`<option value="${i}">${g[0]}</option>`).join('');
+function calc(){
+  const N=+$('#params').value*1e9,D=+$('#tokens').value*1e9*(+$('#epochs').value);
+  const flops=6*N*D;
+  const g=GPUS[+$('#gpu').value];const peak=g[1]*1e12;const util=+$('#util').value/100;const ngpu=+$('#ngpu').value;
+  const throughput=peak*util*ngpu;
+  const seconds=flops/throughput;const hours=seconds/3600;
+  const gpuHours=hours*ngpu;
+  const cost=gpuHours*(+$('#price').value);
+  const energyKwh=g[2]*ngpu*hours/1000;
+  const carbonKg=energyKwh*(+$('#carbon').value)/1000;
+  const fmtT=h=>h<1?(h*60).toFixed(0)+' min':h<48?h.toFixed(1)+' h':(h/24).toFixed(1)+' days';
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Total FLOPs</div><div class="stat-value">${flops.toExponential(2)}</div></div>
+    <div class="stat-card"><div class="stat-label">Wall-clock</div><div class="stat-value" style="color:var(--blue)">${fmtT(hours)}</div></div>
+    <div class="stat-card"><div class="stat-label">GPU-hours</div><div class="stat-value">${gpuHours.toFixed(0)}</div></div>
+    <div class="stat-card"><div class="stat-label">Est. cost</div><div class="stat-value" style="color:var(--green)">$${cost.toFixed(0)}</div></div>
+    <div class="stat-card"><div class="stat-label">Energy</div><div class="stat-value">${energyKwh.toFixed(0)} kWh</div></div>
+    <div class="stat-card"><div class="stat-label">CO₂e</div><div class="stat-value" style="color:var(--amber)">${carbonKg.toFixed(0)} kg</div></div>`;
+  $('#note').innerHTML=`Equivalent to ≈ <b>${(carbonKg/0.18).toFixed(0)} km</b> driven by an average car. For your methods section: "Training required ≈ ${gpuHours.toFixed(0)} ${g[0]} GPU-hours (${energyKwh.toFixed(0)} kWh, ≈ ${carbonKg.toFixed(0)} kg CO₂e at ${$('#carbon').value} g/kWh)."`;
+}
+['params','tokens','epochs','gpu','ngpu','util','price','carbon'].forEach(id=>$('#'+id).addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>

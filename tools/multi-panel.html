@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Panel Figure Creator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-layout-grid"></i></div><div>Multi-Panel Figure Creator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-layout-grid"></i></div>
+      <div>
+        <div class="tool-title">Multi-Panel Figure Creator</div>
+        <div class="tool-desc">Assemble several images into a single publication-ready composite figure with automatic A, B, C panel labels. Choose the grid, spacing, background and label style, then export a high-resolution PNG. Reorder panels by dragging. Runs entirely in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-photo-plus" style="font-size:24px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop panel images (in order)</div>
+      <input type="file" id="file" accept="image/*" multiple style="display:none">
+    </label>
+    <div id="thumbs" class="row" style="gap:8px;flex-wrap:wrap"></div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Columns<select id="cols"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+      <label class="fld">Gap (px)<input id="gap" type="number" value="16" style="width:70px"></label>
+      <label class="fld">Background<select id="bg"><option value="#ffffff">White</option><option value="#00000000">Transparent</option><option value="#000000">Black</option></select></label>
+      <label class="fld">Label style<select id="lab"><option value="A">A B C</option><option value="(A)">(A) (B)</option><option value="a">a b c</option><option value="none">None</option></select></label>
+      <label class="fld">Label size<input id="ls" type="number" value="32" style="width:70px"></label>
+      <label class="fld">Cell fit<select id="fit"><option value="contain">Contain</option><option value="cover">Cover (crop)</option></select></label>
+      <label class="fld">Scale<select id="scale"><option value="1">1×</option><option value="2" selected>2× (hi-res)</option><option value="3">3×</option></select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:repeating-conic-gradient(#222 0 25%,#1a1a22 0 50%) 50%/20px 20px"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button><button class="btn" id="clear"><i class="ti ti-trash"></i> Clear</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Drag thumbnails to reorder panels. Each cell is sized to the largest panel's aspect for a clean grid; use "Cover" to fill cells edge-to-edge (crops), or "Contain" to show whole images (letterboxed).</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .th{position:relative;cursor:grab} .th img{width:74px;height:56px;object-fit:contain;background:var(--bg3);border-radius:6px;border:1px solid var(--border)}
+  .th .x{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .th.drag{opacity:.4} .th .n{position:absolute;bottom:2px;left:4px;font-size:10px;background:rgba(0,0,0,.6);color:#fff;padding:0 4px;border-radius:3px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');let panels=[];
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files.length)add(e.dataTransfer.files);}));
+$('#file').onchange=e=>{if(e.target.files.length)add(e.target.files);};
+async function add(files){for(const f of files){const url=URL.createObjectURL(f);await new Promise(r=>{const im=new Image();im.onload=()=>{panels.push({img:im,name:f.name});r();};im.onerror=r;im.src=url;});}thumbs();render();}
+function thumbs(){
+  $('#thumbs').innerHTML=panels.map((p,i)=>`<div class="th" draggable="true" data-i="${i}"><img src="${p.img.src}"><span class="n">${labelFor(i)}</span><span class="x" data-x="${i}">×</span></div>`).join('');
+}
+let dragI=null;
+$('#thumbs').addEventListener('dragstart',e=>{const t=e.target.closest('.th');if(t){dragI=+t.dataset.i;t.classList.add('drag');}});
+$('#thumbs').addEventListener('dragend',e=>{const t=e.target.closest('.th');if(t)t.classList.remove('drag');});
+$('#thumbs').addEventListener('dragover',e=>e.preventDefault());
+$('#thumbs').addEventListener('drop',e=>{e.preventDefault();const t=e.target.closest('.th');if(t&&dragI!=null){const to=+t.dataset.i;const m=panels.splice(dragI,1)[0];panels.splice(to,0,m);dragI=null;thumbs();render();}});
+$('#thumbs').addEventListener('click',e=>{const x=e.target.closest('.x');if(x){panels.splice(+x.dataset.x,1);thumbs();render();}});
+['cols','gap','bg','lab','ls','fit','scale'].forEach(id=>$('#'+id).addEventListener('input',()=>{thumbs();render();}));
+function labelFor(i){const st=$('#lab').value;if(st==='none')return'';if(st==='a')return String.fromCharCode(97+i);if(st==='(A)')return'('+String.fromCharCode(65+i)+')';return String.fromCharCode(65+i);}
+function render(){
+  if(!panels.length){cv.width=300;cv.height=120;ctx.clearRect(0,0,300,120);ctx.fillStyle='#6b6984';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('Add images to build a panel figure',150,64);$('#status').textContent='';return;}
+  const cols=+$('#cols').value,gap=+$('#gap').value,sc=+$('#scale').value;const rows=Math.ceil(panels.length/cols);
+  let cw=0,ch=0;panels.forEach(p=>{cw=Math.max(cw,p.img.naturalWidth);ch=Math.max(ch,p.img.naturalHeight);});
+  const maxCell=500;const ar=cw/ch;if(cw>maxCell){cw=maxCell;ch=cw/ar;}
+  cw*=sc;ch*=sc;const g=gap*sc;
+  cv.width=cols*cw+(cols+1)*g;cv.height=rows*ch+(rows+1)*g;
+  const bg=$('#bg').value;if(bg==='#00000000')ctx.clearRect(0,0,cv.width,cv.height);else{ctx.fillStyle=bg;ctx.fillRect(0,0,cv.width,cv.height);}
+  const fit=$('#fit').value,ls=+$('#ls').value*sc;
+  panels.forEach((p,i)=>{
+    const r=Math.floor(i/cols),c=i%cols;const x=g+c*(cw+g),y=g+r*(ch+g);
+    const iw=p.img.naturalWidth,ih=p.img.naturalHeight;let dw,dh,dx,dy;
+    if(fit==='cover'){const s=Math.max(cw/iw,ch/ih);dw=iw*s;dh=ih*s;dx=x+(cw-dw)/2;dy=y+(ch-dh)/2;ctx.save();ctx.beginPath();ctx.rect(x,y,cw,ch);ctx.clip();ctx.drawImage(p.img,dx,dy,dw,dh);ctx.restore();}
+    else{const s=Math.min(cw/iw,ch/ih);dw=iw*s;dh=ih*s;dx=x+(cw-dw)/2;dy=y+(ch-dh)/2;ctx.drawImage(p.img,dx,dy,dw,dh);}
+    const lab=labelFor(i);
+    if(lab){ctx.font=`bold ${ls}px Arial, sans-serif`;ctx.textBaseline='top';const pad=4*sc;const tw=ctx.measureText(lab).width;ctx.fillStyle='rgba(255,255,255,0.85)';ctx.fillRect(x+pad-2*sc,y+pad-1*sc,tw+6*sc,ls+2*sc);ctx.fillStyle='#000';ctx.fillText(lab,x+pad+sc,y+pad);}
+  });
+  $('#status').textContent=`${panels.length} panels · ${cv.width}×${cv.height}px`;
+}
+$('#png').onclick=()=>{if(!panels.length)return;const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='panel-figure.png';a.click();};
+$('#clear').onclick=()=>{panels=[];thumbs();render();};
+render();
+</script>
+</body>
+</html>

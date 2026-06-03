@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scientific Infographic Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-infographic"></i></div><div>Scientific Infographic Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-chart-infographic"></i></div>
+      <div>
+        <div class="tool-title">Scientific Infographic Generator</div>
+        <div class="tool-desc">Build a single-page infographic from "stat blocks" — a big number, a label and a short note each. Add as many as you like; the tool lays them out in a tidy grid with your title and footer, then exports a PNG. Perfect for summarising a study's headline results. Local, no upload.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Title<input id="title" value="Crop Disease Detection at a Glance"></label>
+      <label class="fld">Footer / source<input id="footer" value="Researcher et al., Nature Plants 2026"></label>
+    </div>
+    <label class="fld">Stat blocks — one per line: <b>BigNumber | Label | short note</b>
+      <textarea id="src" style="min-height:140px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">94% | Accuracy | at the pre-symptomatic stage
+8× | Less labelled data | than supervised baseline
+12,400 | Leaf scans | across 6 crop species
+6 | Species | maize, wheat, rice, soy, barley, oat
+3 days | Earlier detection | before visible symptoms</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Format<select id="size"><option value="1080,1350" selected>Portrait 4:5</option><option value="1080,1080">Square</option><option value="1200,675">Wide</option></select></label>
+      <label class="fld">Columns<select id="cols"><option>1</option><option selected>2</option><option>3</option></select></label>
+      <label class="fld">Theme<select id="theme"><option value="#0d4f4a,#7fd1c8">Teal</option><option value="#0b2545,#e8b84b">Navy/Gold</option><option value="#3b2a5e,#c4b7ff">Purple</option><option value="#11100f,#f472b6">Dark/Pink</option></select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#333"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function draw(){
+  const [W,H]=$('#size').value.split(',').map(Number);cv.width=W;cv.height=H;
+  const [bg,acc]=$('#theme').value.split(',');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=acc;ctx.fillRect(0,0,W,14);
+  const pad=Math.round(W*0.06);
+  ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='800 '+Math.round(W/22)+'px Arial';
+  const tLines=wrap($('#title').value,W-pad*2,Math.round(W/22));let y=pad+Math.round(W/22);tLines.forEach(l=>{ctx.fillText(l,W/2,y);y+=Math.round(W/20);});
+  y+=10;
+  const blocks=$('#src').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split('|').map(x=>x.trim());return {num:p[0],label:p[1]||'',note:p[2]||''};});
+  const cols=+$('#cols').value;const gap=Math.round(W*0.04);
+  const cw=(W-pad*2-(cols-1)*gap)/cols;const rows=Math.ceil(blocks.length/cols);
+  const availH=H-y-pad*1.4;const ch=Math.min(availH/rows-gap,cw*0.78);
+  ctx.textAlign='center';
+  blocks.forEach((b,i)=>{
+    const r=Math.floor(i/cols),c=i%cols;const x=pad+c*(cw+gap),by=y+r*(ch+gap);
+    roundRect(x,by,cw,ch,18);ctx.fillStyle='rgba(255,255,255,0.07)';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=acc+'66';ctx.stroke();
+    ctx.fillStyle=acc;ctx.font='800 '+Math.round(ch*0.34)+'px Arial';ctx.fillText(b.num,x+cw/2,by+ch*0.42);
+    ctx.fillStyle='#fff';ctx.font='700 '+Math.round(cw*0.072)+'px Arial';wrap(b.label,cw-20,Math.round(cw*0.072)).slice(0,2).forEach((l,j)=>ctx.fillText(l,x+cw/2,by+ch*0.6+j*cw*0.085));
+    ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font=Math.round(cw*0.055)+'px Arial';wrap(b.note,cw-24,Math.round(cw*0.055)).slice(0,2).forEach((l,j)=>ctx.fillText(l,x+cw/2,by+ch*0.82+j*cw*0.065));
+  });
+  ctx.fillStyle='rgba(255,255,255,0.55)';ctx.font=Math.round(W/50)+'px Arial';ctx.fillText($('#footer').value,W/2,H-pad*0.5);
+}
+function wrap(t,maxW,fs){ctx.font='700 '+fs+'px Arial';const words=String(t||'').split(/\s+/);const lines=[];let cur='';words.forEach(w=>{if(ctx.measureText(cur+' '+w).width>maxW&&cur){lines.push(cur);cur=w;}else cur=cur?cur+' '+w:w;});if(cur)lines.push(cur);return lines;}
+['title','footer','src','size','cols','theme'].forEach(id=>$('#'+id).addEventListener('input',draw));
+$('#png').onclick=()=>{cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='infographic.png';a.click();});};
+draw();
+</script>
+</body>
+</html>

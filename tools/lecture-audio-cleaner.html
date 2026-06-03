@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lecture Audio Cleaner — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-adjustments"></i></div><div>Lecture Audio Cleaner</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-adjustments"></i></div>
+      <div>
+        <div class="tool-title">Lecture Audio Cleaner</div>
+        <div class="tool-desc">Improve the clarity of a recorded lecture. Load an audio file, then apply a high-pass to cut rumble and hum, a low-pass to tame hiss, a noise gate to silence room tone between sentences, and a compressor + gain to even out the voice. Preview live and export a cleaned WAV — all in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <input type="file" id="file" accept="audio/*">
+    <div id="controls" style="display:none;flex-direction:column;gap:12px">
+      <div class="sl"><label>High-pass (rumble/hum) <span id="hpV">90 Hz</span></label><input type="range" id="hp" min="20" max="400" value="90"></div>
+      <div class="sl"><label>Low-pass (hiss) <span id="lpV">8000 Hz</span></label><input type="range" id="lp" min="2000" max="16000" step="100" value="8000"></div>
+      <div class="sl"><label>Noise gate threshold <span id="gtV">-50 dB</span></label><input type="range" id="gt" min="-80" max="-20" value="-50"></div>
+      <div class="sl"><label>Compression <span id="cmV">12</span></label><input type="range" id="cm" min="0" max="30" value="12"></div>
+      <div class="sl"><label>Output gain <span id="gnV">+3 dB</span></label><input type="range" id="gn" min="-6" max="18" value="3"></div>
+      <div class="row">
+        <button class="btn btn-primary" id="play"><i class="ti ti-player-play"></i> Preview</button>
+        <button class="btn" id="stop"><i class="ti ti-player-stop"></i> Stop</button>
+        <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="bypass"> bypass (hear original)</label>
+        <button class="btn" id="export" style="margin-left:auto"><i class="ti ti-download"></i> Export cleaned WAV</button>
+      </div>
+      <span class="muted" id="status" style="font-size:12px"></span>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Processing is real-time Web Audio — no upload. Export renders offline at full quality. The noise gate works on quiet gaps; for constant background noise, lean on the high-pass/low-pass filters.</div>
+</main>
+
+<style>.sl label{font-size:12px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:4px} .sl span{color:var(--text)} .sl input{width:100%}
+  .fld{font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+let buffer=null,ctx=null,src=null,playing=false;
+$('#file').onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  $('#status').textContent='Decoding…';
+  try{ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();const ab=await f.arrayBuffer();buffer=await ctx.decodeAudioData(ab);$('#controls').style.display='flex';$('#status').textContent=`Loaded: ${f.name} · ${buffer.duration.toFixed(1)}s · ${buffer.sampleRate} Hz`;}
+  catch(err){$('#status').textContent='Could not decode this file: '+err.message;}
+};
+[['hp','hpV',' Hz'],['lp','lpV',' Hz'],['gt','gtV',' dB'],['gn','gnV',' dB',true],['cm','cmV','']].forEach(([id,vid,suf,sign])=>{const u=()=>$('#'+vid).textContent=(sign&&$('#'+id).value>0?'+':'')+$('#'+id).value+suf;$('#'+id).oninput=u;u();});
+function buildChain(c,source){
+  const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=+$('#hp').value;
+  const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=+$('#lp').value;
+  const comp=c.createDynamicsCompressor();comp.threshold.value=-24;comp.ratio.value=2+(+$('#cm').value)/30*6;comp.knee.value=20;comp.attack.value=0.005;comp.release.value=0.15;
+  const gain=c.createGain();gain.gain.value=Math.pow(10,(+$('#gn').value)/20);
+  source.connect(hp);hp.connect(lp);lp.connect(comp);comp.connect(gain);
+  return {first:hp,last:gain,gateThresh:Math.pow(10,(+$('#gt').value)/20)};
+}
+$('#play').onclick=()=>{
+  if(!buffer)return;stopPlay();
+  src=ctx.createBufferSource();src.buffer=buffer;
+  if($('#bypass').checked){src.connect(ctx.destination);}
+  else{const ch=buildChain(ctx,src);ch.last.connect(ctx.destination);}
+  src.start();playing=true;$('#status').textContent='Previewing…';
+  src.onended=()=>{playing=false;$('#status').textContent='Done';};
+};
+function stopPlay(){if(src&&playing){try{src.stop();}catch(_){}}playing=false;}
+$('#stop').onclick=stopPlay;
+$('#export').onclick=async()=>{
+  if(!buffer)return;$('#status').textContent='Rendering cleaned audio…';
+  const oc=new OfflineAudioContext(buffer.numberOfChannels,buffer.length,buffer.sampleRate);
+  const s=oc.createBufferSource();s.buffer=buffer;const ch=buildChain(oc,s);
+  // simple noise gate via gain automation based on RMS windows
+  const gateGain=oc.createGain();ch.last.connect(gateGain);gateGain.connect(oc.destination);
+  applyGate(buffer,gateGain,ch.gateThresh,oc);
+  s.start();
+  const rendered=await oc.startRendering();
+  downloadWav(rendered);$('#status').textContent='Exported cleaned-lecture.wav';
+};
+function applyGate(buf,gainNode,thresh,oc){
+  const data=buf.getChannelData(0);const sr=buf.sampleRate;const win=Math.floor(sr*0.05);
+  gainNode.gain.setValueAtTime(1,0);
+  for(let i=0;i<data.length;i+=win){let sum=0;for(let j=i;j<Math.min(i+win,data.length);j++)sum+=data[j]*data[j];const rms=Math.sqrt(sum/win);const t=i/sr;gainNode.gain.setTargetAtTime(rms<thresh?0:1,t,0.02);}
+}
+function downloadWav(buf){
+  const n=buf.numberOfChannels,len=buf.length*n*2+44,ab=new ArrayBuffer(len),v=new DataView(ab);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  w(0,'RIFF');v.setUint32(4,len-8,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,n,true);v.setUint32(24,buf.sampleRate,true);v.setUint32(28,buf.sampleRate*n*2,true);v.setUint16(32,n*2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,len-44,true);
+  let off=44;const chans=[];for(let c=0;c<n;c++)chans.push(buf.getChannelData(c));
+  for(let i=0;i<buf.length;i++)for(let c=0;c<n;c++){let s=Math.max(-1,Math.min(1,chans[c][i]));v.setInt16(off,s<0?s*0x8000:s*0x7FFF,true);off+=2;}
+  const blob=new Blob([ab],{type:'audio/wav'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='cleaned-lecture.wav';a.click();
+}
+</script>
+</body>
+</html>

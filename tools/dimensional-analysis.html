@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dimensional Analysis Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-ruler-measure"></i></div><div>Dimensional Analysis Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-ruler-measure"></i></div>
+      <div>
+        <div class="tool-title">Dimensional Analysis Checker</div>
+        <div class="tool-desc">Check whether an equation is dimensionally consistent. Define your variables with SI dimensions, type a formula, and the tool resolves the dimensions of each side in terms of M, L, T, I, Θ, N, J — flagging mismatches. Catches unit errors before they cost you. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Variable dimensions — one per line: <b>name = dimension</b>. Use base symbols (M L T I Θ N J) or named quantities (force, energy, velocity…).
+      <textarea id="vars" style="min-height:120px;font-family:ui-monospace,monospace;font-size:12.5px">F = force
+m = M
+a = velocity/T
+E = energy
+v = velocity
+p = M*velocity</textarea>
+    </label>
+    <label class="fld">Equation or expression to check (use = to test both sides)
+      <input id="expr" value="F = m*a" style="font-family:ui-monospace,monospace">
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-check"></i> Check</button>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Known quantities: velocity, acceleration, force, energy, power, pressure, momentum, charge, frequency, area, volume, density, voltage, current… Base SI symbols: M (mass), L (length), T (time), I (current), Θ (temperature), N (amount), J (luminous). Dimensionless = 1.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .res{border-radius:8px;padding:14px;font-size:15px;text-align:center;font-weight:600}
+  .ok{background:rgba(74,222,128,0.12);color:var(--green)} .bad{background:rgba(248,113,113,0.12);color:var(--red)}
+  .dim{font-family:ui-monospace,monospace;font-size:14px} table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}td,th{padding:5px 9px;border-bottom:1px solid var(--border);text-align:left}th{color:var(--text3);font-size:11px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const BASE=['M','L','T','I','Θ','N','J'];
+const Z=()=>({M:0,L:0,T:0,I:0,'Θ':0,N:0,J:0});
+function mk(o){const d=Z();Object.assign(d,o);return d;}
+const NAMED={velocity:mk({L:1,T:-1}),speed:mk({L:1,T:-1}),acceleration:mk({L:1,T:-2}),force:mk({M:1,L:1,T:-2}),energy:mk({M:1,L:2,T:-2}),work:mk({M:1,L:2,T:-2}),power:mk({M:1,L:2,T:-3}),pressure:mk({M:1,L:-1,T:-2}),momentum:mk({M:1,L:1,T:-1}),charge:mk({I:1,T:1}),frequency:mk({T:-1}),area:mk({L:2}),volume:mk({L:3}),density:mk({M:1,L:-3}),voltage:mk({M:1,L:2,T:-3,I:-1}),current:mk({I:1}),resistance:mk({M:1,L:2,T:-3,I:-2}),mass:mk({M:1}),length:mk({L:1}),time:mk({T:1}),temperature:mk({'Θ':1}),angle:Z(),dimensionless:Z()};
+let VARS={};
+function parseVars(){VARS={};$('#vars').value.split('\n').forEach(l=>{const m=l.split('=');if(m.length<2)return;const name=m[0].trim();if(name)VARS[name]=evalDim(m[1].trim());});}
+// tokenize & evaluate dimension expression (* / ^ and parentheses, base/named/var tokens, numbers->dimensionless)
+function evalDim(expr){
+  const toks=expr.match(/[A-Za-zΘ_][A-Za-zΘ_0-9]*|\d+\.?\d*|[()*/^+-]/g)||[];
+  let i=0;
+  function atom(){
+    if(toks[i]==='('){i++;const v=expr2();i++;return v;}
+    const t=toks[i++];
+    if(t==null)return Z();
+    if(/^\d/.test(t))return Z(); // number = dimensionless
+    if(BASE.includes(t))return mk({[t]:1});
+    if(NAMED[t.toLowerCase()])return {...NAMED[t.toLowerCase()]};
+    if(VARS[t])return {...VARS[t]};
+    return Z(); // unknown -> dimensionless (treated as constant)
+  }
+  function pow(){let b=atom();while(toks[i]==='^'){i++;const e=parseFloat(toks[i++]);const r=Z();BASE.forEach(k=>r[k]=b[k]*e);b=r;}return b;}
+  function term(){let v=pow();while(toks[i]==='*'||toks[i]==='/'){const op=toks[i++];const r=pow();const o=Z();BASE.forEach(k=>o[k]=op==='*'?v[k]+r[k]:v[k]-r[k]);v=o;}return v;}
+  function expr2(){let v=term();while(toks[i]==='+'||toks[i]==='-'){i++;term();}return v;}// +/- keep dims of first
+  return expr2();
+}
+function dimStr(d){const parts=BASE.filter(k=>d[k]).map(k=>d[k]===1?k:`${k}^${d[k]}`);return parts.length?parts.join('·'):'1 (dimensionless)';}
+function eq(a,b){return BASE.every(k=>Math.abs(a[k]-b[k])<1e-9);}
+$('#run').onclick=()=>{
+  parseVars();
+  const expr=$('#expr').value;
+  if(expr.includes('=')){
+    const [l,r]=expr.split('=');const dl=evalDim(l.trim()),dr=evalDim(r.trim());const ok=eq(dl,dr);
+    $('#out').innerHTML=`<div class="res ${ok?'ok':'bad'}">${ok?'✓ Dimensionally consistent':'✗ Dimension mismatch'}</div>
+      <table><tr><th>Side</th><th>Expression</th><th>Dimensions</th></tr>
+      <tr><td>LHS</td><td class="dim">${esc(l.trim())}</td><td class="dim">${esc(dimStr(dl))}</td></tr>
+      <tr><td>RHS</td><td class="dim">${esc(r.trim())}</td><td class="dim">${esc(dimStr(dr))}</td></tr></table>
+      ${!ok?`<div class="muted" style="font-size:12px;margin-top:8px">Difference (LHS÷RHS): ${esc(dimStr(mk(Object.fromEntries(BASE.map(k=>[k,dl[k]-dr[k]])))))}</div>`:''}`;
+  } else {
+    const d=evalDim(expr.trim());
+    $('#out').innerHTML=`<div class="res ok" style="background:var(--bg2);color:var(--text)">Dimensions: <span class="dim" style="color:var(--teal)">${esc(dimStr(d))}</span></div>`;
+  }
+};
+$('#vars').addEventListener('input',()=>$('#run').click());
+$('#expr').addEventListener('input',()=>$('#run').click());
+$('#run').click();
+</script>
+</body>
+</html>

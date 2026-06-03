@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Discussion Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-bulb"></i></div><div>Research Discussion Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-bulb"></i></div>
+      <div>
+        <div class="tool-title">Research Discussion Analyzer</div>
+        <div class="tool-desc">Analyze a lab meeting or group discussion transcript and pull out action items, decisions, open questions, and research ideas. Turns a rambling meeting into a tidy follow-up list — all locally.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Discussion transcript
+      <textarea id="txt" style="min-height:160px" placeholder="Paste a lab meeting transcript…">We should try a contrastive loss instead of cross-entropy — that might fix the collapse. What if the embeddings are too low-dimensional? Let's decide to run the ablation on the val split. Maria will rerun the baseline by Friday. An interesting idea would be to pretrain on the unlabeled spectra. Why does the model fail on the rare classes? We need to check the data leakage issue.</textarea>
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Analyze</button>
+    <div id="out"></div>
+    <div class="row" id="ex" style="display:none"><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:12px}
+  .card h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  .card ul{margin:0;padding-left:18px;font-size:13px;line-height:1.55} .card .n{color:var(--text3);font-size:12px}
+  .h-action h3{color:var(--green)} .h-decision h3{color:var(--blue)} .h-question h3{color:var(--amber)} .h-idea h3{color:var(--pink)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let report='';
+function sentences(t){return (t.replace(/\n+/g,' ').match(/[^.!?]+[.!?]+|\S[^.!?]*$/g)||[]).map(s=>s.trim()).filter(s=>s.length>8);}
+$('#run').onclick=()=>{
+  const ss=sentences($('#txt').value);if(!ss.length){$('#status').textContent='Paste a transcript first.';return;}
+  const buckets={action:[],decision:[],question:[],idea:[]};
+  ss.forEach(s=>{
+    const low=s.toLowerCase();
+    if(/\?\s*$/.test(s)||/^\s*(why|how|what if|what about|could we|should we|do we know|is it|are we)\b/.test(low)) buckets.question.push(s);
+    else if(/\b(decided|we'll go|agreed|let's (use|go with|decide)|consensus|conclusion is|resolved to|we will use)\b/.test(low)) buckets.decision.push(s);
+    else if(/\b(will|should|need to|must|let's (run|do|check|test|try)|by (monday|tuesday|wednesday|thursday|friday|next week|tomorrow)|rerun|todo|action)\b/.test(low)) buckets.action.push(s);
+    else if(/\b(idea|what if|we could|maybe (we|try)|interesting|worth (trying|exploring)|hypothesis|propose|suggestion|might be able to)\b/.test(low)) buckets.idea.push(s);
+  });
+  const meta=[['action','Action items','h-action'],['decision','Decisions','h-decision'],['question','Open questions','h-question'],['idea','Research ideas','h-idea']];
+  $('#out').innerHTML=`<div class="grid">${meta.map(([k,label,cls])=>`<div class="card ${cls}"><h3>${label} (${buckets[k].length})</h3>${buckets[k].length?`<ul>${buckets[k].map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`:'<div class="n">None detected</div>'}</div>`).join('')}</div>`;
+  report=meta.map(([k,label])=>`## ${label}\n${buckets[k].map(s=>'- '+s).join('\n')||'- (none)'}`).join('\n\n');
+  $('#ex').style.display='flex';$('#status').textContent='Done';
+};
+$('#copy').onclick=()=>{if(report){navigator.clipboard.writeText(report);$('#status').textContent='Copied.';}};
+</script>
+</body>
+</html>

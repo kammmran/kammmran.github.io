@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Duplicate Figure Detector — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-copy"></i></div><div>Duplicate Figure Detector</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:980px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-copy"></i></div>
+      <div>
+        <div class="tool-title">Duplicate &amp; Similar Figure Detector</div>
+        <div class="tool-desc">Drop a batch of figures and find duplicates or near-duplicates — even when resized, lightly cropped, or re-saved. Uses perceptual hashing (dHash + aHash) so visually identical images cluster together regardless of file format. Handy for screening a manuscript's figures or a reviewer checking for reused panels. All local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-photo-plus" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop multiple images (2+)</div>
+      <input type="file" id="file" accept="image/*" multiple style="display:none">
+    </label>
+    <div class="row" style="gap:10px">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px">Sensitivity <input type="range" id="thr" min="2" max="20" value="10"><span id="thrv" class="muted" style="font-size:12px">≤10 bits</span></label>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Lower Hamming distance = more similar (0 = identical). Around ≤10 of 128 bits catches resizes and re-saves; raise it to find looser matches. Perceptual hashing flags <i>visual</i> similarity — confirm flagged pairs by eye, since legitimately similar figures (e.g. control vs. treatment) can also match.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grp{border:1px solid var(--border);border-radius:10px;background:var(--bg2);padding:12px;margin-bottom:10px}
+  .grp h3{margin:0 0 8px;font-size:13px} .grp.dup{border-color:var(--red)} .grp.dup h3{color:var(--red)} .grp.near h3{color:var(--amber)}
+  .imgs{display:flex;gap:10px;flex-wrap:wrap} .it{text-align:center;font-size:11px;color:var(--text2);max-width:130px}
+  .it img{width:120px;height:90px;object-fit:contain;background:var(--bg3);border-radius:6px;border:1px solid var(--border)}
+  .pair{font-size:12px;color:var(--text3);margin-top:4px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files.length)handle(e.dataTransfer.files);}));
+$('#file').onchange=e=>{if(e.target.files.length)handle(e.target.files);};
+$('#thr').addEventListener('input',()=>{$('#thrv').textContent='≤'+$('#thr').value+' bits';if(items.length)cluster();});
+let items=[];
+function gray(ctx,w,h){const d=ctx.getImageData(0,0,w,h).data;const g=new Float64Array(w*h);for(let i=0,j=0;i<d.length;i+=4,j++)g[j]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];return g;}
+function hashes(img){
+  // dHash 9x8 and aHash 8x8
+  const c=document.createElement('canvas');const cx=c.getContext('2d');
+  c.width=9;c.height=8;cx.drawImage(img,0,0,9,8);const g1=gray(cx,9,8);
+  let dh='';for(let y=0;y<8;y++)for(let x=0;x<8;x++)dh+=g1[y*9+x]<g1[y*9+x+1]?'1':'0';
+  c.width=8;c.height=8;cx.drawImage(img,0,0,8,8);const g2=gray(cx,8,8);
+  let avg=0;for(let i=0;i<64;i++)avg+=g2[i];avg/=64;let ah='';for(let i=0;i<64;i++)ah+=g2[i]<avg?'1':'0';
+  return dh+ah;
+}
+function ham(a,b){let d=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])d++;return d;}
+async function handle(files){
+  $('#status').textContent='Hashing '+files.length+' images…';items=[];
+  for(const f of files){
+    const url=URL.createObjectURL(f);
+    await new Promise(res=>{const im=new Image();im.onload=()=>{items.push({name:f.name,url,hash:hashes(im)});res();};im.onerror=res;im.src=url;});
+  }
+  $('#status').textContent=items.length+' images hashed';
+  cluster();
+}
+function cluster(){
+  const thr=+$('#thr').value;const n=items.length;const parent=items.map((_,i)=>i);
+  const find=x=>parent[x]===x?x:(parent[x]=find(parent[x]));
+  const dists={};
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const d=ham(items[i].hash,items[j].hash);if(d<=thr){const a=find(i),b=find(j);if(a!==b)parent[a]=b;dists[i+'-'+j]=d;}}
+  const groups={};items.forEach((it,i)=>{const r=find(i);(groups[r]=groups[r]||[]).push(i);});
+  const matched=Object.values(groups).filter(g=>g.length>1);
+  if(!matched.length){$('#out').innerHTML='<div class="muted" style="font-size:13px"><i class="ti ti-circle-check" style="color:var(--green)"></i> No duplicates or near-duplicates found at this sensitivity.</div>';return;}
+  $('#out').innerHTML=matched.map(g=>{
+    let minD=99;for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){const d=dists[g[i]+'-'+g[j]];if(d!=null&&d<minD)minD=d;}
+    const exact=minD===0;
+    return `<div class="grp ${exact?'dup':'near'}"><h3><i class="ti ${exact?'ti-copy':'ti-photo-search'}"></i> ${exact?'Identical':'Near-duplicate'} group · ${g.length} images · min distance ${minD}</h3><div class="imgs">${g.map(i=>`<div class="it"><img src="${items[i].url}"><div>${esc(items[i].name)}</div></div>`).join('')}</div></div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

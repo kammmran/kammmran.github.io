@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio-to-Accessible Transcript Converter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-accessible"></i></div><div>Accessible Transcript Converter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-accessible"></i></div>
+      <div>
+        <div class="tool-title">Audio-to-Accessible Transcript Converter</div>
+        <div class="tool-desc">Clean a raw transcript into an accessibility-compliant one: consistent speaker labels, sentence casing and punctuation tidy-up, normalized non-speech cues like [inaudible] and [laughter], and export to plain text, Markdown, or WebVTT captions.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Raw transcript
+      <textarea id="txt" style="min-height:150px" placeholder="speaker 1: so um yeah the the results were good (laughs)  [inaudible] and we moved on">speaker 1: so um yeah the the results were good (laughs) and we moved on
+speaker 2: i  think  that's   right [inaudible] but we should double check the numbers
+speaker 1: agreed lets do that tomorrow</textarea>
+    </label>
+    <div class="row" style="gap:14px;flex-wrap:wrap">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="fillers" checked> remove filler words</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="dedup" checked> fix stutters/repeats</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="caps" checked> sentence casing</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="cues" checked> bracket non-speech cues</label>
+    </div>
+    <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Clean transcript</button>
+    <div id="out" style="border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:14px;font-size:14px;line-height:1.7;white-space:pre-wrap;min-height:120px"></div>
+    <div class="row"><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><button class="btn" id="md"><i class="ti ti-markdown"></i> .md</button><button class="btn" id="vtt"><i class="ti ti-badge-cc"></i> .vtt</button><span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Follows common accessibility conventions (speaker IDs, sound descriptions in brackets, one idea per line). Always do a final human review — accurate transcripts are a legal accessibility requirement in many contexts.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .who{font-weight:700;color:var(--blue)} .cue{color:var(--amber)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const FILLERS=/\b(um+|uh+|er+|ah+|like|you know|sort of|kind of|i mean|basically)\b/gi;
+let lines=[];
+function titleCaseName(n){return n.replace(/\b\w/g,c=>c.toUpperCase());}
+function clean(text){
+  let t=text;
+  // normalize parenthetical non-speech cues to brackets
+  if($('#cues').checked) t=t.replace(/\((laughs?|laughter|applause|inaudible|crosstalk|pause|music|coughs?|sighs?)\)/gi,(m,w)=>`[${w.toLowerCase()}]`);
+  if($('#fillers').checked) t=t.replace(FILLERS,'').replace(/\s{2,}/g,' ');
+  if($('#dedup').checked) t=t.replace(/\b(\w+)(\s+\1\b)+/gi,'$1');
+  t=t.replace(/\s+([,.!?])/g,'$1').replace(/\s{2,}/g,' ').trim();
+  if($('#caps').checked){
+    t=t.replace(/(^|[.!?]\s+)([a-z])/g,(m,p,c)=>p+c.toUpperCase());
+    t=t.replace(/\bi\b/g,'I');
+    if(t&&!/[.!?\]]$/.test(t))t+='.';
+  }
+  return t;
+}
+$('#run').onclick=()=>{
+  const raw=$('#txt').value.trim();if(!raw){$('#status').textContent='Paste a transcript first.';return;}
+  lines=raw.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    const m=l.match(/^([A-Za-z][\w.\- ]{0,28}?):\s*(.+)$/);
+    if(m)return {sp:titleCaseName(m[1].trim()),text:clean(m[2])};
+    return {sp:null,text:clean(l)};
+  });
+  $('#out').innerHTML=lines.map(l=>(l.sp?`<span class="who">${esc(l.sp)}:</span> `:'')+esc(l.text).replace(/(\[[^\]]+\])/g,'<span class="cue">$1</span>')).join('\n');
+  $('#status').textContent='Cleaned · '+lines.length+' lines';
+};
+function plain(){return lines.map(l=>(l.sp?l.sp+': ':'')+l.text).join('\n');}
+$('#copy').onclick=()=>{navigator.clipboard.writeText(plain());$('#status').textContent='Copied.';};
+function dl(name,text,type){const b=new Blob([text],{type});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;a.click();}
+$('#md').onclick=()=>dl('transcript.md','# Transcript\n\n'+lines.map(l=>(l.sp?`**${l.sp}:** `:'')+l.text).join('\n\n'),'text/markdown');
+$('#vtt').onclick=()=>{let v='WEBVTT\n\n';lines.forEach((l,i)=>{const st=i*4,en=st+4;const f=s=>'00:'+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+'.000';v+=`${f(st)} --> ${f(en)}\n${l.sp?'<v '+l.sp+'>':''}${l.text}\n\n`;});dl('captions.vtt',v,'text/vtt');};
+</script>
+</body>
+</html>

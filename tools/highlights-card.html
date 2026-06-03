@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Highlights Card Creator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-news"></i></div><div>Research Highlights Card</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-news"></i></div>
+      <div>
+        <div class="tool-title">Research Highlights / Social Card Creator</div>
+        <div class="tool-desc">Announce a new paper with a sharp social-media card. Drop in the title, a one-line key finding, authors, journal and a couple of bullet highlights, then export a ready-to-post PNG sized for Twitter/X, LinkedIn, or Instagram. Great for the lab's "new preprint!" post. Local, no upload.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Eyebrow / label<input id="eyebrow" value="NEW PUBLICATION"></label>
+      <label class="fld">Journal / venue<input id="venue" value="Nature Plants · 2026"></label>
+      <label class="fld" style="grid-column:1/-1">Title<textarea id="title" rows="2">Spectral deep learning detects crop disease days before symptoms appear</textarea></label>
+      <label class="fld" style="grid-column:1/-1">Key finding (one line)<input id="finding" value="94% accuracy at the pre-symptomatic stage — with 8× less labelled data"></label>
+      <label class="fld" style="grid-column:1/-1">Highlights (one per line, max 4)<textarea id="bullets" rows="3">Self-supervised pretraining on 12,400 leaf scans
+Robust across lighting and 6 crop species
+Runs on a handheld scanner in the field</textarea></label>
+      <label class="fld">Authors<input id="authors" value="Researcher, Lee, Garcia & Advisor"></label>
+      <label class="fld">Handle / DOI footer<input id="footer" value="@plant_ai_lab · doi.org/10.1234/abcd"></label>
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Format<select id="size">
+        <option value="1200,675">Twitter/X 16:9 (1200×675)</option>
+        <option value="1200,1200" selected>Square 1:1 (1200×1200)</option>
+        <option value="1200,1500">Portrait 4:5 (1200×1500)</option>
+        <option value="1080,1920">Story 9:16 (1080×1920)</option>
+      </select></label>
+      <label class="fld">Theme<select id="theme">
+        <option value="#0b2545,#e8b84b">Navy / Gold</option>
+        <option value="#11100f,#f472b6">Dark / Pink</option>
+        <option value="#0d4f4a,#7fd1c8">Teal</option>
+        <option value="#3b2a5e,#c4b7ff">Purple</option>
+        <option value="#5e1322,#e0a96d">Maroon</option>
+      </select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#333"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button><span class="muted" style="font-size:12px;margin-left:auto">Tip: keep the title under ~12 words so it stays readable in a feed.</span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');
+function draw(){
+  const [w,h]=$('#size').value.split(',').map(Number);cv.width=w;cv.height=h;
+  const [bg,acc]=$('#theme').value.split(',');
+  // background gradient
+  const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,bg);g.addColorStop(1,shade(bg,-18));ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  // accent corner bar
+  ctx.fillStyle=acc;ctx.fillRect(0,0,w,12);
+  const pad=Math.round(w*0.075);let y=pad+30;
+  ctx.textAlign='left';
+  // eyebrow
+  ctx.fillStyle=acc;ctx.font='700 '+Math.round(w/42)+'px Arial';ctx.fillText($('#eyebrow').value.toUpperCase(),pad,y);
+  // venue right
+  ctx.textAlign='right';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font=Math.round(w/48)+'px Arial';ctx.fillText($('#venue').value,w-pad,y);
+  ctx.textAlign='left';y+=Math.round(w*0.05);
+  // title
+  ctx.fillStyle='#fff';const tfs=Math.round(w/19);ctx.font='800 '+tfs+'px Arial';
+  y=wrapText($('#title').value,pad,y,w-pad*2,tfs*1.15,tfs);
+  y+=Math.round(w*0.03);
+  // key finding box
+  const ffs=Math.round(w/30);ctx.font='700 '+ffs+'px Arial';
+  const fLines=measureWrap($('#finding').value,w-pad*2-40,ffs);
+  const boxH=fLines.length*ffs*1.3+34;
+  roundRect(pad,y,w-pad*2,boxH,16);ctx.fillStyle=acc;ctx.fill();
+  ctx.fillStyle=contrast(acc);let fy=y+24+ffs;fLines.forEach(l=>{ctx.fillText(l,pad+20,fy);fy+=ffs*1.3;});
+  y+=boxH+Math.round(w*0.04);
+  // bullets
+  const bfs=Math.round(w/34);ctx.font=bfs+'px Arial';
+  $('#bullets').value.split('\n').map(b=>b.trim()).filter(Boolean).slice(0,4).forEach(b=>{
+    ctx.fillStyle=acc;ctx.beginPath();ctx.arc(pad+8,y-bfs*0.32,6,0,7);ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.92)';const ls=measureWrap(b,w-pad*2-30,bfs);ls.forEach((l,i)=>{ctx.fillText(l,pad+28,y);y+=bfs*1.32;});y+=bfs*0.3;
+  });
+  // footer
+  ctx.fillStyle='rgba(255,255,255,0.6)';ctx.font='1px Arial';
+  ctx.fillStyle=acc;ctx.fillRect(pad,h-pad-46,w-pad*2,2);
+  ctx.fillStyle='#fff';ctx.font='700 '+Math.round(w/40)+'px Arial';ctx.fillText($('#authors').value,pad,h-pad-12);
+  ctx.textAlign='right';ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font=Math.round(w/48)+'px Arial';ctx.fillText($('#footer').value,w-pad,h-pad-12);
+  ctx.textAlign='left';
+}
+function wrapText(text,x,y,maxW,lh,fs){const words=text.split(/\s+/);let line='';words.forEach(w=>{if(ctx.measureText(line+' '+w).width>maxW&&line){ctx.fillText(line,x,y);y+=lh;line=w;}else line=line?line+' '+w:w;});if(line){ctx.fillText(line,x,y);y+=lh;}return y;}
+function measureWrap(text,maxW,fs){ctx.font='700 '+fs+'px Arial';const words=text.split(/\s+/);const lines=[];let line='';words.forEach(w=>{if(ctx.measureText(line+' '+w).width>maxW&&line){lines.push(line);line=w;}else line=line?line+' '+w:w;});if(line)lines.push(line);return lines;}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function shade(hex,p){const n=parseInt(hex.slice(1),16);let r=(n>>16)+p*2.55,g=((n>>8)&255)+p*2.55,b=(n&255)+p*2.55;const cl=v=>Math.max(0,Math.min(255,Math.round(v)));return `rgb(${cl(r)},${cl(g)},${cl(b)})`;}
+function contrast(hex){const n=parseInt(hex.slice(1),16);const l=0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255);return l>140?'#1a1a1a':'#fff';}
+['eyebrow','venue','title','finding','bullets','authors','footer','size','theme'].forEach(id=>$('#'+id).addEventListener('input',draw));
+$('#png').onclick=()=>{cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='highlights-card.png';a.click();});};
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subject Index Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-list-search"></i></div><div>Subject Index Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-list-search"></i></div>
+      <div>
+        <div class="tool-title">Subject / Keyword Index Generator</div>
+        <div class="tool-desc">Build a back-of-book subject index. Paste your entries (each tagged with a page or entry number) and either supply your own keyword list or let the tool suggest salient terms; it then lists every location each term appears. Alphabetical, deduplicated, printable. Local processing.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Source — one block per location, started by <b>[page]</b> or <b>[12]</b>, then its text.
+      <textarea id="src" style="min-height:150px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">[3] Photosynthesis converts light energy in the thylakoid membrane. Chlorophyll absorbs light.
+[7] The Calvin cycle fixes carbon dioxide into glucose. Photosynthesis depends on chlorophyll.
+[11] Mitochondria produce ATP via cellular respiration. The membrane potential drives synthesis.
+[15] Carbon fixation and the Calvin cycle are studied with isotope labelling.</textarea>
+    </label>
+    <label class="fld">Keywords / index terms (comma-separated). Leave blank to auto-suggest.
+      <input id="terms" placeholder="photosynthesis, Calvin cycle, chlorophyll, membrane, ATP">
+    </label>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Build index</button><button class="btn" id="suggest"><i class="ti ti-bulb"></i> Auto-suggest terms</button><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="out" style="column-gap:30px"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Matching is case-insensitive and whole-word, with simple plural folding. For multi-word terms, type them exactly. Auto-suggest ranks repeated noun-like phrases — review and prune before finalizing.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .ix{font-size:13.5px;margin:4px 0;break-inside:avoid} .ix b{font-weight:700} .grp{font-weight:800;color:var(--teal);margin:12px 0 4px;font-size:15px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on at for with as is are was were be been it its this that these those not no into over by from which who what when how also only their there here can could will would should using used use are more most some any all'.split(' '));
+let text='';
+function blocks(){return $('#src').value.split(/\n(?=\[)/).map(b=>{const m=b.match(/^\[([^\]]+)\]\s*([\s\S]*)$/);return m?{loc:m[1].trim(),text:m[2]}:null;}).filter(Boolean);}
+function gen(){
+  const bks=blocks();if(!bks.length){$('#status').textContent='Add blocks starting with [page].';return;}
+  let terms=$('#terms').value.split(',').map(t=>t.trim()).filter(Boolean);
+  if(!terms.length){suggest();terms=$('#terms').value.split(',').map(t=>t.trim()).filter(Boolean);}
+  const map={};
+  terms.forEach(term=>{const re=new RegExp('\\b'+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'s?\\b','i');const locs=[];bks.forEach(b=>{if(re.test(b.text))locs.push(b.loc);});if(locs.length)map[term]=[...new Set(locs)];});
+  const sorted=Object.keys(map).sort((a,b)=>a.toLowerCase().localeCompare(b.toLowerCase()));
+  let html='',cur='';const lines=[];
+  sorted.forEach(t=>{const L=t[0].toUpperCase();if(L!==cur){cur=L;html+=`<div class="grp">${L}</div>`;}html+=`<div class="ix"><b>${esc(t)}</b>, ${map[t].map(esc).join(', ')}</div>`;lines.push(`${t}, ${map[t].join(', ')}`);});
+  $('#out').innerHTML=html||'<div class="muted" style="font-size:13px">No terms matched.</div>';text=lines.join('\n');
+  $('#status').textContent=sorted.length+' terms indexed';
+}
+function suggest(){
+  const all=blocks().map(b=>b.text).join(' ').toLowerCase();
+  const words=(all.match(/\b[a-z][a-z'-]{3,}\b/g)||[]).filter(w=>!STOP.has(w));
+  const uni={};words.forEach(w=>{const k=w.replace(/s$/,'');uni[k]=(uni[k]||0)+1;});
+  const bi={};const seq=all.match(/\b[a-z][a-z'-]{2,}\b/g)||[];for(let i=0;i<seq.length-1;i++){if(STOP.has(seq[i])||STOP.has(seq[i+1]))continue;const p=seq[i]+' '+seq[i+1];bi[p]=(bi[p]||0)+1;}
+  const top=[...Object.entries(bi).filter(([,c])=>c>1).map(([k,c])=>[k,c*2]),...Object.entries(uni).filter(([,c])=>c>1).map(([k,c])=>[k,c])].sort((a,b)=>b[1]-a[1]).slice(0,18).map(x=>x[0]);
+  $('#terms').value=[...new Set(top)].join(', ');
+}
+$('#gen').onclick=gen;$('#suggest').onclick=()=>{suggest();gen();};
+['src','terms'].forEach(id=>$('#'+id).addEventListener('input',()=>{if($('#terms').value.trim())gen();}));
+$('#copy').onclick=()=>{if(text){navigator.clipboard.writeText(text);$('#status').textContent='Copied.';}};
+gen();
+</script>
+</body>
+</html>

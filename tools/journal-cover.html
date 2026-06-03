@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Cover Designer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-book-upload"></i></div><div>Journal Cover Designer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1040px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-book-upload"></i></div>
+      <div>
+        <div class="tool-title">Journal Cover Designer</div>
+        <div class="tool-desc">Design a journal issue or cover-art submission. Choose from several cover templates, set the journal name, volume/issue, ISSN/eISSN, and a cover image, with a band for the featured article. Cycle layouts and palettes to explore designs, then export a high-resolution PNG. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Journal name<input id="jname" value="Journal of Plant Science"></label>
+      <label class="fld">Volume / issue / date<input id="vol" value="Vol. 48 · Issue 6 · June 2026"></label>
+      <label class="fld">Featured article line<input id="feat" value="Spectral deep learning detects crop disease before symptoms"></label>
+      <label class="fld">Featured authors<input id="fauth" value="Researcher, Lee &amp; Garcia"></label>
+      <label class="fld">Publisher / footer<input id="pub" value="University Press"></label>
+      <label class="fld">Cover image<input type="file" id="img" accept="image/*"></label>
+      <label class="fld">ISSN (print)<input id="issn" value="1234-5678" placeholder="1234-5678"></label>
+      <label class="fld">eISSN (online)<input id="eissn" value="8765-4321" placeholder="8765-4321"></label>
+    </div>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px;align-items:flex-end">
+      <label class="fld">Layout<select id="layout">
+        <option value="full">Full-bleed image</option>
+        <option value="bands">Image with bands</option>
+        <option value="classic">Classic framed</option>
+        <option value="sidebar">Side spine</option>
+        <option value="minimal">Minimal light</option>
+        <option value="split">Diagonal split</option>
+        <option value="modern">Modern duotone</option>
+      </select></label>
+      <label class="fld">Palette<select id="palette"></select></label>
+      <label class="fld">Primary<input type="color" id="c1" value="#0b2545"></label>
+      <label class="fld">Accent<input type="color" id="c2" value="#e8b84b"></label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="barcode" checked> ISSN barcode</label>
+      <button class="btn btn-sm" id="cycle"><i class="ti ti-layout-2"></i> Next layout</button>
+      <button class="btn btn-sm" id="shuffle"><i class="ti ti-dice-3"></i> Shuffle design</button>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#333"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">The ISSN barcode is a stylised, decorative rendering — the human-readable ISSN/eISSN text is what's authoritative. For print, use the official EAN-13 barcode your publisher provides. Try the seven layouts and palette presets, or hit <b>Shuffle</b> to generate a fresh combination.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');let img=null;
+const W=850,H=1100;
+
+// ---- palette presets ----
+const PALETTES=[
+  ['Navy / Gold','#0b2545','#e8b84b'],
+  ['Teal / Coral','#0d4f4a','#ff8b6b'],
+  ['Maroon / Sand','#5e1322','#e0a96d'],
+  ['Forest / Lime','#15352a','#a3d977'],
+  ['Plum / Gold','#3b1d4e','#f0c14b'],
+  ['Charcoal / Cyan','#1c2128','#36c5d0'],
+  ['Oxford / Sky','#10243f','#7fb2f0'],
+  ['Crimson / Cream','#7a1020','#f3e3c3'],
+  ['Ink / Magenta','#141124','#e056b1'],
+  ['Slate / Amber','#2b2f36','#fbbf24']
+];
+$('#palette').innerHTML=PALETTES.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join('');
+$('#palette').onchange=()=>{const p=PALETTES[+$('#palette').value];$('#c1').value=p[1];$('#c2').value=p[2];draw();};
+
+$('#img').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);img=new Image();img.onload=draw;img.src=u;};
+
+// ---- helpers ----
+function txtOn(hex){const n=parseInt(hex.slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>140?'#111':'#fff';}
+function shade(hex,p){const n=parseInt(hex.slice(1),16);const cl=v=>Math.max(0,Math.min(255,Math.round(v)));return `rgb(${cl((n>>16)+p*2.55)},${cl(((n>>8)&255)+p*2.55)},${cl((n&255)+p*2.55)})`;}
+function coverImg(x,y,w,h){
+  if(img){const s=Math.max(w/img.naturalWidth,h/img.naturalHeight);const iw=img.naturalWidth*s,ih=img.naturalHeight*s;ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih);ctx.restore();}
+  else{ctx.save();ctx.fillStyle='#e9edf2';ctx.fillRect(x,y,w,h);ctx.fillStyle='#9fb0c4';ctx.font='20px Arial';ctx.textAlign='center';ctx.fillText('Add a cover image',x+w/2,y+h/2);ctx.restore();}
+}
+function containImg(x,y,w,h){
+  if(img){const s=Math.min(w/img.naturalWidth,h/img.naturalHeight);const iw=img.naturalWidth*s,ih=img.naturalHeight*s;ctx.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih);}
+  else{ctx.save();ctx.fillStyle='#e9edf2';ctx.fillRect(x,y,w,h);ctx.fillStyle='#9fb0c4';ctx.font='20px Arial';ctx.textAlign='center';ctx.fillText('Add a cover image',x+w/2,y+h/2);ctx.restore();}
+}
+function wrap(text,maxW,lh,x,y){const words=String(text||'').split(/\s+/);let line='';words.forEach(w=>{if(ctx.measureText(line+' '+w).width>maxW&&line){ctx.fillText(line,x,y);y+=lh;line=w;}else line=line?line+' '+w:w;});if(line){ctx.fillText(line,x,y);y+=lh;}return y;}
+function gradV(x,y,w,h,topCol,botCol){const g=ctx.createLinearGradient(0,y,0,y+h);g.addColorStop(0,topCol);g.addColorStop(1,botCol);ctx.fillStyle=g;ctx.fillRect(x,y,w,h);}
+
+// ---- ISSN barcode (decorative) ----
+function barcode(x,y,w,h,issn,label,col){
+  const digits=(issn||'').replace(/[^0-9]/g,'');if(!digits)return;
+  ctx.save();ctx.fillStyle='#fff';ctx.fillRect(x-6,y-6,w+12,h+24);
+  let seed=0;for(const d of digits)seed=(seed*31+ +d)>>>0;
+  let bx=x;ctx.fillStyle='#111';const n=digits.length*4;const unit=w/n;
+  for(let i=0;i<n;i++){seed=(seed*1103515245+12345)&0x7fffffff;const bw=unit*(0.4+(seed%100)/100*0.9);if((seed>>3)&1){ctx.fillRect(bx,y,Math.max(1,bw*0.6),h);}bx+=unit;}
+  ctx.fillStyle='#111';ctx.font='11px monospace';ctx.textAlign='center';ctx.fillText(label+' '+issn,x+w/2,y+h+15);ctx.restore();
+}
+
+// ---- main ----
+function draw(){
+  cv.width=W;cv.height=H;
+  const c1=$('#c1').value,c2=$('#c2').value,layout=$('#layout').value;
+  const jname=$('#jname').value,vol=$('#vol').value,feat=$('#feat').value,fauth=$('#fauth').value,pub=$('#pub').value;
+  const issn=$('#issn').value.trim(),eissn=$('#eissn').value.trim(),showBar=$('#barcode').checked;
+  ctx.clearRect(0,0,W,H);
+  ({full:lFull,bands:lBands,classic:lClassic,sidebar:lSidebar,minimal:lMinimal,split:lSplit,modern:lModern}[layout]||lFull)(c1,c2,{jname,vol,feat,fauth,pub,issn,eissn,showBar});
+  $('#status').textContent=layout+' · '+W+'×'+H+'px';
+}
+
+function issnText(c1,c2,o,x,y,col){
+  ctx.textAlign=x>W/2?'right':'left';ctx.font='600 14px monospace';ctx.fillStyle=col;
+  const parts=[];if(o.issn)parts.push('ISSN '+o.issn);if(o.eissn)parts.push('eISSN '+o.eissn);
+  if(parts.length)ctx.fillText(parts.join('   ·   '),x,y);
+  ctx.textAlign='left';
+}
+
+// 1. FULL BLEED
+function lFull(c1,c2,o){
+  ctx.fillStyle=c1;ctx.fillRect(0,0,W,H);
+  coverImg(0,0,W,H);
+  gradV(0,0,W,300,c1+'f2',c1+'00');
+  gradV(0,H-380,W,380,c1+'00',c1+'f5');
+  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='800 58px Georgia';wrap(o.jname,W-100,60,50,86);
+  ctx.fillStyle=c2;ctx.fillRect(50,112,W-100,5);
+  ctx.fillStyle=c2;ctx.font='600 22px Arial';ctx.fillText(o.vol,50,150);
+  const by=H-300;ctx.fillStyle=c2;ctx.fillRect(0,by,W,120);
+  ctx.fillStyle=txtOn(c2);ctx.font='700 30px Georgia';let yy=wrap(o.feat,W-100,34,50,by+44);
+  ctx.font='italic 20px Georgia';ctx.fillText(o.fauth,50,Math.min(yy+6,by+110));
+  ctx.fillStyle='#fff';ctx.font='18px Arial';ctx.textAlign='center';ctx.fillText(o.pub,W/2,H-46);
+  if(o.showBar)barcode(W-220,H-150,170,52,o.issn||o.eissn,o.issn?'ISSN':'eISSN');
+  else issnText(c1,c2,o,W-50,H-22,'#fff');
+}
+
+// 2. BANDS
+function lBands(c1,c2,o){
+  ctx.fillStyle=shade(c1,-8);ctx.fillRect(0,0,W,H);
+  const topH=210,botH=300,imgH=H-topH-botH;
+  ctx.fillStyle=c1;ctx.fillRect(0,0,W,topH);
+  coverImg(0,topH,W,imgH);
+  ctx.fillStyle=c1;ctx.fillRect(0,topH+imgH,W,botH);
+  ctx.fillStyle=c2;ctx.fillRect(0,topH-8,W,8);ctx.fillRect(0,topH+imgH,W,8);
+  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='800 52px Georgia';wrap(o.jname,W-90,54,46,76);
+  ctx.fillStyle=c2;ctx.font='600 20px Arial';ctx.fillText(o.vol,46,150);
+  const by=topH+imgH+40;ctx.fillStyle=c2;ctx.font='700 30px Georgia';let yy=wrap(o.feat,W-90,34,46,by);
+  ctx.fillStyle='#fff';ctx.font='italic 20px Georgia';ctx.fillText(o.fauth,46,yy+8);
+  ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font='16px Arial';ctx.fillText(o.pub,46,H-40);
+  if(o.showBar)barcode(W-210,H-110,160,46,o.issn||o.eissn,o.issn?'ISSN':'eISSN');
+  else issnText(c1,c2,o,W-46,H-40,'#fff');
+}
+
+// 3. CLASSIC FRAMED
+function lClassic(c1,c2,o){
+  ctx.fillStyle=c1;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle=c2;ctx.lineWidth=3;ctx.strokeRect(28,28,W-56,H-56);
+  ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='800 50px Georgia';wrap(o.jname,W-140,52,W/2,120);
+  ctx.strokeStyle=c2;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(W/2-120,168);ctx.lineTo(W/2+120,168);ctx.stroke();
+  ctx.fillStyle=c2;ctx.font='600 20px Arial';ctx.fillText(o.vol,W/2,200);
+  // framed image window
+  const ix=70,iy=240,iw=W-140,ih=560;
+  ctx.fillStyle='#fff';ctx.fillRect(ix-8,iy-8,iw+16,ih+16);
+  coverImg(ix,iy,iw,ih);
+  ctx.strokeStyle=c2;ctx.lineWidth=4;ctx.strokeRect(ix-8,iy-8,iw+16,ih+16);
+  ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='italic 700 26px Georgia';let yy=wrap(o.feat,W-160,30,W/2,iy+ih+58);
+  ctx.fillStyle=c2;ctx.font='18px Georgia';ctx.fillText(o.fauth,W/2,yy+6);
+  ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font='16px Arial';ctx.fillText(o.pub,W/2,H-58);
+  if(o.showBar)barcode(W/2-85,H-150,170,46,o.issn||o.eissn,o.issn?'ISSN':'eISSN');
+  else issnText(c1,c2,{...o},W/2+120,H-58,'#fff');
+}
+
+// 4. SIDE SPINE
+function lSidebar(c1,c2,o){
+  const sb=150;
+  coverImg(sb,0,W-sb,H);
+  gradV(sb,H-360,W-sb,360,c1+'00',c1+'f2');
+  ctx.fillStyle=c1;ctx.fillRect(0,0,sb,H);
+  ctx.fillStyle=c2;ctx.fillRect(sb-6,0,6,H);
+  // rotated journal name on spine
+  ctx.save();ctx.translate(sb/2,H-60);ctx.rotate(-Math.PI/2);ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='800 40px Georgia';ctx.fillText(o.jname,0,12);ctx.restore();
+  ctx.save();ctx.translate(sb/2,170);ctx.rotate(-Math.PI/2);ctx.textAlign='right';ctx.fillStyle=c2;ctx.font='600 18px Arial';ctx.fillText(o.vol,0,12);ctx.restore();
+  // featured over image bottom
+  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='700 30px Georgia';let yy=wrap(o.feat,W-sb-80,34,sb+40,H-200);
+  ctx.fillStyle=c2;ctx.font='italic 20px Georgia';ctx.fillText(o.fauth,sb+40,yy+6);
+  ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='15px Arial';ctx.fillText(o.pub,sb+40,H-50);
+  if(o.showBar)barcode(W-210,H-130,160,46,o.issn||o.eissn,o.issn?'ISSN':'eISSN');
+  else issnText(c1,c2,o,W-40,H-50,'#fff');
+}
+
+// 5. MINIMAL LIGHT
+function lMinimal(c1,c2,o){
+  ctx.fillStyle='#f6f4ef';ctx.fillRect(0,0,W,H);
+  ctx.textAlign='left';ctx.fillStyle=c1;ctx.font='800 52px Georgia';let yy=wrap(o.jname,W-120,54,60,110);
+  ctx.strokeStyle=c2;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(60,yy+6);ctx.lineTo(180,yy+6);ctx.stroke();
+  ctx.fillStyle='#666';ctx.font='600 18px Arial';ctx.fillText(o.vol,60,yy+38);
+  const ix=60,iy=yy+70,iw=W-120,ih=560;
+  ctx.fillStyle='#fff';ctx.fillRect(ix,iy,iw,ih);containImg(ix+14,iy+14,iw-28,ih-28);
+  ctx.strokeStyle='#e3ddd0';ctx.lineWidth=1;ctx.strokeRect(ix,iy,iw,ih);
+  ctx.fillStyle=c1;ctx.font='700 26px Georgia';let y2=wrap(o.feat,W-120,30,60,iy+ih+50);
+  ctx.fillStyle=c2;ctx.font='italic 19px Georgia';ctx.fillText(o.fauth,60,y2+4);
+  ctx.fillStyle='#888';ctx.font='15px Arial';ctx.fillText(o.pub,60,H-44);
+  if(o.showBar)barcode(W-210,H-120,160,44,o.issn||o.eissn,o.issn?'ISSN':'eISSN');
+  else issnText(c1,c2,o,W-60,H-44,'#555');
+}
+
+// 6. DIAGONAL SPLIT
+function lSplit(c1,c2,o){
+  ctx.fillStyle=c1;ctx.fillRect(0,0,W,H);
+  // image clipped to top diagonal
+  ctx.save();ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(W,0);ctx.lineTo(W,560);ctx.lineTo(0,720);ctx.closePath();ctx.clip();coverImg(0,0,W,720);ctx.restore();
+  // accent diagonal stripe
+  ctx.fillStyle=c2;ctx.beginPath();ctx.moveTo(0,720);ctx.lineTo(W,560);ctx.lineTo(W,592);ctx.lineTo(0,752);ctx.closePath();ctx.fill();
+  gradV(0,0,W,240,c1+'cc',c1+'00');
+  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='800 52px Georgia';wrap(o.jname,W-100,54,50,84);
+  ctx.fillStyle=c2;ctx.font='600 20px Arial';ctx.fillText(o.vol,50,140);
+  // featured in lower solid area
+  ctx.fillStyle='#fff';ctx.font='800 34px Georgia';let yy=wrap(o.feat,W-110,40,50,830);
+  ctx.fillStyle=c2;ctx.font='italic 21px Georgia';ctx.fillText(o.fauth,50,yy+10);
+  ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font='16px Arial';ctx.fillText(o.pub,50,H-44);
+  if(o.showBar)barcode(W-210,H-120,160,46,o.issn||o.eissn,o.issn?'ISSN':'eISSN');
+  else issnText(c1,c2,o,W-50,H-44,'#fff');
+}
+
+// 7. MODERN DUOTONE
+function lModern(c1,c2,o){
+  ctx.fillStyle=c1;ctx.fillRect(0,0,W,H);
+  coverImg(0,180,W,640);
+  // duotone overlay: multiply primary, screen accent
+  ctx.save();ctx.globalCompositeOperation='multiply';ctx.fillStyle=c1;ctx.fillRect(0,180,W,640);ctx.restore();
+  ctx.save();ctx.globalCompositeOperation='lighten';ctx.fillStyle=shade(c1,40);ctx.globalAlpha=0.25;ctx.fillRect(0,180,W,640);ctx.restore();
+  // big issue number
+  const issNum=(o.vol.match(/(\d+)\s*$/)||o.vol.match(/(\d+)/)||['',''])[1];
+  ctx.textAlign='right';ctx.fillStyle=c2;ctx.font='800 200px Arial';ctx.globalAlpha=0.9;ctx.fillText(issNum||'',W-40,H-120);ctx.globalAlpha=1;
+  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='800 62px "Helvetica Neue",Arial';wrap(o.jname.toUpperCase(),W-90,62,46,96);
+  ctx.fillStyle=c2;ctx.fillRect(46,150,90,6);
+  ctx.fillStyle='#fff';ctx.font='600 20px Arial';ctx.fillText(o.vol,46,860);
+  ctx.font='800 30px "Helvetica Neue",Arial';let yy=wrap(o.feat,W-260,34,46,910);
+  ctx.fillStyle=c2;ctx.font='italic 19px Georgia';ctx.fillText(o.fauth,46,yy+4);
+  ctx.fillStyle='rgba(255,255,255,0.75)';ctx.font='15px Arial';ctx.fillText(o.pub,46,H-40);
+  if(o.showBar)barcode(46,H-150,160,44,o.issn||o.eissn,o.issn?'ISSN':'eISSN');
+  else issnText(c1,c2,o,46,H-40,'#fff');
+}
+
+['jname','vol','feat','fauth','pub','c1','c2','layout','issn','eissn','barcode'].forEach(id=>$('#'+id).addEventListener('input',draw));
+const LAYOUTS=['full','bands','classic','sidebar','minimal','split','modern'];
+$('#cycle').onclick=()=>{const i=LAYOUTS.indexOf($('#layout').value);$('#layout').value=LAYOUTS[(i+1)%LAYOUTS.length];draw();};
+$('#shuffle').onclick=()=>{$('#layout').value=LAYOUTS[Math.floor(Math.random()*LAYOUTS.length)];const pi=Math.floor(Math.random()*PALETTES.length);$('#palette').value=pi;$('#c1').value=PALETTES[pi][1];$('#c2').value=PALETTES[pi][2];draw();};
+$('#png').onclick=()=>{cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='journal-cover.png';a.click();});};
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publication Branding Kit — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-color-swatch"></i></div><div>Publication Branding Kit</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:980px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-color-swatch"></i></div>
+      <div>
+        <div class="tool-title">Publication / Lab Branding Kit</div>
+        <div class="tool-desc">Define a consistent visual identity for your lab or research group — a colour palette with tints, a font pairing, and usage notes — and generate a one-page brand sheet. Export the sheet as a printable page and the tokens as CSS/JSON so every poster, slide and figure stays on-brand. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Group / brand name<input id="name" value="Plant AI Lab"></label>
+      <label class="fld">Tagline<input id="tag" value="Spectral intelligence for agriculture"></label>
+    </div>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Primary<input type="color" id="c1" value="#0b2545"></label>
+      <label class="fld">Secondary<input type="color" id="c2" value="#2dd4bf"></label>
+      <label class="fld">Accent<input type="color" id="c3" value="#e8b84b"></label>
+      <label class="fld">Neutral<input type="color" id="c4" value="#475569"></label>
+      <label class="fld">Heading font<select id="hf"><option>Georgia, serif</option><option>'Helvetica Neue', Arial, sans-serif</option><option>'Trebuchet MS', sans-serif</option></select></label>
+      <label class="fld">Body font<select id="bf"><option>'Helvetica Neue', Arial, sans-serif</option><option>Georgia, serif</option><option>Verdana, sans-serif</option></select></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="print"><i class="ti ti-printer"></i> Print brand sheet</button><button class="btn" id="css"><i class="ti ti-code"></i> Copy CSS</button><button class="btn" id="json"><i class="ti ti-braces"></i> Copy JSON</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+
+  <div id="sheet"></div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  #sheet{margin-top:14px}
+  .bs{background:#fff;color:#111;border-radius:10px;padding:34px 40px;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+  .bs h1{margin:0} .bs .lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;margin:22px 0 8px}
+  .sw{border-radius:8px;height:90px;display:flex;align-items:flex-end;padding:8px;color:#fff;font-size:12px;font-weight:600}
+  .tints{display:flex;height:30px;border-radius:6px;overflow:hidden;margin-top:6px}
+  .swgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .logo-box{width:80px;height:80px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:28px}
+  @media print{.no-print{display:none!important}@page{margin:12mm}body{background:#fff}.bs{box-shadow:none;border-radius:0;padding:0}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function tint(hex,p){const n=parseInt(hex.slice(1),16);const r=n>>16,g=(n>>8)&255,b=n&255;const m=v=>Math.round(v+(255-v)*p);return `#${[m(r),m(g),m(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}`;}
+function txt(hex){const n=parseInt(hex.slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))>140?'#111':'#fff';}
+function initials(s){return s.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).map(w=>w[0]).join('').slice(0,3).toUpperCase();}
+function render(){
+  const c1=$('#c1').value,c2=$('#c2').value,c3=$('#c3').value,c4=$('#c4').value,hf=$('#hf').value,bf=$('#bf').value;
+  const cols=[['Primary',c1],['Secondary',c2],['Accent',c3],['Neutral',c4]];
+  $('#sheet').innerHTML=`<div class="bs" style="font-family:${bf}">
+    <div style="display:flex;align-items:center;gap:18px;border-bottom:4px solid ${c3};padding-bottom:16px">
+      <div class="logo-box" style="background:${c1};color:${c3}">${esc(initials($('#name').value))}</div>
+      <div><h1 style="font-family:${hf};color:${c1}">${esc($('#name').value)}</h1><div style="color:#666;font-size:15px">${esc($('#tag').value)}</div><div style="font-size:11px;color:#999;margin-top:4px">BRAND GUIDELINES</div></div>
+    </div>
+    <div class="lbl">Colour palette</div>
+    <div class="swgrid">${cols.map(([n,c])=>`<div><div class="sw" style="background:${c};color:${txt(c)}">${esc(n)}<br>${c.toUpperCase()}</div><div class="tints">${[0.2,0.4,0.6,0.8].map(p=>`<div style="flex:1;background:${tint(c,p)}"></div>`).join('')}</div></div>`).join('')}</div>
+    <div class="lbl">Typography</div>
+    <div style="display:flex;gap:30px;flex-wrap:wrap">
+      <div><div style="font-family:${hf};font-size:30px;color:${c1};font-weight:800">Heading — ${esc(hf.split(',')[0].replace(/'/g,''))}</div><div style="font-family:${hf};color:#555">Aa Bb Cc · 0123456789</div></div>
+      <div><div style="font-family:${bf};font-size:18px;color:#222">Body — ${esc(bf.split(',')[0].replace(/'/g,''))}</div><div style="font-family:${bf};color:#555;max-width:300px;font-size:13px">The quick brown fox jumps over the lazy dog. Use for paragraphs, captions and labels.</div></div>
+    </div>
+    <div class="lbl">Usage</div>
+    <ul style="font-size:13px;line-height:1.6;color:#333;margin:0;padding-left:18px">
+      <li>Use <b style="color:${c1}">Primary</b> for headers and key UI; <b style="color:${c2}">Secondary</b> for supporting elements.</li>
+      <li>Reserve <b style="color:${c3}">Accent</b> for highlights and calls to action — never as a large background behind body text.</li>
+      <li>Maintain clear space around the logo equal to the height of its initials.</li>
+      <li>Keep the same font pairing across posters, slides, and figures for a coherent identity.</li>
+    </ul>
+  </div>`;
+}
+function cssOut(){return `:root{\n  --brand-primary:${$('#c1').value};\n  --brand-secondary:${$('#c2').value};\n  --brand-accent:${$('#c3').value};\n  --brand-neutral:${$('#c4').value};\n  --brand-heading-font:${$('#hf').value};\n  --brand-body-font:${$('#bf').value};\n}`;}
+['name','tag','c1','c2','c3','c4','hf','bf'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#print').onclick=()=>window.print();
+$('#css').onclick=()=>{navigator.clipboard.writeText(cssOut());$('#status').textContent='CSS copied.';};
+$('#json').onclick=()=>{navigator.clipboard.writeText(JSON.stringify({name:$('#name').value,tagline:$('#tag').value,colors:{primary:$('#c1').value,secondary:$('#c2').value,accent:$('#c3').value,neutral:$('#c4').value},fonts:{heading:$('#hf').value,body:$('#bf').value}},null,2));$('#status').textContent='JSON copied.';};
+render();
+</script>
+</body>
+</html>

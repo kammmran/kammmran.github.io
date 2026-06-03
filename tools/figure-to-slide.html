@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figure-to-Slide Converter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-photo-scan"></i></div><div>Figure-to-Slide Converter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-photo-scan"></i></div>
+      <div>
+        <div class="tool-title">Figure-to-Slide Converter</div>
+        <div class="tool-desc">Drop your result figures and turn each into a clean, consistent slide — figure centred on a themed background with a title and caption you type in. Reorder, then present full-screen or print the deck to PDF. A fast way to build a results-walkthrough talk. Local, no upload.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:22px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-photo-plus" style="font-size:24px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop figure images (one slide each)</div>
+      <input type="file" id="file" accept="image/*" multiple style="display:none">
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Theme<select id="theme"><option value="#0b2545,#e8b84b,#fff">Navy/Gold</option><option value="#11100f,#7c6df0,#f0eff8">Dark</option><option value="#0d4f4a,#2dd4bf,#fff">Teal</option><option value="#ffffff,#0b2545,#111">Light</option></select></label>
+      <button class="btn btn-sm btn-primary" id="present"><i class="ti ti-player-play"></i> Present</button>
+      <button class="btn btn-sm" id="print"><i class="ti ti-printer"></i> Print / PDF</button>
+    </div>
+    <div id="editors" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+  <div id="stage" style="display:none;position:fixed;inset:0;background:#000;z-index:1000;align-items:center;justify-content:center">
+    <div id="host"></div>
+    <div id="counter" style="position:absolute;bottom:14px;right:20px;color:#888;font-size:13px"></div>
+    <button class="btn" id="exit" style="position:absolute;top:14px;right:16px"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="printArea"></div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .ed{display:flex;gap:10px;align-items:center;border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:8px}
+  .ed img{width:90px;height:64px;object-fit:contain;background:var(--bg3);border-radius:6px} .ed .grip{cursor:grab;color:var(--text3)}
+  .ed input{width:100%} .ed .rm{color:var(--text3);cursor:pointer} .ed .rm:hover{color:var(--red)}
+  .slide{box-sizing:border-box;display:flex;flex-direction:column;aspect-ratio:16/9;padding:4%}
+  .slide .st{font-weight:700;font-size:1.5em;margin-bottom:.3em} .slide .fig{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden} .slide .fig img{max-width:100%;max-height:100%;object-fit:contain} .slide .cap{font-size:.95em;opacity:.85;margin-top:.4em}
+  @media print{.no-print{display:none!important}@page{size:landscape;margin:0}.slide{page-break-after:always;width:100vw;height:100vh}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let slides=[],cur=0;
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files.length)add(e.dataTransfer.files);}));
+$('#file').onchange=e=>{if(e.target.files.length)add(e.target.files);};
+function add(files){for(const f of files){const url=URL.createObjectURL(f);slides.push({url,title:f.name.replace(/\.[^.]+$/,''),cap:''});}editors();}
+function editors(){
+  $('#editors').innerHTML=slides.map((s,i)=>`<div class="ed" data-i="${i}" draggable="true"><i class="ti ti-grip-vertical grip"></i><img src="${s.url}"><div style="flex:1;display:flex;flex-direction:column;gap:5px"><input data-t="${i}" value="${esc(s.title)}" placeholder="Slide title"><input data-c="${i}" value="${esc(s.cap)}" placeholder="Caption (optional)"></div><i class="ti ti-x rm" data-x="${i}"></i></div>`).join('');
+}
+$('#editors').addEventListener('input',e=>{const t=e.target.dataset.t,c=e.target.dataset.c;if(t!=null)slides[t].title=e.target.value;if(c!=null)slides[c].cap=e.target.value;});
+$('#editors').addEventListener('click',e=>{const x=e.target.closest('.rm');if(x){slides.splice(+x.dataset.x,1);editors();}});
+let dragI=null;
+$('#editors').addEventListener('dragstart',e=>{dragI=+e.target.closest('.ed').dataset.i;});
+$('#editors').addEventListener('dragover',e=>e.preventDefault());
+$('#editors').addEventListener('drop',e=>{e.preventDefault();const t=e.target.closest('.ed');if(t&&dragI!=null){const to=+t.dataset.i;const m=slides.splice(dragI,1)[0];slides.splice(to,0,m);dragI=null;editors();}});
+function slideHtml(i,fb){const [bg,acc,txt]=$('#theme').value.split(',');const s=slides[i];return `<div class="slide" style="background:${bg};color:${txt};font-size:${fb}"><div class="st" style="color:${txt};border-left:6px solid ${acc};padding-left:14px">${esc(s.title)}</div><div class="fig"><img src="${s.url}"></div>${s.cap?`<div class="cap">${esc(s.cap)}</div>`:''}</div>`;}
+function sizeStage(){const w=Math.min(window.innerWidth*0.96,window.innerHeight*0.92*16/9);$('#host').style.width=w+'px';$('#host').innerHTML=slideHtml(cur,(w/42)+'px');$('#counter').textContent=`${cur+1} / ${slides.length}`;}
+$('#present').onclick=()=>{if(!slides.length)return;cur=0;$('#stage').style.display='flex';sizeStage();};
+$('#exit').onclick=()=>$('#stage').style.display='none';
+document.addEventListener('keydown',e=>{if($('#stage').style.display!=='flex')return;if(e.key==='ArrowRight'||e.key===' ')cur=Math.min(slides.length-1,cur+1);if(e.key==='ArrowLeft')cur=Math.max(0,cur-1);if(e.key==='Escape'){$('#exit').click();return;}sizeStage();});
+window.addEventListener('resize',()=>{if($('#stage').style.display==='flex')sizeStage();});
+$('#print').onclick=()=>{if(!slides.length)return;$('#printArea').innerHTML=slides.map((_,i)=>slideHtml(i,'30px')).join('');window.print();};
+$('#theme').onchange=()=>{};
+</script>
+</body>
+</html>

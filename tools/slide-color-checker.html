@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Color Accessibility Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-color-filter"></i></div><div>Slide Color Accessibility</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-color-filter"></i></div>
+      <div>
+        <div class="tool-title">Presentation Color Accessibility Checker</div>
+        <div class="tool-desc">Check the colours in your slide palette for accessibility: a contrast matrix of every text-on-background pair (with WCAG AA/AAA for normal and large text), plus a colour-blind preview of the swatches. Make sure your slides are legible from the back row and for the ~8% with colour-vision deficiency. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Palette — one hex colour per line, optionally <b>#hex Name</b>
+      <textarea id="src" style="min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:13px">#0b2545 Background
+#ffffff White text
+#e8b84b Accent gold
+#cdd7e6 Body grey
+#f87171 Alert red</textarea>
+    </label>
+    <div class="panel-label">Contrast matrix (row text on column background)</div>
+    <div style="overflow:auto"><table id="matrix"></table></div>
+    <div class="panel-label" style="margin-top:6px">Colour-blind preview</div>
+    <div id="cb"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">WCAG thresholds: <b>AA</b> needs 4.5:1 (normal) or 3:1 (large/bold ≥24px); <b>AAA</b> needs 7:1 / 4.5:1. Slides are viewed at distance, so prefer pairs comfortably above AA. The colour-blind rows simulate protan/deutan/tritan vision — if two palette colours collapse together, don't rely on them alone to distinguish data.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #matrix td,#matrix th{border:1px solid var(--border);padding:6px 8px;text-align:center;font-size:12px;white-space:nowrap}
+  #matrix th{background:var(--bg2)} .sw{width:16px;height:16px;border-radius:3px;display:inline-block;vertical-align:middle;border:1px solid var(--border2);margin-right:5px}
+  .cell .r{font-weight:700} .cell .b{font-size:10px;opacity:.8}
+  .cbrow{display:flex;align-items:center;gap:6px;margin:6px 0;flex-wrap:wrap}.cbrow .lbl{width:110px;font-size:12px;color:var(--text2)}.cbrow .s{width:46px;height:30px;border-radius:5px;border:1px solid var(--border)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function lum(hex){const n=parseInt(hex.slice(1),16);const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};return 0.2126*f(n>>16)+0.7152*f((n>>8)&255)+0.0722*f(n&255);}
+function ratio(a,b){const l1=lum(a),l2=lum(b);return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05);}
+function lin(c){c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4);}
+function srgb(c){c=c<=0.0031308?c*12.92:1.055*Math.pow(c,1/2.4)-0.055;return Math.max(0,Math.min(255,Math.round(c*255)));}
+const MAT={protan:[0.112,0.888,0,0.073,0.927,0,0.004,-0.004,1],deutan:[0.293,0.707,0,0.346,0.654,0,-0.022,0.022,1],tritan:[1,0.146,-0.146,0,0.857,0.143,0,0.858,0.142]};
+function sim(hex,type){const n=parseInt(hex.slice(1),16);const r=lin(n>>16),g=lin((n>>8)&255),b=lin(n&255);const m=MAT[type];return `#${[srgb(m[0]*r+m[1]*g+m[2]*b),srgb(m[3]*r+m[4]*g+m[5]*b),srgb(m[6]*r+m[7]*g+m[8]*b)].map(v=>v.toString(16).padStart(2,'0')).join('')}`;}
+function parse(){return $('#src').value.split('\n').map(l=>{const m=l.trim().match(/^(#[0-9a-fA-F]{6})\s*(.*)$/);return m?{hex:m[1].toLowerCase(),name:m[2]||m[1]}:null;}).filter(Boolean);}
+function render(){
+  const cols=parse();if(!cols.length){$('#matrix').innerHTML='';return;}
+  let head='<tr><th>text ＼ bg</th>'+cols.map(c=>`<th><span class="sw" style="background:${c.hex}"></span>${esc(c.name)}</th>`).join('')+'</tr>';
+  let body=cols.map(t=>`<tr><th style="text-align:left"><span class="sw" style="background:${t.hex}"></span>${esc(t.name)}</th>`+cols.map(b=>{
+    if(t.hex===b.hex)return '<td style="background:var(--bg2);color:var(--text3)">—</td>';
+    const r=ratio(t.hex,b.hex);const aa=r>=4.5,aaa=r>=7,aaL=r>=3;
+    const col=aaa?'var(--green)':aa?'var(--green)':aaL?'var(--amber)':'var(--red)';
+    const badge=aaa?'AAA':aa?'AA':aaL?'AA large':'fail';
+    return `<td style="background:${b.hex}"><div class="cell"><div class="r" style="color:${t.hex}">${esc(t.name.slice(0,4)||'Ab')}</div><div class="b" style="color:${col};background:rgba(0,0,0,.25);border-radius:3px;display:inline-block;padding:0 3px">${r.toFixed(1)} ${badge}</div></div></td>`;
+  }).join('')+'</tr>').join('');
+  $('#matrix').innerHTML=head+body;
+  $('#cb').innerHTML=[['Normal',c=>c.hex],['Protanopia',c=>sim(c.hex,'protan')],['Deuteranopia',c=>sim(c.hex,'deutan')],['Tritanopia',c=>sim(c.hex,'tritan')]].map(([lbl,fn])=>`<div class="cbrow"><span class="lbl">${lbl}</span>${cols.map(c=>`<div class="s" style="background:${fn(c)}" title="${esc(c.name)}"></div>`).join('')}</div>`).join('');
+}
+$('#src').addEventListener('input',render);render();
+</script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multilingual Lecture Translator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-language"></i></div><div>Multilingual Lecture Translator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-language"></i></div>
+      <div>
+        <div class="tool-title">Multilingual Lecture Translator</div>
+        <div class="tool-desc">Speak (or play) a lecture and see it translated live into another language, with optional spoken playback of the translation. Speech recognition runs in your browser; translation uses the free MyMemory API.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px">
+      <label class="fld">Spoken language<select id="from"></select></label>
+      <i class="ti ti-arrow-right" style="align-self:flex-end;margin-bottom:8px;color:var(--text3)"></i>
+      <label class="fld">Translate to<select id="to"></select></label>
+      <label class="fld" style="flex-direction:row;align-items:flex-end;gap:6px;margin-bottom:2px"><input type="checkbox" id="speak"> speak translation</label>
+      <button class="btn btn-primary" id="rec" style="margin-left:auto"><i class="ti ti-microphone"></i> Start</button>
+    </div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+    <div class="grid2">
+      <div><div class="panel-label" style="margin-bottom:4px">Original</div><div id="src" class="box"></div></div>
+      <div><div class="panel-label" style="margin-bottom:4px">Translation</div><div id="dst" class="box"></div></div>
+    </div>
+    <div class="row"><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy translation</button><button class="btn" id="clear"><i class="ti ti-trash"></i> Clear</button></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Machine translation — proofread before relying on it. The free API rate-limits heavy use, so very long sessions may pause briefly.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .box{border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg2);font-size:14px;line-height:1.6;min-height:220px;max-height:45vh;overflow:auto}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const LANGS=[['en','English'],['es','Spanish'],['fr','French'],['de','German'],['it','Italian'],['pt','Portuguese'],['ru','Russian'],['tr','Turkish'],['az','Azerbaijani'],['ar','Arabic'],['zh','Chinese'],['ja','Japanese'],['ko','Korean'],['hi','Hindi'],['fa','Persian'],['nl','Dutch'],['pl','Polish'],['uk','Ukrainian']];
+const SRLANG={en:'en-US',es:'es-ES',fr:'fr-FR',de:'de-DE',it:'it-IT',pt:'pt-PT',ru:'ru-RU',tr:'tr-TR',az:'az-AZ',ar:'ar-SA',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR',hi:'hi-IN',fa:'fa-IR',nl:'nl-NL',pl:'pl-PL',uk:'uk-UA'};
+$('#from').innerHTML=LANGS.map(l=>`<option value="${l[0]}">${l[1]}</option>`).join('');
+$('#to').innerHTML=LANGS.map(l=>`<option value="${l[0]}"${l[0]==='en'?' selected':''}>${l[1]}</option>`).join('');
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,recording=false,srcLines=[],dstLines=[];
+function render(){$('#src').innerHTML=srcLines.map(esc).join('<br>');$('#dst').innerHTML=dstLines.map(esc).join('<br>');$('#src').scrollTop=9e9;$('#dst').scrollTop=9e9;}
+async function translate(text){
+  const from=$('#from').value,to=$('#to').value;if(from===to)return text;
+  try{const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);const d=await r.json();return (d.responseData&&d.responseData.translatedText)||'…';}
+  catch(e){return '[translation error]';}
+}
+async function handle(text){
+  srcLines.push(text);dstLines.push('…');render();
+  const tr=await translate(text);dstLines[dstLines.length-1]=tr;render();
+  if($('#speak').checked){const u=new SpeechSynthesisUtterance(tr);u.lang=SRLANG[$('#to').value]||'en-US';speechSynthesis.speak(u);}
+}
+function start(){
+  if(!SR){$('#status').textContent='Use Chrome or Edge for the microphone.';return;}
+  rec=new SR();rec.continuous=true;rec.interimResults=false;rec.lang=SRLANG[$('#from').value]||'en-US';
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)handle(e.results[i][0].transcript.trim());};
+  rec.onerror=e=>{$('#status').textContent='Error: '+e.error;};
+  rec.onend=()=>{if(recording){try{rec.start();}catch(_){}}};
+  rec.start();recording=true;$('#rec').innerHTML='<i class="ti ti-player-stop"></i> Stop';$('#rec').classList.remove('btn-primary');$('#status').textContent='Listening & translating…';
+}
+function stop(){recording=false;if(rec)rec.stop();$('#rec').innerHTML='<i class="ti ti-microphone"></i> Start';$('#rec').classList.add('btn-primary');$('#status').textContent='Stopped';}
+$('#rec').onclick=()=>recording?stop():start();
+$('#clear').onclick=()=>{srcLines=[];dstLines=[];render();};
+$('#copy').onclick=()=>{navigator.clipboard.writeText(dstLines.join('\n'));$('#status').textContent='Copied.';};
+</script>
+</body>
+</html>

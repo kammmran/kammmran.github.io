@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Handbook Creator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-notebook"></i></div><div>Event Handbook Creator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-notebook"></i></div>
+      <div>
+        <div class="tool-title">Event Handbook Creator</div>
+        <div class="tool-desc">Create a pocket-sized attendee handbook with the essentials: schedule-at-a-glance, maps &amp; directions, key contacts, code of conduct, and FAQs. Write Markdown-style sections with bullet lists; print double-sided to fold into an A5 booklet. Local only.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <label class="fld">Handbook title<input id="title" value="Attendee Handbook"></label>
+    <label class="fld">Content — <code># Section</code> headings; lines starting with <code>-</code> become bullets; <code>**bold**</code> supported.
+      <textarea id="src" style="min-height:280px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"># At a Glance
+- **Day 1:** Registration 09:00, Keynote 10:00, Sessions A–B
+- **Day 2:** Sessions C–D, Poster session 16:00
+- **Day 3:** Workshops, Closing 15:00
+
+# Getting There
+- Venue: Main Building, University of Vienna
+- Metro: U2 to Schottentor, 5 min walk
+- Parking: Garage P3 (paid)
+
+# Key Contacts
+- Help desk: +43 1 234 5678
+- Email: help@icps2026.org
+- Emergency: 112
+
+# Code of Conduct
+All participants are expected to be respectful and inclusive. Report concerns to any staff member wearing a green lanyard.
+
+# FAQ
+- **Wi-Fi?** Network ConfGuest, password vienna2026
+- **Certificates?** Collect at the help desk on Day 3
+- **Lunch?** Included, served in the atrium</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Accent<select id="accent"><option value="#0d4f4a">Teal</option><option value="#0b2545">Navy</option><option value="#5e1322">Maroon</option><option value="#3b2a5e">Purple</option></select></label>
+      <label class="fld">Columns<select id="cols"><option value="1">1</option><option value="2" selected>2 (booklet)</option></select></label>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="render"><i class="ti ti-refresh"></i> Build handbook</button>
+      <button class="btn" id="print"><i class="ti ti-printer"></i> Print / PDF</button>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+  </div>
+
+  <div id="out"></div>
+</main>
+
+<style>
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+#out{margin-top:14px}
+.page{background:#fff;color:#111;border-radius:8px;padding:34px 40px;font-family:'Helvetica Neue',Arial,sans-serif;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.htitle{font-size:24px;font-weight:800;text-align:center;margin:0 0 16px}
+.sec{break-inside:avoid;margin-bottom:14px}
+.sec h3{font-size:15px;margin:0 0 6px;color:#fff;padding:4px 10px;border-radius:6px;display:inline-block}
+.sec ul{margin:6px 0;padding-left:18px;font-size:13px;line-height:1.5}.sec p{font-size:13px;line-height:1.5;margin:6px 0}
+@media print{.no-print{display:none!important}@page{margin:12mm}body{background:#fff}.page{box-shadow:none;border-radius:0;padding:0}}
+</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const bold=s=>esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+function render(){
+  const accent=$('#accent').value;const secs=[];let cur=null;
+  $('#src').value.split('\n').forEach(l=>{if(l.startsWith('# ')){cur={h:l.slice(2).trim(),items:[]};secs.push(cur);}else if(cur)cur.items.push(l);});
+  const body=secs.map(s=>{
+    let html=`<div class="sec"><h3 style="background:${accent}">${esc(s.h)}</h3>`;let inList=false;
+    s.items.forEach(l=>{const t=l.trim();if(t.startsWith('- ')){if(!inList){html+='<ul>';inList=true;}html+=`<li>${bold(t.slice(2))}</li>`;}else{if(inList){html+='</ul>';inList=false;}if(t)html+=`<p>${bold(t)}</p>`;}});
+    if(inList)html+='</ul>';return html+'</div>';
+  }).join('');
+  $('#out').innerHTML=`<div class="page"><div class="htitle" style="color:${accent}">${esc($('#title').value)}</div><div style="column-count:${$('#cols').value};column-gap:28px">${body}</div></div>`;
+  $('#status').textContent=secs.length+' sections';
+}
+$('#render').onclick=render;['title','src','accent','cols'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#print').onclick=()=>{render();window.print();};
+render();
+</script>
+</body>
+</html>

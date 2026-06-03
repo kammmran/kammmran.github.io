@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Numerical Methods Assistant — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-math-x-divide-y"></i></div><div>Numerical Methods Assistant</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-math-x-divide-y"></i></div>
+      <div>
+        <div class="tool-title">Numerical Methods Assistant</div>
+        <div class="tool-desc">Solve f(x)=0 (bisection / Newton–Raphson), numerically integrate (Simpson's rule), or differentiate at a point — for any function you type in JavaScript-style notation. Shows the iteration trace and a plot. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">f(x) = <input id="fx" value="x*x*x - x - 2" style="font-family:ui-monospace,monospace"></label>
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Operation<select id="op"><option value="root">Find root</option><option value="integrate">Integrate</option><option value="diff">Derivative at point</option></select></label>
+      <label class="fld">a / x₀<input id="a" type="number" value="1" style="width:80px"></label>
+      <label class="fld" id="bWrap">b<input id="b" type="number" value="2" style="width:80px"></label>
+      <label class="fld">tol / N<input id="tol" value="1e-8" style="width:80px"></label>
+      <button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-calculator"></i> Solve</button>
+    </div>
+    <div id="result" class="stat-grid"></div>
+    <canvas id="plot" width="840" height="280" style="width:100%;max-width:840px;border:1px solid var(--border);border-radius:8px;background:#fff"></canvas>
+    <div id="trace"></div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Use JS math: <code>x*x</code>, <code>Math.sin(x)</code>, <code>Math.exp(x)</code>, <code>x**2</code>. Root finding tries Newton from x₀ and falls back to bisection on [a,b] if it has a sign change.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;font-family:ui-monospace,monospace} td,th{padding:4px 8px;border-bottom:1px solid var(--border);text-align:right} th{color:var(--text3);font-size:11px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+function makeF(expr){try{const f=new Function('x','with(Math){return '+expr+'}');f(1);return f;}catch(e){return null;}}
+function dnum(f,x){const h=1e-6;return (f(x+h)-f(x-h))/(2*h);}
+function syncOp(){const op=$('#op').value;$('#bWrap').style.display=op==='integrate'||op==='root'?'flex':'none';}
+$('#op').onchange=()=>{syncOp();run();};
+function run(){
+  const f=makeF($('#fx').value);if(!f){$('#status').textContent='Invalid function.';return;}
+  const op=$('#op').value,a=+$('#a').value,b=+$('#b').value,tol=parseFloat($('#tol').value)||1e-8;
+  let result='',trace='';
+  if(op==='diff'){const d=dnum(f,a);result=card('f\'(x₀)',d.toFixed(8))+card('f(x₀)',f(a).toFixed(6))+card('x₀',a);}
+  else if(op==='integrate'){const N=Math.max(2,Math.round(tol>=1?tol:1000)*2);const I=simpson(f,a,b,N%2?N+1:N);result=card('∫ f dx',I.toFixed(8))+card('interval',`[${a}, ${b}]`)+card('method','Simpson');}
+  else{ // root
+    let x=a,rows=[],ok=false,root=null;
+    for(let i=0;i<60;i++){const fx=f(x),d=dnum(f,x);rows.push([i,x,fx]);if(Math.abs(fx)<tol){ok=true;root=x;break;}if(Math.abs(d)<1e-14)break;const nx=x-fx/d;if(!isFinite(nx))break;x=nx;}
+    if(!ok&&f(a)*f(b)<0){let lo=a,hi=b;rows=[];for(let i=0;i<200;i++){const mid=(lo+hi)/2,fm=f(mid);rows.push([i,mid,fm]);if(Math.abs(fm)<tol||(hi-lo)/2<tol){root=mid;ok=true;break;}(f(lo)*fm<0)?hi=mid:lo=mid;}}
+    if(ok){result=card('root x',root.toPrecision(10))+card('f(root)',f(root).toExponential(2))+card('iterations',rows.length);}
+    else result=card('root','not found')+card('hint','give a bracket [a,b] with a sign change');
+    trace=`<div class="panel-label" style="margin:8px 0 4px">Iterations</div><div style="max-height:180px;overflow:auto"><table><tr><th>#</th><th>x</th><th>f(x)</th></tr>${rows.slice(0,40).map(r=>`<tr><td>${r[0]}</td><td>${(+r[1]).toPrecision(8)}</td><td>${(+r[2]).toExponential(3)}</td></tr>`).join('')}</table></div>`;
+  }
+  $('#result').innerHTML=result;$('#trace').innerHTML=trace;
+  plot(f,a,b,op);$('#status').textContent='Done';
+}
+function card(l,v){return `<div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="font-size:18px">${v}</div></div>`;}
+function simpson(f,a,b,n){const h=(b-a)/n;let s=f(a)+f(b);for(let i=1;i<n;i++)s+=(i%2?4:2)*f(a+i*h);return s*h/3;}
+function plot(f,a,b,op){const cv=$('#plot'),ctx=cv.getContext('2d');const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  let lo=op==='diff'?a-5:Math.min(a,b)-1,hi=op==='diff'?a+5:Math.max(a,b)+1;if(lo===hi){lo-=2;hi+=2;}
+  const xs=[],ys=[];for(let i=0;i<=400;i++){const x=lo+(hi-lo)*i/400;let y=f(x);if(isFinite(y)){xs.push(x);ys.push(y);}}
+  let ymin=Math.min(...ys),ymax=Math.max(...ys);if(ymin===ymax){ymin-=1;ymax+=1;}const pad=(ymax-ymin)*0.1;ymin-=pad;ymax+=pad;
+  const X=x=>(x-lo)/(hi-lo)*W,Y=y=>H-(y-ymin)/(ymax-ymin)*H;
+  ctx.strokeStyle='#ddd';ctx.lineWidth=1;if(ymin<0&&ymax>0){ctx.beginPath();ctx.moveTo(0,Y(0));ctx.lineTo(W,Y(0));ctx.stroke();}if(lo<0&&hi>0){ctx.beginPath();ctx.moveTo(X(0),0);ctx.lineTo(X(0),H);ctx.stroke();}
+  if(op==='integrate'){ctx.fillStyle='rgba(96,165,250,0.25)';ctx.beginPath();ctx.moveTo(X(a),Y(0));for(let i=0;i<=200;i++){const x=a+(b-a)*i/200;ctx.lineTo(X(x),Y(f(x)));}ctx.lineTo(X(b),Y(0));ctx.fill();}
+  ctx.strokeStyle='#2563eb';ctx.lineWidth=2;ctx.beginPath();xs.forEach((x,i)=>{const px=X(x),py=Y(ys[i]);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();
+}
+['fx','a','b','tol'].forEach(id=>$('#'+id).addEventListener('input',run));
+$('#run').onclick=run;syncOp();run();
+</script>
+</body>
+</html>

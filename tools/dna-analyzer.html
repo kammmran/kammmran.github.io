@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA / RNA Sequence Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-dna"></i></div><div>DNA / RNA Sequence Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-dna"></i></div>
+      <div>
+        <div class="tool-title">DNA / RNA Sequence Analyzer</div>
+        <div class="tool-desc">Paste a nucleotide sequence and get the essentials: length, GC content, base composition, reverse complement, transcription to RNA, the six-frame translation, and a list of open reading frames. Accepts FASTA; ambiguous bases are ignored. Everything runs locally.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Sequence (DNA or RNA, FASTA header optional)
+      <textarea id="seq" style="min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:13px">>example
+ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAGGAACCCTAGCTAA</textarea>
+    </label>
+    <div class="row" style="gap:10px"><button class="btn btn-primary" id="run"><i class="ti ti-microscope"></i> Analyze</button><label class="fld" style="flex-direction:row;align-items:center;gap:6px">Min ORF (aa)<input id="minorf" type="number" value="20" style="width:70px"></label><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="stats" class="stat-grid"></div>
+    <div id="gcbar"></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .seqbox{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.7;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;word-break:break-all;max-height:200px;overflow:auto}
+  .blk{margin-top:14px} .blk h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent3);margin:0 0 6px;display:flex;justify-content:space-between}
+  .copy{cursor:pointer;color:var(--text3);font-size:12px} .copy:hover{color:var(--teal)}
+  .A{color:#4ade80}.T{color:#f87171}.G{color:#fbbf24}.C{color:#60a5fa}.U{color:#f472b6}
+  .orf{font-size:12.5px;padding:6px 10px;border:1px solid var(--border);border-left:3px solid var(--green);border-radius:6px;background:var(--bg2);margin-bottom:6px;font-family:ui-monospace,monospace}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const CODON={TTT:'F',TTC:'F',TTA:'L',TTG:'L',CTT:'L',CTC:'L',CTA:'L',CTG:'L',ATT:'I',ATC:'I',ATA:'I',ATG:'M',GTT:'V',GTC:'V',GTA:'V',GTG:'V',TCT:'S',TCC:'S',TCA:'S',TCG:'S',CCT:'P',CCC:'P',CCA:'P',CCG:'P',ACT:'T',ACC:'T',ACA:'T',ACG:'T',GCT:'A',GCC:'A',GCA:'A',GCG:'A',TAT:'Y',TAC:'Y',TAA:'*',TAG:'*',CAT:'H',CAC:'H',CAA:'Q',CAG:'Q',AAT:'N',AAC:'N',AAA:'K',AAG:'K',GAT:'D',GAC:'D',GAA:'E',GAG:'E',TGT:'C',TGC:'C',TGA:'*',TGG:'W',CGT:'R',CGC:'R',CGA:'R',CGG:'R',AGT:'S',AGC:'S',AGA:'R',AGG:'R',GGT:'G',GGC:'G',GGA:'G',GGG:'G'};
+const COMP={A:'T',T:'A',G:'C',C:'G',U:'A',N:'N'};
+function clean(raw){return raw.replace(/^>.*$/gm,'').replace(/[^ACGTUacgtu]/g,'').toUpperCase();}
+function revcomp(s){return s.split('').reverse().map(b=>COMP[b==='U'?'T':b]||'N').join('');}
+function translate(s){let p='';for(let i=0;i+3<=s.length;i+=3){p+=CODON[s.substr(i,3).replace(/U/g,'T')]||'X';}return p;}
+function findORFs(dna,minAa){
+  const orfs=[];const seqs={'+':dna,'-':revcomp(dna)};
+  for(const strand of ['+','-']){const s=seqs[strand];
+    for(let f=0;f<3;f++){let i=f;while(i+3<=s.length){if(s.substr(i,3)==='ATG'){let j=i;let prot='';while(j+3<=s.length){const aa=CODON[s.substr(j,3)];if(aa==='*'){if(prot.length>=minAa)orfs.push({strand,frame:f+1,start:i,len:prot.length,prot});break;}prot+=aa;j+=3;}i=j+3;}else i+=3;}}}
+  return orfs.sort((a,b)=>b.len-a.len);
+}
+function color(s){return s.replace(/[ACGTU]/g,c=>`<span class="${c}">${c}</span>`);}
+$('#run').onclick=()=>{
+  const s=clean($('#seq').value);if(!s){$('#status').textContent='Enter a sequence.';return;}
+  const counts={A:0,T:0,G:0,C:0,U:0};for(const b of s)counts[b]++;
+  const isRNA=counts.U>counts.T;const gc=(counts.G+counts.C)/s.length*100;
+  const at=(counts.A+counts.T+counts.U)/s.length*100;
+  // Tm (Wallace for short, GC-based for long)
+  let tm;if(s.length<14)tm=(counts.A+counts.T+counts.U)*2+(counts.G+counts.C)*4;else tm=64.9+41*(counts.G+counts.C-16.4)/s.length;
+  const mw=s.length*(isRNA?320.5:308.95)+(isRNA?159:79); // approx ssNA MW
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Length</div><div class="stat-value">${s.length} nt</div></div>
+    <div class="stat-card"><div class="stat-label">GC content</div><div class="stat-value" style="color:var(--blue)">${gc.toFixed(1)}%</div></div>
+    <div class="stat-card"><div class="stat-label">Est. Tm</div><div class="stat-value">${tm.toFixed(1)}°C</div></div>
+    <div class="stat-card"><div class="stat-label">Type</div><div class="stat-value" style="font-size:16px">${isRNA?'RNA':'DNA'}</div></div>`;
+  $('#gcbar').innerHTML=`<div style="display:flex;height:22px;border-radius:6px;overflow:hidden;font-size:11px;font-weight:700;color:#111">${[['A',counts.A,'#4ade80'],['T',counts.T,'#f87171'],['U',counts.U,'#f472b6'],['G',counts.G,'#fbbf24'],['C',counts.C,'#60a5fa']].filter(x=>x[1]).map(([b,n,c])=>`<div style="flex:${n};background:${c};display:flex;align-items:center;justify-content:center">${b} ${n}</div>`).join('')}</div>`;
+  const rna=s.replace(/T/g,'U');const dna=s.replace(/U/g,'T');
+  const orfs=findORFs(dna,+$('#minorf').value);
+  $('#out').innerHTML=`
+    <div class="blk"><h3>Reverse complement <span class="copy" data-c="${revcomp(s)}"><i class="ti ti-copy"></i> copy</span></h3><div class="seqbox">${color(revcomp(s))}</div></div>
+    <div class="blk"><h3>${isRNA?'Back-transcribed DNA':'Transcribed RNA'} <span class="copy" data-c="${isRNA?dna:rna}"><i class="ti ti-copy"></i> copy</span></h3><div class="seqbox">${color(isRNA?dna:rna)}</div></div>
+    <div class="blk"><h3>Translation (frame +1) <span class="copy" data-c="${translate(dna)}"><i class="ti ti-copy"></i> copy</span></h3><div class="seqbox">${esc(translate(dna))}</div></div>
+    <div class="blk"><h3>Open reading frames (${orfs.length}, ≥${$('#minorf').value} aa)</h3>${orfs.length?orfs.slice(0,12).map(o=>`<div class="orf">strand ${o.strand} · frame ${o.frame} · pos ${o.start+1} · <b style="color:var(--green)">${o.len} aa</b><br>M${esc(o.prot.slice(1,60))}${o.prot.length>60?'…':''}</div>`).join(''):'<div class="muted" style="font-size:12px">None found at this threshold.</div>'}</div>`;
+  $('#status').textContent='Analyzed';
+};
+$('#out').addEventListener('click',e=>{const c=e.target.closest('.copy');if(c){navigator.clipboard.writeText(c.dataset.c);$('#status').textContent='Copied.';}});
+$('#run').click();
+</script>
+</body>
+</html>

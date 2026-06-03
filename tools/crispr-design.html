@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRISPR Guide Designer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-scissors"></i></div><div>CRISPR Guide Designer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-scissors"></i></div>
+      <div>
+        <div class="tool-title">CRISPR Guide Designer</div>
+        <div class="tool-desc">Find candidate sgRNA guides in a target sequence. Scans both strands for the chosen PAM (SpCas9 NGG, SaCas9, Cas12a TTTV…), extracts 20-nt protospacers, scores them on GC content, poly-T terminators and homopolymer runs, and marks the predicted cut site. A first-pass design aid. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Target DNA (FASTA header optional)
+      <textarea id="seq" style="min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13px">>target
+ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAGGCACCCTAGCTAACGGCCGCTAGCTAGGCTAGGCCATTACGGTACCGAGCTCGAATTCACTGGTAA</textarea>
+    </label>
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Nuclease / PAM<select id="pam">
+        <option value="NGG|3p|20">SpCas9 — NGG (3', 20 nt)</option>
+        <option value="NGRRT|3p|21">SaCas9 — NGRRT (3', 21 nt)</option>
+        <option value="NNGRRT|3p|21">SaCas9 — NNGRRT (3', 21 nt)</option>
+        <option value="TTTV|5p|23">Cas12a/Cpf1 — TTTV (5', 23 nt)</option>
+        <option value="NG|3p|20">Cas9-NG — NG (3', 20 nt)</option>
+      </select></label>
+      <label class="fld">GC min<input id="gcmin" type="number" value="40" style="width:60px"></label>
+      <label class="fld">GC max<input id="gcmax" type="number" value="70" style="width:60px"></label>
+      <button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-search"></i> Find guides</button>
+    </div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">On-target scoring here is a simple heuristic (GC window, no poly-T, no long runs). It does <b>not</b> predict off-targets — always run candidates through a genome-wide off-target tool (e.g. CRISPOR, Cas-OFFinder) before use.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .g{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:10px 12px;margin-bottom:8px;font-family:ui-monospace,monospace;font-size:13px}
+  .g .pam{color:var(--amber);font-weight:700} .g .meta{font-family:system-ui;font-size:12px;color:var(--text2);margin-top:5px;display:flex;gap:14px;flex-wrap:wrap} .g .meta b{color:var(--text)}
+  .badge{font-size:11px;padding:1px 7px;border-radius:10px} .good{background:rgba(74,222,128,.15);color:var(--green)} .ok{background:rgba(251,191,36,.15);color:var(--amber)} .poor{background:rgba(248,113,113,.15);color:var(--red)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const COMP={A:'T',T:'A',G:'C',C:'G'};
+const IUPAC={A:'A',C:'C',G:'G',T:'T',R:'[AG]',Y:'[CT]',S:'[GC]',W:'[AT]',K:'[GT]',M:'[AC]',B:'[CGT]',D:'[AGT]',H:'[ACT]',V:'[ACG]',N:'[ACGT]'};
+function clean(r){return r.replace(/^>.*$/gm,'').replace(/[^ACGTacgt]/g,'').toUpperCase();}
+function rc(s){return s.split('').reverse().map(b=>COMP[b]).join('');}
+function pamRe(p){return new RegExp(p.split('').map(c=>IUPAC[c]).join(''));}
+function gc(s){return (s.match(/[GC]/g)||[]).length/s.length*100;}
+function maxRun(s){return Math.max(...(s.match(/(.)\1*/g)||['']).map(x=>x.length));}
+function score(sp,gcmin,gcmax){let s=50;const g=gc(sp);if(g>=gcmin&&g<=gcmax)s+=25;else s-=Math.min(25,Math.abs(g-(gcmin+gcmax)/2));if(/TTTT/.test(sp))s-=30;if(maxRun(sp)>4)s-=15;if(/[GC]$/.test(sp))s+=8;return Math.max(0,Math.min(100,Math.round(s)));}
+$('#run').onclick=()=>{
+  const seq=clean($('#seq').value);if(seq.length<25){$('#status').textContent='Need a longer target.';return;}
+  const [pam,side,lenS]=$('#pam').value.split('|');const sgLen=+lenS;const re=pamRe(pam);const pamLen=pam.length;
+  const gcmin=+$('#gcmin').value,gcmax=+$('#gcmax').value;
+  const guides=[];
+  for(const strand of ['+','-']){
+    const s=strand==='+'?seq:rc(seq);
+    for(let i=0;i<=s.length-pamLen;i++){
+      const window=s.substr(i,pamLen);if(!re.test(window))continue;
+      let spacer,cutInS;
+      if(side==='3p'){if(i-sgLen<0)continue;spacer=s.substr(i-sgLen,sgLen);cutInS=i-3;}
+      else{if(i+pamLen+sgLen>s.length)continue;spacer=s.substr(i+pamLen,sgLen);cutInS=i+pamLen+18;}
+      if(/[^ACGT]/.test(spacer))continue;
+      const pos=strand==='+'?cutInS:seq.length-cutInS;
+      guides.push({strand,spacer,pam:window,sc:score(spacer,gcmin,gcmax),gc:gc(spacer),cut:pos,side});
+    }
+  }
+  guides.sort((a,b)=>b.sc-a.sc);
+  if(!guides.length){$('#status').textContent='No PAM sites found.';$('#out').innerHTML='';return;}
+  $('#out').innerHTML=guides.slice(0,20).map(g=>{
+    const band=g.sc>=70?'good':g.sc>=50?'ok':'poor';
+    const disp=g.side==='3p'?`${esc(g.spacer)} <span class="pam">${esc(g.pam)}</span>`:`<span class="pam">${esc(g.pam)}</span> ${esc(g.spacer)}`;
+    return `<div class="g">5'-${disp}-3' (strand ${g.strand})<div class="meta"><span class="badge ${band}">score ${g.sc}</span><span>GC <b>${g.gc.toFixed(0)}%</b></span><span>cut ≈ pos <b>${g.cut}</b></span></div></div>`;
+  }).join('');
+  $('#status').textContent=`${guides.length} guides found`;
+};
+$('#run').click();
+</script>
+</body>
+</html>

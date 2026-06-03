@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plot Digitizer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-chart-dots"></i></div><div>Plot Digitizer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-chart-dots"></i></div>
+      <div>
+        <div class="tool-title">Plot Digitizer</div>
+        <div class="tool-desc">Recover the underlying data from a chart image. Calibrate the two axes by clicking known reference points, then click each data point to read off real coordinates — supports linear and log scales. Export the recovered series as CSV. Works on scatter, line and bar plots; runs entirely in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:12px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:22px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop a plot image</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+
+    <div id="workspace" style="display:none;flex-direction:column;gap:12px">
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <span class="muted" style="font-size:12px">Mode:</span>
+        <button class="btn btn-sm mode on" data-mode="x1"><i class="ti ti-target"></i> X-ref 1</button>
+        <button class="btn btn-sm mode" data-mode="x2">X-ref 2</button>
+        <button class="btn btn-sm mode" data-mode="y1">Y-ref 1</button>
+        <button class="btn btn-sm mode" data-mode="y2">Y-ref 2</button>
+        <button class="btn btn-sm mode" data-mode="data"><i class="ti ti-point"></i> Data points</button>
+        <label class="fld" style="flex-direction:row;align-items:center;gap:4px;font-size:11px"><input type="checkbox" id="logx"> log&nbsp;X</label>
+        <label class="fld" style="flex-direction:row;align-items:center;gap:4px;font-size:11px"><input type="checkbox" id="logy"> log&nbsp;Y</label>
+      </div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;font-size:12px">
+        <label class="fld">X-ref 1 value<input id="x1v" type="number" style="width:90px" value="0"></label>
+        <label class="fld">X-ref 2 value<input id="x2v" type="number" style="width:90px" value="10"></label>
+        <label class="fld">Y-ref 1 value<input id="y1v" type="number" style="width:90px" value="0"></label>
+        <label class="fld">Y-ref 2 value<input id="y2v" type="number" style="width:90px" value="10"></label>
+        <span class="muted" id="hint" style="font-size:12px;align-self:flex-end;margin-bottom:6px"></span>
+      </div>
+      <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;max-height:60vh">
+        <canvas id="cv" style="display:block;cursor:crosshair"></canvas>
+      </div>
+      <div class="row">
+        <button class="btn" id="undo"><i class="ti ti-arrow-back-up"></i> Undo point</button>
+        <button class="btn" id="clearpts"><i class="ti ti-eraser"></i> Clear data</button>
+        <button class="btn" id="csv"><i class="ti ti-table"></i> Export CSV</button>
+        <span class="muted" id="count" style="font-size:12px;margin-left:auto"></span>
+      </div>
+      <div id="table"></div>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">How to use: set each reference's value in the boxes, pick the matching mode, and click that spot on the axis (e.g. where X = 0 and where X = 10). Do the same for Y. Then switch to <b>Data points</b> and click each marker. Zoom your browser for precision on dense plots.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .mode.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  table{width:100%;border-collapse:collapse;font-size:13px} td,th{padding:5px 9px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:.5px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');
+let img=null,refs={},data=[],mode='x1';
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])load(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+function load(f){const u=URL.createObjectURL(f);img=new Image();img.onload=()=>{cv.width=img.naturalWidth;cv.height=img.naturalHeight;$('#workspace').style.display='flex';refs={};data=[];draw();updateHint();};img.src=u;}
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.mode;updateHint();});
+function updateHint(){const h={x1:'Click where X equals the X-ref 1 value',x2:'Click where X equals the X-ref 2 value',y1:'Click where Y equals the Y-ref 1 value',y2:'Click where Y equals the Y-ref 2 value',data:'Click each data point on the curve'};$('#hint').textContent=h[mode]||'';}
+cv.onclick=e=>{
+  const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)*(cv.width/r.width),y=(e.clientY-r.top)*(cv.height/r.height);
+  if(mode==='data'){if(!calibrated()){$('#hint').textContent='Set all four axis references first.';return;}data.push({px:x,py:y});}
+  else refs[mode]={px:x,py:y};
+  draw();updateTable();
+};
+function calibrated(){return refs.x1&&refs.x2&&refs.y1&&refs.y2;}
+function toData(px,py){
+  const lx=$('#logx').checked,ly=$('#logy').checked;
+  const x1=+$('#x1v').value,x2=+$('#x2v').value,y1=+$('#y1v').value,y2=+$('#y2v').value;
+  const X1=lx?Math.log10(x1):x1,X2=lx?Math.log10(x2):x2,Y1=ly?Math.log10(y1):y1,Y2=ly?Math.log10(y2):y2;
+  const fx=X1+(px-refs.x1.px)/(refs.x2.px-refs.x1.px)*(X2-X1);
+  const fy=Y1+(py-refs.y1.py)/(refs.y2.py-refs.y1.py)*(Y2-Y1);
+  return {x:lx?Math.pow(10,fx):fx,y:ly?Math.pow(10,fy):fy};
+}
+function draw(){
+  if(!img)return;ctx.drawImage(img,0,0);
+  const marks=[['x1','#60a5fa'],['x2','#60a5fa'],['y1','#fbbf24'],['y2','#fbbf24']];
+  marks.forEach(([k,c])=>{if(refs[k])cross(refs[k].px,refs[k].py,c,k.toUpperCase());});
+  data.forEach((d,i)=>{ctx.fillStyle='rgba(124,109,240,0.9)';ctx.beginPath();ctx.arc(d.px,d.py,5,0,7);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();});
+}
+function cross(x,y,c,lab){ctx.strokeStyle=c;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-9,y);ctx.lineTo(x+9,y);ctx.moveTo(x,y-9);ctx.lineTo(x,y+9);ctx.stroke();ctx.fillStyle=c;ctx.font='bold 12px sans-serif';ctx.fillText(lab,x+10,y-6);}
+function updateTable(){
+  $('#count').textContent=data.length+' points';
+  if(!calibrated()||!data.length){$('#table').innerHTML=calibrated()?'<div class="muted" style="font-size:12px">Switch to Data points and click the markers.</div>':'<div class="muted" style="font-size:12px">Calibrate all four axis references to start reading values.</div>';return;}
+  const rows=data.map((d,i)=>{const v=toData(d.px,d.py);return `<tr><td>${i+1}</td><td>${fmt(v.x)}</td><td>${fmt(v.y)}</td></tr>`;});
+  $('#table').innerHTML=`<table><tr><th>#</th><th>X</th><th>Y</th></tr>${rows.join('')}</table>`;
+}
+function fmt(n){if(!isFinite(n))return'—';const a=Math.abs(n);return (a>=1e4||(a<1e-3&&a>0))?n.toExponential(3):n.toFixed(4).replace(/\.?0+$/,'');}
+$('#undo').onclick=()=>{data.pop();draw();updateTable();};
+$('#clearpts').onclick=()=>{data=[];draw();updateTable();};
+['logx','logy','x1v','x2v','y1v','y2v'].forEach(id=>$('#'+id).addEventListener('input',updateTable));
+$('#csv').onclick=()=>{if(!calibrated()||!data.length)return;const rows=[['x','y'],...data.map(d=>{const v=toData(d.px,d.py);return [v.x,v.y];})];const csv=rows.map(r=>r.join(',')).join('\n');const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='digitized-data.csv';a.click();};
+</script>
+</body>
+</html>

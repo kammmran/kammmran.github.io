@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Visual Audit — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-checkup-list"></i></div><div>Presentation Visual Audit</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-checkup-list"></i></div>
+      <div>
+        <div class="tool-title">Presentation Visual Audit</div>
+        <div class="tool-desc">Paste your slide text (one slide per <code>---</code> block) and get a per-slide audit against good-practice rules: word count, bullet count, the 6×6 rule, reading level, and ALL-CAPS or wall-of-text warnings. Find the slides that need trimming before you rehearse. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Slide text — separate slides with a line of <code>---</code>
+      <textarea id="src" style="min-height:180px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">Spectral Deep Learning for Crop Disease Detection
+Jane Researcher
+---
+The Problem
+- Crop disease causes major global yield loss every single year
+- By the time visible symptoms appear on the leaves it is often already too late to intervene effectively
+- Labelled training data for supervised models is extremely scarce and very expensive to obtain at scale
+- Existing approaches do not generalise well across different species and lighting
+---
+Our Approach
+- Self-supervised pretraining
+- Fine-tune on small set
+- Deploy on scanners
+---
+RESULTS: WE ACHIEVED NINETY FOUR PERCENT ACCURACY WHICH IS A HUGE IMPROVEMENT OVER EVERYTHING</textarea>
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Audit slides</button>
+    <div id="overall" class="stat-grid"></div>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Guidelines used: ≤ ~6 bullets and ≤ ~6 words per bullet (6×6 rule), ≤ ~40 words total per slide, avoid ALL-CAPS lines, and keep the reading grade conversational. These are heuristics — break them deliberately when it serves the talk.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .sl{border:1px solid var(--border);border-left:4px solid var(--green);border-radius:8px;background:var(--bg2);padding:10px 14px;margin-bottom:8px}
+  .sl.warn{border-left-color:var(--amber)} .sl.bad{border-left-color:var(--red)}
+  .sl h3{margin:0 0 6px;font-size:14px} .sl .flags{display:flex;flex-wrap:wrap;gap:6px} .chip2{font-size:11px;padding:2px 8px;border-radius:10px;background:var(--bg3);border:1px solid var(--border)}
+  .chip2.bad{color:var(--red);border-color:rgba(248,113,113,.4)} .chip2.warn{color:var(--amber)} .chip2.ok{color:var(--green)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function syll(w){w=w.toLowerCase().replace(/[^a-z]/g,'');if(w.length<=3)return 1;w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,'');const m=w.match(/[aeiouy]{1,2}/g);return m?m.length:1;}
+$('#run').onclick=()=>{
+  const slides=$('#src').value.split(/\n-{3,}\n/).map(s=>s.trim()).filter(Boolean);
+  if(!slides.length){return;}
+  let totalFlags=0,worst=0;
+  const html=slides.map((s,i)=>{
+    const lines=s.split('\n').map(l=>l.trim()).filter(Boolean);
+    const bullets=lines.filter(l=>/^[-*•]/.test(l));
+    const words=(s.match(/\S+/g)||[]).length;
+    const caps=lines.filter(l=>l.length>6&&l===l.toUpperCase()&&/[A-Z]/.test(l));
+    const longBul=bullets.filter(b=>(b.replace(/^[-*•]\s*/,'').match(/\S+/g)||[]).length>6);
+    const flags=[];let sev=0;
+    if(words>40){flags.push(['bad',`${words} words (wall of text)`]);sev=2;}else if(words>28){flags.push(['warn',`${words} words`]);sev=Math.max(sev,1);}else flags.push(['ok',`${words} words`]);
+    if(bullets.length>6){flags.push(['bad',`${bullets.length} bullets (>6)`]);sev=2;}else if(bullets.length)flags.push(['ok',`${bullets.length} bullets`]);
+    if(longBul.length){flags.push(['warn',`${longBul.length} bullet(s) >6 words`]);sev=Math.max(sev,1);}
+    if(caps.length){flags.push(['bad',`${caps.length} ALL-CAPS line(s)`]);sev=2;}
+    // reading grade
+    const sents=s.split(/[.!?]+/).filter(x=>x.trim()).length||1;const sy=(s.match(/\S+/g)||[]).reduce((a,w)=>a+syll(w),0);
+    const grade=words>5?Math.max(0,0.39*(words/sents)+11.8*(sy/words)-15.59):0;
+    if(grade>14){flags.push(['warn',`reading grade ${grade.toFixed(0)}`]);sev=Math.max(sev,1);}
+    totalFlags+=flags.filter(f=>f[0]!=='ok').length;worst=Math.max(worst,sev);
+    const cls=sev===2?'bad':sev===1?'warn':'';
+    return `<div class="sl ${cls}"><h3>Slide ${i+1}: ${esc(lines[0]||'(untitled)')}</h3><div class="flags">${flags.map(f=>`<span class="chip2 ${f[0]}">${esc(f[1])}</span>`).join('')}</div></div>`;
+  }).join('');
+  $('#overall').innerHTML=`<div class="stat-card"><div class="stat-label">Slides</div><div class="stat-value">${slides.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total issues</div><div class="stat-value" style="color:${totalFlags?'var(--amber)':'var(--green)'}">${totalFlags}</div></div>
+    <div class="stat-card"><div class="stat-label">Avg words/slide</div><div class="stat-value">${Math.round(slides.reduce((a,s)=>a+(s.match(/\S+/g)||[]).length,0)/slides.length)}</div></div>
+    <div class="stat-card"><div class="stat-label">Verdict</div><div class="stat-value" style="font-size:15px;color:${worst===2?'var(--red)':worst===1?'var(--amber)':'var(--green)'}">${worst===2?'Trim needed':worst===1?'Minor tweaks':'Clean'}</div></div>`;
+  $('#out').innerHTML=html;
+};
+$('#run').click();
+</script>
+</body>
+</html>

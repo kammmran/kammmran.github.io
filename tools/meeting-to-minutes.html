@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meeting-to-Minutes Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-clipboard-text"></i></div><div>Meeting-to-Minutes</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-clipboard-text"></i></div>
+      <div>
+        <div class="tool-title">Meeting-to-Minutes Generator</div>
+        <div class="tool-desc">Paste a meeting transcript and get structured minutes: attendees, key discussion points, decisions made, and action items with owners. Heuristic extraction runs entirely in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Transcript (works best with "Name: …" speaker lines)
+      <textarea id="txt" style="min-height:160px" placeholder="Sarah: Let's start. I think we should move the deadline to Friday.&#10;Tom: Agreed. We decided to ship the beta next week.&#10;Sarah: Tom, can you send the report by Thursday?&#10;Tom: I'll prepare the slides and email everyone.">Sarah: Okay let's start. We need to decide on the submission target.
+Tom: I think we should submit to ICML. We decided to aim for the May deadline.
+Sarah: Agreed. Tom, can you draft the abstract by Thursday?
+Tom: Sure, I will prepare the abstract and send it to everyone.
+Maria: I'll run the additional baseline experiments next week.
+Sarah: Great. Action: Maria to finish baselines, Tom to write intro.</textarea>
+    </label>
+    <div class="row">
+      <button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate minutes</button>
+      <button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button>
+      <button class="btn" id="md"><i class="ti ti-download"></i> Download .md</button>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .sec{margin-bottom:14px} .sec h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent3);margin:0 0 6px} .sec ul{margin:0;padding-left:18px;line-height:1.6;font-size:14px}
+  .own{color:var(--teal);font-weight:600}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let md='';
+function parse(t){
+  const lines=t.split(/\n+/).map(l=>l.trim()).filter(Boolean);
+  const turns=[];const names=new Set();
+  lines.forEach(l=>{const m=l.match(/^([A-Z][\w.\- ]{0,28}?):\s*(.+)$/);if(m){names.add(m[1].trim());turns.push({sp:m[1].trim(),text:m[2]});}else turns.push({sp:null,text:l});});
+  return {turns,names:[...names]};
+}
+function sentences(t){return (t.match(/[^.!?]+[.!?]+|\S[^.!?]*$/g)||[]).map(s=>s.trim()).filter(Boolean);}
+$('#gen').onclick=()=>{
+  const {turns,names}=parse($('#txt').value.trim());
+  if(!turns.length){$('#status').textContent='Paste a transcript first.';return;}
+  const decisions=[],actions=[],points=[];
+  turns.forEach(tn=>sentences(tn.text).forEach(s=>{
+    const low=s.toLowerCase();
+    if(/\b(we decided|decision|agreed( that)?|will go with|consensus|resolved|approved|let's go with|settled on)\b/.test(low)) decisions.push(s);
+    else if(/\b(action|todo|to-do|\bi('|\swi)ll\b|\bwe('|\swi)ll\b|can you|please|by (monday|tuesday|wednesday|thursday|friday|next week|tomorrow|eod)|needs? to|responsible for|owns?\b|follow[- ]up)\b/.test(low)){
+      let owner=null;const m=s.match(/\b([A-Z][a-z]+)\s+(?:to|will|should|can)\b/);if(m&&names.includes(m[1]))owner=m[1];else if(tn.sp&&/\bi('|\swi)ll\b/i.test(s))owner=tn.sp;
+      actions.push({text:s,owner});
+    } else if(s.split(/\s+/).length>5) points.push(s);
+  }));
+  const top=points.slice(0,8);
+  const date=new Date().toISOString().slice(0,10);
+  let html=`<div class="sec"><h3>Attendees</h3><ul>${names.length?names.map(n=>`<li>${esc(n)}</li>`).join(''):'<li class="muted">None detected — add "Name:" prefixes</li>'}</ul></div>`;
+  html+=`<div class="sec"><h3>Decisions</h3><ul>${decisions.length?decisions.map(d=>`<li>${esc(d)}</li>`).join(''):'<li class="muted">None detected</li>'}</ul></div>`;
+  html+=`<div class="sec"><h3>Action items</h3><ul>${actions.length?actions.map(a=>`<li>${a.owner?`<span class="own">${esc(a.owner)}:</span> `:''}${esc(a.text)}</li>`).join(''):'<li class="muted">None detected</li>'}</ul></div>`;
+  html+=`<div class="sec"><h3>Discussion points</h3><ul>${top.map(p=>`<li>${esc(p)}</li>`).join('')}</ul></div>`;
+  $('#out').innerHTML=html;$('#status').textContent='Generated';
+  md=`# Meeting Minutes — ${date}\n\n## Attendees\n${names.map(n=>'- '+n).join('\n')||'- (none)'}\n\n## Decisions\n${decisions.map(d=>'- '+d).join('\n')||'- (none)'}\n\n## Action Items\n${actions.map(a=>`- ${a.owner?'**'+a.owner+':** ':''}${a.text}`).join('\n')||'- (none)'}\n\n## Discussion Points\n${top.map(p=>'- '+p).join('\n')}\n`;
+};
+$('#copy').onclick=()=>{if(md){navigator.clipboard.writeText(md);$('#status').textContent='Copied.';}};
+$('#md').onclick=()=>{if(!md)return;const b=new Blob([md],{type:'text/markdown'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='minutes.md';a.click();};
+</script>
+</body>
+</html>

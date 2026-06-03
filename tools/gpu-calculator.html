@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPU Memory Requirement Calculator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-cpu"></i></div><div>GPU Requirement Calculator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-cpu"></i></div>
+      <div>
+        <div class="tool-title">GPU Memory Requirement Calculator</div>
+        <div class="tool-desc">Estimate the GPU memory a deep-learning model needs for inference or training. Enter the parameter count and precision; the tool adds optimizer state, gradients and a rough activation budget, then suggests which GPUs fit. Back-of-the-envelope planning before you queue a job. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Parameters<input id="params" type="number" value="7" step="0.1" style="width:90px"></label>
+      <label class="fld">unit<select id="unit"><option value="1e9">billion (B)</option><option value="1e6">million (M)</option></select></label>
+      <label class="fld">Precision<select id="prec"><option value="2">FP16 / BF16 (2 B)</option><option value="4">FP32 (4 B)</option><option value="1">INT8 (1 B)</option><option value="0.5">4-bit (0.5 B)</option></select></label>
+      <label class="fld">Mode<select id="mode"><option value="infer">Inference</option><option value="train">Training (full)</option><option value="lora">Training (LoRA/adapter)</option></select></label>
+      <label class="fld">Optimizer<select id="opt"><option value="2">Adam (2× state)</option><option value="1">SGD (1× state)</option></select></label>
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Batch size<input id="batch" type="number" value="8" style="width:70px"></label>
+      <label class="fld">Seq/img tokens<input id="seq" type="number" value="2048" style="width:90px"></label>
+      <label class="fld">Hidden size<input id="hidden" type="number" value="4096" style="width:90px"></label>
+      <label class="fld">Layers<input id="layers" type="number" value="32" style="width:70px"></label>
+    </div>
+    <div id="stats" class="stat-grid"></div>
+    <div id="gpus"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Rough estimate: weights + (training only) gradients and optimizer state + an activation budget from batch × tokens × hidden × layers. Real usage depends on framework, attention implementation (e.g. FlashAttention), gradient checkpointing and fragmentation — add ~20% headroom.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .gpu{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;font-size:13px}
+  .gpu .bar{flex:1;height:10px;border-radius:5px;background:var(--bg3);overflow:hidden}.gpu .bar>span{display:block;height:100%}
+  .gpu .v{width:90px;text-align:right}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const GPUS=[['RTX 3090 / 4090',24],['A100 40GB',40],['A100 80GB',80],['H100 80GB',80],['RTX 6000 Ada',48],['V100 32GB',32],['T4',16],['L4',24]];
+function calc(){
+  const P=+$('#params').value*(+$('#unit').value);const bytes=+$('#prec').value;const mode=$('#mode').value;
+  const weights=P*bytes;
+  let grad=0,optS=0;
+  if(mode==='train'){grad=P*bytes;optS=P*4*(+$('#opt').value);}// optimizer states usually fp32
+  else if(mode==='lora'){const trainable=P*0.01;grad=trainable*bytes;optS=trainable*4*(+$('#opt').value);}
+  const batch=+$('#batch').value,seq=+$('#seq').value,hidden=+$('#hidden').value,layers=+$('#layers').value;
+  const act=mode==='infer'?batch*seq*hidden*bytes*2:batch*seq*hidden*layers*bytes*2; // crude
+  const total=(weights+grad+optS+act)*1.2; // 20% headroom
+  const GB=x=>x/1073741824;
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Weights</div><div class="stat-value">${GB(weights).toFixed(1)} GB</div></div>
+    ${mode!=='infer'?`<div class="stat-card"><div class="stat-label">Grad + optim</div><div class="stat-value">${GB(grad+optS).toFixed(1)} GB</div></div>`:''}
+    <div class="stat-card"><div class="stat-label">Activations</div><div class="stat-value">${GB(act).toFixed(1)} GB</div></div>
+    <div class="stat-card"><div class="stat-label">Total (≈)</div><div class="stat-value" style="color:var(--accent3)">${GB(total).toFixed(1)} GB</div></div>`;
+  const need=GB(total);
+  $('#gpus').innerHTML='<div class="panel-label" style="margin:8px 0 6px">Will it fit?</div>'+GPUS.map(([name,mem])=>{const frac=Math.min(1,need/mem);const fits=need<=mem;const col=fits?'var(--green)':'var(--red)';return `<div class="gpu"><div style="width:150px">${name} <span style="color:var(--text3)">${mem}GB</span></div><div class="bar"><span style="width:${frac*100}%;background:${col}"></span></div><div class="v" style="color:${col}">${fits?'fits':(Math.ceil(need/mem))+'× GPUs'}</div></div>`;}).join('');
+}
+['params','unit','prec','mode','opt','batch','seq','hidden','layers'].forEach(id=>$('#'+id).addEventListener('input',calc));
+calc();
+</script>
+</body>
+</html>

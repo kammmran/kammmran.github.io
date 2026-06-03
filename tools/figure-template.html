@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Journal Figure Template Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-layout-dashboard"></i></div><div>Figure Template Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:960px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-layout-dashboard"></i></div>
+      <div>
+        <div class="tool-title">Journal Figure Template Generator</div>
+        <div class="tool-desc">Generate a sized, guide-marked template to build a multi-panel figure on. Set the journal column width and target DPI, choose a panel grid, and download a PNG (or transparent SVG overlay) at exact pixel dimensions with panel boxes and labels — drop it into your design tool as a layout guide so your figure fits first time.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Width<select id="width"><option value="90">Single column (90 mm)</option><option value="140">1.5 column (140 mm)</option><option value="190" selected>Double column (190 mm)</option><option value="183">Nature double (183 mm)</option></select></label>
+      <label class="fld">DPI<select id="dpi"><option>300</option><option selected>600</option></select></label>
+      <label class="fld">Height (mm)<input id="hmm" type="number" value="120" style="width:80px"></label>
+      <label class="fld">Rows<input id="rows" type="number" value="2" min="1" style="width:64px"></label>
+      <label class="fld">Cols<input id="cols" type="number" value="2" min="1" style="width:64px"></label>
+      <label class="fld">Gap (mm)<input id="gap" type="number" value="4" style="width:64px"></label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="labels" checked> panel labels</label>
+    </div>
+    <div id="info" class="muted" style="font-size:12.5px"></div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> PNG template</button><button class="btn" id="svg"><i class="ti ti-vector"></i> SVG overlay</button><span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">The PNG is exactly the pixel size your figure should be (width&nbsp;mm ÷ 25.4 × DPI). Build your panels inside the marked boxes, then delete the guide layer before export. Use the SVG overlay if your tool supports placing a vector guide on top.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');
+function dims(){const wmm=+$('#width').value,hmm=+$('#hmm').value,dpi=+$('#dpi').value;return {wmm,hmm,dpi,W:Math.round(wmm/25.4*dpi),H:Math.round(hmm/25.4*dpi)};}
+function draw(){
+  const {wmm,hmm,dpi,W,H}=dims();const rows=+$('#rows').value,cols=+$('#cols').value,gapmm=+$('#gap').value;
+  const gap=Math.round(gapmm/25.4*dpi);
+  cv.width=W;cv.height=H;ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  const cw=(W-(cols-1)*gap)/cols,ch=(H-(rows-1)*gap)/rows;
+  ctx.strokeStyle='#9bb8e0';ctx.lineWidth=Math.max(2,dpi/200);ctx.setLineDash([dpi/40,dpi/60]);
+  ctx.fillStyle='#c9d8ef';ctx.textBaseline='top';
+  let n=0;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=c*(cw+gap),y=r*(ch+gap);ctx.strokeRect(x+1,y+1,cw-2,ch-2);if($('#labels').checked){ctx.font=`bold ${Math.round(ch*0.18)}px Arial`;ctx.fillStyle='#aac3e8';ctx.fillText(String.fromCharCode(65+n),x+cw*0.04,y+ch*0.04);}n++;}
+  ctx.setLineDash([]);
+  // outer frame + center guides
+  ctx.strokeStyle='#dfe7f2';ctx.lineWidth=1;ctx.strokeRect(0.5,0.5,W-1,H-1);
+  $('#info').textContent=`Template: ${W} × ${H} px  (${wmm} × ${hmm} mm @ ${dpi} dpi) · panels ${Math.round(cw)}×${Math.round(ch)} px each`;
+}
+['width','dpi','hmm','rows','cols','gap','labels'].forEach(id=>$('#'+id).addEventListener('input',draw));
+$('#png').onclick=()=>{draw();cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='figure-template.png';a.click();});};
+$('#svg').onclick=()=>{
+  const {wmm,hmm,dpi,W,H}=dims();const rows=+$('#rows').value,cols=+$('#cols').value,gap=Math.round(+$('#gap').value/25.4*dpi);
+  const cw=(W-(cols-1)*gap)/cols,ch=(H-(rows-1)*gap)/rows;let rects='',n=0;
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=c*(cw+gap),y=r*(ch+gap);rects+=`<rect x="${x+1}" y="${y+1}" width="${cw-2}" height="${ch-2}" fill="none" stroke="#9bb8e0" stroke-width="2" stroke-dasharray="${dpi/40} ${dpi/60}"/>`;if($('#labels').checked)rects+=`<text x="${x+cw*0.04}" y="${y+ch*0.04+ch*0.16}" font-size="${ch*0.18}" font-family="Arial" font-weight="bold" fill="#aac3e8">${String.fromCharCode(65+n)}</text>`;n++;}
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${rects}</svg>`;
+  const b=new Blob([svg],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='figure-template.svg';a.click();
+};
+draw();
+</script>
+</body>
+</html>

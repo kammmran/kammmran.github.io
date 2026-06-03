@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Co-Author Agreement Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-file-description"></i></div><div>Co-Author Agreement</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:980px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-file-description"></i></div>
+      <div>
+        <div class="tool-title">Co-Author Agreement Generator</div>
+        <div class="tool-desc">Draft a simple authorship agreement to set expectations early — author order, corresponding author, contribution summary, data ownership, and how disputes and future changes are handled. Fill the form and print a signable document. A template, not legal advice. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Working title<input id="title" value="Spectral deep learning for crop disease detection"></label>
+      <label class="fld">Target journal (optional)<input id="journal" value="Nature Plants"></label>
+      <label class="fld">Authors in agreed order (comma-separated)<input id="authors" value="Jane Researcher, Tom Lee, Maria Garcia"></label>
+      <label class="fld">Corresponding author<input id="corr" value="Jane Researcher"></label>
+    </div>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="order" checked> order may change with contribution</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="data" checked> data/code sharing clause</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="dispute" checked> dispute resolution</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="addremove" checked> adding/removing authors</label>
+    </div>
+    <label class="fld">Extra clauses (one per line, optional)<textarea id="extra" style="min-height:60px" placeholder="e.g. First two authors contributed equally."></textarea></label>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-refresh"></i> Generate</button><button class="btn" id="print"><i class="ti ti-printer"></i> Print / PDF</button></div>
+  </div>
+
+  <div id="doc"></div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  #doc{margin-top:14px}
+  .agr{background:#fff;color:#111;border-radius:8px;padding:36px 44px;font-family:Georgia,serif;box-shadow:0 1px 0 rgba(0,0,0,.2);line-height:1.6}
+  .agr h1{font-size:22px;text-align:center;margin:0 0 4px} .agr .sub{text-align:center;color:#555;margin-bottom:20px}
+  .agr h3{font-size:15px;margin:18px 0 4px;color:#1a2a44} .agr ol{padding-left:20px} .agr li{margin:6px 0;font-size:13.5px}
+  .sig{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px;margin-top:36px} .sig .s{min-width:200px;flex:1} .sig .line{border-bottom:1px solid #333;margin-bottom:4px;height:30px} .sig .lbl{font-size:12px;color:#555}
+  @media print{.no-print{display:none!important}@page{margin:16mm}body{background:#fff}.agr{box-shadow:none;border-radius:0;padding:0}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function gen(){
+  const authors=$('#authors').value.split(',').map(a=>a.trim()).filter(Boolean);
+  const items=[];
+  items.push(`The authors agree that the working title of the manuscript is "<b>${esc($('#title').value)}</b>"${$('#journal').value?`, to be submitted initially to <i>${esc($('#journal').value)}</i>`:''}.`);
+  items.push(`The agreed author order is: <b>${authors.map(esc).join(', ')}</b>.`);
+  items.push(`<b>${esc($('#corr').value)}</b> will act as corresponding author and manage submission and correspondence.`);
+  if($('#order').checked)items.push('Author order reflects current expected contributions and may be revised by consensus if contributions change substantially before submission.');
+  items.push('Each author confirms they will meet the authorship criteria (substantial contribution, approval of the final version, and accountability), and that the contribution statement (e.g. CRediT) will be agreed before submission.');
+  if($('#data').checked)items.push('Underlying data, code and materials will be shared among co-authors during the project and made available per the target journal\'s data-availability policy on publication.');
+  if($('#addremove').checked)items.push('No author will be added or removed without the written agreement of all current authors.');
+  if($('#dispute').checked)items.push('Disagreements regarding authorship or order will first be resolved by discussion among authors; if unresolved, they will be referred to the relevant institutional research-integrity office.');
+  $('#extra').value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>items.push(esc(x)));
+  const sigs=authors.map(a=>`<div class="s"><div class="line"></div><div class="lbl">${esc(a)} — signature &amp; date</div></div>`).join('');
+  $('#doc').innerHTML=`<div class="agr"><h1>Co-Authorship Agreement</h1><div class="sub">${esc($('#title').value)}</div><p style="font-size:13px">This agreement records the understanding among the listed co-authors regarding the preparation and publication of the above manuscript. It is made in good faith and is not a legally binding contract.</p><h3>Terms</h3><ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol><h3>Signatures</h3><div class="sig">${sigs}</div></div>`;
+}
+['title','journal','authors','corr','order','data','dispute','addremove','extra'].forEach(id=>$('#'+id).addEventListener('input',gen));
+$('#gen').onclick=gen;$('#print').onclick=()=>{gen();window.print();};
+gen();
+</script>
+</body>
+</html>

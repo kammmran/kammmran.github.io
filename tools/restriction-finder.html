@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restriction Enzyme Finder — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-scissors"></i></div><div>Restriction Enzyme Finder</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-scissors"></i></div>
+      <div>
+        <div class="tool-title">Restriction Enzyme Finder</div>
+        <div class="tool-desc">Find restriction sites in a DNA sequence. Scans a panel of common enzymes (including IUPAC-ambiguous recognition sites), reports the cut positions and fragment sizes, and highlights enzymes that cut once — handy for cloning. Linear or circular. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">DNA sequence (FASTA header optional)
+      <textarea id="seq" style="min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13px">>plasmid_fragment
+GAATTCGGATCCAAGCTTGTCGACCTGCAGGAATTCACTAGTGGTACCGAGCTCGGGCCCTCTAGAGGATCC</textarea>
+    </label>
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="circular"> circular</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="uniqOnly"> single-cutters only</label>
+      <button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-search"></i> Find sites</button>
+    </div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Panel of ~30 common enzymes with degenerate-base matching. Cut position is at the enzyme's nick on the top strand. For a complete enzyme catalogue use REBASE; this covers the workhorses.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  table{width:100%;border-collapse:collapse;font-size:13px} td,th{padding:6px 9px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--text3);font-size:11px;text-transform:uppercase}
+  .site{font-family:ui-monospace,monospace} .uniq{color:var(--green);font-weight:700} .none{color:var(--text3)}
+  td .cuts{font-family:ui-monospace,monospace;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+// name: [recognition (with ^ = cut on top strand), ]
+const ENZ={EcoRI:'G^AATTC',BamHI:'G^GATCC',HindIII:'A^AGCTT',NotI:'GC^GGCCGC',XhoI:'C^TCGAG',SalI:'G^TCGAC',PstI:'CTGCA^G',SmaI:'CCC^GGG',KpnI:'GGTAC^C',SacI:'GAGCT^C',XbaI:'T^CTAGA',SpeI:'A^CTAGT',NcoI:'C^CATGG',NdeI:'CA^TATG',NheI:'G^CTAGC',ApaI:'GGGCC^C',EcoRV:'GAT^ATC',HpaI:'GTT^AAC',PvuII:'CAG^CTG',ScaI:'AGT^ACT',StuI:'AGG^CCT',AflII:'C^TTAAG',BglII:'A^GATCT',ClaI:'AT^CGAT',DraI:'TTT^AAA',MluI:'A^CGCGT',NruI:'TCG^CGA',SphI:'GCATG^C',BsaI:'GGTCTC',AluI:'AG^CT',HaeIII:'GG^CC',TaqI:'T^CGA'};
+const IUPAC={A:'A',C:'C',G:'G',T:'T',R:'[AG]',Y:'[CT]',S:'[GC]',W:'[AT]',K:'[GT]',M:'[AC]',B:'[CGT]',D:'[AGT]',H:'[ACT]',V:'[ACG]',N:'[ACGT]'};
+function clean(r){return r.replace(/^>.*$/gm,'').replace(/[^ACGTacgt]/g,'').toUpperCase();}
+function toRe(site){return new RegExp(site.replace('^','').split('').map(c=>IUPAC[c]||c).join(''),'g');}
+$('#run').onclick=()=>{
+  const seq=clean($('#seq').value);if(!seq){$('#status').textContent='Enter a sequence.';return;}
+  const circ=$('#circular').checked;const search=circ?seq+seq.slice(0,20):seq;
+  const rows=[];
+  for(const [name,site] of Object.entries(ENZ)){
+    const cutOff=site.indexOf('^');const re=toRe(site);const recLen=site.replace('^','').length;
+    const cuts=[];let m;re.lastIndex=0;
+    while((m=re.exec(search))){if(m.index>=seq.length)break;const pos=m.index+(cutOff>=0?cutOff:0);if(pos<seq.length)cuts.push(pos);re.lastIndex=m.index+1;}
+    rows.push({name,site:site.replace('^','|'),cuts:[...new Set(cuts)].sort((a,b)=>a-b)});
+  }
+  let list=rows.filter(r=>r.cuts.length);
+  if($('#uniqOnly').checked)list=list.filter(r=>r.cuts.length===1);
+  list.sort((a,b)=>a.cuts.length-b.cuts.length||a.name.localeCompare(b.name));
+  const nonCut=rows.filter(r=>!r.cuts.length).map(r=>r.name);
+  if(!list.length){$('#out').innerHTML='<div class="muted" style="font-size:13px">No matching sites.</div>';$('#status').textContent='Done';return;}
+  $('#out').innerHTML=`<table><tr><th>Enzyme</th><th>Site</th><th>Cuts</th><th>Positions</th><th>Fragments</th></tr>${list.map(r=>{
+    const sorted=r.cuts.slice().sort((a,b)=>a-b);let frags=[];
+    if(circ){for(let i=0;i<sorted.length;i++){const next=sorted[(i+1)%sorted.length];frags.push(((next-sorted[i]+seq.length)%seq.length)||seq.length);}}
+    else{let prev=0;sorted.forEach(c=>{frags.push(c-prev);prev=c;});frags.push(seq.length-prev);}
+    return `<tr><td><b>${esc(r.name)}</b></td><td class="site">${esc(r.site)}</td><td class="${r.cuts.length===1?'uniq':''}">${r.cuts.length}</td><td class="cuts">${sorted.map(c=>c+1).join(', ')}</td><td class="cuts">${frags.filter(f=>f>0).sort((a,b)=>b-a).join(', ')} bp</td></tr>`;
+  }).join('')}</table>${nonCut.length?`<div class="muted" style="font-size:12px;margin-top:10px"><b>Don't cut (${nonCut.length}):</b> ${nonCut.join(', ')}</div>`:''}`;
+  $('#status').textContent=`${list.length} cutting enzymes`;
+};
+$('#run').click();
+</script>
+</body>
+</html>

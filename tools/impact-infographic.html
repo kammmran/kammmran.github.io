@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Impact Infographic Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-trophy"></i></div><div>Research Impact Infographic</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-trophy"></i></div>
+      <div>
+        <div class="tool-title">Research Impact Infographic Generator</div>
+        <div class="tool-desc">Turn a researcher's or group's impact metrics into a shareable card: headline numbers (publications, citations, h-index), a bar of outputs by year, and reach highlights. Ideal for annual reports, tenure files, or a lab's "year in review". Export PNG. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Name / group<input id="name" value="Plant AI Lab"></label>
+      <label class="fld">Subtitle<input id="sub" value="Research Impact · 2025"></label>
+    </div>
+    <label class="fld">Headline metrics — <b>Number | Label</b> (3–4 lines)
+      <textarea id="metrics" style="min-height:90px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">38 | Publications
+2,450 | Citations
+21 | h-index
+17 | Countries reached</textarea>
+    </label>
+    <label class="fld">Outputs by year — <b>Year | count</b>
+      <textarea id="years" style="min-height:80px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">2021 | 4
+2022 | 6
+2023 | 9
+2024 | 8
+2025 | 11</textarea>
+    </label>
+    <label class="fld">Highlights (one per line, max 3)
+      <textarea id="hl" style="min-height:70px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">2 papers in Nature Plants
+Featured in 14 news outlets
+3 patents filed</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Theme<select id="theme"><option value="#0b2545,#e8b84b">Navy/Gold</option><option value="#0d4f4a,#2dd4bf">Teal</option><option value="#3b2a5e,#c4b7ff">Purple</option><option value="#11100f,#fbbf24">Dark/Amber</option></select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#333"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function draw(){
+  const W=1080,H=1350;cv.width=W;cv.height=H;const [bg,acc]=$('#theme').value.split(',');
+  const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,bg);g.addColorStop(1,shade(bg,-14));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle=acc;ctx.fillRect(0,0,W,16);
+  const pad=70;ctx.textAlign='left';
+  ctx.fillStyle='#fff';ctx.font='800 64px Arial';ctx.fillText($('#name').value,pad,140);
+  ctx.fillStyle=acc;ctx.font='700 30px Arial';ctx.fillText($('#sub').value,pad,186);
+  // metrics grid
+  const ms=$('#metrics').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]);
+  const cols=2,cw=(W-pad*2-30)/cols,mh=150;let y=230;
+  ms.slice(0,4).forEach((m,i)=>{const r=Math.floor(i/cols),c=i%cols;const x=pad+c*(cw+30),by=y+r*(mh+24);rr(x,by,cw,mh,18);ctx.fillStyle='rgba(255,255,255,0.07)';ctx.fill();ctx.strokeStyle=acc+'55';ctx.lineWidth=2;ctx.stroke();ctx.textAlign='center';ctx.fillStyle=acc;ctx.font='800 64px Arial';ctx.fillText(m[0],x+cw/2,by+82);ctx.fillStyle='#fff';ctx.font='600 24px Arial';ctx.fillText((m[1]||'').toUpperCase(),x+cw/2,by+122);});
+  y+=Math.ceil(Math.min(ms.length,4)/2)*(mh+24)+30;
+  // bar chart
+  const ys=$('#years').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(p=>p[0]);
+  ctx.textAlign='left';ctx.fillStyle='#fff';ctx.font='700 26px Arial';ctx.fillText('Outputs by year',pad,y);y+=20;
+  const chartH=200,chartW=W-pad*2,bw=chartW/ys.length*0.6,maxV=Math.max(...ys.map(p=>+p[1]),1);
+  ys.forEach((p,i)=>{const x=pad+i*(chartW/ys.length)+(chartW/ys.length-bw)/2;const bh=(+p[1]/maxV)*chartH;const by=y+chartH-bh;ctx.fillStyle=acc;rr(x,by,bw,bh,8);ctx.fill();ctx.fillStyle='#fff';ctx.font='700 22px Arial';ctx.textAlign='center';ctx.fillText(p[1],x+bw/2,by-8);ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='20px Arial';ctx.fillText(p[0],x+bw/2,y+chartH+28);});
+  y+=chartH+70;
+  // highlights
+  ctx.textAlign='left';const hls=$('#hl').value.split('\n').map(l=>l.trim()).filter(Boolean).slice(0,3);
+  hls.forEach(h=>{ctx.fillStyle=acc;ctx.beginPath();ctx.arc(pad+10,y-8,7,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.font='600 26px Arial';ctx.fillText(h,pad+34,y);y+=48;});
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='20px Arial';ctx.fillText('Generated with Academy Tools',pad,H-40);
+}
+function shade(hex,p){const n=parseInt(hex.slice(1),16);const cl=v=>Math.max(0,Math.min(255,Math.round(v)));return `rgb(${cl((n>>16)+p*2.55)},${cl(((n>>8)&255)+p*2.55)},${cl((n&255)+p*2.55)})`;}
+['name','sub','metrics','years','hl','theme'].forEach(id=>$('#'+id).addEventListener('input',draw));
+$('#png').onclick=()=>{cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='impact-infographic.png';a.click();});};
+draw();
+</script>
+</body>
+</html>

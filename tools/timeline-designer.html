@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Timeline Designer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-timeline"></i></div><div>Research Timeline Designer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-timeline"></i></div>
+      <div>
+        <div class="tool-title">Research Timeline Designer</div>
+        <div class="tool-desc">Design a clean milestone timeline for a project, PhD, or grant — a horizontal or vertical line with dated markers, alternating labels and colour-coded phases. Unlike a Gantt chart this is a narrative timeline made for slides and posters. Export crisp SVG or PNG. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Milestones — one per line: <b>Date label | Milestone | note (optional)</b>
+      <textarea id="src" style="min-height:160px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">Jan 2025 | Project kickoff | team assembled, ethics approved
+Apr 2025 | Data collection | 12,400 leaf scans
+Sep 2025 | Model v1 | first results
+Feb 2026 | Field validation | held-out trial
+Jun 2026 | Publication | Nature Plants
+Sep 2026 | Deployment | handheld scanner pilot</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Layout<select id="dir"><option value="h">Horizontal</option><option value="v">Vertical</option></select></label>
+      <label class="fld">Theme<select id="theme"><option value="#0b2545,#60a5fa">Navy</option><option value="#0d4f4a,#2dd4bf">Teal</option><option value="#5e1322,#e0a96d">Maroon</option><option value="#3b2a5e,#c4b7ff">Purple</option></select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#fff"><div id="chart"></div></div>
+    <div class="row"><button class="btn" id="svg"><i class="ti ti-download"></i> SVG</button><button class="btn" id="png"><i class="ti ti-photo-down"></i> PNG</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let lastSVG='';
+function items(){return $('#src').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split('|').map(x=>x.trim());return {date:p[0],title:p[1]||'',note:p[2]||''};});}
+function wrapTspan(text,maxChars,x,dy){const words=String(text).split(/\s+/);const lines=[];let cur='';words.forEach(w=>{if((cur+' '+w).length>maxChars&&cur){lines.push(cur);cur=w;}else cur=cur?cur+' '+w:w;});if(cur)lines.push(cur);return lines.map((l,i)=>`<tspan x="${x}" dy="${i===0?0:dy}">${esc(l)}</tspan>`).join('');}
+function render(){
+  const its=items();if(!its.length){$('#status').textContent='Add milestones.';return;}
+  const [c1,c2]=$('#theme').value.split(',');
+  let svg;
+  if($('#dir').value==='h'){
+    const gap=Math.max(180,1000/its.length),W=gap*its.length+120,H=420,midY=H/2;
+    svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" font-family="Arial,sans-serif"><line x1="60" y1="${midY}" x2="${W-40}" y2="${midY}" stroke="${c1}" stroke-width="4"/>`;
+    its.forEach((m,i)=>{const x=80+i*gap+gap/2;const up=i%2===0;const ly=up?midY-130:midY+40;
+      svg+=`<circle cx="${x}" cy="${midY}" r="11" fill="${c2}" stroke="${c1}" stroke-width="3"/>`;
+      svg+=`<line x1="${x}" y1="${midY}" x2="${x}" y2="${up?midY-22:midY+22}" stroke="${c1}" stroke-width="2"/>`;
+      svg+=`<text x="${x}" y="${up?ly:ly+4}" text-anchor="middle" font-size="15" font-weight="700" fill="${c1}">${esc(m.date)}</text>`;
+      svg+=`<text x="${x}" y="${up?ly+22:ly+26}" text-anchor="middle" font-size="15" font-weight="700" fill="#222">${wrapTspan(m.title,18,x,17)}</text>`;
+      if(m.note)svg+=`<text x="${x}" y="${up?ly+62:ly+66}" text-anchor="middle" font-size="12" fill="#666">${wrapTspan(m.note,24,x,14)}</text>`;
+    });
+    svg+='</svg>';
+  }else{
+    const gap=120,W=620,H=gap*its.length+80,midX=120;
+    svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" font-family="Arial,sans-serif"><line x1="${midX}" y1="40" x2="${midX}" y2="${H-40}" stroke="${c1}" stroke-width="4"/>`;
+    its.forEach((m,i)=>{const y=60+i*gap;
+      svg+=`<circle cx="${midX}" cy="${y}" r="11" fill="${c2}" stroke="${c1}" stroke-width="3"/>`;
+      svg+=`<text x="${midX-26}" y="${y+5}" text-anchor="end" font-size="14" font-weight="700" fill="${c1}">${esc(m.date)}</text>`;
+      svg+=`<text x="${midX+26}" y="${y}" font-size="16" font-weight="700" fill="#222">${wrapTspan(m.title,40,midX+26,18)}</text>`;
+      if(m.note)svg+=`<text x="${midX+26}" y="${y+22}" font-size="12.5" fill="#666">${wrapTspan(m.note,48,midX+26,15)}</text>`;
+    });
+    svg+='</svg>';
+  }
+  lastSVG=svg;$('#chart').innerHTML=svg;$('#status').textContent=its.length+' milestones';
+}
+['src','dir','theme'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#svg').onclick=()=>{const b=new Blob([lastSVG],{type:'image/svg+xml'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='timeline.svg';a.click();};
+$('#png').onclick=()=>{const b=new Blob([lastSVG],{type:'image/svg+xml'});const url=URL.createObjectURL(b);const img=new Image();img.onload=()=>{const m=lastSVG.match(/width="(\d+)" height="(\d+)"/);const c=document.createElement('canvas');c.width=m[1]*2;c.height=m[2]*2;const cx=c.getContext('2d');cx.scale(2,2);cx.fillStyle='#fff';cx.fillRect(0,0,+m[1],+m[2]);cx.drawImage(img,0,0);c.toBlob(bb=>{const a=document.createElement('a');a.href=URL.createObjectURL(bb);a.download='timeline.png';a.click();});};img.src=url;};
+render();
+</script>
+</body>
+</html>

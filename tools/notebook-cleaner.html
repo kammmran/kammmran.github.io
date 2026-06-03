@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notebook Cleaner — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-notebook"></i></div><div>Notebook Cleaner</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-notebook"></i></div>
+      <div>
+        <div class="tool-title">Jupyter Notebook Cleaner</div>
+        <div class="tool-desc">Clean a <code>.ipynb</code> for sharing or version control: clear all outputs and execution counts, strip cell metadata, and optionally remove empty cells. Get a smaller, diff-friendly notebook back. Useful before committing or submitting supplementary code. Everything happens locally — your notebook never leaves the browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop a .ipynb file</div>
+      <input type="file" id="file" accept=".ipynb,application/json" style="display:none">
+    </label>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="outputs" checked> clear outputs</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="counts" checked> reset execution counts</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="meta" checked> strip cell metadata</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="empties"> remove empty cells</label>
+    </div>
+    <div id="stats" class="stat-grid"></div>
+    <div class="row"><button class="btn btn-primary" id="dl" disabled><i class="ti ti-download"></i> Download cleaned</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+let nb=null,fname='notebook.ipynb';
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])load(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+function load(f){fname=f.name;const fr=new FileReader();fr.onload=()=>{try{nb=JSON.parse(fr.result);$('#dl').disabled=false;preview();}catch(e){$('#status').textContent='Not valid JSON / .ipynb';}};fr.readAsText(f);}
+function clean(obj){
+  const n=JSON.parse(JSON.stringify(obj));const cells=n.cells||[];
+  let outsCleared=0,bytesBefore=JSON.stringify(obj).length;
+  let kept=cells.filter(c=>{
+    if($('#empties').checked){const src=(Array.isArray(c.source)?c.source.join(''):c.source||'').trim();if(!src)return false;}
+    return true;
+  });
+  kept.forEach(c=>{
+    if(c.cell_type==='code'){if($('#outputs').checked){if(c.outputs&&c.outputs.length)outsCleared++;c.outputs=[];}if($('#counts').checked)c.execution_count=null;}
+    if($('#meta').checked)c.metadata={};
+  });
+  n.cells=kept;
+  return {n,outsCleared,bytesBefore,bytesAfter:JSON.stringify(n).length,removed:cells.length-kept.length};
+}
+function preview(){
+  if(!nb)return;const {bytesBefore,bytesAfter,outsCleared,removed,n}=clean(nb);
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Cells</div><div class="stat-value">${n.cells.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Outputs cleared</div><div class="stat-value" style="color:var(--amber)">${outsCleared}</div></div>
+    <div class="stat-card"><div class="stat-label">Cells removed</div><div class="stat-value">${removed}</div></div>
+    <div class="stat-card"><div class="stat-label">Size</div><div class="stat-value">${(bytesBefore/1024).toFixed(0)}→${(bytesAfter/1024).toFixed(0)} KB</div></div>`;
+  $('#status').textContent=`−${(100-bytesAfter/bytesBefore*100).toFixed(0)}% smaller`;
+}
+['outputs','counts','meta','empties'].forEach(id=>$('#'+id).addEventListener('change',preview));
+$('#dl').onclick=()=>{if(!nb)return;const {n}=clean(nb);const b=new Blob([JSON.stringify(n,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fname.replace(/\.ipynb$/,'')+'.cleaned.ipynb';a.click();};
+</script>
+</body>
+</html>

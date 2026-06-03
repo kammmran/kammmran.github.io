@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Publication Figure Optimizer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-wand"></i></div><div>Publication Figure Optimizer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-wand"></i></div>
+      <div>
+        <div class="tool-title">Publication Figure Optimizer</div>
+        <div class="tool-desc">Get a figure submission-ready: resize to an exact print width at a target DPI, convert between PNG/JPEG/WebP, drop to grayscale, set a white matte for transparent images, and trim file size. See the before/after size and export. Pixels never leave your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:22px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop an image</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div id="ctrls" style="display:none;gap:12px" class="row">
+      <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+        <label class="fld">Target width<select id="wmode"><option value="mm">mm @ DPI</option><option value="px">pixels</option><option value="none">keep size</option></select></label>
+        <label class="fld">Width value<input id="wval" type="number" value="90" style="width:80px"></label>
+        <label class="fld">DPI<input id="dpi" type="number" value="300" style="width:70px"></label>
+        <label class="fld">Format<select id="fmt"><option value="image/png">PNG</option><option value="image/jpeg">JPEG</option><option value="image/webp">WebP</option></select></label>
+        <label class="fld">Quality<input id="q" type="range" min="50" max="100" value="92"><span id="qv" class="muted" style="font-size:11px">92</span></label>
+        <label class="fld" style="flex-direction:row;align-items:center;gap:5px"><input type="checkbox" id="gray"> grayscale</label>
+        <label class="fld" style="flex-direction:row;align-items:center;gap:5px"><input type="checkbox" id="matte" checked> white matte</label>
+      </div>
+    </div>
+    <div id="preview" style="display:none;gap:16px;flex-wrap:wrap" class="row">
+      <div><div class="panel-label">Result preview</div><div style="background:repeating-conic-gradient(#222 0 25%,#1a1a22 0 50%) 50%/16px 16px;border-radius:8px;border:1px solid var(--border);margin-top:4px"><canvas id="cv" style="display:block;max-width:340px;max-height:300px;margin:auto"></canvas></div></div>
+      <div id="info" style="flex:1;min-width:200px"></div>
+    </div>
+    <div class="row" id="exrow" style="display:none"><button class="btn btn-primary" id="dl"><i class="ti ti-download"></i> Download optimized</button><span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Use PNG/TIFF-style lossless for line art and plots; JPEG/WebP for photographs. Note browsers can't write a DPI tag into PNG — the pixel dimensions are what matter, and the tool reports the print size they yield. Never upscale to "add" resolution; it won't add real detail.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .crow{display:flex;gap:8px;padding:7px 11px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;font-size:13px}.crow .v{margin-left:auto;font-weight:600}
+  .ok{color:var(--green)}.bad{color:var(--red)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');let img=null,origSize=0,blob=null;
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])load(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+function load(f){origSize=f.size;const u=URL.createObjectURL(f);img=new Image();img.onload=()=>{$('#ctrls').style.display='flex';$('#preview').style.display='flex';$('#exrow').style.display='flex';render();};img.src=u;}
+['wmode','wval','dpi','fmt','q','gray','matte'].forEach(id=>$('#'+id).addEventListener('input',()=>{$('#qv').textContent=$('#q').value;render();}));
+function targetW(){
+  const m=$('#wmode').value;if(m==='none')return img.naturalWidth;if(m==='px')return Math.max(1,+$('#wval').value);return Math.round(+$('#wval').value/25.4*(+$('#dpi').value));
+}
+function render(){
+  if(!img)return;
+  const tw=targetW();const th=Math.round(img.naturalHeight*(tw/img.naturalWidth));
+  cv.width=tw;cv.height=th;
+  if($('#matte').checked&&$('#fmt').value!=='image/png'){ctx.fillStyle='#fff';ctx.fillRect(0,0,tw,th);}else if($('#matte').checked){ctx.fillStyle='#fff';ctx.fillRect(0,0,tw,th);}else ctx.clearRect(0,0,tw,th);
+  ctx.imageSmoothingQuality='high';ctx.drawImage(img,0,0,tw,th);
+  if($('#gray').checked){const d=ctx.getImageData(0,0,tw,th);const a=d.data;for(let i=0;i<a.length;i+=4){const l=0.299*a[i]+0.587*a[i+1]+0.114*a[i+2];a[i]=a[i+1]=a[i+2]=l;}ctx.putImageData(d,0,0);}
+  const fmt=$('#fmt').value,q=+$('#q').value/100;
+  cv.toBlob(b=>{
+    blob=b;const newSize=b.size;const dpiAt=mm=>Math.round(tw/(mm/25.4));
+    const ratio=origSize?(newSize/origSize):1;
+    $('#info').innerHTML=`<div class="crow">Output dimensions<span class="v">${tw} × ${th} px</span></div>
+      <div class="crow">Print width @ ${$('#dpi').value} dpi<span class="v">${(tw/(+$('#dpi').value)*25.4).toFixed(1)} mm</span></div>
+      <div class="crow">DPI at 90 mm (1-col)<span class="v ${dpiAt(90)>=300?'ok':'bad'}">${dpiAt(90)}</span></div>
+      <div class="crow">Original size<span class="v">${(origSize/1024).toFixed(0)} KB</span></div>
+      <div class="crow">Optimized size<span class="v ${ratio<=1?'ok':'bad'}">${(newSize/1024).toFixed(0)} KB (${ratio<1?'−':'+'}${Math.abs(Math.round((1-ratio)*100))}%)</span></div>
+      <div class="crow">Format<span class="v">${fmt.replace('image/','').toUpperCase()}</span></div>`;
+  },fmt,q);
+}
+$('#dl').onclick=()=>{if(!blob)return;const ext=$('#fmt').value.replace('image/','').replace('jpeg','jpg');const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='figure-optimized.'+ext;a.click();$('#status').textContent='Downloaded.';};
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automatic Lecture Chaptering — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-list-numbers"></i></div><div>Lecture Chaptering</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-list-numbers"></i></div>
+      <div>
+        <div class="tool-title">Automatic Lecture Chaptering</div>
+        <div class="tool-desc">Split a long lecture transcript into topic-based chapters. Detects where the subject shifts using lexical-cohesion scoring, names each chapter from its top terms, and (if your transcript has [mm:ss] timestamps) produces YouTube-style chapter markers.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Transcript (timestamps like [03:12] optional but supported)
+      <textarea id="txt" style="min-height:160px" placeholder="Paste a lecture transcript…"></textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Detect chapters</button>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px">Sensitivity <input type="range" id="sens" min="1" max="9" value="5"></label>
+      <button class="btn" id="copy"><i class="ti ti-copy"></i> Copy markers</button>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .ch{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:12px 14px;margin-bottom:8px}
+  .ch h3{margin:0 0 5px;font-size:14px;color:var(--amber)} .ch .ts{color:var(--text3);font-size:12px;font-weight:600;margin-right:8px}
+  .ch p{margin:0;font-size:13px;line-height:1.55;color:var(--text2)} .ch .kw{font-size:11px;color:var(--accent3);margin-top:6px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on at for with as is are was were be been it its this that these those not no into over under so we i you they he she them their there here what when how also only can could will would should using used use okay now going get got like just really very more most some any all from by about which who'.split(' '));
+let markers='';
+function tokens(s){return (s.toLowerCase().match(/\b[a-z][a-z'-]{2,}\b/g)||[]).filter(w=>!STOP.has(w));}
+function jacc(a,b){const A=new Set(a),B=new Set(b);let inter=0;A.forEach(x=>{if(B.has(x))inter++;});const uni=A.size+B.size-inter;return uni?inter/uni:0;}
+$('#run').onclick=()=>{
+  const raw=$('#txt').value;
+  // split into blocks; keep timestamps if present
+  const sents=(raw.replace(/\n+/g,' ').match(/(\[\d{1,2}:\d{2}(?::\d{2})?\])?\s*[^.!?]+[.!?]+/g)||[]).map(s=>s.trim()).filter(s=>s.replace(/\[[^\]]*\]/,'').split(/\s+/).length>=4);
+  if(sents.length<6){$('#status').textContent='Need a longer transcript (6+ sentences).';return;}
+  const toks=sents.map(tokens);
+  // cohesion gap between consecutive windows
+  const W=2;const gaps=[];
+  for(let i=W;i<sents.length-W+1;i++){const left=toks.slice(Math.max(0,i-W),i).flat();const right=toks.slice(i,i+W).flat();gaps.push({i,sim:jacc(left,right)});}
+  const sims=gaps.map(g=>g.sim);const mean=sims.reduce((a,b)=>a+b,0)/sims.length;const sd=Math.sqrt(sims.reduce((a,b)=>a+(b-mean)**2,0)/sims.length);
+  const thr=mean-sd*(1.4-(+$('#sens').value)/10);
+  let cuts=[0];gaps.forEach(g=>{if(g.sim<thr&&g.i-cuts[cuts.length-1]>=3)cuts.push(g.i);});
+  cuts.push(sents.length);
+  const chapters=[];
+  for(let c=0;c<cuts.length-1;c++){
+    const seg=sents.slice(cuts[c],cuts[c+1]);
+    const tk=seg.map(tokens).flat();const f={};tk.forEach(w=>f[w]=(f[w]||0)+1);
+    const top=Object.entries(f).sort((a,b)=>b[1]-a[1]).slice(0,4).map(x=>x[0]);
+    const tsM=seg[0].match(/\[(\d{1,2}:\d{2}(?::\d{2})?)\]/);
+    chapters.push({ts:tsM?tsM[1]:null,title:top.map(w=>w[0].toUpperCase()+w.slice(1)).join(' · ')||'Section '+(c+1),kw:top,preview:seg.join(' ').replace(/\[[^\]]*\]/g,'').slice(0,160)});
+  }
+  $('#out').innerHTML=chapters.map((c,i)=>`<div class="ch"><h3>${c.ts?`<span class="ts">${esc(c.ts)}</span>`:''}${i+1}. ${esc(c.title)}</h3><p>${esc(c.preview)}…</p><div class="kw">key terms: ${esc(c.kw.join(', '))}</div></div>`).join('');
+  markers=chapters.map((c,i)=>`${c.ts||('00:'+String(i).padStart(2,'0'))} ${c.title}`).join('\n');
+  $('#status').textContent=chapters.length+' chapters';
+};
+$('#copy').onclick=()=>{if(markers){navigator.clipboard.writeText(markers);$('#status').textContent='Markers copied.';}};
+</script>
+</body>
+</html>

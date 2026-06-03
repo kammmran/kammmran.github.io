@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speaker Identification Tool — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-users-group"></i></div><div>Speaker Identification</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-users-group"></i></div>
+      <div>
+        <div class="tool-title">Speaker Identification Tool</div>
+        <div class="tool-desc">Estimate who spoke when in a live recording. The tool tracks the fundamental pitch of the voice and groups speech into speaker bands, building a "who-spoke-when" timeline and talk-time breakdown. A lightweight, fully-local diarization aid for meetings and interviews.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px">
+      <button class="btn btn-primary" id="rec"><i class="ti ti-microphone"></i> Start listening</button>
+      <label class="fld">Expected speakers<select id="nsp"><option>2</option><option>3</option><option>4</option></select></label>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div id="meter" style="height:14px;border-radius:7px;background:var(--bg3);overflow:hidden"><div id="meterbar" style="height:100%;width:0;background:var(--teal);transition:width .05s"></div></div>
+    <div class="row"><span class="muted" style="font-size:12px">Current pitch:</span><b id="pitch">—</b><span class="muted" style="font-size:12px">→ likely</span><b id="who" style="color:var(--accent3)">—</b></div>
+    <div id="timeline" style="display:flex;height:30px;border-radius:6px;overflow:hidden;border:1px solid var(--border);background:var(--bg2)"></div>
+    <div id="stats" class="stat-grid"></div>
+    <div class="row"><button class="btn" id="clear"><i class="ti ti-trash"></i> Reset</button></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Honest caveat: this groups voices by pitch only, so speakers with similar pitch may merge and one person's pitch range may split. It's a rough aid, not forensic diarization. Works best with distinct voices and a quiet room (Chrome/Edge/Firefox).</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .seg{height:100%}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const COLORS=['#2dd4bf','#60a5fa','#fbbf24','#f472b6'];
+let ctx,analyser,stream,raf,listening=false,buf;
+let frames=[]; // {t, who} every ~120ms of speech
+let t0=0,centroids=null;
+function autoCorr(buf,sr){
+  let size=buf.length,rms=0;for(let i=0;i<size;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/size);
+  if(rms<0.01)return {pitch:-1,rms};
+  let r1=0,r2=size-1,thr=0.2;
+  for(let i=0;i<size/2;i++)if(Math.abs(buf[i])<thr){r1=i;break;}
+  for(let i=1;i<size/2;i++)if(Math.abs(buf[size-i])<thr){r2=size-i;break;}
+  buf=buf.slice(r1,r2);size=buf.length;
+  const c=new Array(size).fill(0);
+  for(let i=0;i<size;i++)for(let j=0;j<size-i;j++)c[i]+=buf[j]*buf[j+i];
+  let d=0;while(c[d]>c[d+1])d++;
+  let maxv=-1,maxp=-1;for(let i=d;i<size;i++)if(c[i]>maxv){maxv=c[i];maxp=i;}
+  return {pitch:maxp>0?sr/maxp:-1,rms};
+}
+function assign(p){
+  if(!centroids){centroids=[p];return 0;}
+  const n=+$('#nsp').value;
+  let best=0,bd=1e9;centroids.forEach((c,i)=>{const dd=Math.abs(c-p);if(dd<bd){bd=dd;best=i;}});
+  if(bd>35&&centroids.length<n){centroids.push(p);return centroids.length-1;}
+  centroids[best]=centroids[best]*0.9+p*0.1;return best;
+}
+function loop(){
+  if(!listening)return;
+  analyser.getFloatTimeDomainData(buf);
+  const {pitch,rms}=autoCorr(buf,ctx.sampleRate);
+  $('#meterbar').style.width=Math.min(100,rms*400)+'%';
+  if(pitch>60&&pitch<400&&rms>0.012){
+    const who=assign(pitch);
+    $('#pitch').textContent=Math.round(pitch)+' Hz';
+    $('#who').textContent='Speaker '+(who+1);$('#who').style.color=COLORS[who%4];
+    frames.push({t:Date.now()-t0,who});
+    drawTimeline();drawStats();
+  }
+  raf=requestAnimationFrame(loop);
+}
+function drawTimeline(){
+  if(!frames.length)return;
+  const total=frames[frames.length-1].t||1;
+  let segs=[],last=null;
+  frames.forEach(f=>{if(last&&last.who===f.who)last.end=f.t;else{last={who:f.who,start:f.t,end:f.t};segs.push(last);}});
+  $('#timeline').innerHTML=segs.map(s=>`<div class="seg" style="flex:${Math.max(1,(s.end-s.start)||500)};background:${COLORS[s.who%4]}" title="Speaker ${s.who+1}"></div>`).join('');
+}
+function drawStats(){
+  const n=centroids?centroids.length:0;const counts=new Array(n).fill(0);
+  frames.forEach(f=>counts[f.who]++);const tot=frames.length||1;
+  $('#stats').innerHTML=counts.map((c,i)=>`<div class="stat-card"><div class="stat-label">Speaker ${i+1} · ~${Math.round(centroids[i])}Hz</div><div class="stat-value" style="color:${COLORS[i%4]}">${Math.round(c/tot*100)}%</div></div>`).join('');
+}
+async function start(){
+  try{stream=await navigator.mediaDevices.getUserMedia({audio:true});}
+  catch(e){$('#status').textContent='Microphone blocked: '+e.message;return;}
+  ctx=new (window.AudioContext||window.webkitAudioContext)();
+  const src=ctx.createMediaStreamSource(stream);analyser=ctx.createAnalyser();analyser.fftSize=2048;buf=new Float32Array(analyser.fftSize);src.connect(analyser);
+  listening=true;t0=t0||Date.now();$('#rec').innerHTML='<i class="ti ti-player-stop"></i> Stop';$('#rec').classList.remove('btn-primary');$('#status').textContent='Listening…';loop();
+}
+function stop(){listening=false;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());$('#rec').innerHTML='<i class="ti ti-microphone"></i> Start listening';$('#rec').classList.add('btn-primary');$('#status').textContent='Stopped';}
+$('#rec').onclick=()=>listening?stop():start();
+$('#clear').onclick=()=>{frames=[];centroids=null;t0=0;$('#timeline').innerHTML='';$('#stats').innerHTML='';$('#pitch').textContent='—';$('#who').textContent='—';};
+</script>
+</body>
+</html>

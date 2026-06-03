@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Participation Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-users"></i></div><div>Student Participation Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-users"></i></div>
+      <div>
+        <div class="tool-title">Student Participation Analyzer</div>
+        <div class="tool-desc">Measure how evenly a discussion or seminar was shared. Paste a transcript with speaker labels and see talk-time distribution, turn counts, questions asked, and an equity score that flags whether a few voices dominated.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Transcript ("Name: text" per line)
+      <textarea id="txt" style="min-height:150px">Teacher: What causes the seasons?
+Alex: I think it's the distance from the sun?
+Teacher: Good guess. Anyone else?
+Sam: Isn't it the tilt of the Earth's axis?
+Teacher: Exactly, Sam. Can you explain why?
+Sam: Because the tilt changes how directly sunlight hits each hemisphere over the year, so we get more energy in summer.
+Jordan: Oh, so that's why the southern hemisphere is opposite.</textarea>
+    </label>
+    <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Analyze</button>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="exTeach"> exclude moderator/teacher</label>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="equity" class="stat-grid"></div>
+    <div id="bars"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Equity uses the Gini coefficient of words per speaker: 0 = perfectly even, 1 = one person did all the talking. Under ~0.4 is a well-shared discussion.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .row2{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:13px}
+  .row2 .nm{width:110px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .row2 .bar{flex:1;height:18px;border-radius:5px;background:var(--bg3);overflow:hidden} .row2 .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--accent))}
+  .row2 .v{width:120px;text-align:right;color:var(--text2);font-size:12px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function parse(t){return t.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([A-Z][\w.\- ]{0,28}?):\s*(.+)$/);return m?{sp:m[1].trim(),text:m[2]}:null;}).filter(Boolean);}
+function gini(arr){const n=arr.length;if(n===0)return 0;const s=[...arr].sort((a,b)=>a-b);let cum=0,tot=s.reduce((a,b)=>a+b,0);if(!tot)return 0;let g=0;s.forEach((v,i)=>{g+=(2*(i+1)-n-1)*v;});return g/(n*tot);}
+$('#run').onclick=()=>{
+  const turns=parse($('#txt').value.trim());if(!turns.length){$('#status').textContent='Need "Name: text" lines.';return;}
+  const data={};
+  turns.forEach(t=>{const d=data[t.sp]=data[t.sp]||{words:0,turns:0,q:0};d.words+=(t.text.match(/\S+/g)||[]).length;d.turns++;d.q+=(t.text.match(/\?/g)||[]).length;});
+  let entries=Object.entries(data);
+  if($('#exTeach').checked)entries=entries.filter(([n])=>!/teacher|mod|moderator|instructor|prof|facilitator/i.test(n));
+  if(!entries.length){$('#status').textContent='Everyone was excluded.';return;}
+  const totW=entries.reduce((a,[,d])=>a+d.words,0);
+  const g=gini(entries.map(([,d])=>d.words));
+  const eq=g<0.4?'Well shared':g<0.6?'Somewhat uneven':'Dominated by a few';
+  const eqcol=g<0.4?'var(--green)':g<0.6?'var(--amber)':'var(--red)';
+  $('#equity').innerHTML=`<div class="stat-card"><div class="stat-label">Speakers</div><div class="stat-value">${entries.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Total words</div><div class="stat-value">${totW}</div></div>
+    <div class="stat-card"><div class="stat-label">Equity (Gini)</div><div class="stat-value" style="color:${eqcol}">${g.toFixed(2)}</div></div>
+    <div class="stat-card"><div class="stat-label">Verdict</div><div class="stat-value" style="font-size:15px;color:${eqcol}">${eq}</div></div>`;
+  entries.sort((a,b)=>b[1].words-a[1].words);
+  const max=entries[0][1].words||1;
+  $('#bars').innerHTML=entries.map(([n,d])=>`<div class="row2"><div class="nm">${esc(n)}</div><div class="bar"><span style="width:${Math.round(d.words/max*100)}%"></span></div><div class="v">${d.words}w · ${d.turns} turns${d.q?' · '+d.q+'?':''} · ${Math.round(d.words/totW*100)}%</div></div>`).join('');
+  $('#status').textContent='Analyzed';
+};
+</script>
+</body>
+</html>

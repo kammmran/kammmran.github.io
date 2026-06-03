@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fourier Transform Tool — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-wave-sine"></i></div><div>Fourier Transform Tool</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-wave-sine"></i></div>
+      <div>
+        <div class="tool-title">Fourier Transform Tool</div>
+        <div class="tool-desc">Compute the discrete Fourier transform of a signal — paste samples or generate a synthetic waveform — and see the time-domain trace alongside its amplitude spectrum. Identify dominant frequencies and their magnitudes. Uses a DFT (any length). Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Samples (comma/space/newline separated) — or generate below
+      <textarea id="data" style="min-height:80px;font-family:ui-monospace,monospace;font-size:12.5px"></textarea>
+    </label>
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Sample rate (Hz)<input id="fs" type="number" value="64" style="width:90px"></label>
+      <span class="muted" style="align-self:flex-end;margin-bottom:6px">Generate:</span>
+      <label class="fld">freqs (Hz)<input id="genf" value="5, 12" style="width:120px"></label>
+      <label class="fld">N<input id="genn" type="number" value="64" style="width:70px"></label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:5px"><input type="checkbox" id="noise"> noise</label>
+      <button class="btn" id="gen"><i class="ti ti-wave-sine"></i> Generate</button>
+      <button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-calculator"></i> Transform</button>
+    </div>
+    <div><div class="panel-label">Time domain</div><canvas id="time" width="860" height="180" style="width:100%;border:1px solid var(--border);border-radius:8px;background:#fff;margin-top:4px"></canvas></div>
+    <div><div class="panel-label">Amplitude spectrum</div><canvas id="freq" width="860" height="200" style="width:100%;border:1px solid var(--border);border-radius:8px;background:#fff;margin-top:4px"></canvas></div>
+    <div id="peaks"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .pk{display:inline-block;border:1px solid var(--border);border-radius:14px;padding:3px 11px;margin:3px 5px 0 0;font-size:12px} .pk b{color:var(--pink)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+function parse(){return $('#data').value.split(/[\s,]+/).map(Number).filter(x=>isFinite(x));}
+$('#gen').onclick=()=>{const fs=+$('#fs').value,N=+$('#genn').value,freqs=$('#genf').value.split(',').map(Number).filter(isFinite);const out=[];for(let n=0;n<N;n++){let v=0;freqs.forEach(f=>v+=Math.sin(2*Math.PI*f*n/fs));if($('#noise').checked)v+=(Math.random()-0.5)*1.2;out.push(+v.toFixed(4));}$('#data').value=out.join(', ');run();};
+function dft(x){const N=x.length;const re=new Array(N).fill(0),im=new Array(N).fill(0);for(let k=0;k<N;k++){for(let n=0;n<N;n++){const a=-2*Math.PI*k*n/N;re[k]+=x[n]*Math.cos(a);im[k]+=x[n]*Math.sin(a);}}return {re,im};}
+function run(){
+  const x=parse();if(x.length<2){$('#peaks').innerHTML='<span class="muted" style="font-size:12px">Enter at least 2 samples.</span>';return;}
+  const N=x.length,fs=+$('#fs').value;
+  drawTime(x);
+  const {re,im}=dft(x);const half=Math.floor(N/2);const mag=[];for(let k=0;k<=half;k++){mag.push(Math.hypot(re[k],im[k])*2/N);}
+  drawFreq(mag,fs,N);
+  // peaks
+  const peaks=[];for(let k=1;k<mag.length-1;k++){if(mag[k]>mag[k-1]&&mag[k]>mag[k+1]&&mag[k]>0.05*Math.max(...mag.slice(1)))peaks.push({f:k*fs/N,a:mag[k]});}
+  peaks.sort((a,b)=>b.a-a.a);
+  $('#peaks').innerHTML='<div class="panel-label" style="margin:6px 0">Dominant frequencies</div>'+(peaks.slice(0,6).map(p=>`<span class="pk"><b>${p.f.toFixed(2)} Hz</b> · amp ${p.a.toFixed(3)}</span>`).join('')||'<span class="muted" style="font-size:12px">No clear peaks.</span>');
+}
+function drawTime(x){const cv=$('#time'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);const mx=Math.max(...x.map(Math.abs))||1;ctx.strokeStyle='#eee';ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();ctx.strokeStyle='#7c3aed';ctx.lineWidth=1.8;ctx.beginPath();x.forEach((v,i)=>{const px=i/(x.length-1)*W,py=H/2-v/mx*(H/2-10);i?ctx.lineTo(px,py):ctx.moveTo(px,py);});ctx.stroke();}
+function drawFreq(mag,fs,N){const cv=$('#freq'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);const mx=Math.max(...mag.slice(1))||1;const bw=W/mag.length;ctx.fillStyle='#ec4899';mag.forEach((m,k)=>{const h=m/mx*(H-26);ctx.fillRect(k*bw,H-20-h,Math.max(1,bw-1),h);});ctx.fillStyle='#888';ctx.font='11px Arial';for(let k=0;k<mag.length;k+=Math.ceil(mag.length/8)){const f=(k*fs/N).toFixed(0);ctx.fillText(f,k*bw,H-6);}ctx.fillText('Hz',W-20,H-6);}
+['data','fs'].forEach(id=>$('#'+id).addEventListener('input',run));
+$('#run').onclick=run;
+$('#gen').click();
+</script>
+</body>
+</html>

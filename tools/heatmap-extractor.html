@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heatmap Value Extractor — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-grid-dots"></i></div><div>Heatmap Value Extractor</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-grid-dots"></i></div>
+      <div>
+        <div class="tool-title">Heatmap Value Extractor</div>
+        <div class="tool-desc">Read numeric values back out of a colour heatmap. Calibrate the colour scale by clicking its low and high ends and entering their values, then hover or click anywhere on the heatmap to recover the underlying number from its colour. Sample a whole grid to CSV. Local, no upload.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:12px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:24px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop a heatmap image</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div id="ws" style="display:none;flex-direction:column;gap:12px">
+      <div class="row" style="gap:6px;flex-wrap:wrap">
+        <button class="btn btn-sm mode on" data-m="lo"><i class="ti ti-color-swatch"></i> Pick low colour</button>
+        <button class="btn btn-sm mode" data-m="hi">Pick high colour</button>
+        <button class="btn btn-sm mode" data-m="read"><i class="ti ti-eyedropper"></i> Read values</button>
+        <label class="fld">Low value<input id="lov" type="number" value="0" style="width:80px"></label>
+        <label class="fld">High value<input id="hiv" type="number" value="1" style="width:80px"></label>
+      </div>
+      <div class="row" style="gap:10px;align-items:center;font-size:12px">
+        <span>Low <span id="loSw" class="sw"></span></span>
+        <span>High <span id="hiSw" class="sw"></span></span>
+        <span class="muted" id="hint">Click the lightest/lowest end of the colour bar, then the highest end.</span>
+      </div>
+      <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;max-height:55vh"><canvas id="cv" style="display:block;cursor:crosshair"></canvas></div>
+      <div class="row" style="gap:14px;align-items:center">
+        <div style="font-size:14px">Value here: <b id="val" style="color:var(--red)">—</b></div>
+        <div class="row" style="gap:6px;font-size:12px;margin-left:auto">
+          <label class="fld">Grid rows<input id="gr" type="number" value="0" min="0" style="width:64px"></label>
+          <label class="fld">cols<input id="gc" type="number" value="0" min="0" style="width:64px"></label>
+          <button class="btn btn-sm" id="csv"><i class="ti ti-table"></i> Sample grid → CSV</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Works best on continuous colour maps (viridis, jet, hot, blue-white-red). Recovery maps each pixel's colour to the nearest point along the calibrated low→high colour path, so it's approximate near anti-aliased edges and text. For a grid sample, set rows/cols matching the heatmap cells and it reads each cell centre.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .mode.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .sw{display:inline-block;width:18px;height:14px;border-radius:3px;border:1px solid var(--border2);vertical-align:middle}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');let img=null,lo=null,hi=null,mode='lo',data=null;
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])load(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+function load(f){const u=URL.createObjectURL(f);img=new Image();img.onload=()=>{cv.width=img.naturalWidth;cv.height=img.naturalHeight;ctx.drawImage(img,0,0);data=ctx.getImageData(0,0,cv.width,cv.height);$('#ws').style.display='flex';};img.src=u;}
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{document.querySelectorAll('.mode').forEach(x=>x.classList.remove('on'));b.classList.add('on');mode=b.dataset.m;});
+function px(e){const r=cv.getBoundingClientRect();const x=Math.round((e.clientX-r.left)*(cv.width/r.width)),y=Math.round((e.clientY-r.top)*(cv.height/r.height));const i=(y*cv.width+x)*4;return [data.data[i],data.data[i+1],data.data[i+2]];}
+function val(c){if(!lo||!hi)return null;const dLo=dist(c,lo),dHi=dist(c,hi);const t=dLo+dHi?dLo/(dLo+dHi):0;return +$('#lov').value+t*(+$('#hiv').value-+$('#lov').value);}
+function dist(a,b){return Math.sqrt((a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2);}
+cv.addEventListener('mousemove',e=>{if(mode==='read'&&lo&&hi){const v=val(px(e));$('#val').textContent=v==null?'—':fmt(v);}});
+cv.addEventListener('click',e=>{const c=px(e);if(mode==='lo'){lo=c;$('#loSw').style.background=`rgb(${c.join(',')})`;}else if(mode==='hi'){hi=c;$('#hiSw').style.background=`rgb(${c.join(',')})`;}else{const v=val(c);$('#val').textContent=v==null?'calibrate first':fmt(v);}});
+function fmt(n){const a=Math.abs(n);return (a>=1e4||(a<1e-3&&a>0))?n.toExponential(3):(+n.toFixed(4)).toString();}
+$('#csv').onclick=()=>{
+  const R=+$('#gr').value,C=+$('#gc').value;if(!lo||!hi){$('#hint').textContent='Calibrate low/high colours first.';return;}if(R<1||C<1){$('#hint').textContent='Set grid rows and cols (>0).';return;}
+  const rows=[];for(let r=0;r<R;r++){const row=[];for(let c=0;c<C;c++){const x=Math.round((c+0.5)/C*cv.width),y=Math.round((r+0.5)/R*cv.height);const i=(y*cv.width+x)*4;const v=val([data.data[i],data.data[i+1],data.data[i+2]]);row.push(v==null?'':v);}rows.push(row.join(','));}
+  const b=new Blob([rows.join('\n')],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='heatmap-values.csv';a.click();$('#hint').textContent=`Sampled ${R}×${C} grid.`;
+};
+</script>
+</body>
+</html>

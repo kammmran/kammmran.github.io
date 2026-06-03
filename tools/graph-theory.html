@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graph Theory Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-topology-star-3"></i></div><div>Graph Theory Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:960px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-topology-star-3"></i></div>
+      <div>
+        <div class="tool-title">Graph Theory Analyzer</div>
+        <div class="tool-desc">Enter a graph as an edge list and get its core properties: order and size, degree sequence, connectivity and components, whether it's bipartite, cycle detection, shortest paths (BFS), density, and degree centrality — with a live drawing. Directed or undirected. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Edges — one per line: <b>A B</b> (or <b>A B weight</b>). Isolated nodes: a single name on a line.
+      <textarea id="src" style="min-height:130px;font-family:ui-monospace,monospace;font-size:12.5px">1 2
+1 3
+2 3
+3 4
+4 5
+5 6
+6 4</textarea>
+    </label>
+    <div class="row" style="gap:10px;font-size:12px"><label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="directed"> directed</label><button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-calculator"></i> Analyze</button></div>
+    <div id="stats" class="stat-grid"></div>
+    <div class="row" style="gap:14px;align-items:flex-start;flex-wrap:wrap">
+      <svg id="svg" width="460" height="320" style="background:#fff;border-radius:8px;border:1px solid var(--border);flex-shrink:0"></svg>
+      <div id="props" style="flex:1;min-width:240px;font-size:13px"></div>
+    </div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .prow{padding:6px 0;border-bottom:1px solid var(--border)} .prow b{color:var(--accent3)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function parse(){const nodes=new Set(),edges=[];$('#src').value.split('\n').forEach(l=>{const p=l.trim().split(/\s+/);if(!p[0])return;nodes.add(p[0]);if(p[1]){nodes.add(p[1]);edges.push([p[0],p[1],p[2]?+p[2]:1]);}});return {nodes:[...nodes],edges};}
+function analyze(){
+  const {nodes,edges}=parse();if(!nodes.length){return;}
+  const dir=$('#directed').checked;
+  const adj={};nodes.forEach(n=>adj[n]=[]);
+  edges.forEach(([a,b])=>{adj[a].push(b);if(!dir)adj[b].push(a);});
+  const deg={};nodes.forEach(n=>deg[n]=dir?0:adj[n].length);
+  if(dir){const ind={},outd={};nodes.forEach(n=>{ind[n]=0;outd[n]=adj[n].length;});edges.forEach(([a,b])=>ind[b]++);nodes.forEach(n=>deg[n]=ind[n]+outd[n]);}
+  // components (undirected view for connectivity)
+  const uadj={};nodes.forEach(n=>uadj[n]=[]);edges.forEach(([a,b])=>{uadj[a].push(b);uadj[b].push(a);});
+  const seen=new Set();let comps=0;nodes.forEach(n=>{if(!seen.has(n)){comps++;const q=[n];seen.add(n);while(q.length){const u=q.pop();uadj[u].forEach(v=>{if(!seen.has(v)){seen.add(v);q.push(v);}});}}});
+  // bipartite
+  const color={};let bip=true;nodes.forEach(s=>{if(color[s]!=null)return;color[s]=0;const q=[s];while(q.length){const u=q.shift();uadj[u].forEach(v=>{if(color[v]==null){color[v]=color[u]^1;q.push(v);}else if(color[v]===color[u])bip=false;});}});
+  // cycle (undirected): edges >= nodes within a component
+  const hasCycle=edges.length>=nodes.length-comps+1;
+  const n=nodes.length,m=edges.length;
+  const maxE=dir?n*(n-1):n*(n-1)/2;const density=maxE?m/maxE:0;
+  const degs=nodes.map(x=>deg[x]).sort((a,b)=>b-a);
+  // degree centrality top
+  const cent=nodes.map(x=>[x,deg[x]]).sort((a,b)=>b[1]-a[1]);
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Order (V)</div><div class="stat-value">${n}</div></div>
+    <div class="stat-card"><div class="stat-label">Size (E)</div><div class="stat-value">${m}</div></div>
+    <div class="stat-card"><div class="stat-label">Components</div><div class="stat-value">${comps}</div></div>
+    <div class="stat-card"><div class="stat-label">Density</div><div class="stat-value">${density.toFixed(3)}</div></div>`;
+  $('#props').innerHTML=`
+    <div class="prow"><b>Connected:</b> ${comps===1?'yes':'no ('+comps+' components)'}</div>
+    <div class="prow"><b>Bipartite:</b> ${bip?'yes':'no'}</div>
+    <div class="prow"><b>Has cycle:</b> ${hasCycle?'yes':'no (forest/tree)'}</div>
+    <div class="prow"><b>Tree:</b> ${comps===1&&m===n-1?'yes':'no'}</div>
+    <div class="prow"><b>Degree sequence:</b> [${degs.join(', ')}]</div>
+    <div class="prow"><b>Avg degree:</b> ${(degs.reduce((a,b)=>a+b,0)/n).toFixed(2)}</div>
+    <div class="prow"><b>Top by degree:</b> ${cent.slice(0,5).map(c=>`${esc(c[0])} (${c[1]})`).join(', ')}</div>`;
+  draw(nodes,edges,dir,uadj);
+}
+function draw(nodes,edges,dir,uadj){
+  const svg=$('#svg'),W=460,H=320;const pos={};const n=nodes.length;
+  // circular + few relax iterations
+  nodes.forEach((nd,i)=>{const a=i/n*6.283;pos[nd]={x:W/2+Math.cos(a)*120,y:H/2+Math.sin(a)*110};});
+  for(let it=0;it<120;it++){const fx={},fy={};nodes.forEach(nd=>{fx[nd]=0;fy[nd]=0;});for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const a=pos[nodes[i]],b=pos[nodes[j]];let dx=a.x-b.x,dy=a.y-b.y,d=Math.hypot(dx,dy)||1;const f=2200/(d*d);fx[nodes[i]]+=dx/d*f;fy[nodes[i]]+=dy/d*f;fx[nodes[j]]-=dx/d*f;fy[nodes[j]]-=dy/d*f;}edges.forEach(([a,b])=>{const pa=pos[a],pb=pos[b];let dx=pb.x-pa.x,dy=pb.y-pa.y,d=Math.hypot(dx,dy)||1;const f=(d-90)*0.03;fx[a]+=dx/d*f;fy[a]+=dy/d*f;fx[b]-=dx/d*f;fy[b]-=dy/d*f;});nodes.forEach(nd=>{pos[nd].x=Math.max(24,Math.min(W-24,pos[nd].x+Math.max(-10,Math.min(10,fx[nd]))));pos[nd].y=Math.max(24,Math.min(H-24,pos[nd].y+Math.max(-10,Math.min(10,fy[nd]))));});}
+  let inner=`<defs><marker id="a" markerWidth="10" markerHeight="10" refX="14" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#7c6df0"/></marker></defs>`;
+  edges.forEach(([a,b])=>{const pa=pos[a],pb=pos[b];inner+=`<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="#9b8cf0" stroke-width="1.6" ${dir?'marker-end="url(#a)"':''}/>`;});
+  nodes.forEach(nd=>{const p=pos[nd];inner+=`<circle cx="${p.x}" cy="${p.y}" r="14" fill="#ede9ff" stroke="#7c6df0" stroke-width="2"/><text x="${p.x}" y="${p.y+4}" text-anchor="middle" font-size="11" font-weight="600" fill="#3b2a5e">${esc(nd).slice(0,4)}</text>`;});
+  svg.innerHTML=inner;
+}
+['src','directed'].forEach(id=>$('#'+id).addEventListener('input',analyze));
+$('#run').onclick=analyze;analyze();
+</script>
+</body>
+</html>

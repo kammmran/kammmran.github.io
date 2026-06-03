@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Academic Poster Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-layout-board"></i></div><div>Academic Poster Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1100px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-layout-board"></i></div>
+      <div>
+        <div class="tool-title">Academic Poster Generator</div>
+        <div class="tool-desc">Build a clean, conference-ready research poster from a simple form — no design software needed. Pick a size and theme, fill in your sections, and print to PDF at full scale or export a PNG. Everything renders live in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Size<select id="size">
+        <option value="841,1189">A0 portrait (841×1189)</option>
+        <option value="1189,841" selected>A0 landscape (1189×841)</option>
+        <option value="594,841">A1 portrait</option>
+        <option value="841,594">A1 landscape</option>
+        <option value="914,1219">36×48″ portrait</option>
+        <option value="1219,914">48×36″ landscape</option>
+      </select></label>
+      <label class="fld">Columns<select id="cols"><option>2</option><option selected>3</option><option>4</option></select></label>
+      <label class="fld">Theme<select id="theme">
+        <option value="navy">Navy &amp; gold</option>
+        <option value="teal">Teal</option>
+        <option value="maroon">Maroon</option>
+        <option value="forest">Forest</option>
+        <option value="slate">Slate mono</option>
+      </select></label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="qrOn"> footer QR (URL below)</label>
+    </div>
+    <div class="grid2">
+      <label class="fld">Title<textarea id="title" rows="2">Deep Learning for Early Detection of Crop Disease from Leaf Spectra</textarea></label>
+      <label class="fld">Authors &amp; affiliations<textarea id="authors" rows="2">A. Researcher¹, B. Colleague², C. Advisor¹
+¹Dept. of Plant Science, State University · ²AI Lab, Institute of Technology</textarea></label>
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap">
+      <label class="fld" style="flex:1;min-width:200px">Logo / institution URL line (optional)<input id="meta" placeholder="contact@uni.edu · @lab_handle"></label>
+      <label class="fld" style="flex:1;min-width:200px">QR target URL (optional)<input id="qrurl" placeholder="https://doi.org/..."></label>
+    </div>
+    <div id="sections"></div>
+    <button class="btn" id="addSec"><i class="ti ti-plus"></i> Add section</button>
+    <div class="row">
+      <button class="btn btn-primary" id="print"><i class="ti ti-printer"></i> Print / Save PDF</button>
+      <button class="btn" id="png"><i class="ti ti-photo-down"></i> Export PNG</button>
+      <span class="muted" style="font-size:12px;margin-left:auto">Tip: in the print dialog set margins to <b>None</b> and scale to <b>Fit</b>.</span>
+    </div>
+  </div>
+  <div class="muted no-print" style="font-size:12px;margin:8px 0 4px">Live preview (scaled down — prints at full poster size):</div>
+  <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#444;padding:18px" class="no-print">
+    <div id="scaler" style="transform-origin:top left"><div id="poster"></div></div>
+  </div>
+</main>
+
+<div id="printArea"></div>
+
+<style>
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+.sec-edit{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
+.sec-edit input{font-weight:600} .sec-edit .col2{flex:1;display:flex;flex-direction:column;gap:5px}
+.sec-edit .rm{color:var(--text3);cursor:pointer;padding-top:8px} .sec-edit .rm:hover{color:var(--red)}
+/* poster render */
+#poster{position:relative;box-sizing:border-box;font-family:'Helvetica Neue',Arial,sans-serif;color:#1a1a1a;background:#fff;display:flex;flex-direction:column}
+.p-head{padding:36px 44px;color:#fff}
+.p-title{font-size:64px;font-weight:800;line-height:1.08;margin:0}
+.p-auth{font-size:30px;margin-top:14px;opacity:.95;white-space:pre-line;line-height:1.3}
+.p-cols{flex:1;display:grid;gap:26px;padding:30px 44px}
+.p-card{background:#f5f6f8;border-radius:14px;padding:24px 26px;break-inside:avoid}
+.p-card h2{margin:0 0 12px;font-size:34px}
+.p-card .body{font-size:25px;line-height:1.4;white-space:pre-wrap}
+.p-foot{padding:18px 44px;color:#fff;display:flex;align-items:center;gap:22px;font-size:24px}
+.p-foot canvas{background:#fff;padding:6px;border-radius:8px}
+@media print{
+  .no-print{display:none!important} body{background:#fff}
+  #printArea #poster{box-shadow:none}
+  @page{margin:0;size:auto}
+}
+</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const THEMES={navy:['#0b2545','#e8b84b'],teal:['#0d4f4a','#7fd1c8'],maroon:['#5e1322','#e0a96d'],forest:['#1c3b2a','#9ccb7a'],slate:['#2b2f36','#9aa3ad']};
+let sections=[
+  {h:'Introduction',b:'Crop diseases cause major yield losses. Early detection from leaf spectra could enable timely intervention. We ask whether a compact deep model can detect disease before visible symptoms appear.'},
+  {h:'Methods',b:'• 12,400 hyperspectral leaf scans across 6 species\n• Self-supervised pretraining + fine-tuning\n• 5-fold cross-validation; held-out field trial'},
+  {h:'Results',b:'• 94.1% balanced accuracy at pre-symptomatic stage\n• 8× less labelled data than the supervised baseline\n• Robust across lighting conditions'},
+  {h:'Conclusions',b:'Spectral deep learning detects disease days before the eye can. Next: on-device inference for handheld scanners and drone surveys.'},
+  {h:'References',b:'[1] Smith et al., Plant Methods, 2023.\n[2] Lee & Garcia, Remote Sensing, 2022.'}
+];
+function renderEditors(){
+  $('#sections').innerHTML=sections.map((s,i)=>`<div class="sec-edit"><div class="col2"><input data-h="${i}" value="${esc(s.h)}"><textarea data-b="${i}" rows="3">${esc(s.b)}</textarea></div><i class="ti ti-x rm" data-rm="${i}"></i></div>`).join('');
+}
+$('#sections').addEventListener('input',e=>{const h=e.target.dataset.h,b=e.target.dataset.b;if(h!=null)sections[h].h=e.target.value;if(b!=null)sections[b].b=e.target.value;render();});
+$('#sections').addEventListener('click',e=>{const rm=e.target.dataset.rm;if(rm!=null){sections.splice(+rm,1);renderEditors();render();}});
+$('#addSec').onclick=()=>{sections.push({h:'New section',b:'…'});renderEditors();render();};
+['size','cols','theme','title','authors','meta','qrurl','qrOn'].forEach(id=>$('#'+id).addEventListener('input',render));
+
+function drawQR(el){
+  const url=$('#qrurl').value.trim();if(!$('#qrOn').checked||!url)return;
+  const c=document.createElement('canvas');c.width=c.height=110;
+  // lightweight QR via external lib not loaded; draw a simple matrix placeholder mapping isn't a real QR.
+  // Use api.qrserver as image instead for a scannable code.
+  const img=document.createElement('img');img.crossOrigin='anonymous';img.width=img.height=96;img.style.background='#fff';img.style.padding='6px';img.style.borderRadius='8px';
+  img.src='https://api.qrserver.com/v1/create-qr-code/?size=120x120&data='+encodeURIComponent(url);
+  el.appendChild(img);el.insertAdjacentHTML('beforeend',`<span>Scan for full paper &amp; data</span>`);
+}
+function render(){
+  const [w,h]=$('#size').value.split(',').map(Number);
+  const [c1,c2]=THEMES[$('#theme').value];
+  const cols=+$('#cols').value;
+  const p=$('#poster');
+  p.style.width=w+'mm';p.style.height=h+'mm';
+  p.innerHTML=`
+    <div class="p-head" style="background:${c1}"><h1 class="p-title">${esc($('#title').value)}</h1><div class="p-auth">${esc($('#authors').value)}</div></div>
+    <div class="p-cols" style="grid-template-columns:repeat(${cols},1fr);background:${c1}0d">
+      ${sections.map(s=>`<div class="p-card" style="border-top:8px solid ${c2}"><h2 style="color:${c1}">${esc(s.h)}</h2><div class="body">${esc(s.b)}</div></div>`).join('')}
+    </div>
+    <div class="p-foot" id="pfoot" style="background:${c1}"><span style="font-weight:700">${esc($('#title').value.split(/[.:]/)[0]).slice(0,60)}</span><span style="margin-left:auto">${esc($('#meta').value)}</span></div>`;
+  drawQR($('#pfoot'));
+  // scale preview to container width
+  const wrap=$('#scaler').parentElement;const pxW=p.getBoundingClientRect().width||(w*3.78);
+  const avail=wrap.clientWidth-36;const sc=Math.min(1,avail/pxW);
+  $('#scaler').style.transform=`scale(${sc})`;
+  $('#scaler').style.height=(p.getBoundingClientRect().height*sc)+'px';
+}
+$('#print').onclick=()=>{$('#printArea').innerHTML='';$('#printArea').appendChild($('#poster').cloneNode(true));window.print();};
+$('#png').onclick=async()=>{
+  // render poster to canvas via SVG foreignObject
+  const node=$('#poster');const r=node.getBoundingClientRect();
+  const clone=node.cloneNode(true);clone.style.transform='';
+  const html=new XMLSerializer().serializeToString(clone);
+  const w=node.offsetWidth,h=node.offsetHeight;
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${html}</div></foreignObject></svg>`;
+  const blob=new Blob([svg],{type:'image/svg+xml'});const url=URL.createObjectURL(blob);
+  const img=new Image();img.onload=()=>{const c=document.createElement('canvas');c.width=w*2;c.height=h*2;const cx=c.getContext('2d');cx.scale(2,2);cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(img,0,0);c.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='poster.png';a.click();});};
+  img.onerror=()=>alert('PNG export blocked (often due to the external QR image). Disable the QR or use Print → Save as PDF for full fidelity.');
+  img.src=url;
+};
+renderEditors();render();window.addEventListener('resize',render);
+</script>
+</body>
+</html>

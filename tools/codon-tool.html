@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codon Usage &amp; Optimization — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-table"></i></div><div>Codon Usage &amp; Optimization</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-table"></i></div>
+      <div>
+        <div class="tool-title">Codon Usage &amp; Optimization</div>
+        <div class="tool-desc">Analyze the codon usage of a coding sequence (counts, RSCU, GC3), or codon-optimize a protein/DNA sequence for a host organism using its preferred codons. Includes <i>E. coli</i> and human usage tables. A quick aid for synthetic-biology design. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px"><label class="fld">Mode<select id="mode"><option value="analyze">Analyze codon usage (input: CDS)</option><option value="optimize">Codon-optimize (input: protein or CDS)</option></select></label><label class="fld">Host<select id="host"><option value="ecoli">E. coli</option><option value="human">Human</option></select></label></div>
+    <label class="fld">Sequence (DNA codons for analyze; protein 1-letter or DNA for optimize)
+      <textarea id="seq" style="min-height:100px;font-family:ui-monospace,Menlo,monospace;font-size:13px">ATGGCTAGCAAAGGAGAAGAACTTTTCACTGGAGTTGTCCCAATTCTTGTTGAATTAGATGGT</textarea>
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Run</button>
+    <span class="muted" id="status" style="font-size:12px"></span>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px} td,th{padding:4px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--text3);font-size:11px;text-transform:uppercase}
+  .seqbox{font-family:ui-monospace,monospace;font-size:13px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;word-break:break-all;line-height:1.7}
+  .copy{cursor:pointer;color:var(--text3)} .copy:hover{color:var(--teal)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const CODON={TTT:'F',TTC:'F',TTA:'L',TTG:'L',CTT:'L',CTC:'L',CTA:'L',CTG:'L',ATT:'I',ATC:'I',ATA:'I',ATG:'M',GTT:'V',GTC:'V',GTA:'V',GTG:'V',TCT:'S',TCC:'S',TCA:'S',TCG:'S',CCT:'P',CCC:'P',CCA:'P',CCG:'P',ACT:'T',ACC:'T',ACA:'T',ACG:'T',GCT:'A',GCC:'A',GCA:'A',GCG:'A',TAT:'Y',TAC:'Y',TAA:'*',TAG:'*',CAT:'H',CAC:'H',CAA:'Q',CAG:'Q',AAT:'N',AAC:'N',AAA:'K',AAG:'K',GAT:'D',GAC:'D',GAA:'E',GAG:'E',TGT:'C',TGC:'C',TGA:'*',TGG:'W',CGT:'R',CGC:'R',CGA:'R',CGG:'R',AGT:'S',AGC:'S',AGA:'R',AGG:'R',GGT:'G',GGC:'G',GGA:'G',GGG:'G'};
+// preferred codon per amino acid (most frequent) for host
+const PREF={ecoli:{F:'TTC',L:'CTG',I:'ATC',M:'ATG',V:'GTG',S:'AGC',P:'CCG',T:'ACC',A:'GCG',Y:'TAC',H:'CAC',Q:'CAG',N:'AAC',K:'AAA',D:'GAT',E:'GAA',C:'TGC',W:'TGG',R:'CGC',G:'GGC','*':'TAA'},
+  human:{F:'TTC',L:'CTG',I:'ATC',M:'ATG',V:'GTG',S:'AGC',P:'CCC',T:'ACC',A:'GCC',Y:'TAC',H:'CAC',Q:'CAG',N:'AAC',K:'AAG',D:'GAC',E:'GAG',C:'TGC',W:'TGG',R:'CGG',G:'GGC','*':'TGA'}};
+const AA3=Object.keys(PREF.ecoli);
+function clean(r){return r.replace(/^>.*$/gm,'').replace(/\s/g,'').toUpperCase();}
+function isProtein(s){return /[EFILPQZ]/.test(s)&&!/^[ACGTU]+$/.test(s);}
+$('#run').onclick=()=>{
+  const raw=clean($('#seq').value);if(!raw){$('#status').textContent='Enter a sequence.';return;}
+  const host=$('#host').value;
+  if($('#mode').value==='optimize'){
+    let prot;
+    if(isProtein(raw))prot=raw.replace(/[^A-Z*]/g,'');
+    else{prot='';const dna=raw.replace(/U/g,'T');for(let i=0;i+3<=dna.length;i+=3)prot+=CODON[dna.substr(i,3)]||'';}
+    if(!prot){$('#status').textContent='Could not read protein.';return;}
+    const opt=prot.split('').map(a=>PREF[host][a]||'NNN').join('');
+    $('#out').innerHTML=`<div class="panel-label" style="margin-bottom:6px">Optimized CDS for ${host==='ecoli'?'E. coli':'human'} (${prot.length} aa) <span class="copy" data-c="${opt}"><i class="ti ti-copy"></i></span></div><div class="seqbox">${opt.replace(/.{3}/g,'$& ')}</div><div class="muted" style="font-size:12px;margin-top:8px">Greedy "one best codon per residue" optimization — maximises codon frequency but not GC balance or motif avoidance. Review for restriction sites and repeats before synthesis.</div>`;
+    $('#status').textContent='Optimized';return;
+  }
+  // analyze
+  const dna=raw.replace(/U/g,'T');if(!/^[ACGT]+$/.test(dna)){$('#status').textContent='Analyze mode needs a DNA coding sequence.';return;}
+  const counts={};let total=0,gc3=0,codons=0;
+  for(let i=0;i+3<=dna.length;i+=3){const c=dna.substr(i,3);if(!CODON[c])continue;counts[c]=(counts[c]||0)+1;total++;codons++;if(/[GC]/.test(c[2]))gc3++;}
+  // RSCU per codon
+  const byAA={};Object.keys(CODON).forEach(c=>{(byAA[CODON[c]]=byAA[CODON[c]]||[]).push(c);});
+  const rows=[];Object.entries(byAA).forEach(([aa,cods])=>{const tot=cods.reduce((s,c)=>s+(counts[c]||0),0);cods.forEach(c=>{const n=counts[c]||0;const rscu=tot?n/(tot/cods.length):0;rows.push({aa,c,n,rscu});});});
+  rows.sort((a,b)=>a.aa.localeCompare(b.aa)||b.n-a.n);
+  $('#out').innerHTML=`<div class="stat-grid" style="margin-bottom:10px"><div class="stat-card"><div class="stat-label">Codons</div><div class="stat-value">${codons}</div></div><div class="stat-card"><div class="stat-label">GC3</div><div class="stat-value" style="color:var(--blue)">${(gc3/total*100).toFixed(1)}%</div></div></div>
+    <table><tr><th>AA</th><th>Codon</th><th>Count</th><th>Freq</th><th>RSCU</th></tr>${rows.filter(r=>r.n).map(r=>`<tr><td>${r.aa}</td><td style="font-family:monospace">${r.c}</td><td>${r.n}</td><td>${(r.n/total*100).toFixed(1)}%</td><td style="color:${r.rscu>1?'var(--green)':'var(--text2)'}">${r.rscu.toFixed(2)}</td></tr>`).join('')}</table>`;
+  $('#status').textContent='Analyzed';
+};
+$('#out').addEventListener('click',e=>{const c=e.target.closest('.copy');if(c){navigator.clipboard.writeText(c.dataset.c);$('#status').textContent='Copied.';}});
+$('#run').click();
+</script>
+</body>
+</html>

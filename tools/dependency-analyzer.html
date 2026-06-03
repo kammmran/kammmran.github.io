@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dependency Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-package"></i></div><div>Dependency Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-package"></i></div>
+      <div>
+        <div class="tool-title">Dependency &amp; Reproducibility Analyzer</div>
+        <div class="tool-desc">Paste a <code>requirements.txt</code>, <code>environment.yml</code>, <code>package.json</code>, or a block of import statements. The tool lists the dependencies, flags which are <b>not version-pinned</b> (a common reproducibility hazard), and rates how reproducible the environment is. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Dependency file or import block
+      <textarea id="src" style="min-height:180px;font-family:ui-monospace,monospace;font-size:12.5px">numpy==1.24.3
+pandas>=1.5
+scikit-learn
+torch==2.1.0
+matplotlib
+seaborn~=0.12
+requests
+import os
+import json</textarea>
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-calculator"></i> Analyze</button>
+    <div id="stats" class="stat-grid"></div>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">For a reproducible research environment, pin every dependency to an exact version (<code>==</code>) and record the language/runtime version too. Imports of standard-library modules are listed but not counted as external dependencies.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 9px;border-bottom:1px solid var(--border);text-align:left}th{color:var(--text3);font-size:11px}
+  .pin{color:var(--green);font-weight:600}.loose{color:var(--amber);font-weight:600}.none{color:var(--red);font-weight:600}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STDLIB=new Set('os sys json re math random time datetime collections itertools functools typing pathlib subprocess argparse logging io csv glob shutil copy abc warnings unittest threading multiprocessing socket struct hashlib base64 string'.split(' '));
+function analyze(){
+  const text=$('#src').value;const deps=[];const seen=new Set();
+  text.split('\n').forEach(raw=>{
+    let l=raw.trim();if(!l||l.startsWith('#')||l.startsWith('//'))return;
+    // python import
+    let m=l.match(/^(?:from\s+([A-Za-z0-9_.]+)|import\s+([A-Za-z0-9_.]+))/);
+    if(m){const name=(m[1]||m[2]).split('.')[0];if(!seen.has(name)){seen.add(name);deps.push({name,ver:'',pin:'import',std:STDLIB.has(name)});}return;}
+    // package.json line  "pkg": "^1.2.3"
+    m=l.match(/^"([^"]+)"\s*:\s*"([^"]+)"/);
+    if(m){const name=m[1];const v=m[2];if(['name','version','description','main','scripts','license','author'].includes(name))return;if(!seen.has(name)){seen.add(name);deps.push({name,ver:v,pin:/^\d/.test(v)?'pin':v.match(/[\^~><]/)?'loose':'pin',std:false});}return;}
+    // yaml "- pkg=1.2" or "- pkg>=1"
+    m=l.match(/^-\s*([A-Za-z0-9_.-]+)\s*([=<>!~]+)\s*([\w.*]+)/);
+    if(m){const name=m[1],op=m[2],v=m[3];if(!seen.has(name)){seen.add(name);deps.push({name,ver:op+v,pin:op==='='||op==='=='?'pin':'loose',std:false});}return;}
+    m=l.match(/^-\s*([A-Za-z0-9_.-]+)\s*$/);
+    if(m&&!/^-\s*(python|pip|name|channels|dependencies)/.test(l)){const name=m[1];if(!seen.has(name)){seen.add(name);deps.push({name,ver:'',pin:'none',std:false});}return;}
+    // requirements.txt  pkg==1.2 / pkg>=1 / pkg
+    m=l.match(/^([A-Za-z0-9_.-]+)\s*(==|>=|<=|~=|>|<|!=)?\s*([\w.*]+)?/);
+    if(m){const name=m[1],op=m[2]||'',v=m[3]||'';if(!seen.has(name)){seen.add(name);deps.push({name,ver:op+v,pin:op==='=='?'pin':op?'loose':'none',std:false});}}
+  });
+  const ext=deps.filter(d=>!d.std&&d.pin!=='import');
+  const imports=deps.filter(d=>d.pin==='import');
+  const pinned=ext.filter(d=>d.pin==='pin').length;
+  const repScore=ext.length?Math.round(pinned/ext.length*100):100;
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Dependencies</div><div class="stat-value">${ext.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Pinned</div><div class="stat-value" style="color:var(--green)">${pinned}</div></div>
+    <div class="stat-card"><div class="stat-label">Unpinned</div><div class="stat-value" style="color:${ext.length-pinned?'var(--red)':'var(--green)'}">${ext.length-pinned}</div></div>
+    <div class="stat-card"><div class="stat-label">Reproducibility</div><div class="stat-value" style="color:${repScore>=90?'var(--green)':repScore>=60?'var(--amber)':'var(--red)'}">${repScore}%</div></div>`;
+  let html='';
+  if(ext.length)html+=`<table><tr><th>Package</th><th>Version spec</th><th>Pinning</th></tr>${ext.map(d=>`<tr><td>${esc(d.name)}</td><td style="font-family:monospace">${esc(d.ver||'—')}</td><td class="${d.pin==='pin'?'pin':d.pin==='loose'?'loose':'none'}">${d.pin==='pin'?'✓ exact':d.pin==='loose'?'~ range':'✗ none'}</td></tr>`).join('')}</table>`;
+  if(imports.length)html+=`<div class="muted" style="font-size:12px;margin-top:10px"><b>Imports detected:</b> ${imports.map(d=>esc(d.name)+(d.std?' <span style="color:var(--text3)">(stdlib)</span>':'')).join(', ')}</div>`;
+  $('#out').innerHTML=html||'<div class="muted" style="font-size:13px">No dependencies recognised.</div>';
+}
+$('#src').addEventListener('input',analyze);$('#run').onclick=analyze;analyze();
+</script>
+</body>
+</html>

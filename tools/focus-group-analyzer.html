@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Group Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-messages"></i></div><div>Focus Group Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-messages"></i></div>
+      <div>
+        <div class="tool-title">Focus Group Analyzer</div>
+        <div class="tool-desc">Spot agreements, disagreements, and the key topics in a focus-group transcript. Flags consensus and conflict moments, ranks the most-discussed themes, and shows who drove the conversation. Local analysis.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Focus group transcript ("Name: text" lines)
+      <textarea id="txt" style="min-height:150px">Mod: What do you think of the pricing?
+P1: I agree it's too expensive, honestly.
+P2: Exactly, I feel the same way about the cost.
+P3: Actually I disagree — I think the price is fair for the value.
+P1: But the onboarding was confusing and slow.
+P2: Yes, totally, onboarding was a real pain point.
+P3: Hmm, I didn't find onboarding hard at all.</textarea>
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Analyze</button>
+    <div id="stats" class="stat-grid"></div>
+    <div class="grid"><div id="agree"></div><div id="disagree"></div></div>
+    <div id="topics"></div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.grid{grid-template-columns:1fr}}
+  .col h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px}
+  .col.a h3{color:var(--green)} .col.d h3{color:var(--red)}
+  .q{font-size:13px;line-height:1.5;padding:6px 8px;border-radius:6px;background:var(--bg2);margin-bottom:5px} .q b{font-weight:700}
+  .topic{display:inline-block;border:1px solid var(--border);border-radius:16px;padding:4px 12px;margin:3px 5px 0 0;font-size:12px} .topic .c{color:var(--pink);font-weight:700;margin-left:5px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const STOP=new Set('the a an and or but of to in on at for with as is are was were be it its they them he she you we i my me do did so if then not no yes just like really very think feel about that this what when how too also only your our their about would could should will going get'.split(' '));
+const AGREE=/\b(i agree|agreed|exactly|same (way|here)|me too|totally|absolutely|right|yes,|true|good point|i feel the same|that'?s right|definitely)\b/i;
+const DISAGREE=/\b(i disagree|disagree|but |however|actually|not (sure|really)|i don'?t (think|agree)|on the (other|contrary)|that'?s not|i'?d push back|hmm,? i|didn'?t find)\b/i;
+function parse(t){return t.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{const m=l.match(/^([A-Z][\w.\- ]{0,28}?):\s*(.+)$/);return m?{sp:m[1].trim(),text:m[2]}:{sp:'?',text:l};});}
+$('#run').onclick=()=>{
+  const turns=parse($('#txt').value.trim());if(!turns.length){$('#status').textContent='Paste a transcript first.';return;}
+  const agree=[],disagree=[];const talk={};
+  turns.forEach(t=>{talk[t.sp]=(talk[t.sp]||0)+(t.text.match(/\S+/g)||[]).length;if(AGREE.test(t.text))agree.push(t);else if(DISAGREE.test(t.text))disagree.push(t);});
+  const words=(turns.map(t=>t.text).join(' ').toLowerCase().match(/\b[a-z][a-z'-]{3,}\b/g)||[]).filter(w=>!STOP.has(w));
+  const freq={};words.forEach(w=>freq[w]=(freq[w]||0)+1);
+  const topics=Object.entries(freq).filter(([,c])=>c>1).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  const lead=Object.entries(talk).sort((a,b)=>b[1]-a[1])[0];
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Turns</div><div class="stat-value">${turns.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Agreements</div><div class="stat-value" style="color:var(--green)">${agree.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Disagreements</div><div class="stat-value" style="color:var(--red)">${disagree.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Most vocal</div><div class="stat-value" style="font-size:15px">${esc(lead?lead[0]:'—')}</div></div>`;
+  $('#agree').innerHTML=`<div class="col a"><h3>Consensus / agreement</h3>${agree.length?agree.map(t=>`<div class="q"><b>${esc(t.sp)}:</b> ${esc(t.text)}</div>`).join(''):'<div class="muted" style="font-size:12px">None detected</div>'}</div>`;
+  $('#disagree').innerHTML=`<div class="col d"><h3>Conflict / disagreement</h3>${disagree.length?disagree.map(t=>`<div class="q"><b>${esc(t.sp)}:</b> ${esc(t.text)}</div>`).join(''):'<div class="muted" style="font-size:12px">None detected</div>'}</div>`;
+  $('#topics').innerHTML='<div class="panel-label" style="margin:8px 0 6px">Key topics</div>'+(topics.map(([t,c])=>`<span class="topic">${esc(t)}<span class="c">${c}</span></span>`).join('')||'<span class="muted" style="font-size:12px">No repeated topics</span>');
+  $('#status').textContent='Analyzed';
+};
+</script>
+</body>
+</html>

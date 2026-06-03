@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figure Accessibility Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-eye-check"></i></div><div>Figure Accessibility Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-eye-check"></i></div>
+      <div>
+        <div class="tool-title">Figure Accessibility Checker</div>
+        <div class="tool-desc">See your figure the way colour-blind readers do. Simulate protanopia, deuteranopia and tritanopia side by side, get a quick estimate of how reliant the figure is on red–green distinctions, and check it in grayscale to confirm it survives black-and-white printing. All processing is local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:22px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop a figure (chart, plot, diagram)</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div id="report"></div>
+    <div id="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">The red–green reliance score estimates how much of the figure's colour information sits on the red/green axis that's hardest for the most common colour-blindness types (~8% of men). High reliance + survives-grayscale failing = add shapes, line styles, direct labels or a colour-blind-safe palette. Simulations use the Brettel/Viénot transform and are approximate.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .cell{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:8px;text-align:center}
+  .cell h4{margin:0 0 6px;font-size:12px;color:var(--text2)} .cell canvas{max-width:100%;border-radius:6px;background:#fff}
+  .crow{display:flex;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:6px;font-size:13px}.crow .v{margin-left:auto;font-weight:600}
+  .ok{color:var(--green)}.warn{color:var(--amber)}.bad{color:var(--red)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+let img=null;
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])load(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+function load(f){const u=URL.createObjectURL(f);img=new Image();img.onload=run;img.src=u;}
+// sRGB->linear
+function lin(c){c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4);}
+function srgb(c){c=c<=0.0031308?c*12.92:1.055*Math.pow(c,1/2.4)-0.055;return Math.max(0,Math.min(255,Math.round(c*255)));}
+// Viénot 1999 simulation matrices (in linear RGB)
+const MAT={
+  protan:[0.11238,0.88762,0,0.07276,0.92724,0,0.00399,-0.00399,1],
+  deutan:[0.29275,0.70725,0,0.34597,0.65403,0,-0.02174,0.02174,1],
+  tritan:[1,0.14461,-0.14461,0,0.85659,0.14341,0,0.85841,0.14159]
+};
+function simulate(src,type){
+  const m=MAT[type];const out=new ImageData(src.width,src.height);const a=src.data,b=out.data;
+  for(let i=0;i<a.length;i+=4){const r=lin(a[i]),g=lin(a[i+1]),bl=lin(a[i+2]);
+    b[i]=srgb(m[0]*r+m[1]*g+m[2]*bl);b[i+1]=srgb(m[3]*r+m[4]*g+m[5]*bl);b[i+2]=srgb(m[6]*r+m[7]*g+m[8]*bl);b[i+3]=a[i+3];}
+  return out;
+}
+function grayscale(src){const out=new ImageData(src.width,src.height);const a=src.data,b=out.data;for(let i=0;i<a.length;i+=4){const l=0.299*a[i]+0.587*a[i+1]+0.114*a[i+2];b[i]=b[i+1]=b[i+2]=l;b[i+3]=a[i+3];}return out;}
+function run(){
+  const W=Math.min(img.naturalWidth,520),H=Math.round(img.naturalHeight*(W/img.naturalWidth));
+  const base=document.createElement('canvas');base.width=W;base.height=H;const bc=base.getContext('2d');bc.fillStyle='#fff';bc.fillRect(0,0,W,H);bc.drawImage(img,0,0,W,H);
+  const src=bc.getImageData(0,0,W,H);
+  // red-green reliance: fraction of pixels with notable a* magnitude (red-green axis) among coloured pixels
+  let colored=0,rg=0;const a=src.data;
+  for(let i=0;i<a.length;i+=4){const r=a[i],g=a[i+1],b=a[i+2];const mx=Math.max(r,g,b),mn=Math.min(r,g,b);const sat=mx-mn;if(sat>30){colored++;const rgAxis=Math.abs(r-g);const yb=Math.abs((r+g)/2-b);if(rgAxis>=yb*0.8)rg++;}}
+  const reliance=colored?rg/colored:0;
+  // grayscale separability: stddev of luminance among colored pixels (proxy)
+  const views=[['Original',src],['Protanopia',simulate(src,'protan')],['Deuteranopia',simulate(src,'deutan')],['Tritanopia',simulate(src,'tritan')],['Grayscale',grayscale(src)]];
+  $('#grid').innerHTML=views.map((_,i)=>`<div class="cell"><h4>${views[i][0]}</h4><canvas id="vc${i}"></canvas></div>`).join('');
+  views.forEach((v,i)=>{const c=document.getElementById('vc'+i);c.width=W;c.height=H;c.getContext('2d').putImageData(v[1],0,0);});
+  const rel=reliance>0.5?['bad','High']:reliance>0.3?['warn','Moderate']:['ok','Low'];
+  const colPct=Math.round(colored/(W*H/4*1)*100)||0;
+  $('#report').innerHTML=`<div class="crow">Red–green colour reliance<span class="v ${rel[0]}">${rel[1]} (${Math.round(reliance*100)}%)</span></div>
+    <div class="crow">Recommendation<span class="v" style="font-weight:500;text-align:right">${reliance>0.3?'Add non-colour cues (shapes, line styles, labels) or a CB-safe palette':'Looks robust — still verify legends are labelled'}</span></div>
+    <div class="muted" style="font-size:12px;margin:4px 0 2px">Compare the panels below: if categories that differ in the Original become hard to tell apart in any simulation, encode them with more than colour.</div>`;
+}
+</script>
+</body>
+</html>

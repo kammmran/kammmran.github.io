@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Open Source License Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-license"></i></div><div>Open Source License Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-license"></i></div>
+      <div>
+        <div class="tool-title">Open Source License Checker</div>
+        <div class="tool-desc">Understand and choose a software license. Compare permissions, conditions and limitations of common licenses (MIT, Apache-2.0, GPL, BSD, MPL…), check basic compatibility for combining code, and get a recommendation for releasing research software. Reference info, not legal advice. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">License<select id="lic"></select></label>
+      <label class="fld">Combine with<select id="lic2"></select></label>
+    </div>
+    <div id="detail"></div>
+    <div id="compat"></div>
+    <div class="panel-label" style="margin-top:8px">Recommendation helper</div>
+    <div class="row" style="gap:14px;flex-wrap:wrap;font-size:12px">
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="permissive" checked> maximise adoption/reuse</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="patent"> need explicit patent grant</label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="copyleft"> want derivatives kept open</label>
+    </div>
+    <div id="rec"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Summaries follow choosealicense.com / SPDX. For anything consequential, confirm with your institution's tech-transfer or legal office — funder and employer policies can constrain your choice.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}@media(max-width:640px){.cols{grid-template-columns:1fr}}
+  .col h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px} .col.perm h4{color:var(--green)} .col.cond h4{color:var(--amber)} .col.lim h4{color:var(--red)}
+  .col ul{margin:0;padding-left:16px;font-size:13px;line-height:1.5} .verdict{border-radius:8px;padding:12px 14px;font-size:14px;margin-top:6px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const L={
+  'MIT':{type:'permissive',patent:false,perm:['Commercial use','Modification','Distribution','Private use'],cond:['License & copyright notice'],lim:['Liability','Warranty'],note:'Short, simple, very widely used.'},
+  'Apache-2.0':{type:'permissive',patent:true,perm:['Commercial use','Modification','Distribution','Patent use','Private use'],cond:['License & copyright notice','State changes'],lim:['Liability','Trademark use','Warranty'],note:'Permissive + explicit patent grant. Great default for research software.'},
+  'BSD-3-Clause':{type:'permissive',patent:false,perm:['Commercial use','Modification','Distribution','Private use'],cond:['License & copyright notice'],lim:['Liability','Warranty'],note:'Like MIT with a no-endorsement clause.'},
+  'GPL-3.0':{type:'copyleft',patent:true,perm:['Commercial use','Modification','Distribution','Patent use','Private use'],cond:['Disclose source','License & copyright notice','Same license (copyleft)','State changes'],lim:['Liability','Warranty'],note:'Strong copyleft — derivatives must also be GPL.'},
+  'LGPL-3.0':{type:'copyleft',patent:true,perm:['Commercial use','Modification','Distribution','Patent use','Private use'],cond:['Disclose source (library)','License & copyright notice','Same license for the library'],lim:['Liability','Warranty'],note:'Weak copyleft — can be linked from non-GPL code.'},
+  'MPL-2.0':{type:'copyleft',patent:true,perm:['Commercial use','Modification','Distribution','Patent use','Private use'],cond:['Disclose source (file-level)','License & copyright notice','Same license (file)'],lim:['Liability','Trademark use','Warranty'],note:'File-level copyleft — middle ground.'},
+  'CC-BY-4.0':{type:'permissive',patent:false,perm:['Commercial use','Modification','Distribution'],cond:['Attribution'],lim:['Liability','Warranty','Patent/trademark not granted'],note:'For data/docs, not code. Good for datasets & figures.'},
+  'Unlicense':{type:'public-domain',patent:false,perm:['Commercial use','Modification','Distribution','Private use'],cond:[],lim:['Liability','Warranty'],note:'Public-domain dedication; no conditions.'}
+};
+const opts=Object.keys(L).map(k=>`<option value="${k}">${k}</option>`).join('');
+$('#lic').innerHTML=opts;$('#lic2').innerHTML='<option value="">— (none)</option>'+opts;$('#lic').value='Apache-2.0';
+function render(){
+  const k=$('#lic').value,l=L[k];
+  $('#detail').innerHTML=`<div style="font-size:13px;color:var(--text2);margin-bottom:8px"><b style="color:var(--text)">${esc(k)}</b> — ${esc(l.note)} <span style="color:var(--text3)">[${l.type}]</span></div>
+    <div class="cols"><div class="col perm"><h4>✓ Permissions</h4><ul>${l.perm.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+    <div class="col cond"><h4>! Conditions</h4><ul>${l.cond.length?l.cond.map(x=>`<li>${esc(x)}</li>`).join(''):'<li>None</li>'}</ul></div>
+    <div class="col lim"><h4>✗ Limitations</h4><ul>${l.lim.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div></div>`;
+  // compatibility
+  const k2=$('#lic2').value;
+  if(k2){const l2=L[k2];let msg,col;
+    const copyleftStrong=x=>x==='GPL-3.0';
+    if(copyleftStrong(k)||copyleftStrong(k2)){if(l.type==='permissive'||l2.type==='permissive'||k===k2){msg=`Combining permissive code into a GPL project is fine — the combined work must be released under ${copyleftStrong(k)?k:k2}.`;col='var(--amber)';}else{msg='Both are strong copyleft — combinable only if license-compatible; check versions carefully.';col='var(--amber)';}}
+    else{msg='Both permissive/weak-copyleft — generally safe to combine, keeping all notices.';col='var(--green)';}
+    $('#compat').innerHTML=`<div class="verdict" style="background:rgba(251,191,36,0.1);color:${col}"><b>${esc(k)} + ${esc(k2)}:</b> ${esc(msg)}</div>`;
+  }else $('#compat').innerHTML='';
+  recommend();
+}
+function recommend(){
+  let rec;
+  if($('#copyleft').checked)rec=$('#patent').checked?'GPL-3.0':'GPL-3.0';
+  else if($('#patent').checked)rec='Apache-2.0';
+  else if($('#permissive').checked)rec='MIT';
+  else rec='Apache-2.0';
+  $('#rec').innerHTML=`<div class="verdict" style="background:rgba(74,222,128,0.1);color:var(--green)"><i class="ti ti-bulb"></i> Suggested: <b>${rec}</b> — ${esc(L[rec].note)}</div>`;
+}
+['lic','lic2'].forEach(id=>$('#'+id).addEventListener('change',render));
+['permissive','patent','copyleft'].forEach(id=>$('#'+id).addEventListener('change',recommend));
+render();
+</script>
+</body>
+</html>

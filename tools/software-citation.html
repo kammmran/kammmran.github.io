@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Software Citation Formatter — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-quote"></i></div><div>Software Citation Formatter</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-quote"></i></div>
+      <div>
+        <div class="tool-title">Research Software Citation Formatter</div>
+        <div class="tool-desc">Make your software properly citable. Fill in the metadata (or paste a CITATION.cff) and generate APA, IEEE and BibTeX citations plus a ready-to-commit <code>CITATION.cff</code> file. Encourages reproducible credit for research code. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Software title<input id="title" value="SpectraNet"></label>
+      <label class="fld">Authors (one per line: Family, Given)<textarea id="authors" style="min-height:60px">Researcher, Jane
+Lee, Tom</textarea></label>
+      <label class="fld">Version<input id="version" value="1.2.0"></label>
+      <label class="fld">Year<input id="year" value="2026"></label>
+      <label class="fld">URL / repository<input id="url" value="https://github.com/plant-ai/spectranet"></label>
+      <label class="fld">DOI (optional)<input id="doi" value="10.5281/zenodo.123456"></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-quote"></i> Generate</button><button class="btn" id="cff"><i class="ti ti-download"></i> CITATION.cff</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .cit{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:12px 14px;margin-bottom:8px;position:relative}
+  .cit .s{font-size:11px;text-transform:uppercase;color:var(--accent3);font-weight:700;margin-bottom:5px} .cit .b{font-size:13.5px;line-height:1.55;font-family:ui-monospace,monospace;white-space:pre-wrap}
+  .cit .cp{position:absolute;top:10px;right:10px;color:var(--text3);cursor:pointer}.cit .cp:hover{color:var(--teal)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const v=id=>$('#'+id).value.trim();
+function authors(){return $('#authors').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(',');return {family:(p[0]||'').trim(),given:(p[1]||'').trim()};});}
+function gen(){
+  const au=authors();const title=v('title'),ver=v('version'),year=v('year'),url=v('url'),doi=v('doi');
+  const apaA=au.map(a=>`${a.family}, ${a.given?a.given[0]+'.':''}`).join(', ');
+  const ieeeA=au.map(a=>`${a.given?a.given[0]+'. ':''}${a.family}`).join(', ');
+  const apa=`${apaA} (${year}). ${title} (Version ${ver}) [Computer software].${doi?' https://doi.org/'+doi:' '+url}`;
+  const ieee=`${ieeeA}, "${title}," version ${ver}, ${year}. [Online]. Available: ${doi?'https://doi.org/'+doi:url}`;
+  const key=(au[0]?au[0].family.toLowerCase():'software')+year;
+  const bib=`@software{${key},\n  title  = {${title}},\n  author = {${au.map(a=>a.family+', '+a.given).join(' and ')}},\n  year   = {${year}},\n  version= {${ver}},\n  url    = {${url}}${doi?',\n  doi    = {'+doi+'}':''}\n}`;
+  const cits=[['APA',apa],['IEEE',ieee],['BibTeX',bib]];
+  $('#out').innerHTML=cits.map(([s,c])=>`<div class="cit"><div class="s">${s}</div><div class="b">${esc(c)}</div><i class="ti ti-copy cp" title="copy"></i></div>`).join('');
+  $('#status').textContent='Generated';
+}
+function cffText(){
+  const au=authors();
+  return `cff-version: 1.2.0\nmessage: "If you use this software, please cite it as below."\ntitle: "${v('title')}"\nversion: ${v('version')}\ndate-released: ${v('year')}-01-01\nrepository-code: "${v('url')}"\n${v('doi')?`doi: ${v('doi')}\n`:''}authors:\n${au.map(a=>`  - family-names: "${a.family}"\n    given-names: "${a.given}"`).join('\n')}\n`;
+}
+$('#gen').onclick=gen;
+$('#cff').onclick=()=>{const b=new Blob([cffText()],{type:'text/yaml'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='CITATION.cff';a.click();$('#status').textContent='CITATION.cff downloaded';};
+$('#out').addEventListener('click',e=>{const cp=e.target.closest('.cp');if(cp){navigator.clipboard.writeText(cp.parentElement.querySelector('.b').innerText);$('#status').textContent='Copied.';}});
+gen();
+</script>
+</body>
+</html>

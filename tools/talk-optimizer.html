@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conference Talk Slide Optimizer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-clock-bolt"></i></div><div>Talk Slide Optimizer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-clock-bolt"></i></div>
+      <div>
+        <div class="tool-title">Conference Talk Slide Optimizer</div>
+        <div class="tool-desc">Make your deck fit the clock. Enter your talk length and paste the slides; the tool estimates speaking time per slide from its content, flags slides that will run long or short, and tells you the target slide count and whether to cut or add. Built for the strict 12- or 15-minute conference slot. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Talk length (min)<input id="mins" type="number" value="12" style="width:80px"></label>
+      <label class="fld">Reserve for Q&amp;A (min)<input id="qa" type="number" value="3" style="width:80px"></label>
+      <label class="fld">Speaking pace (wpm)<input id="wpm" type="number" value="130" style="width:80px"></label>
+    </div>
+    <label class="fld">Slides — separate with <code>---</code>. Include the words you'll actually say if you have a script; otherwise the title + bullets are used as a proxy.
+      <textarea id="src" style="min-height:170px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">Title slide
+Jane Researcher
+---
+The Problem
+- Crop disease causes major yield loss
+- Symptoms appear too late
+- Labelled data is scarce
+---
+Our Approach
+- Self-supervised pretraining on spectra
+- Fine-tune on a small labelled set
+- Deploy on handheld scanners
+---
+Results
+- 94% accuracy pre-symptomatically
+- 8x less labelled data
+- Robust across 6 species
+---
+Conclusions & next steps
+- Detect disease days earlier
+- On-device inference next
+- Thank you / questions</textarea>
+    </label>
+    <button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Optimize timing</button>
+    <div id="overall" class="stat-grid"></div>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">A common rule of thumb is ~1 slide per minute, but content-dense slides take longer. The estimate adds a fixed transition cost per slide plus speaking time for the words. Rehearse with a timer to calibrate your real pace.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .sl{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:9px 12px;margin-bottom:6px;font-size:13px}
+  .sl .ti2{flex:1} .sl .bar{width:120px;height:8px;border-radius:4px;background:var(--bg3);overflow:hidden} .sl .bar>span{display:block;height:100%}
+  .sl .t{width:64px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+$('#run').onclick=()=>{
+  const slides=$('#src').value.split(/\n-{3,}\n/).map(s=>s.trim()).filter(Boolean);
+  if(!slides.length)return;
+  const total=(+$('#mins').value-+$('#qa').value)*60;const wpm=+$('#wpm').value||130;
+  const TRANS=8; // seconds per slide overhead
+  const est=slides.map(s=>{const words=(s.match(/\S+/g)||[]).length;return TRANS+words/wpm*60*2.2;}); // bullets get expanded ~2.2x when spoken
+  const sum=est.reduce((a,b)=>a+b,0);
+  const scale=total/sum;const scaled=est.map(e=>e*scale);
+  const perSlideTarget=total/slides.length;
+  const out=slides.map((s,i)=>{
+    const title=s.split('\n')[0];const t=scaled[i];const over=t>perSlideTarget*1.4,under=t<perSlideTarget*0.5;
+    const col=over?'var(--red)':under?'var(--amber)':'var(--green)';
+    const w=Math.min(100,t/(perSlideTarget*2)*100);
+    return `<div class="sl"><span class="ti2">${i+1}. ${esc(title.slice(0,50))}</span><div class="bar"><span style="width:${w}%;background:${col}"></span></div><span class="t" style="color:${col}">${fmt(t)}</span></div>`;
+  }).join('');
+  const fit=sum<=total;const idealCount=Math.round(total/Math.max(perSlideTarget,40));
+  $('#overall').innerHTML=`<div class="stat-card"><div class="stat-label">Speaking budget</div><div class="stat-value">${fmt(total)}</div></div>
+    <div class="stat-card"><div class="stat-label">Slides</div><div class="stat-value">${slides.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Raw estimate</div><div class="stat-value" style="color:${fit?'var(--green)':'var(--red)'}">${fmt(sum)}</div></div>
+    <div class="stat-card"><div class="stat-label">Verdict</div><div class="stat-value" style="font-size:15px;color:${fit?'var(--green)':'var(--red)'}">${sum>total*1.15?'Cut content':sum<total*0.8?'Room to add':'Good fit'}</div></div>`;
+  $('#out').innerHTML=`<div class="muted" style="font-size:12px;margin:4px 0 8px">Bars are normalised so the deck fills your ${fmt(total)} budget. <b style="color:var(--red)">Red</b> = likely to overrun, <b style="color:var(--amber)">amber</b> = very light. Aim for ~${fmt(perSlideTarget)}/slide (≈ ${idealCount} slides total).</div>${out}`;
+};
+function fmt(s){s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+$('#run').click();
+</script>
+</body>
+</html>

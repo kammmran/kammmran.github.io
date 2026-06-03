@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Image Metadata Inspector — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-info-square"></i></div><div>Image Metadata Inspector</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-info-square"></i></div>
+      <div>
+        <div class="tool-title">Image Metadata Inspector</div>
+        <div class="tool-desc">Read the hidden EXIF/metadata embedded in an image: camera and software used, capture date, editing-software tags, stored DPI, GPS, and more. Useful for integrity checks and for spotting when a "raw" figure was actually processed in Photoshop. Nothing is uploaded — parsing happens in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-upload" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop a JPEG / TIFF / PNG</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div id="flags"></div>
+    <div id="out"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">EXIF is richest in JPEG and TIFF straight from cameras. Many exported figures and screenshots carry little or no EXIF — an absence of metadata is normal and not itself suspicious. Note: software stripping metadata is trivial, so presence is more informative than absence.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  table{width:100%;border-collapse:collapse;font-size:13px} td,th{padding:6px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top} th{color:var(--text3);font-size:11px;text-transform:uppercase} td:first-child{color:var(--text2);width:42%}
+  .flag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:13px;margin:0 6px 6px 0}
+  .flag.warn{background:rgba(251,191,36,0.12);color:var(--amber)} .flag.info{background:rgba(96,165,250,0.12);color:var(--blue)} .flag.ok{background:rgba(74,222,128,0.12);color:var(--green)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])handle(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])handle(e.target.files[0]);};
+
+// Minimal EXIF parser (TIFF IFD inside JPEG APP1)
+const TAGS={0x010F:'Make',0x0110:'Model',0x0131:'Software',0x0132:'DateTime',0x9003:'DateTimeOriginal',0x9004:'DateTimeDigitized',0x011A:'XResolution',0x011B:'YResolution',0x0128:'ResolutionUnit',0x0112:'Orientation',0x013B:'Artist',0x8298:'Copyright',0x010E:'ImageDescription',0xA002:'PixelXDimension',0xA003:'PixelYDimension',0x829A:'ExposureTime',0x829D:'FNumber',0x8827:'ISO',0x920A:'FocalLength',0x0103:'Compression',0x9290:'SubSecTime',0xC614:'UniqueCameraModel'};
+function parseExif(buf){
+  const dv=new DataView(buf);if(dv.getUint16(0)!==0xFFD8)return {err:'Not a JPEG — EXIF parsing here supports JPEG (and TIFF).',tags:{}};
+  let off=2;
+  while(off<dv.byteLength){
+    if(dv.getUint16(off)!==0xFFE1){const len=dv.getUint16(off+2);if(dv.getUint16(off)===0xFFDA)break;off+=2+len;continue;}
+    const segLen=dv.getUint16(off+2);
+    if(dv.getUint32(off+4)===0x45786966){return readTiff(dv,off+10);}
+    off+=2+segLen;
+  }
+  return {tags:{},none:true};
+}
+function readTiff(dv,base){
+  const le=dv.getUint16(base)===0x4949;const g16=(o)=>dv.getUint16(base+o,le),g32=(o)=>dv.getUint32(base+o,le);
+  const out={};
+  function ifd(start){
+    const n=g16(start);let p=start+2;
+    for(let i=0;i<n;i++,p+=12){
+      const tag=g16(p),type=g16(p+2),count=g32(p+4);
+      const sizes={1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8};const bytes=(sizes[type]||1)*count;
+      let valOff=p+8;if(bytes>4)valOff=g32(p+8);
+      let v;
+      if(type===2){let s='';for(let j=0;j<count-1;j++)s+=String.fromCharCode(dv.getUint8(base+valOff+j));v=s.replace(/\0+$/,'');}
+      else if(type===3)v=g16(valOff);
+      else if(type===4)v=g32(valOff);
+      else if(type===5)v=g32(valOff)+'/'+g32(valOff+4);
+      else v='[binary]';
+      if(tag===0x8769&&type===4){ifd(g32(valOff));}
+      else if(tag===0x8825){/* GPS IFD */ try{readGps(dv,base,le,g32(valOff),out);}catch(_){}}
+      else if(TAGS[tag])out[TAGS[tag]]=v;
+    }
+    return p;
+  }
+  try{const ifd0=g32(4);const next=ifd(ifd0);const nextOff=dv.getUint32(base+next,le)?dv.getUint32(base+next,le):0;if(nextOff)ifd(nextOff);}catch(e){}
+  return {tags:out};
+}
+function readGps(dv,base,le,start,out){
+  const g16=o=>dv.getUint16(base+o,le),g32=o=>dv.getUint32(base+o,le);const n=g16(start);let p=start+2;const gps={};
+  for(let i=0;i<n;i++,p+=12){const tag=g16(p),count=g32(p+4),valOff=g32(p+8);
+    if(tag===2||tag===4){const d=g32(base+valOff)/g32(base+valOff+4),m=g32(base+valOff+8)/g32(base+valOff+12),s=g32(base+valOff+16)/g32(base+valOff+20);gps[tag===2?'lat':'lon']=d+m/60+s/3600;}
+    if(tag===1||tag===3)gps[tag===1?'latRef':'lonRef']=String.fromCharCode(dv.getUint8(base+(count<=4?p+8:valOff)));}
+  if(gps.lat&&gps.lon)out['GPS']=`${(gps.latRef==='S'?-1:1)*gps.lat.toFixed(5)}, ${(gps.lonRef==='W'?-1:1)*gps.lon.toFixed(5)}`;
+}
+function handle(file){
+  const out=$('#out'),flags=$('#flags');out.innerHTML='';flags.innerHTML='<span class="muted" style="font-size:12px">Reading…</span>';
+  const fr=new FileReader();
+  fr.onload=()=>{
+    const res=parseExif(fr.result);const t=res.tags||{};const keys=Object.keys(t);
+    const url=URL.createObjectURL(file);
+    let fl=[];
+    fl.push(`<span class="flag info"><i class="ti ti-file"></i> ${esc((file.type||'?').replace('image/',''))} · ${(file.size/1024).toFixed(0)} KB</span>`);
+    if(t.Software)fl.push(`<span class="flag warn"><i class="ti ti-brush"></i> Edited/saved in: ${esc(t.Software)}</span>`);
+    if(/photoshop|gimp|illustrator|affinity|imagej/i.test(t.Software||''))fl.push(`<span class="flag warn"><i class="ti ti-alert-triangle"></i> Image-editing software detected</span>`);
+    if(t.Make||t.Model)fl.push(`<span class="flag ok"><i class="ti ti-camera"></i> Camera: ${esc([t.Make,t.Model].filter(Boolean).join(' '))}</span>`);
+    if(t.GPS)fl.push(`<span class="flag warn"><i class="ti ti-map-pin"></i> GPS location embedded</span>`);
+    if(t.DateTimeOriginal)fl.push(`<span class="flag info"><i class="ti ti-calendar"></i> Captured: ${esc(t.DateTimeOriginal)}</span>`);
+    if(!keys.length)fl.push(`<span class="flag info"><i class="ti ti-info-circle"></i> No EXIF found (common for exports/screenshots)</span>`);
+    flags.innerHTML=fl.join('');
+    const rows=keys.map(k=>`<tr><td>${esc(k)}</td><td>${esc(t[k])}</td></tr>`).join('');
+    out.innerHTML=`<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start"><img src="${url}" style="max-width:160px;max-height:140px;border-radius:8px;border:1px solid var(--border)"><div style="flex:1;min-width:260px">${keys.length?`<table><tr><th>Tag</th><th>Value</th></tr>${rows}</table>`:'<div class="muted" style="font-size:13px">No embedded metadata to display.</div>'}</div></div>${res.err?`<div class="muted" style="font-size:12px;margin-top:8px">${esc(res.err)}</div>`:''}`;
+  };
+  fr.readAsArrayBuffer(file.slice(0,256*1024));
+}
+</script>
+</body>
+</html>

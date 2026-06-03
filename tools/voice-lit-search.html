@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice-Based Literature Search — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-search"></i></div><div>Voice Literature Search</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-search"></i></div>
+      <div>
+        <div class="tool-title">Voice-Based Literature Search</div>
+        <div class="tool-desc">Ask a research question out loud and get matching papers. Speech becomes a query, then results stream from the free Crossref API — title, authors, year, venue and a direct DOI link.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px">
+      <button class="btn btn-primary" id="mic"><i class="ti ti-microphone"></i> Speak query</button>
+      <input type="text" id="q" placeholder="…or type: machine learning for protein folding" style="flex:1;min-width:200px">
+      <button class="btn" id="go"><i class="ti ti-search"></i> Search</button>
+    </div>
+    <span class="muted" id="status" style="font-size:12px"></span>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.r{padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);margin-bottom:10px}
+  .r .t{font-weight:600;font-size:14px;line-height:1.4} .r .m{color:var(--text2);font-size:12px;margin-top:4px}
+  .r a{color:var(--accent3);text-decoration:none} .r a:hover{text-decoration:underline}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+$('#mic').onclick=()=>{
+  if(!SR){$('#status').textContent='Voice input needs Chrome or Edge — type instead.';return;}
+  const rec=new SR();rec.lang='en-US';rec.interimResults=true;
+  $('#status').textContent='Listening…';$('#mic').innerHTML='<i class="ti ti-player-stop"></i> Listening';
+  rec.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');$('#q').value=t;if(e.results[e.results.length-1].isFinal){rec.stop();}};
+  rec.onend=()=>{$('#mic').innerHTML='<i class="ti ti-microphone"></i> Speak query';$('#status').textContent='';if($('#q').value.trim())search();};
+  rec.onerror=e=>{$('#status').textContent='Mic error: '+e.error;};
+  rec.start();
+};
+$('#go').onclick=search;
+$('#q').addEventListener('keydown',e=>{if(e.key==='Enter')search();});
+async function search(){
+  const q=$('#q').value.trim();if(!q){$('#status').textContent='Say or type a question first.';return;}
+  $('#status').textContent='Searching Crossref…';$('#out').innerHTML='';
+  try{
+    const r=await fetch(`https://api.crossref.org/works?query=${encodeURIComponent(q)}&rows=12&select=title,author,issued,container-title,DOI`);
+    const d=await r.json();const items=d.message.items||[];
+    if(!items.length){$('#status').textContent='No results.';return;}
+    $('#status').textContent=`${items.length} results for "${q}"`;
+    $('#out').innerHTML=items.map(it=>{
+      const title=(it.title&&it.title[0])||'Untitled';
+      const yr=it.issued&&it.issued['date-parts']&&it.issued['date-parts'][0]?it.issued['date-parts'][0][0]:'';
+      const au=(it.author||[]).slice(0,4).map(a=>[a.given,a.family].filter(Boolean).join(' ')).join(', ')+((it.author||[]).length>4?', et al.':'');
+      const ven=(it['container-title']&&it['container-title'][0])||'';
+      return `<div class="r"><div class="t">${esc(title)}</div><div class="m">${esc(au)}${yr?' · '+yr:''}${ven?' · <i>'+esc(ven)+'</i>':''}</div>${it.DOI?`<div class="m"><a href="https://doi.org/${esc(it.DOI)}" target="_blank" rel="noopener"><i class="ti ti-external-link"></i> doi.org/${esc(it.DOI)}</a></div>`:''}</div>`;
+    }).join('');
+  }catch(e){$('#status').textContent='Search failed: '+e.message;}
+}
+</script>
+</body>
+</html>

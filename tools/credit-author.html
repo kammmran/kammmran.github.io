@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Author Contribution Generator (CRediT) — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-users-plus"></i></div><div>Author Contribution (CRediT)</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:980px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-users-plus"></i></div>
+      <div>
+        <div class="tool-title">Author Contribution Generator (CRediT)</div>
+        <div class="tool-desc">Build the "Author Contributions" statement most journals now require, using the 14 standardised CRediT roles. Tick which authors did what in the matrix, then copy a clean statement (and an optional degree-of-contribution note). Local — nothing is uploaded.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Authors (comma-separated, in order)<input id="authors" value="Jane Researcher, Tom Lee, Maria Garcia"></label>
+    <div style="overflow:auto"><table id="matrix"></table></div>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-file-text"></i> Generate statement</button><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="out" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:14px;line-height:1.6"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">CRediT (Contributor Roles Taxonomy) is the standard adopted by Elsevier, PLOS, Cell Press and many others. Tick a cell where that author meaningfully contributed to that role.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #matrix{border-collapse:collapse;font-size:12.5px}#matrix td,#matrix th{border:1px solid var(--border);padding:5px 8px;text-align:center}#matrix th:first-child,#matrix td:first-child{text-align:left;position:sticky;left:0;background:var(--bg);max-width:200px}
+  #matrix th{font-size:11px;color:var(--text2);font-weight:600}#matrix input{cursor:pointer;width:16px;height:16px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const ROLES=['Conceptualization','Data curation','Formal analysis','Funding acquisition','Investigation','Methodology','Project administration','Resources','Software','Supervision','Validation','Visualization','Writing – original draft','Writing – review & editing'];
+let authors=[],state={};
+function build(){
+  authors=$('#authors').value.split(',').map(a=>a.trim()).filter(Boolean);
+  let html='<tr><th>Role</th>'+authors.map(a=>`<th>${esc(a.split(' ').map(w=>w[0]).join(''))}<br><span style="font-weight:400">${esc(a.split(' ')[0])}</span></th>`).join('')+'</tr>';
+  ROLES.forEach((r,ri)=>{html+=`<tr><td>${esc(r)}</td>`+authors.map((a,ai)=>`<td><input type="checkbox" data-r="${ri}" data-a="${ai}" ${state[ri+'-'+ai]?'checked':''}></td>`).join('')+'</tr>';});
+  $('#matrix').innerHTML=html;
+}
+$('#matrix').addEventListener('change',e=>{const cb=e.target;if(cb.dataset.r!=null)state[cb.dataset.r+'-'+cb.dataset.a]=cb.checked;});
+$('#authors').addEventListener('input',()=>{build();});
+let statement='';
+$('#gen').onclick=()=>{
+  build();
+  const byAuthor=authors.map((a,ai)=>{const roles=ROLES.filter((r,ri)=>state[ri+'-'+ai]);return {a,roles};});
+  const lines=byAuthor.filter(x=>x.roles.length).map(x=>`<b>${esc(x.a)}:</b> ${esc(x.roles.join(', '))}.`);
+  statement=byAuthor.filter(x=>x.roles.length).map(x=>`${x.a}: ${x.roles.join(', ')}.`).join(' ');
+  $('#out').innerHTML=lines.length?'<b>Author Contributions</b><br>'+lines.join('<br>'):'<span class="muted">Tick contributions in the matrix above.</span>';
+  $('#status').textContent='Generated';
+};
+$('#copy').onclick=()=>{if(statement){navigator.clipboard.writeText('Author Contributions\n'+statement);$('#status').textContent='Copied.';}};
+build();
+// demo ticks
+['0-0','5-0','12-0','2-1','8-1','4-2','11-2','13-0','13-1','13-2'].forEach(k=>state[k]=true);build();$('#gen').click();
+</script>
+</body>
+</html>

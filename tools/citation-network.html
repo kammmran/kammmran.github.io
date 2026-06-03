@@ -15,13 +15,13 @@
   <div style="width:120px"></div>
 </header>
 
-<main class="tool-page fade-in" style="max-width:920px">
+<main class="tool-page fade-in" style="max-width:1100px">
   <div class="tool-header">
     <div class="tool-title-block">
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-binary-tree"></i></div>
       <div>
         <div class="tool-title">Citation Network Visualizer</div>
-        <div class="tool-desc">Enter a DOI or paper title → a graph of what it cites (its foundations) and what cites it (its impact). Powered by OpenAlex.</div>
+        <div class="tool-desc">Enter a DOI or paper title to map its full citation network — every work it references (its foundations) and every paper that cites it (its impact). Browse, search, sort and export the complete lists. Powered by the free OpenAlex API.</div>
       </div>
     </div>
   </div>
@@ -29,64 +29,182 @@
   <div class="panel" style="min-height:auto;gap:14px">
     <form id="f" class="row" style="gap:8px">
       <input type="text" id="q" placeholder="DOI (10.1038/…) or paper title" style="flex:1;min-width:240px">
-      <button class="btn btn-primary" type="submit"><i class="ti ti-binary-tree"></i> Map</button>
+      <button class="btn btn-primary" type="submit"><i class="ti ti-binary-tree"></i> Map network</button>
     </form>
-    <div id="out"><div class="muted">References fan out to the left, citing papers to the right.</div></div>
+    <div id="focal"></div>
+    <div id="controls" class="row" style="gap:10px;flex-wrap:wrap;display:none">
+      <div class="seg"><button class="vbtn on" data-v="list"><i class="ti ti-list"></i> List</button><button class="vbtn" data-v="net"><i class="ti ti-binary-tree-2"></i> Network</button></div>
+      <input type="text" id="filter" placeholder="Filter by title / author / year…" style="flex:1;min-width:180px">
+      <label class="fld">Sort<select id="sort"><option value="cited">Most cited</option><option value="year-desc">Newest</option><option value="year-asc">Oldest</option><option value="title">Title A–Z</option></select></label>
+      <button class="btn btn-sm" id="csv"><i class="ti ti-table"></i> Export CSV</button>
+    </div>
+    <div id="out"><div class="muted">References are the papers this work builds on; citing papers show its downstream impact.</div></div>
   </div>
 </main>
 
-<style>svg text{font-size:10px}
-  a.lnk{color:var(--accent3);text-decoration:none}</style>
+<style>
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.vbtn{background:var(--bg2);border:none;color:var(--text2);padding:6px 12px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.vbtn.on{background:var(--accent);color:#fff}
+.focal-card{border:1px solid var(--border2);border-radius:12px;background:var(--bg2);padding:16px 18px;border-left:4px solid var(--accent)}
+.focal-card .t{font-size:16px;font-weight:700;line-height:1.35}
+.focal-card .meta{color:var(--text2);font-size:13px;margin-top:6px;line-height:1.5}
+.focal-card .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.badge2{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:3px 11px;font-size:12px}
+.badge2 b{color:var(--accent3)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:760px){.cols{grid-template-columns:1fr}}
+.col{border:1px solid var(--border);border-radius:10px;background:var(--bg2);display:flex;flex-direction:column;min-height:0}
+.col-head{position:sticky;top:0;padding:10px 14px;font-weight:600;font-size:13px;border-bottom:1px solid var(--border);background:var(--bg3);border-radius:10px 10px 0 0;display:flex;align-items:center;gap:8px;z-index:1}
+.col.refs .col-head{color:var(--blue)} .col.cites .col-head{color:var(--green)}
+.cnt{margin-left:auto;font-size:12px;color:var(--text3);font-weight:500}
+.list{overflow-y:auto;max-height:62vh;padding:6px}
+.item{padding:9px 11px;border-radius:8px;border:1px solid transparent}
+.item:hover{background:var(--bg3);border-color:var(--border)}
+.item .it-t{font-size:13.5px;line-height:1.4;font-weight:500}
+.item .it-t a{color:var(--text);text-decoration:none} .item .it-t a:hover{color:var(--accent3)}
+.item .it-m{color:var(--text3);font-size:12px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.item .it-m .cc{color:var(--text2)} .item .doi{color:var(--accent3);text-decoration:none}
+.loadmore{margin:8px;text-align:center}
+.svgwrap{overflow:auto;max-height:70vh;border:1px solid var(--border);border-radius:10px;background:var(--bg2)}
+svg text{font-size:10px}
+.spin{display:inline-block;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
+</style>
 
 <script>
 const $ = s => document.querySelector(s);
-const NS='http://www.w3.org/2000/svg';
 const esc = s => String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const MAIL='mailto=academy-tools@users.noreply.github.com';
-const short=(s,n=42)=>{ s=s||''; return s.length>n?s.slice(0,n-1)+'…':s; };
+const short=(s,n=70)=>{ s=s||''; return s.length>n?s.slice(0,n-1)+'…':s; };
+const SELECT='id,doi,display_name,publication_year,cited_by_count,authorships,primary_location';
+
+let STATE={focal:null,refs:[],cites:[],citeTotal:0,citeCursor:null,view:'list'};
+
+function authorStr(w){const a=(w.authorships||[]).map(x=>x.author&&x.author.display_name).filter(Boolean);if(!a.length)return '';return a.slice(0,3).join(', ')+(a.length>3?` +${a.length-3}`:'');}
+function venueStr(w){return (w.primary_location&&w.primary_location.source&&w.primary_location.source.display_name)||'';}
+function linkOf(w){return w.doi?w.doi:(w.id||'#');}
 
 $('#f').addEventListener('submit',async e=>{
   e.preventDefault(); let q=$('#q').value.trim(); if(!q) return;
-  const out=$('#out'); out.innerHTML='<div class="muted"><i class="ti ti-loader"></i> Building network…</div>';
+  const out=$('#out'); $('#controls').style.display='none'; $('#focal').innerHTML='';
+  out.innerHTML='<div class="muted"><i class="ti ti-loader-2 spin"></i> Finding paper…</div>';
   try{
     const doi=q.match(/10\.\d{4,}\/\S+/);
     const url=doi?`https://api.openalex.org/works/doi:${encodeURIComponent(doi[0])}?${MAIL}`
                  :`https://api.openalex.org/works?search=${encodeURIComponent(q)}&per_page=1&${MAIL}`;
     let w=await fetch(url).then(r=>r.json()); if(w.results) w=w.results[0];
-    if(!w||!w.id){ out.innerHTML='<div class="muted">Paper not found.</div>'; return; }
-    const refIds=(w.referenced_works||[]).slice(0,6).map(u=>u.split('/').pop());
-    const [refs,cites]=await Promise.all([
-      refIds.length?fetch(`https://api.openalex.org/works?filter=openalex_id:${refIds.join('|')}&select=id,display_name,publication_year,cited_by_count&per_page=6&${MAIL}`).then(r=>r.json()).then(d=>d.results||[]):Promise.resolve([]),
-      fetch(`https://api.openalex.org/works?filter=cites:${w.id.split('/').pop()}&sort=cited_by_count:desc&per_page=6&select=id,display_name,publication_year,cited_by_count&${MAIL}`).then(r=>r.json()).then(d=>d.results||[])
-    ]);
-    draw(w,refs,cites);
-  }catch(err){ $('#out').innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
+    if(!w||!w.id){ out.innerHTML='<div class="muted">Paper not found. Try a DOI or a more specific title.</div>'; return; }
+    STATE.focal=w;
+    renderFocal(w);
+    out.innerHTML='<div class="muted"><i class="ti ti-loader-2 spin"></i> Loading references & citing papers…</div>';
+    // references — fetch ALL in batches of 50
+    const refIds=(w.referenced_works||[]).map(u=>u.split('/').pop());
+    STATE.refs=await fetchByIds(refIds);
+    // citations — first page (cursor)
+    STATE.cites=[]; STATE.citeCursor='*';
+    const wid=w.id.split('/').pop();
+    const first=await fetchCitesPage(wid);
+    STATE.citeTotal=first.count;
+    STATE.cites=first.items; STATE.citeCursor=first.cursor;
+    $('#controls').style.display='flex';
+    render();
+  }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}). Please try again.</div>`; }
 });
 
-function draw(focal,refs,cites){
-  const W=900,H=Math.max(320, 60+Math.max(refs.length,cites.length)*46);
-  const cx=W/2, cy=H/2;
-  let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px">`;
-  // edges first
-  const place=(arr,side)=>arr.map((n,i)=>{ const y=(H/(arr.length+1))*(i+1); const x=side<0?170:W-170; return {n,x,y}; });
-  const L=place(refs,-1), R=place(cites,1);
-  [...L,...R].forEach(p=>{ s+=`<line x1="${cx}" y1="${cy}" x2="${p.x}" y2="${p.y}" stroke="var(--border2)" stroke-width="1"/>`; });
-  const card=(x,y,n,col,anchor)=>{ const w2=210,h=34; const rx=anchor==='end'?x-w2:x;
-    return `<g><rect x="${anchor==='start'?x:x-w2}" y="${y-h/2}" width="${w2}" height="${h}" rx="7" fill="var(--bg3)" stroke="${col}"/>
-      <text x="${anchor==='start'?x+8:x-8}" y="${y-3}" text-anchor="${anchor}" fill="var(--text)">${esc(short(n.display_name,34))}</text>
-      <text x="${anchor==='start'?x+8:x-8}" y="${y+11}" text-anchor="${anchor}" fill="var(--text3)">${n.publication_year||''} · ${(n.cited_by_count||0).toLocaleString()} cites</text></g>`; };
-  L.forEach(p=>{ s+=card(p.x,p.y,p.n,'var(--blue)','end'); });
-  R.forEach(p=>{ s+=card(p.x,p.y,p.n,'var(--green)','start'); });
-  // focal
-  s+=`<circle cx="${cx}" cy="${cy}" r="44" fill="rgba(124,109,240,0.2)" stroke="var(--accent3)" stroke-width="2"/>`;
-  s+=`<text x="${cx}" y="${cy-2}" text-anchor="middle" fill="var(--text)" style="font-size:11px;font-weight:700">FOCAL</text>`;
-  s+=`<text x="${cx}" y="${cy+12}" text-anchor="middle" fill="var(--text3)">${focal.cited_by_count||0} cites</text>`;
-  s+=`<text x="170" y="22" text-anchor="middle" fill="var(--blue)" style="font-size:12px">← references (${refs.length})</text>`;
-  s+=`<text x="${W-170}" y="22" text-anchor="middle" fill="var(--green)" style="font-size:12px">citing papers (${cites.length}) →</text>`;
-  s+='</svg>';
-  $('#out').innerHTML=`<div style="font-weight:600;margin-bottom:8px">${esc(focal.display_name)}</div>${s}
-    <div class="muted" style="font-size:12px;margin-top:8px">Left = papers this work builds on. Right = the most-cited papers that cite it. Limited to 6 each for readability.</div>`;
+async function fetchByIds(ids){
+  const res=[];
+  for(let i=0;i<ids.length;i+=50){
+    const batch=ids.slice(i,i+50);
+    const d=await fetch(`https://api.openalex.org/works?filter=openalex_id:${batch.join('|')}&per_page=50&select=${SELECT}&${MAIL}`).then(r=>r.json());
+    if(d.results)res.push(...d.results);
+  }
+  return res;
 }
+async function fetchCitesPage(wid){
+  const d=await fetch(`https://api.openalex.org/works?filter=cites:${wid}&sort=cited_by_count:desc&per_page=200&cursor=${encodeURIComponent(STATE.citeCursor)}&select=${SELECT}&${MAIL}`).then(r=>r.json());
+  return {items:d.results||[],count:(d.meta&&d.meta.count)||0,cursor:d.meta&&d.meta.next_cursor};
+}
+
+function renderFocal(w){
+  $('#focal').innerHTML=`<div class="focal-card">
+    <div class="t"><a href="${esc(linkOf(w))}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(w.display_name||'Untitled')}</a></div>
+    <div class="meta">${esc(authorStr(w))}${w.publication_year?` · ${w.publication_year}`:''}${venueStr(w)?` · <i>${esc(venueStr(w))}</i>`:''}</div>
+    <div class="badges">
+      <span class="badge2"><b>${(w.cited_by_count||0).toLocaleString()}</b> citations</span>
+      <span class="badge2"><b>${(w.referenced_works||[]).length}</b> references</span>
+      ${w.doi?`<a class="badge2 doi" href="${esc(w.doi)}" target="_blank" rel="noopener"><i class="ti ti-external-link"></i> ${esc(w.doi.replace('https://doi.org/',''))}</a>`:''}
+    </div></div>`;
+}
+
+function sortItems(arr){
+  const s=$('#sort').value;const a=arr.slice();
+  if(s==='cited')a.sort((x,y)=>(y.cited_by_count||0)-(x.cited_by_count||0));
+  else if(s==='year-desc')a.sort((x,y)=>(y.publication_year||0)-(x.publication_year||0));
+  else if(s==='year-asc')a.sort((x,y)=>(x.publication_year||0)-(y.publication_year||0));
+  else if(s==='title')a.sort((x,y)=>(x.display_name||'').localeCompare(y.display_name||''));
+  return a;
+}
+function filterItems(arr){
+  const q=$('#filter').value.trim().toLowerCase();if(!q)return arr;
+  return arr.filter(w=>(`${w.display_name||''} ${authorStr(w)} ${w.publication_year||''} ${venueStr(w)}`).toLowerCase().includes(q));
+}
+function itemHTML(w){
+  return `<div class="item"><div class="it-t"><a href="${esc(linkOf(w))}" target="_blank" rel="noopener">${esc(w.display_name||'Untitled')}</a></div>
+    <div class="it-m"><span>${esc(authorStr(w))||'—'}</span>${w.publication_year?`<span>· ${w.publication_year}</span>`:''}${venueStr(w)?`<span>· ${esc(short(venueStr(w),36))}</span>`:''}<span class="cc">· ${(w.cited_by_count||0).toLocaleString()} cites</span></div></div>`;
+}
+
+function render(){
+  if(STATE.view==='net'){renderNet();return;}
+  const refs=sortItems(filterItems(STATE.refs));
+  const cites=sortItems(filterItems(STATE.cites));
+  const moreLoaded=STATE.cites.length, moreTotal=STATE.citeTotal;
+  $('#out').innerHTML=`<div class="cols">
+    <div class="col refs"><div class="col-head"><i class="ti ti-arrow-left"></i> References <span class="cnt">${refs.length}${refs.length!==STATE.refs.length?' / '+STATE.refs.length:''}</span></div>
+      <div class="list">${refs.length?refs.map(itemHTML).join(''):'<div class="muted" style="padding:14px">No references listed for this work in OpenAlex.</div>'}</div></div>
+    <div class="col cites"><div class="col-head"><i class="ti ti-arrow-right"></i> Cited by <span class="cnt">${cites.length}${cites.length!==moreLoaded?' / '+moreLoaded:''} of ${moreTotal.toLocaleString()}</span></div>
+      <div class="list">${cites.length?cites.map(itemHTML).join(''):'<div class="muted" style="padding:14px">No citing papers found.</div>'}
+        ${moreLoaded<moreTotal?`<div class="loadmore"><button class="btn btn-sm" id="more"><i class="ti ti-plus"></i> Load more (${(moreTotal-moreLoaded).toLocaleString()} remaining)</button></div>`:''}
+      </div></div>
+  </div>`;
+  const m=$('#more'); if(m) m.onclick=async()=>{m.disabled=true;m.innerHTML='<i class="ti ti-loader-2 spin"></i> Loading…';const wid=STATE.focal.id.split('/').pop();const p=await fetchCitesPage(wid);STATE.cites.push(...p.items);STATE.citeCursor=p.cursor;render();};
+}
+
+function renderNet(){
+  const refs=sortItems(filterItems(STATE.refs));
+  const cites=sortItems(filterItems(STATE.cites));
+  const rows=Math.max(refs.length,cites.length,1);
+  const rowH=30, W=1040, H=Math.max(360,60+rows*rowH);
+  const cx=W/2, cyTop=40;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" style="background:var(--bg2);display:block">`;
+  const colX=(side)=>side<0?250:W-250;
+  const place=arr=>arr.map((n,i)=>({n,x:colX(arr===refs?-1:1),y:70+i*rowH}));
+  const L=place(refs),R=place(cites);
+  [...L,...R].forEach(p=>{s+=`<line x1="${cx}" y1="${cyTop+18}" x2="${p.x}" y2="${p.y}" stroke="var(--border2)" stroke-width="0.7" opacity="0.5"/>`;});
+  const node=(p,col,anchor)=>{const w2=230,x=anchor==='end'?p.x:p.x;const rx=anchor==='end'?x-w2:x;
+    return `<a href="${esc(linkOf(p.n))}" target="_blank"><rect x="${rx}" y="${p.y-11}" width="${w2}" height="22" rx="5" fill="var(--bg3)" stroke="${col}"/>
+      <text x="${anchor==='end'?x-7:x+7}" y="${p.y+4}" text-anchor="${anchor}" fill="var(--text)">${esc(short(p.n.display_name,38))}</text></a>`;};
+  L.forEach(p=>s+=node(p,'var(--blue)','end'));
+  R.forEach(p=>s+=node(p,'var(--green)','start'));
+  s+=`<rect x="${cx-150}" y="${cyTop}" width="300" height="40" rx="9" fill="rgba(124,109,240,0.18)" stroke="var(--accent3)" stroke-width="2"/>`;
+  s+=`<text x="${cx}" y="${cyTop+18}" text-anchor="middle" fill="var(--text)" style="font-size:11px;font-weight:700">${esc(short(STATE.focal.display_name,44))}</text>`;
+  s+=`<text x="${cx}" y="${cyTop+32}" text-anchor="middle" fill="var(--text3)">${(STATE.focal.cited_by_count||0).toLocaleString()} citations</text>`;
+  s+=`<text x="250" y="50" text-anchor="middle" fill="var(--blue)" style="font-size:12px;font-weight:600">← references (${refs.length})</text>`;
+  s+=`<text x="${W-250}" y="50" text-anchor="middle" fill="var(--green)" style="font-size:12px;font-weight:600">cited by (${cites.length}) →</text>`;
+  s+='</svg>';
+  $('#out').innerHTML=`<div class="svgwrap">${s}</div><div class="muted" style="font-size:12px;margin-top:8px">Showing all loaded nodes. Click any node to open the paper. Use the filter to narrow the network; load more citing papers from the List view.</div>`;
+}
+
+document.querySelectorAll('.vbtn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.vbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');STATE.view=b.dataset.v;if(STATE.focal)render();});
+$('#filter').addEventListener('input',()=>{if(STATE.focal)render();});
+$('#sort').addEventListener('change',()=>{if(STATE.focal)render();});
+$('#csv').onclick=()=>{
+  if(!STATE.focal)return;
+  const rows=[['relation','title','authors','year','venue','cited_by_count','doi']];
+  STATE.refs.forEach(w=>rows.push(['reference',w.display_name,authorStr(w),w.publication_year,venueStr(w),w.cited_by_count,(w.doi||'')]));
+  STATE.cites.forEach(w=>rows.push(['cited_by',w.display_name,authorStr(w),w.publication_year,venueStr(w),w.cited_by_count,(w.doi||'')]));
+  const csv=rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const b=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='citation-network.csv';a.click();
+};
 </script>
 
 </body>

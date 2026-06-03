@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monte Carlo Simulator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-dice-5"></i></div><div>Monte Carlo Simulator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-dice-5"></i></div>
+      <div>
+        <div class="tool-title">Monte Carlo Simulator</div>
+        <div class="tool-desc">Estimate quantities by random sampling. Choose a built-in experiment (π estimation, integral, dice/coin, random walk) or define your own expression sampled over a variable, and run thousands of trials to get the mean, standard error and a histogram with a 95% confidence interval. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Experiment<select id="exp">
+        <option value="pi">Estimate π (unit circle)</option>
+        <option value="integral">∫ f(x) on [a,b]</option>
+        <option value="custom">Custom: mean of expr(r)</option>
+        <option value="dice">Sum of N dice</option>
+        <option value="walk">1-D random walk final position</option>
+      </select></label>
+      <label class="fld">Trials<input id="trials" type="number" value="50000" style="width:100px"></label>
+      <label class="fld" id="exprWrap" style="display:none">expr (r = U(0,1))<input id="expr" value="r*r" style="width:160px;font-family:monospace"></label>
+      <label class="fld" id="abWrap" style="display:none">a<input id="a" type="number" value="0" style="width:60px"></label>
+      <label class="fld" id="abWrap2" style="display:none">b<input id="b" type="number" value="3.14159" style="width:80px"></label>
+      <label class="fld" id="fnWrap" style="display:none">f(x)<input id="fx" value="Math.sin(x)" style="width:140px;font-family:monospace"></label>
+      <label class="fld" id="nWrap" style="display:none">N<input id="N" type="number" value="2" style="width:60px"></label>
+      <button class="btn btn-primary" id="run" style="margin-left:auto"><i class="ti ti-player-play"></i> Run</button>
+    </div>
+    <div id="stats" class="stat-grid"></div>
+    <canvas id="hist" width="840" height="240" style="width:100%;border:1px solid var(--border);border-radius:8px;background:#fff"></canvas>
+    <span class="muted" id="status" style="font-size:12px"></span>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+function sync(){const e=$('#exp').value;$('#exprWrap').style.display=e==='custom'?'flex':'none';$('#fnWrap').style.display=e==='integral'?'flex':'none';$('#abWrap').style.display=$('#abWrap2').style.display=(e==='integral')?'flex':'none';$('#nWrap').style.display=(e==='dice'||e==='walk')?'flex':'none';}
+$('#exp').onchange=()=>{sync();run();};
+function run(){
+  const exp=$('#exp').value,T=Math.min(2e6,+$('#trials').value);const samples=[];let inside=0;
+  let fn=null;try{if(exp==='custom')fn=new Function('r','with(Math){return '+$('#expr').value+'}');if(exp==='integral')fn=new Function('x','with(Math){return '+$('#fx').value+'}');}catch(e){$('#status').textContent='Bad expression';return;}
+  const a=+$('#a').value,b=+$('#b').value,N=+$('#N').value;
+  for(let i=0;i<T;i++){
+    let v;
+    if(exp==='pi'){const x=Math.random()*2-1,y=Math.random()*2-1;v=(x*x+y*y<=1)?1:0;inside+=v;}
+    else if(exp==='integral'){const x=a+Math.random()*(b-a);v=fn(x)*(b-a);}
+    else if(exp==='custom'){v=fn(Math.random());}
+    else if(exp==='dice'){let s=0;for(let k=0;k<N;k++)s+=1+Math.floor(Math.random()*6);v=s;}
+    else if(exp==='walk'){let p=0;for(let k=0;k<N;k++)p+=Math.random()<0.5?-1:1;v=p;}
+    samples.push(v);
+  }
+  let mean=samples.reduce((s,x)=>s+x,0)/T;
+  if(exp==='pi')mean=mean*4;
+  const realMean=exp==='pi'?inside/T*4:mean;
+  const variance=samples.reduce((s,x)=>s+(x-(exp==='pi'?inside/T:mean))**2,0)/T;
+  const sd=Math.sqrt(variance);const se=sd/Math.sqrt(T)*(exp==='pi'?4:1);
+  const ci=1.96*se;
+  $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Estimate</div><div class="stat-value" style="color:var(--amber)">${realMean.toFixed(5)}</div></div>
+    <div class="stat-card"><div class="stat-label">Std error</div><div class="stat-value">${se.toExponential(2)}</div></div>
+    <div class="stat-card"><div class="stat-label">95% CI</div><div class="stat-value" style="font-size:15px">±${ci.toFixed(5)}</div></div>
+    <div class="stat-card"><div class="stat-label">Trials</div><div class="stat-value">${T.toLocaleString()}</div></div>`;
+  hist(samples);
+  $('#status').textContent=exp==='pi'?`True π = 3.14159 · error ${Math.abs(realMean-Math.PI).toFixed(5)}`:'Done';
+}
+function hist(samples){const cv=$('#hist'),ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  let mn=Math.min(...samples),mx=Math.max(...samples);if(mn===mx){mx=mn+1;}const bins=40;const counts=new Array(bins).fill(0);samples.forEach(v=>{let b=Math.floor((v-mn)/(mx-mn)*bins);if(b>=bins)b=bins-1;if(b<0)b=0;counts[b]++;});const cmax=Math.max(...counts);const bw=W/bins;ctx.fillStyle='#fbbf24';counts.forEach((c,i)=>{const h=c/cmax*(H-24);ctx.fillRect(i*bw,H-20-h,bw-1,h);});ctx.fillStyle='#888';ctx.font='11px Arial';ctx.fillText(mn.toFixed(2),2,H-5);ctx.textAlign='right';ctx.fillText(mx.toFixed(2),W-2,H-5);ctx.textAlign='left';}
+['trials','expr','a','b','fx','N'].forEach(id=>$('#'+id).addEventListener('input',()=>{}));
+$('#run').onclick=run;sync();run();
+</script>
+</body>
+</html>

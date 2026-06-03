@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conference Booklet Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-book"></i></div><div>Conference Booklet Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in no-print" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-book"></i></div>
+      <div>
+        <div class="tool-title">Conference Booklet Generator</div>
+        <div class="tool-desc">Compile a complete conference booklet — welcome message, committees, venue info, sponsors and a day-by-day program — from simple Markdown-style sections. Get a clean, paginated, printable booklet with a cover and auto table of contents. Runs entirely in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel no-print" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Event title<input id="title" value="12th International Conference on Plant Science"></label>
+      <label class="fld">Dates &amp; venue<input id="meta" value="14–16 June 2026 · University of Vienna"></label>
+    </div>
+    <label class="fld">Content — use <code># Section heading</code> to start each section; everything below is body text. Blank line = paragraph.
+      <textarea id="src" style="min-height:280px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"># Welcome
+On behalf of the organizing committee, welcome to the 12th International Conference on Plant Science. We are delighted to host researchers from over 40 countries.
+
+# Organizing Committee
+Prof. A. Chair (Chair) — State University
+Dr. B. Organizer (Program) — Institute of Technology
+Dr. C. Secretary — Plant Science Lab
+
+# Venue & Practical Information
+All sessions take place in the Main Hall and Rooms 201–204. Wi-Fi: ConfGuest / password vienna2026. Lunch is served in the atrium.
+
+# Keynote Speakers
+Prof. M. Keynote — The future of crop genomics
+Dr. N. Plenary — AI in agriculture
+
+# Sponsors
+We gratefully acknowledge our sponsors: AgriTech Inc., SeedCorp, and the National Science Foundation.</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Accent<select id="accent"><option value="#0b2545">Navy</option><option value="#0d4f4a">Teal</option><option value="#5e1322">Maroon</option><option value="#3b2a5e">Purple</option></select></label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="toc" checked> table of contents</label>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="render"><i class="ti ti-refresh"></i> Build booklet</button>
+      <button class="btn" id="print"><i class="ti ti-printer"></i> Print / PDF</button>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+  </div>
+
+  <div id="out"></div>
+</main>
+
+<style>
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}
+code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+#out{margin-top:14px}
+.page{background:#fff;color:#111;border-radius:8px;padding:40px 48px;margin-bottom:16px;font-family:Georgia,serif;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+.cover{text-align:center;padding:130px 48px;display:flex;flex-direction:column;gap:20px}
+.cover h1{font-size:38px;margin:0} .cover .m{font-size:18px;color:#555}
+.h{font-size:22px;font-weight:700;margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid currentColor;break-after:avoid}
+.bd{font-size:14px;line-height:1.6;white-space:pre-wrap;margin-bottom:10px}
+.toc-row{display:flex;font-size:14px;margin:5px 0}.toc-row .t{flex:1}.toc-row .n{font-weight:700;width:30px}
+@media print{.no-print{display:none!important}@page{margin:16mm}body{background:#fff}.page{box-shadow:none;border-radius:0;margin:0;page-break-after:always;padding:0}.cover{padding:220px 0}}
+</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function parse(){const secs=[];let cur=null;$('#src').value.split('\n').forEach(l=>{if(l.startsWith('# ')){cur={h:l.slice(2).trim(),body:''};secs.push(cur);}else if(cur)cur.body+=l+'\n';});return secs;}
+function render(){
+  const secs=parse();const accent=$('#accent').value;
+  let html=`<div class="page cover"><div style="color:${accent};font-size:14px;letter-spacing:3px;font-weight:700">CONFERENCE BOOKLET</div><h1 style="color:${accent}">${esc($('#title').value)}</h1><div class="m">${esc($('#meta').value)}</div></div>`;
+  if($('#toc').checked&&secs.length){html+=`<div class="page"><div class="h" style="color:${accent}">Contents</div>${secs.map((s,i)=>`<div class="toc-row"><span class="n">${i+1}</span><span class="t">${esc(s.h)}</span></div>`).join('')}</div>`;}
+  html+=`<div class="page">`+secs.map(s=>`<div class="h" style="color:${accent}">${esc(s.h)}</div><div class="bd">${esc(s.body.trim())}</div>`).join('')+`</div>`;
+  $('#out').innerHTML=html;$('#status').textContent=secs.length+' sections';
+}
+$('#render').onclick=render;['title','meta','src','accent','toc'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#print').onclick=()=>{render();window.print();};
+render();
+</script>
+</body>
+</html>

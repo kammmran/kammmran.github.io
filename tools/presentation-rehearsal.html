@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentation Rehearsal Analyzer — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-presentation"></i></div><div>Presentation Rehearsal Analyzer</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:880px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-presentation"></i></div>
+      <div>
+        <div class="tool-title">Presentation Rehearsal Analyzer</div>
+        <div class="tool-desc">Rehearse a talk out loud and get instant feedback on speaking pace, filler words ("um", "like", "you know"), and timing against a target. Everything runs locally on the browser's speech recognition.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="row" style="gap:8px">
+      <button class="btn btn-primary" id="rec"><i class="ti ti-microphone"></i> Start rehearsal</button>
+      <label class="fld">Target (min)<input type="number" id="target" value="10" min="1" style="width:80px"></label>
+      <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Elapsed</div><div class="stat-value" id="dur">0:00</div></div>
+      <div class="stat-card"><div class="stat-label">Words</div><div class="stat-value" id="wc">0</div></div>
+      <div class="stat-card"><div class="stat-label">Pace (wpm)</div><div class="stat-value" id="wpm">—</div></div>
+      <div class="stat-card"><div class="stat-label">Filler words</div><div class="stat-value" id="fc" style="color:var(--amber)">0</div></div>
+    </div>
+    <div id="pacing" class="muted" style="font-size:13px"></div>
+    <div id="fillers"></div>
+    <div id="transcript" style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg2);font-size:13px;line-height:1.6;max-height:30vh;overflow:auto"></div>
+    <div class="row"><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy report</button><button class="btn" id="clear"><i class="ti ti-trash"></i> Reset</button></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  mark{background:rgba(251,191,36,0.3);color:var(--amber);border-radius:3px;padding:0 2px}
+  .chip2{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:3px 10px;font-size:12px;margin:3px 4px 0 0}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const FILLERS=['um','uh','er','ah','like','basically','actually','literally','you know','i mean','sort of','kind of','so yeah','right','okay so'];
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let rec=null,recording=false,t0=0,text='',timer=null;
+function analyze(){
+  const words=(text.match(/\S+/g)||[]).length; $('#wc').textContent=words;
+  const mins=(Date.now()-t0)/60000;
+  const wpm=mins>0.05?Math.round(words/mins):0; $('#wpm').textContent=wpm||'—';
+  const low=' '+text.toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ')+' ';
+  let total=0;const counts={};
+  FILLERS.forEach(f=>{const re=new RegExp('\\s'+f.replace(/ /g,'\\s')+'\\s','g');const m=low.match(re);if(m){counts[f]=m.length;total+=m.length;}});
+  $('#fc').textContent=total;
+  $('#fillers').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span class="chip2">${esc(f)} · ${n}</span>`).join('')||'<span class="muted" style="font-size:12px">No filler words detected yet — nice.</span>';
+  let hl=esc(text);FILLERS.forEach(f=>{hl=hl.replace(new RegExp('\\b'+f.replace(/ /g,'\\s')+'\\b','gi'),m=>`<mark>${m}</mark>`);});
+  $('#transcript').innerHTML=hl||'<span class="muted">Your speech transcript appears here…</span>';
+  $('#transcript').scrollTop=$('#transcript').scrollHeight;
+  if(wpm){let p;if(wpm<110)p='🐢 A little slow — aim for 120–150 wpm for an engaged audience.';else if(wpm<=160)p='✅ Good conversational pace (120–150 is ideal).';else p='⚡ Fast — slow down so the audience can follow; aim under 160 wpm.';
+    const fillRate=words?(total/words*100).toFixed(1):0;
+    $('#pacing').innerHTML=`${p} · Filler rate: <b>${fillRate}%</b> ${fillRate>3?'(try to keep under 3%)':'(good — under 3%)'}`;}
+}
+function start(){
+  if(!SR){$('#status').textContent='Use Chrome or Edge for the microphone.';return;}
+  rec=new SR();rec.continuous=true;rec.interimResults=false;rec.lang='en-US';
+  if(!t0)t0=Date.now();
+  rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal)text+=' '+e.results[i][0].transcript.trim();analyze();};
+  rec.onerror=e=>{$('#status').textContent='Error: '+e.error;};
+  rec.onend=()=>{if(recording){try{rec.start();}catch(_){}}};
+  rec.start();recording=true;$('#rec').innerHTML='<i class="ti ti-player-stop"></i> Stop';$('#rec').classList.remove('btn-primary');$('#status').textContent='Rehearsing…';
+  timer=setInterval(()=>{const e=Date.now()-t0;$('#dur').textContent=Math.floor(e/60000)+':'+String(Math.floor(e/1000)%60).padStart(2,'0');const tgt=parseFloat($('#target').value)*60000;$('#dur').style.color=tgt&&e>tgt?'var(--red)':'';analyze();},1000);
+}
+function stop(){recording=false;if(rec)rec.stop();clearInterval(timer);$('#rec').innerHTML='<i class="ti ti-microphone"></i> Start rehearsal';$('#rec').classList.add('btn-primary');$('#status').textContent='Done';}
+$('#rec').onclick=()=>recording?stop():start();
+$('#clear').onclick=()=>{text='';t0=0;$('#dur').textContent='0:00';$('#dur').style.color='';analyze();$('#pacing').textContent='';};
+$('#copy').onclick=()=>{const r=`Rehearsal report\nDuration: ${$('#dur').textContent}\nWords: ${$('#wc').textContent}\nPace: ${$('#wpm').textContent} wpm\nFiller words: ${$('#fc').textContent}\n\n${text.trim()}`;navigator.clipboard.writeText(r);$('#status').textContent='Copied.';};
+analyze();
+</script>
+</body>
+</html>

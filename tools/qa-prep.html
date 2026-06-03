@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Q&amp;A Preparation Assistant — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-message-question"></i></div><div>Q&amp;A Preparation Assistant</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:920px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-message-question"></i></div>
+      <div>
+        <div class="tool-title">Q&amp;A Preparation Assistant</div>
+        <div class="tool-desc">Anticipate the questions you'll get after a talk. Paste your abstract or summary; the tool generates a checklist of likely audience questions — on limitations, methods, generalisability, comparisons, and future work — adapted to cues in your text, with space to jot your answers and print a prep sheet. Heuristic, local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Abstract / talk summary
+      <textarea id="abs" style="min-height:130px">We developed a self-supervised deep learning model that detects crop disease from hyperspectral leaf scans before visible symptoms appear, achieving 94% accuracy with 8x less labeled data across six species in a field trial.</textarea>
+    </label>
+    <button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate questions</button>
+    <div id="out"></div>
+    <div class="row" id="exrow" style="display:none"><button class="btn" id="print"><i class="ti ti-printer"></i> Print prep sheet</button><span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+  <div class="muted no-print" style="font-size:12px;margin-top:10px">These are generic-but-targeted prompts derived from common reviewer/audience patterns plus keywords in your text — not model-generated. Use them to rehearse; the best prep is knowing your own limitations cold.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .qcat{margin-bottom:14px} .qcat h3{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--amber);margin:0 0 6px}
+  .q{border:1px solid var(--border);border-radius:8px;background:var(--bg2);padding:10px 12px;margin-bottom:7px}
+  .q .qt{font-size:13.5px;font-weight:500} .q textarea{width:100%;margin-top:6px;min-height:40px;font-size:13px}
+  @media print{.no-print{display:none!important}.q textarea{border:none}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const BANK={
+  'Limitations & validity':[
+    'What are the main limitations of this work?',
+    'How did you control for confounding factors?',
+    'Could your results be explained by {alt}?',
+    'What is the failure mode of your approach?'],
+  'Methods & rigour':[
+    'Why did you choose this {method} over alternatives?',
+    'How sensitive are the results to your hyperparameters / settings?',
+    'What was your sample size and how was it determined?',
+    'Did you pre-register or have a held-out test set?'],
+  'Generalisability':[
+    'Would this generalise beyond {domain}?',
+    'How would performance change on out-of-distribution data?',
+    'Have you tested it in a real-world / clinical / field setting?'],
+  'Comparison & novelty':[
+    'How does this compare to {baseline}?',
+    'What is the key novelty relative to prior work?',
+    'Has anyone tried a similar approach, and how do you differ?'],
+  'Data & reproducibility':[
+    'Will the data and code be openly available?',
+    'How was the data collected and labelled?',
+    'Could others reproduce these results?'],
+  'Impact & future work':[
+    'What is the practical impact of this finding?',
+    'What are the next steps for this research?',
+    'What would you do with more time / resources?']
+};
+$('#gen').onclick=()=>{
+  const t=$('#abs').value.toLowerCase();
+  const domain=(t.match(/\b(crop|plant|clinical|patient|protein|cell|climate|material|social|economic|image|text|speech)\w*/)||[])[0]||'your domain';
+  const method=(t.match(/\b(deep learning|machine learning|model|regression|simulation|survey|rct|trial|interview|sequencing|spectroscopy)\b/)||[])[0]||'this method';
+  const baseline=/baseline|state-of-the-art|sota|compared/.test(t)?'the baselines you mentioned':'existing methods';
+  const alt=/correlat|associat/.test(t)?'a confounding correlation':'a simpler explanation';
+  const fill=s=>s.replace('{domain}',domain).replace('{method}',method).replace('{baseline}',baseline).replace('{alt}',alt);
+  let html='';
+  Object.entries(BANK).forEach(([cat,qs])=>{html+=`<div class="qcat"><h3>${esc(cat)}</h3>${qs.map(q=>`<div class="q"><div class="qt">${esc(fill(q))}</div><textarea placeholder="Your answer / key points…"></textarea></div>`).join('')}</div>`;});
+  $('#out').innerHTML=html;$('#exrow').style.display='flex';$('#status').textContent='Generated';
+};
+$('#print').onclick=()=>window.print();
+$('#gen').click();
+</script>
+</body>
+</html>

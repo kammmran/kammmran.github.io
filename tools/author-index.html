@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Author Index Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-list-letters"></i></div><div>Author Index Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-list-letters"></i></div>
+      <div>
+        <div class="tool-title">Author Index Generator</div>
+        <div class="tool-desc">Build an alphabetical author index for a proceedings or abstract book. Paste one entry per line as <b>number | authors</b>; the tool normalizes names to "Surname, Initials", merges duplicates, sorts them, and lists every entry number each author appears in. Copy or print the finished index.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Entries — one per line: <b>EntryNumber | Author A, Author B, …</b>
+      <textarea id="src" style="min-height:170px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">1 | Jane Researcher, Tom Lee, Carol Advisor
+2 | Tom Lee, Jane Researcher
+3 | Maria Garcia, John Smith
+4 | A. Mammadova, J. Researcher
+5 | John Smith, Maria Garcia, Tom Lee</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Name order<select id="order"><option value="last">Surname, Initials</option><option value="full">As written</option></select></label>
+      <label class="fld">Columns<select id="cols"><option>1</option><option selected>2</option><option>3</option></select></label>
+    </div>
+    <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate index</button><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><button class="btn" id="print"><i class="ti ti-printer"></i> Print</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="out"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  #out{column-gap:30px} .ix{font-size:13.5px;margin:4px 0;break-inside:avoid;line-height:1.45} .ix b{font-weight:700}
+  .grp{font-weight:800;color:var(--accent3);margin:12px 0 4px;font-size:15px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let text='';
+function norm(name,mode){
+  name=name.trim().replace(/\s+/g,' ');if(!name)return null;
+  if(mode==='full')return {key:name.toLowerCase(),disp:name};
+  const parts=name.replace(/\./g,'').split(' ');const last=parts.pop();const inits=parts.map(p=>p[0].toUpperCase()+'.').join(' ');
+  const disp=inits?`${last}, ${inits}`:last;return {key:(last+' '+inits).toLowerCase(),disp};
+}
+function gen(){
+  const mode=$('#order').value;const map={};
+  $('#src').value.split('\n').forEach(l=>{const m=l.split('|');if(m.length<2)return;const num=m[0].trim();m[1].split(',').forEach(a=>{const n=norm(a,mode);if(!n)return;(map[n.key]=map[n.key]||{disp:n.disp,nums:new Set()}).nums.add(num);});});
+  const sorted=Object.values(map).sort((a,b)=>a.disp.toLowerCase().localeCompare(b.disp.toLowerCase()));
+  if(!sorted.length){$('#status').textContent='Add entries as "number | authors".';return;}
+  let html='',curLetter='';const lines=[];
+  sorted.forEach(a=>{const L=a.disp[0].toUpperCase();if(L!==curLetter){curLetter=L;html+=`<div class="grp">${L}</div>`;}const nums=[...a.nums].sort((x,y)=>(parseFloat(x)||0)-(parseFloat(y)||0));html+=`<div class="ix"><b>${esc(a.disp)}</b> — ${nums.map(esc).join(', ')}</div>`;lines.push(`${a.disp} — ${nums.join(', ')}`);});
+  $('#out').style.columnCount=$('#cols').value;
+  $('#out').innerHTML=html;text=lines.join('\n');
+  $('#status').textContent=sorted.length+' authors';
+}
+$('#gen').onclick=gen;['src','order','cols'].forEach(id=>$('#'+id).addEventListener('input',gen));
+$('#copy').onclick=()=>{if(text){navigator.clipboard.writeText(text);$('#status').textContent='Copied.';}};
+$('#print').onclick=()=>window.print();
+gen();
+</script>
+</body>
+</html>

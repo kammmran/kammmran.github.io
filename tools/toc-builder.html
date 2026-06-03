@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Table of Contents Builder — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-list-numbers"></i></div><div>Table of Contents Builder</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-list-numbers"></i></div>
+      <div>
+        <div class="tool-title">Table of Contents Builder</div>
+        <div class="tool-desc">Generate a formatted table of contents from your heading list. Indent lines to set the level, optionally add a page number after a tab or <code>|</code>, and pick a numbering scheme (1.2.3, decimal, or none) and dot-leader style. Copy as HTML/Markdown or print. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld">Headings — indent (2 spaces or a tab) for sub-levels; add <b>| page</b> at the end for page numbers.
+      <textarea id="src" style="min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size:13px">Introduction | 1
+  Background | 2
+  Research questions | 4
+Methods | 6
+  Participants | 6
+  Procedure | 8
+    Apparatus | 9
+Results | 12
+Discussion | 18
+References | 24</textarea>
+    </label>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Numbering<select id="num"><option value="multi">1, 1.1, 1.1.1</option><option value="none">None</option><option value="decimal">1., 2., 3. (top only)</option></select></label>
+      <label class="fld">Leaders<select id="lead"><option value="dots">Dot leaders ……</option><option value="none">None</option></select></label>
+      <label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="pages" checked> show page numbers</label>
+    </div>
+    <div class="row"><button class="btn" id="copyMd"><i class="ti ti-markdown"></i> Copy Markdown</button><button class="btn" id="copyHtml"><i class="ti ti-code"></i> Copy HTML</button><button class="btn" id="print"><i class="ti ti-printer"></i> Print</button><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
+    <div id="out" style="background:#fff;color:#111;border-radius:8px;padding:24px 28px;font-family:Georgia,serif"></div>
+  </div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  code{background:var(--bg3);padding:1px 5px;border-radius:4px;font-size:11.5px}
+  .toc-h{font-size:20px;font-weight:700;margin:0 0 14px;text-align:center}
+  .tl{display:flex;align-items:baseline;margin:5px 0}
+  .tl .num{font-weight:600;margin-right:8px} .tl .t{white-space:nowrap;overflow:hidden} .tl .dots{flex:1;border-bottom:1px dotted #999;margin:0 5px;transform:translateY(-4px)} .tl .pg{font-variant-numeric:tabular-nums}
+  .l0{font-weight:700} .l1{padding-left:20px} .l2{padding-left:40px;font-size:.95em} .l3{padding-left:60px;font-size:.9em;color:#444}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function parse(){
+  return $('#src').value.split('\n').filter(l=>l.trim()).map(l=>{
+    const indent=(l.match(/^(\s*)/)[1].replace(/\t/g,'  ').length);const level=Math.floor(indent/2);
+    let rest=l.trim();let page='';const m=rest.match(/[|\t]\s*([\w.-]+)\s*$/);if(m){page=m[1];rest=rest.slice(0,m.index).trim();}
+    return {level,title:rest,page};
+  });
+}
+function number(items,mode){
+  const counters=[0,0,0,0,0];
+  return items.map(it=>{
+    if(mode==='none'){it.numStr='';return it;}
+    counters[it.level]++;for(let i=it.level+1;i<counters.length;i++)counters[i]=0;
+    if(mode==='decimal')it.numStr=it.level===0?counters[0]+'.':'';
+    else it.numStr=counters.slice(0,it.level+1).join('.');
+    return it;
+  });
+}
+let md='',htmlStr='';
+function render(){
+  const items=number(parse(),$('#num').value);const showPg=$('#pages').checked;const leaders=$('#lead').value==='dots';
+  let html=`<div class="toc-h">Contents</div>`,mdLines=[],htmlLines=[];
+  items.forEach(it=>{
+    const numHtml=it.numStr?`<span class="num">${it.numStr}</span>`:'';
+    html+=`<div class="tl l${Math.min(it.level,3)}">${numHtml}<span class="t">${esc(it.title)}</span>${leaders?'<span class="dots"></span>':'<span style="flex:1"></span>'}${showPg&&it.page?`<span class="pg">${esc(it.page)}</span>`:''}</div>`;
+    mdLines.push('  '.repeat(it.level)+`- ${it.numStr?it.numStr+' ':''}${it.title}${showPg&&it.page?' — '+it.page:''}`);
+    htmlLines.push(`<li>${it.numStr?it.numStr+' ':''}${esc(it.title)}${showPg&&it.page?' <span>'+esc(it.page)+'</span>':''}</li>`);
+  });
+  $('#out').innerHTML=html;md=mdLines.join('\n');htmlStr='<ul>\n'+htmlLines.join('\n')+'\n</ul>';
+  $('#status').textContent=items.length+' entries';
+}
+['src','num','lead','pages'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#copyMd').onclick=()=>{navigator.clipboard.writeText(md);$('#status').textContent='Markdown copied.';};
+$('#copyHtml').onclick=()=>{navigator.clipboard.writeText(htmlStr);$('#status').textContent='HTML copied.';};
+$('#print').onclick=()=>window.print();
+render();
+</script>
+</body>
+</html>

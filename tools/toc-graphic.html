@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOC Graphic Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-photo-square-rounded"></i></div><div>TOC Graphic Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:900px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-photo-square-rounded"></i></div>
+      <div>
+        <div class="tool-title">TOC Graphic Generator</div>
+        <div class="tool-desc">Make a Table-of-Contents graphic to the exact specs many journals require (a small square or wide thumbnail with a short caption). Drop your key figure, add a one-line message, and export at the precise pixel size — ACS-style square or a wide variant. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-photo-plus" style="font-size:24px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop your key figure / image</div>
+      <input type="file" id="file" accept="image/*" style="display:none">
+    </label>
+    <div class="grid2">
+      <label class="fld">Caption / message<input id="caption" value="Spectral AI flags disease before symptoms appear"></label>
+      <label class="fld">Spec<select id="spec">
+        <option value="1100,1100,300">ACS square (3.25″ @ 300dpi · 975px)</option>
+        <option value="975,975,300" selected>Square 975×975 px</option>
+        <option value="1200,675,150">Wide 1200×675</option>
+        <option value="500,500,72">Web square 500×500</option>
+      </select></label>
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Caption position<select id="pos"><option value="bottom">Bottom band</option><option value="top">Top band</option><option value="none">No caption</option></select></label>
+      <label class="fld">Theme<select id="theme"><option value="#0d4f4a,#fff">Teal</option><option value="#0b2545,#fff">Navy</option><option value="#11100f,#f0eff8">Dark</option><option value="#ffffff,#111">Light</option></select></label>
+      <label class="fld">Fit<select id="fit"><option value="cover">Cover (crop)</option><option value="contain">Contain</option></select></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#333"><canvas id="cv" style="display:block;max-width:100%;margin:auto"></canvas></div>
+    <div class="row"><button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button><span class="muted" id="status" style="font-size:12px"></span></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Check your journal's exact TOC/abstract-graphic size and any text limits before submitting — they vary. The pixel dimensions shown are what you export.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');let img=null;
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files[0])load(e.dataTransfer.files[0]);}));
+$('#file').onchange=e=>{if(e.target.files[0])load(e.target.files[0]);};
+function load(f){const u=URL.createObjectURL(f);img=new Image();img.onload=draw;img.src=u;}
+function draw(){
+  const [W,H,dpi]=$('#spec').value.split(',').map(Number);cv.width=W;cv.height=H;
+  const [band,txt]=$('#theme').value.split(',');const pos=$('#pos').value;
+  const bandH=pos==='none'?0:Math.round(H*0.16);
+  const imgY=pos==='top'?bandH:0,imgH=H-bandH;
+  ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+  if(img){const fit=$('#fit').value;if(fit==='cover'){const s=Math.max(W/img.naturalWidth,imgH/img.naturalHeight);const iw=img.naturalWidth*s,ih=img.naturalHeight*s;ctx.save();ctx.beginPath();ctx.rect(0,imgY,W,imgH);ctx.clip();ctx.drawImage(img,(W-iw)/2,imgY+(imgH-ih)/2,iw,ih);ctx.restore();}else{const s=Math.min(W/img.naturalWidth,imgH/img.naturalHeight);const iw=img.naturalWidth*s,ih=img.naturalHeight*s;ctx.drawImage(img,(W-iw)/2,imgY+(imgH-ih)/2,iw,ih);}}
+  else{ctx.fillStyle='#eef1f3';ctx.fillRect(0,imgY,W,imgH);ctx.fillStyle='#aab';ctx.font='18px Arial';ctx.textAlign='center';ctx.fillText('Add your key figure',W/2,imgY+imgH/2);}
+  if(pos!=='none'){const by=pos==='top'?0:H-bandH;ctx.fillStyle=band;ctx.fillRect(0,by,W,bandH);ctx.fillStyle=txt;ctx.textAlign='center';ctx.textBaseline='middle';let fs=Math.round(bandH*0.32);ctx.font=`600 ${fs}px Arial`;const cap=$('#caption').value;while(ctx.measureText(cap).width>W-40&&fs>10){fs--;ctx.font=`600 ${fs}px Arial`;}
+    // wrap into up to 2 lines
+    const words=cap.split(/\s+/);const lines=[];let cur='';words.forEach(w=>{if(ctx.measureText(cur+' '+w).width>W-50&&cur){lines.push(cur);cur=w;}else cur=cur?cur+' '+w:w;});if(cur)lines.push(cur);
+    const ls=lines.slice(0,2);ls.forEach((l,i)=>ctx.fillText(l,W/2,by+bandH/2+(i-(ls.length-1)/2)*fs*1.15));ctx.textBaseline='alphabetic';}
+  $('#status').textContent=`${W}×${H} px${dpi?` @ ${dpi}dpi`:''}`;
+}
+['caption','spec','pos','theme','fit'].forEach(id=>$('#'+id).addEventListener('input',draw));
+$('#png').onclick=()=>{cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='toc-graphic.png';a.click();});};
+draw();
+</script>
+</body>
+</html>

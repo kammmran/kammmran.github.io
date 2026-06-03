@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Certificate Generator — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-certificate"></i></div><div>Certificate Generator</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:1000px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-certificate"></i></div>
+      <div>
+        <div class="tool-title">Certificate Generator</div>
+        <div class="tool-desc">Produce certificates of participation, presentation, or achievement for conferences, workshops and courses. Customise the wording and signatures, then export a single PNG — or paste a list of names and batch-export one certificate per person. Runs entirely in your browser.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <div class="grid2">
+      <label class="fld">Heading<input id="heading" value="Certificate of Participation"></label>
+      <label class="fld">Presented to label<input id="toLabel" value="This certifies that"></label>
+      <label class="fld">Recipient name<input id="name" value="Dr. Jane Researcher"></label>
+      <label class="fld">Body text (use {name} if you like)<textarea id="body" rows="2">has participated in the 12th International Conference on Plant Science, held in Vienna on 14–16 June 2026.</textarea></label>
+      <label class="fld">Left signatory<input id="sig1" value="Prof. A. Chair&#10;Conference Chair"></label>
+      <label class="fld">Right signatory<input id="sig2" value="Dr. B. Organizer&#10;Program Director"></label>
+    </div>
+    <div class="row" style="gap:12px;flex-wrap:wrap;font-size:12px">
+      <label class="fld">Theme<select id="theme">
+        <option value="#0b2545,#e8b84b,#fdfaf3">Navy / Gold</option>
+        <option value="#5e1322,#caa15a,#fdf8f2">Maroon</option>
+        <option value="#0d4f4a,#3fae9f,#f3fbf9">Teal</option>
+        <option value="#2b2f36,#9aa3ad,#ffffff">Slate</option>
+      </select></label>
+      <label class="fld">Orientation<select id="orient"><option value="land">Landscape</option><option value="port">Portrait</option></select></label>
+      <label class="fld">Date<input id="date" type="text" value="June 2026" style="width:140px"></label>
+    </div>
+    <div style="overflow:auto;border:1px solid var(--border);border-radius:8px;background:#444;padding:14px"><canvas id="cv" style="display:block;max-width:100%;margin:auto;background:#fff"></canvas></div>
+    <div class="row">
+      <button class="btn btn-primary" id="png"><i class="ti ti-download"></i> Export PNG</button>
+      <button class="btn" id="batchBtn"><i class="ti ti-users"></i> Batch from name list</button>
+    </div>
+    <div id="batchBox" style="display:none;flex-direction:column;gap:8px">
+      <label class="fld">One recipient name per line<textarea id="names" rows="4" placeholder="Dr. Jane Researcher&#10;Prof. John Smith&#10;Maria Garcia, MSc"></textarea></label>
+      <div class="row"><button class="btn btn-primary" id="batchGo"><i class="ti ti-download"></i> Generate &amp; download all</button><span class="muted" id="status" style="font-size:12px"></span></div>
+    </div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Batch export downloads one PNG per name (your browser may ask to allow multiple downloads). For a few certificates you can also just change the name and export individually.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}@media(max-width:640px){.grid2{grid-template-columns:1fr}}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const cv=$('#cv'),ctx=cv.getContext('2d');
+function draw(name){
+  const [c1,c2,bg]=$('#theme').value.split(',');
+  const port=$('#orient').value==='port';
+  const W=port?1100:1500,H=port?1500:1060;cv.width=W;cv.height=H;
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  // borders
+  ctx.strokeStyle=c1;ctx.lineWidth=10;ctx.strokeRect(34,34,W-68,H-68);
+  ctx.strokeStyle=c2;ctx.lineWidth=3;ctx.strokeRect(52,52,W-104,H-104);
+  // corner flourishes
+  [[52,52],[W-52,52],[52,H-52],[W-52,H-52]].forEach(([x,y])=>{ctx.fillStyle=c2;ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.fill();});
+  ctx.textAlign='center';
+  const cx=W/2;let y=port?180:150;
+  // seal
+  ctx.fillStyle=c1;ctx.font='700 18px Georgia';ctx.fillText('★  ACADEMIC  ★',cx,y-44);
+  ctx.fillStyle=c1;ctx.font='800 '+(port?46:54)+'px Georgia';
+  wrap($('#heading').value.toUpperCase(),W*0.8,port?52:60,cx,y,(l,yy)=>{ctx.fillText(l,cx,yy);y=yy;});
+  y+=70;ctx.strokeStyle=c2;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-90,y-30);ctx.lineTo(cx+90,y-30);ctx.stroke();
+  ctx.fillStyle='#555';ctx.font='italic 24px Georgia';ctx.fillText($('#toLabel').value,cx,y);
+  y+=80;ctx.fillStyle=c1;ctx.font='700 '+(port?52:62)+'px "Brush Script MT", Georgia';ctx.fillText(name,cx,y);
+  ctx.strokeStyle=c2;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(cx-W*0.32,y+22);ctx.lineTo(cx+W*0.32,y+22);ctx.stroke();
+  y+=80;ctx.fillStyle='#333';ctx.font='26px Georgia';
+  const body=$('#body').value.replace(/\{name\}/g,name);
+  wrap(body,W*0.74,36,cx,y,(l,yy)=>{ctx.fillText(l,cx,yy);y=yy;});
+  // signatures
+  const sy=H-180;const positions=port?[W*0.5]:[W*0.3,W*0.7];const sigs=[$('#sig1').value,$('#sig2').value];
+  (port?[sigs[0]]:sigs).forEach((s,i)=>{const x=positions[i];const [n1,n2]=s.split('\n');ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-150,sy);ctx.lineTo(x+150,sy);ctx.stroke();ctx.fillStyle='#222';ctx.font='700 22px Georgia';ctx.fillText(n1||'',x,sy+34);ctx.fillStyle='#666';ctx.font='18px Georgia';ctx.fillText(n2||'',x,sy+60);});
+  ctx.fillStyle=c1;ctx.font='20px Georgia';ctx.fillText($('#date').value,cx,H-90);
+}
+function wrap(text,maxW,lh,cx,startY,cb){const words=String(text).split(/\s+/);let line='',y=startY;words.forEach(w=>{if(ctx.measureText(line+' '+w).width>maxW&&line){cb(line,y);y+=lh;line=w;}else line=line?line+' '+w:w;});if(line)cb(line,y);}
+['heading','toLabel','name','body','sig1','sig2','theme','orient','date'].forEach(id=>$('#'+id).addEventListener('input',()=>draw($('#name').value)));
+$('#png').onclick=()=>{draw($('#name').value);cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='certificate-'+slug($('#name').value)+'.png';a.click();});};
+$('#batchBtn').onclick=()=>{const b=$('#batchBox');b.style.display=b.style.display==='flex'?'none':'flex';};
+function slug(s){return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cert';}
+$('#batchGo').onclick=async()=>{
+  const names=$('#names').value.split('\n').map(n=>n.trim()).filter(Boolean);
+  if(!names.length){$('#status').textContent='Add some names.';return;}
+  for(let i=0;i<names.length;i++){draw(names[i]);await new Promise(r=>cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='certificate-'+slug(names[i])+'.png';a.click();setTimeout(r,250);}));$('#status').textContent=`Downloaded ${i+1}/${names.length}…`;}
+  $('#status').textContent='Done — '+names.length+' certificates.';draw($('#name').value);
+};
+draw($('#name').value);
+</script>
+</body>
+</html>

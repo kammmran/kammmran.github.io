@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figure Consistency Checker — Academy Tools</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="../assets/theme.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-link" href="../academy.html"><i class="ti ti-arrow-left"></i> Back to tools</a>
+  <div class="logo"><div class="logo-icon"><i class="ti ti-checklist"></i></div><div>Figure Consistency Checker</div></div>
+  <div style="width:120px"></div>
+</header>
+
+<main class="tool-page fade-in" style="max-width:960px">
+  <div class="tool-header">
+    <div class="tool-title-block">
+      <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-checklist"></i></div>
+      <div>
+        <div class="tool-title">Figure Consistency Checker</div>
+        <div class="tool-desc">Drop all of a manuscript's figures at once and check that they're consistent with each other: matching widths, similar effective DPI, the same file format and colour mode, and comparable background tone. Mismatched figures are the tell-tale sign of a rushed submission — this catches them before a reviewer does. Local.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:auto;gap:14px">
+    <label class="fld" id="drop" style="border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;align-items:center">
+      <i class="ti ti-photo-plus" style="font-size:26px;color:var(--text3)"></i>
+      <div style="margin-top:6px">Click or drop all figures (2+)</div>
+      <input type="file" id="file" accept="image/*" multiple style="display:none">
+    </label>
+    <label class="fld" style="flex-direction:row;align-items:center;gap:8px;font-size:12px">Intended print width<select id="width"><option value="90">Single col (90 mm)</option><option value="140">1.5 col (140 mm)</option><option value="190" selected>Double col (190 mm)</option></select></label>
+    <div id="flags"></div>
+    <div id="table"></div>
+  </div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Consistency, not perfection: figures legitimately differ in height and content. The checker flags the things that look careless side by side — a JPEG among PNGs, one low-DPI panel, a grayscale figure in a colour set, or a dark-background plot among white ones.</div>
+</main>
+
+<style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
+  .flag{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-size:13px;margin:0 6px 6px 0}
+  .flag.warn{background:rgba(251,191,36,0.12);color:var(--amber)} .flag.ok{background:rgba(74,222,128,0.12);color:var(--green)} .flag.bad{background:rgba(248,113,113,0.12);color:var(--red)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px} td,th{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left} th{color:var(--text3);font-size:11px;text-transform:uppercase}
+  .odd{color:var(--amber);font-weight:600} td img{width:54px;height:40px;object-fit:contain;background:var(--bg3);border-radius:4px}</style>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+let figs=[];
+$('#drop').onclick=()=>$('#file').click();
+['dragover','dragleave','drop'].forEach(ev=>$('#drop').addEventListener(ev,e=>{e.preventDefault();$('#drop').style.borderColor=ev==='dragover'?'var(--accent)':'var(--border)';if(ev==='drop'&&e.dataTransfer.files.length)add(e.dataTransfer.files);}));
+$('#file').onchange=e=>{if(e.target.files.length)add(e.target.files);};
+$('#width').onchange=render;
+async function add(files){
+  for(const f of files){const url=URL.createObjectURL(f);await new Promise(res=>{const im=new Image();im.onload=()=>{const c=document.createElement('canvas');const s=Math.min(1,60/im.naturalWidth);c.width=im.naturalWidth*s;c.height=im.naturalHeight*s;const cx=c.getContext('2d');cx.drawImage(im,0,0,c.width,c.height);let r=0,g=0,b=0,n=0,sat=0;try{const d=cx.getImageData(0,0,c.width,c.height).data;for(let i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];n++;sat+=Math.max(d[i],d[i+1],d[i+2])-Math.min(d[i],d[i+1],d[i+2]);}}catch(_){}figs.push({name:f.name,url,w:im.naturalWidth,h:im.naturalHeight,type:(f.type||'').replace('image/','')||f.name.split('.').pop(),size:f.size,bg:n?(r/n+g/n+b/n)/3:255,sat:n?sat/n:0});res();};im.onerror=res;im.src=url;});}
+  render();
+}
+function mode(arr){const m={};arr.forEach(v=>m[v]=(m[v]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1])[0][0];}
+function render(){
+  if(figs.length<1){return;}
+  const widthMM=+$('#width').value,widthIn=widthMM/25.4;
+  figs.forEach(f=>{f.dpi=Math.round(f.w/widthIn);f.gray=f.sat<12;});
+  const widths=figs.map(f=>f.w),dpis=figs.map(f=>f.dpi);
+  const modeType=mode(figs.map(f=>f.type.toLowerCase()));
+  const medDpi=dpis.slice().sort((a,b)=>a-b)[Math.floor(dpis.length/2)];
+  const flags=[];
+  const wRange=Math.max(...widths)-Math.min(...widths);
+  flags.push(wRange<=Math.max(...widths)*0.05?['ok','Pixel widths consistent']:['warn',`Widths vary (${Math.min(...widths)}–${Math.max(...widths)} px)`]);
+  const lowDpi=figs.filter(f=>f.dpi<medDpi*0.7);
+  flags.push(lowDpi.length?['bad',`${lowDpi.length} low-resolution figure(s)`]:['ok','DPI consistent']);
+  const offType=figs.filter(f=>f.type.toLowerCase()!==modeType);
+  flags.push(offType.length?['warn',`Mixed formats (mostly ${modeType.toUpperCase()})`]:['ok',`Format uniform (${modeType.toUpperCase()})`]);
+  const grays=figs.filter(f=>f.gray).length;
+  flags.push(grays&&grays!==figs.length?['warn',`${grays} grayscale among ${figs.length} colour`]:['ok','Colour mode consistent']);
+  const darks=figs.filter(f=>f.bg<128).length;
+  flags.push(darks&&darks!==figs.length?['warn',`${darks} dark-background figure(s)`]:['ok','Background tone consistent']);
+  $('#flags').innerHTML=flags.map(f=>`<span class="flag ${f[0]}"><i class="ti ${f[0]==='ok'?'ti-check':f[0]==='warn'?'ti-alert-triangle':'ti-x'}"></i>${f[1]}</span>`).join('');
+  $('#table').innerHTML=`<table><tr><th></th><th>File</th><th>Dimensions</th><th>DPI@${widthMM}mm</th><th>Format</th><th>Mode</th><th>Bg</th></tr>${figs.map(f=>`<tr><td><img src="${f.url}"></td><td>${esc(f.name)}</td><td class="${Math.abs(f.w-medianW())>medianW()*0.05?'odd':''}">${f.w}×${f.h}</td><td class="${f.dpi<medDpi*0.7?'odd':''}">${f.dpi}</td><td class="${f.type.toLowerCase()!==modeType?'odd':''}">${esc(f.type.toUpperCase())}</td><td class="${f.gray&&grays!==figs.length?'odd':''}">${f.gray?'gray':'colour'}</td><td>${f.bg<128?'dark':'light'}</td></tr>`).join('')}</table>`;
+}
+function medianW(){const w=figs.map(f=>f.w).sort((a,b)=>a-b);return w[Math.floor(w.length/2)]||1;}
+</script>
+</body>
+</html>
