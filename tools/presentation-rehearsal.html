@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Presentation Rehearsal Analyzer — Academy Tools</title>
+<title>Presentation Rehearsal Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -35,7 +35,7 @@
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-label">Elapsed</div><div class="stat-value" id="dur">0:00</div></div>
       <div class="stat-card"><div class="stat-label">Words</div><div class="stat-value" id="wc">0</div></div>
-      <div class="stat-card"><div class="stat-label">Pace (wpm)</div><div class="stat-value" id="wpm">—</div></div>
+      <div class="stat-card"><div class="stat-label">Pace (wpm)</div><div class="stat-value" id="wpm">-</div></div>
       <div class="stat-card"><div class="stat-label">Filler words</div><div class="stat-value" id="fc" style="color:var(--amber)">0</div></div>
     </div>
     <div id="pacing" class="muted" style="font-size:13px"></div>
@@ -58,18 +58,18 @@ let rec=null,recording=false,t0=0,text='',timer=null;
 function analyze(){
   const words=(text.match(/\S+/g)||[]).length; $('#wc').textContent=words;
   const mins=(Date.now()-t0)/60000;
-  const wpm=mins>0.05?Math.round(words/mins):0; $('#wpm').textContent=wpm||'—';
+  const wpm=mins>0.05?Math.round(words/mins):0; $('#wpm').textContent=wpm||'-';
   const low=' '+text.toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ')+' ';
   let total=0;const counts={};
   FILLERS.forEach(f=>{const re=new RegExp('\\s'+f.replace(/ /g,'\\s')+'\\s','g');const m=low.match(re);if(m){counts[f]=m.length;total+=m.length;}});
   $('#fc').textContent=total;
-  $('#fillers').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span class="chip2">${esc(f)} · ${n}</span>`).join('')||'<span class="muted" style="font-size:12px">No filler words detected yet — nice.</span>';
+  $('#fillers').innerHTML=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span class="chip2">${esc(f)} · ${n}</span>`).join('')||'<span class="muted" style="font-size:12px">No filler words detected yet - nice.</span>';
   let hl=esc(text);FILLERS.forEach(f=>{hl=hl.replace(new RegExp('\\b'+f.replace(/ /g,'\\s')+'\\b','gi'),m=>`<mark>${m}</mark>`);});
   $('#transcript').innerHTML=hl||'<span class="muted">Your speech transcript appears here…</span>';
   $('#transcript').scrollTop=$('#transcript').scrollHeight;
-  if(wpm){let p;if(wpm<110)p='🐢 A little slow — aim for 120–150 wpm for an engaged audience.';else if(wpm<=160)p='✅ Good conversational pace (120–150 is ideal).';else p='⚡ Fast — slow down so the audience can follow; aim under 160 wpm.';
+  if(wpm){let p;if(wpm<110)p='🐢 A little slow - aim for 120–150 wpm for an engaged audience.';else if(wpm<=160)p='✅ Good conversational pace (120–150 is ideal).';else p='⚡ Fast - slow down so the audience can follow; aim under 160 wpm.';
     const fillRate=words?(total/words*100).toFixed(1):0;
-    $('#pacing').innerHTML=`${p} · Filler rate: <b>${fillRate}%</b> ${fillRate>3?'(try to keep under 3%)':'(good — under 3%)'}`;}
+    $('#pacing').innerHTML=`${p} · Filler rate: <b>${fillRate}%</b> ${fillRate>3?'(try to keep under 3%)':'(good - under 3%)'}`;}
 }
 function start(){
   if(!SR){$('#status').textContent='Use Chrome or Edge for the microphone.';return;}

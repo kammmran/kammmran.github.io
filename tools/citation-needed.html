@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Citation-Needed Detector — Academy Tools</title>
+<title>Citation-Needed Detector - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-quote"></i></div>
       <div>
         <div class="tool-title">Citation-Needed Detector</div>
-        <div class="tool-desc">Highlights sentences that make factual or statistical claims but carry no citation — the spots a reviewer will ask you to back up.</div>
+        <div class="tool-desc">Highlights sentences that make factual or statistical claims but carry no citation - the spots a reviewer will ask you to back up.</div>
       </div>
     </div>
   </div>
@@ -76,7 +76,7 @@ function run(){
     const hit = triggers.find(tr=>tr.re.test(trimmed));
     if(hit && !hasCite){
       flagged++;
-      return `<span class="sent flag" title="${hit.why}">${esc(s)}</span><span class="why"><i class="ti ti-alert-circle"></i> ${hit.why} — add a citation</span>`;
+      return `<span class="sent flag" title="${hit.why}">${esc(s)}</span><span class="why"><i class="ti ti-alert-circle"></i> ${hit.why} - add a citation</span>`;
     }
     if(hasCite){ cited++; return `<span class="sent cited">${esc(s)}</span> `; }
     return `<span class="sent">${esc(s)}</span> `;
@@ -88,7 +88,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Already cited</div><div class="stat-value" style="color:var(--green)">${cited}</div></div>
     </div>
     <div id="render">${html}</div>
-    <div class="muted" style="font-size:12px;margin-top:10px">Blue = a claim with no nearby citation. Green = already has one. This flags candidates, not certainties — your own results don't need a citation.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:10px">Blue = a claim with no nearby citation. Green = already has one. This flags candidates, not certainties - your own results don't need a citation.</div>`;
 }
 $('#txt').addEventListener('input',run);
 </script>

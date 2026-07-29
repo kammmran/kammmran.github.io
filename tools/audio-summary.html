@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Audio Summary Generator — Academy Tools</title>
+<title>Audio Summary Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-file-text"></i></div>
       <div>
         <div class="tool-title">Audio Summary Generator</div>
-        <div class="tool-desc">Condense a long recording's transcript into a concise summary. An extractive TextRank-style algorithm scores and selects the most central sentences, plus pulls out key bullet points — fully in your browser, no upload.</div>
+        <div class="tool-desc">Condense a long recording's transcript into a concise summary. An extractive TextRank-style algorithm scores and selects the most central sentences, plus pulls out key bullet points - fully in your browser, no upload.</div>
       </div>
     </div>
   </div>
@@ -70,7 +70,7 @@ $('#run').onclick=()=>{
   // key bullets = top distinct sentences
   const bullets=scores.map((s,i)=>[i,s]).sort((a,b)=>b[1]-a[1]).slice(0,Math.min(5,Math.ceil(k/2))).sort((a,b)=>a[0]-b[0]).map(x=>sents[x[0]]);
   $('#out').innerHTML=`<div class="summary">${esc(summaryText)}<ul class="bullets">${bullets.map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div>
-    <div class="muted" style="font-size:12px;margin-top:8px">Reduced ${N} sentences → ${k} (${Math.round(k/N*100)}%). Extractive summary — sentences are taken verbatim from your transcript.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Reduced ${N} sentences → ${k} (${Math.round(k/N*100)}%). Extractive summary - sentences are taken verbatim from your transcript.</div>`;
   $('#status').textContent='Summarized';
 };
 $('#copy').onclick=()=>{if(summaryText){navigator.clipboard.writeText(summaryText);$('#status').textContent='Copied.';}};

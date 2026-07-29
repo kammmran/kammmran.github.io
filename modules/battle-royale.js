@@ -1,9 +1,9 @@
-// CHRONO SHIFT — Battle Royale bootstrap.
+// CHRONO SHIFT - Battle Royale bootstrap.
 //
 // Three modes share this page:
-//   1) SOLO vs BOTS — local sim, 1 human + N bots.
-//   2) HOST ROOM    — PeerJS broker, accepts up to 5 guest connections.
-//   3) JOIN ROOM    — connects to a host's room code as a guest.
+//   1) SOLO vs BOTS - local sim, 1 human + N bots.
+//   2) HOST ROOM    - PeerJS broker, accepts up to 5 guest connections.
+//   3) JOIN ROOM    - connects to a host's room code as a guest.
 //
 // The host (or solo player) runs the simulation. Guests forward input and render snapshots
 // (same model as the existing online-2p mode, extended for N peers).
@@ -146,7 +146,7 @@
     BR.matchEnded=false;
     BR.matchStartTime=Date.now();
     // Hide lobby, show HUD + canvas. NB: the global CSS has display:none on #gameCanvas and
-    // most HUD bars; we must set explicit display values (block / flex) — clearing inline style
+    // most HUD bars; we must set explicit display values (block / flex) - clearing inline style
     // falls back to those defaults and leaves the screen blank.
     document.getElementById('brLobby').style.display='none';
     document.getElementById('brResults').style.display='none';

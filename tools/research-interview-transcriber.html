@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Interview Transcriber — Academy Tools</title>
+<title>Research Interview Transcriber - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-microphone-2"></i></div>
       <div>
         <div class="tool-title">Research Interview Transcriber</div>
-        <div class="tool-desc">Transcribe qualitative interviews live with speaker separation and timestamps. Tag who's speaking, then export as text or VTT. Runs on the browser's built-in speech recognition — audio never leaves your device.</div>
+        <div class="tool-desc">Transcribe qualitative interviews live with speaker separation and timestamps. Tag who's speaking, then export as text or VTT. Runs on the browser's built-in speech recognition - audio never leaves your device.</div>
       </div>
     </div>
   </div>
@@ -44,7 +44,7 @@
       <button class="btn" id="clear"><i class="ti ti-trash"></i> Clear</button>
     </div>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">Tip: switch the active speaker tag whenever a new person talks — speech recognition can't separate voices on its own, so you steer the labels. Double-click a tag to rename. Works best in Chrome/Edge in a quiet room.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Tip: switch the active speaker tag whenever a new person talks - speech recognition can't separate voices on its own, so you steer the labels. Double-click a tag to rename. Works best in Chrome/Edge in a quiet room.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
@@ -88,7 +88,7 @@ function addLine(text){
   render();
 }
 function start(){
-  if(!SR){$('#status').textContent='Speech recognition not supported — use Chrome or Edge.';return;}
+  if(!SR){$('#status').textContent='Speech recognition not supported - use Chrome or Edge.';return;}
   rec=new SR(); rec.continuous=true; rec.interimResults=true; rec.lang=$('#lang').value;
   if(!t0)t0=Date.now();
   rec.onresult=e=>{

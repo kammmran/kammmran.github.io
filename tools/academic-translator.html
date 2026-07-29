@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Academic Translator — Academy Tools</title>
+<title>Academic Translator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-language"></i></div>
       <div>
         <div class="tool-title">Academic Translator</div>
-        <div class="tool-desc">Translate abstracts and passages between languages — especially handy for non-native English authors. Powered by the free MyMemory API.</div>
+        <div class="tool-desc">Translate abstracts and passages between languages - especially handy for non-native English authors. Powered by the free MyMemory API.</div>
       </div>
     </div>
   </div>
@@ -72,7 +72,7 @@ $('#run').addEventListener('click',async ()=>{
   try{
     const chunks=chunk(text); const res=[];
     for(let i=0;i<chunks.length;i++){ st.textContent=`Translating ${i+1}/${chunks.length}…`; res.push(await tr(chunks[i],`${from}|${to}`)); }
-    $('#dst').value=res.join(''); st.textContent='Done · machine translation — proofread before use';
+    $('#dst').value=res.join(''); st.textContent='Done · machine translation - proofread before use';
   }catch(err){ st.textContent='Translation failed: '+err.message; }
 });
 $('#copy').addEventListener('click',()=>{ const t=$('#dst').value.trim(); if(t){ navigator.clipboard.writeText(t); $('#status').textContent='Copied.'; } });

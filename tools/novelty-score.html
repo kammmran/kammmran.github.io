@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Novelty Score Calculator — Academy Tools</title>
+<title>Novelty Score Calculator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -30,7 +30,7 @@
     <label class="fld">Your idea / abstract
       <textarea id="mine" style="min-height:90px" placeholder="Describe your proposed contribution…"></textarea>
     </label>
-    <label class="fld">Prior work — one title or abstract per line
+    <label class="fld">Prior work - one title or abstract per line
       <textarea id="prior" style="min-height:120px" placeholder="Existing paper 1 title/abstract…&#10;Existing paper 2 title/abstract…"></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-calculator"></i> Score novelty</button></div>
@@ -60,12 +60,12 @@ $('#run').addEventListener('click',()=>{
   const sims=prior.map(p=>({p,sim:cosine(mv,tf(p))})).sort((a,b)=>b.sim-a.sim);
   const maxSim=sims[0].sim; const novelty=Math.round((1-maxSim)*100);
   const band=novelty>=70?'--green':novelty>=45?'--amber':'--red';
-  const verdict=novelty>=70?'Highly distinct from the listed prior work':novelty>=45?'Moderately novel — overlaps with some prior work':'Substantial overlap — sharpen your distinct contribution';
+  const verdict=novelty>=70?'Highly distinct from the listed prior work':novelty>=45?'Moderately novel - overlaps with some prior work':'Substantial overlap - sharpen your distinct contribution';
   out.innerHTML=`<div class="big" style="color:var(${band})">${novelty}<span style="font-size:18px">/100</span></div>
     <div style="text-align:center;color:var(${band});font-weight:600;margin-bottom:12px">${verdict}</div>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px">Closest prior work (similarity)</div>`+
     sims.slice(0,8).map(x=>{ const pc=Math.round(x.sim*100); const c=pc>=55?'--red':pc>=30?'--amber':'--green'; return `<div class="prow"><div class="bar"><div style="width:${pc}%;background:var(${c})"></div></div><span style="width:42px;color:var(${c})">${pc}%</span><span>${esc(x.p.slice(0,90))}${x.p.length>90?'…':''}</span></div>`; }).join('')+
-    `<div class="muted" style="font-size:12px;margin-top:8px">Novelty = 100 − closest match. This measures <i>wording</i> overlap, not true conceptual novelty — low scores mean "phrased very like existing work", which is still worth checking.</div>`;
+    `<div class="muted" style="font-size:12px;margin-top:8px">Novelty = 100 − closest match. This measures <i>wording</i> overlap, not true conceptual novelty - low scores mean "phrased very like existing work", which is still worth checking.</div>`;
 });
 </script>
 

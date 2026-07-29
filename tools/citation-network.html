@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Citation Network Visualizer — Academy Tools</title>
+<title>Citation Network Visualizer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-binary-tree"></i></div>
       <div>
         <div class="tool-title">Citation Network Visualizer</div>
-        <div class="tool-desc">Enter a DOI or paper title to map its full citation network — every work it references (its foundations) and every paper that cites it (its impact). Browse, search, sort and export the complete lists. Powered by the free OpenAlex API.</div>
+        <div class="tool-desc">Enter a DOI or paper title to map its full citation network - every work it references (its foundations) and every paper that cites it (its impact). Browse, search, sort and export the complete lists. Powered by the free OpenAlex API.</div>
       </div>
     </div>
   </div>
@@ -97,10 +97,10 @@ $('#f').addEventListener('submit',async e=>{
     STATE.focal=w;
     renderFocal(w);
     out.innerHTML='<div class="muted"><i class="ti ti-loader-2 spin"></i> Loading references & citing papers…</div>';
-    // references — fetch ALL in batches of 50
+    // references - fetch ALL in batches of 50
     const refIds=(w.referenced_works||[]).map(u=>u.split('/').pop());
     STATE.refs=await fetchByIds(refIds);
-    // citations — first page (cursor)
+    // citations - first page (cursor)
     STATE.cites=[]; STATE.citeCursor='*';
     const wid=w.id.split('/').pop();
     const first=await fetchCitesPage(wid);
@@ -150,7 +150,7 @@ function filterItems(arr){
 }
 function itemHTML(w){
   return `<div class="item"><div class="it-t"><a href="${esc(linkOf(w))}" target="_blank" rel="noopener">${esc(w.display_name||'Untitled')}</a></div>
-    <div class="it-m"><span>${esc(authorStr(w))||'—'}</span>${w.publication_year?`<span>· ${w.publication_year}</span>`:''}${venueStr(w)?`<span>· ${esc(short(venueStr(w),36))}</span>`:''}<span class="cc">· ${(w.cited_by_count||0).toLocaleString()} cites</span></div></div>`;
+    <div class="it-m"><span>${esc(authorStr(w))||'-'}</span>${w.publication_year?`<span>· ${w.publication_year}</span>`:''}${venueStr(w)?`<span>· ${esc(short(venueStr(w),36))}</span>`:''}<span class="cc">· ${(w.cited_by_count||0).toLocaleString()} cites</span></div></div>`;
 }
 
 function render(){

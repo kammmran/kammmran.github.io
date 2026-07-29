@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Molecular Descriptors — Academy Tools</title>
+<title>Molecular Descriptors - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -80,7 +80,7 @@ function run(){
     render();
   });
 }
-function num(v,d=2){ return v===''||v==null?'—':(typeof v==='number'?v.toFixed(d):v); }
+function num(v,d=2){ return v===''||v==null?'-':(typeof v==='number'?v.toFixed(d):v); }
 function sub(f){ return String(f).replace(/(\d+)/g,'<sub>$1</sub>'); }
 function render(){
   $('#rows').innerHTML = data.length? data.map((r,i)=>{

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reference Consistency Checker — Academy Tools</title>
+<title>Reference Consistency Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,13 +21,13 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-list-check"></i></div>
       <div>
         <div class="tool-title">Reference Consistency Checker</div>
-        <div class="tool-desc">Spots reference-list entries that drift from the majority style — year placement, ampersands, DOIs, dash style and more.</div>
+        <div class="tool-desc">Spots reference-list entries that drift from the majority style - year placement, ampersands, DOIs, dash style and more.</div>
       </div>
     </div>
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Reference list — one reference per line
+    <label class="fld">Reference list - one reference per line
       <textarea id="refs" style="min-height:220px" placeholder="Smith, J., & Doe, A. (2021). A title here. Journal of X, 12(3), 45-60. https://doi.org/10.1/x&#10;Lee B and Park C 2019 Another title Nature 5 1-9"></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-checkup-list"></i> Check consistency</button></div>
@@ -91,7 +91,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Consistency</div><div class="stat-value" style="color:var(${band})">${score}%</div></div>
     </div>
     ${rows.join('')}
-    <div class="muted" style="font-size:12px;margin-top:8px">Heuristic check — it compares each entry against the most common style in your list, so it works best with a real reference section.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Heuristic check - it compares each entry against the most common style in your list, so it works best with a real reference section.</div>`;
 }
 $('#run').addEventListener('click',run);
 </script>

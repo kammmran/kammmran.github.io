@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMILES Validator — Academy Tools</title>
+<title>SMILES Validator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -51,16 +51,16 @@
     <div class="panel" style="min-height:auto">
       <div class="panel-label"><span>Properties</span></div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Formula</div><div class="stat-value" id="p_formula">—</div></div>
-        <div class="stat-card"><div class="stat-label">Mol. weight</div><div class="stat-value" id="p_mw">—</div></div>
-        <div class="stat-card"><div class="stat-label">Exact mass</div><div class="stat-value" id="p_exact">—</div></div>
-        <div class="stat-card"><div class="stat-label">Heavy atoms</div><div class="stat-value" id="p_heavy">—</div></div>
-        <div class="stat-card"><div class="stat-label">Rings</div><div class="stat-value" id="p_rings">—</div></div>
-        <div class="stat-card"><div class="stat-label">Rot. bonds</div><div class="stat-value" id="p_rot">—</div></div>
-        <div class="stat-card"><div class="stat-label">H donors</div><div class="stat-value" id="p_don">—</div></div>
-        <div class="stat-card"><div class="stat-label">H acceptors</div><div class="stat-value" id="p_acc">—</div></div>
-        <div class="stat-card"><div class="stat-label">cLogP</div><div class="stat-value" id="p_logp">—</div></div>
-        <div class="stat-card"><div class="stat-label">TPSA</div><div class="stat-value" id="p_tpsa">—</div></div>
+        <div class="stat-card"><div class="stat-label">Formula</div><div class="stat-value" id="p_formula">-</div></div>
+        <div class="stat-card"><div class="stat-label">Mol. weight</div><div class="stat-value" id="p_mw">-</div></div>
+        <div class="stat-card"><div class="stat-label">Exact mass</div><div class="stat-value" id="p_exact">-</div></div>
+        <div class="stat-card"><div class="stat-label">Heavy atoms</div><div class="stat-value" id="p_heavy">-</div></div>
+        <div class="stat-card"><div class="stat-label">Rings</div><div class="stat-value" id="p_rings">-</div></div>
+        <div class="stat-card"><div class="stat-label">Rot. bonds</div><div class="stat-value" id="p_rot">-</div></div>
+        <div class="stat-card"><div class="stat-label">H donors</div><div class="stat-value" id="p_don">-</div></div>
+        <div class="stat-card"><div class="stat-label">H acceptors</div><div class="stat-value" id="p_acc">-</div></div>
+        <div class="stat-card"><div class="stat-label">cLogP</div><div class="stat-value" id="p_logp">-</div></div>
+        <div class="stat-card"><div class="stat-label">TPSA</div><div class="stat-value" id="p_tpsa">-</div></div>
       </div>
       <div class="divider"></div>
       <div class="panel-label" style="margin-bottom:8px"><span>Lipinski's Rule of Five</span></div>
@@ -110,7 +110,7 @@ function validate(){
       mol = OCL.Molecule.fromSmiles(smi);
       if (!mol || mol.getAllAtoms() === 0) throw new Error('No atoms parsed');
     } catch (e) {
-      st.innerHTML = `<span class="err-msg"><i class="ti ti-circle-x"></i> Invalid SMILES — ${(e.message||'could not be parsed')}.</span>`;
+      st.innerHTML = `<span class="err-msg"><i class="ti ti-circle-x"></i> Invalid SMILES - ${(e.message||'could not be parsed')}.</span>`;
       $('#result').hidden = true; return;
     }
     st.innerHTML = '<span class="ok-msg"><i class="ti ti-circle-check"></i> Valid SMILES.</span>';
@@ -126,9 +126,9 @@ function show(mol){
   set('p_mw', mf.relativeWeight.toFixed(2));
   set('p_exact', mf.absoluteWeight.toFixed(4));
   set('p_heavy', mol.getAllAtoms());
-  set('p_rings', mol.getRingSet ? mol.getRingSet().getSize() : '—');
+  set('p_rings', mol.getRingSet ? mol.getRingSet().getSize() : '-');
 
-  let don='—',acc='—',logp='—',tpsa='—',rot='—';
+  let don='-',acc='-',logp='-',tpsa='-',rot='-';
   try {
     const p = new OCL.MoleculeProperties(mol);
     don=p.donorCount; acc=p.acceptorCount; logp=p.logP.toFixed(2); tpsa=p.polarSurfaceArea.toFixed(1); rot=p.rotatableBondCount;
@@ -145,14 +145,14 @@ function show(mol){
   const mw = mf.relativeWeight;
   const rules = [
     ['MW ≤ 500', mw <= 500, `${mw.toFixed(1)}`],
-    ['cLogP ≤ 5', logp!=='—' && parseFloat(logp) <= 5, logp],
-    ['H-donors ≤ 5', don!=='—' && don <= 5, don],
-    ['H-acceptors ≤ 10', acc!=='—' && acc <= 10, acc],
+    ['cLogP ≤ 5', logp!=='-' && parseFloat(logp) <= 5, logp],
+    ['H-donors ≤ 5', don!=='-' && don <= 5, don],
+    ['H-acceptors ≤ 10', acc!=='-' && acc <= 10, acc],
   ];
   const violations = rules.filter(r=>!r[1]).length;
   $('#lipinski').innerHTML = rules.map(r =>
     `<div class="lp"><i class="ti ti-${r[1]?'circle-check ok':'circle-x bad'}"></i> ${r[0]} <span class="muted" style="margin-left:auto">${r[2]}</span></div>`
-  ).join('') + `<div class="muted" style="font-size:12px;margin-top:4px">${violations===0?'Passes all four — drug-like.':violations===1?'1 violation (still generally acceptable).':violations+' violations — poor oral drug-likeness.'}</div>`;
+  ).join('') + `<div class="muted" style="font-size:12px;margin-top:4px">${violations===0?'Passes all four - drug-like.':violations===1?'1 violation (still generally acceptable).':violations+' violations - poor oral drug-likeness.'}</div>`;
 }
 
 function formatFormula(f){ return f.replace(/(\d+)/g,'<sub>$1</sub>'); }

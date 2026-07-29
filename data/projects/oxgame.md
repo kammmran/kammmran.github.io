@@ -15,7 +15,7 @@ ___
 
 Each player has two colors of matryoshka-like characters (black and blue), available in three sizes: small, medium, and large. The game board is 3x3, and players can add their matryoshkas to this board according to specific rules:
 
-1. **Placement Order**: Pieces must be placed in order of size—small first, then medium, and finally large.
+1. **Placement Order**: Pieces must be placed in order of size-small first, then medium, and finally large.
 2. **Limited Uses**: Each piece can only be used twice. After the first use, the piece appears with a “used” indicator. After the second use, it is removed from the game.
 3. **Winning Condition**: The first player to align three of their pieces in a row, column, or diagonal wins.
 

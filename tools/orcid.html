@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ID Validator — Academy Tools</title>
+<title>ID Validator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -41,7 +41,7 @@
 <script>
 const $ = s => document.querySelector(s);
 
-// ISO 7064 MOD 11-2 — used by ORCID & ISNI (16 digits, last is check 0-9 or X)
+// ISO 7064 MOD 11-2 - used by ORCID & ISNI (16 digits, last is check 0-9 or X)
 function mod11_2(digits){
   let total=0;
   for(const ch of digits){ const d=ch==='X'?10:parseInt(ch,10); total=(total+d)*2 % 11; }
@@ -52,13 +52,13 @@ function validateOrcidIsni(raw){
   if(!/^\d{15}[\dX]$/.test(clean)) return {ok:false, msg:'Must be 16 characters (15 digits + check digit).'};
   const base=clean.slice(0,15), check=clean[15];
   const expected=mod11_2(base);
-  if(expected!==check) return {ok:false, msg:`Checksum failed — expected check digit "${expected}", got "${check}".`};
+  if(expected!==check) return {ok:false, msg:`Checksum failed - expected check digit "${expected}", got "${check}".`};
   const fmt=clean.replace(/(.{4})(.{4})(.{4})(.{4})/,'$1-$2-$3-$4');
   return {ok:true, msg:'Valid checksum.', fmt};
 }
 function validateDOI(raw){
   const clean=raw.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i,'').replace(/^doi:/i,'');
-  if(/^10\.\d{4,9}\/\S+$/.test(clean)) return {ok:true, msg:'Well-formed DOI (format only — existence not checked).', fmt:clean};
+  if(/^10\.\d{4,9}\/\S+$/.test(clean)) return {ok:true, msg:'Well-formed DOI (format only - existence not checked).', fmt:clean};
   return {ok:false, msg:'Not a valid DOI. Expected 10.XXXX/suffix.'};
 }
 function validateISBN(raw){

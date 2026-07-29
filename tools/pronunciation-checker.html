@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scientific Pronunciation Checker — Academy Tools</title>
+<title>Scientific Pronunciation Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -38,7 +38,7 @@
     <div id="result"></div>
     <span class="muted" id="status" style="font-size:12px"></span>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">Scoring compares the recognizer's transcription to your target word-by-word and by character similarity. Recognition leans toward common words, so rare jargon may score low even when you nailed it — use the score as a rough guide, not a verdict.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Scoring compares the recognizer's transcription to your target word-by-word and by character similarity. Recognition leans toward common words, so rare jargon may score low even when you nailed it - use the score as a rough guide, not a verdict.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
@@ -64,10 +64,10 @@ $('#say').onclick=()=>{
     alts.forEach(a=>{const sc=sim(a.replace(/\s/g,''),target.replace(/\s/g,''));if(sc>best){best=sc;heard=a;}});
     const pct=Math.round(best*100);
     const col=pct>=85?'var(--green)':pct>=65?'var(--amber)':'var(--red)';
-    const verdict=pct>=85?'Excellent — clear match':pct>=65?'Close — refine a syllable or two':'Try again, listen to the reference';
+    const verdict=pct>=85?'Excellent - clear match':pct>=65?'Close - refine a syllable or two':'Try again, listen to the reference';
     $('#result').innerHTML=`<div class="score" style="color:${col}">${pct}%</div>
       <div class="bar"><span style="width:${pct}%;background:${col}"></span></div>
-      <div class="heard">target: <b>${$('#term').value}</b><br>heard: <b>${heard||'—'}</b></div>
+      <div class="heard">target: <b>${$('#term').value}</b><br>heard: <b>${heard||'-'}</b></div>
       <div class="muted" style="text-align:center;margin-top:8px">${verdict}</div>`;
     $('#status').textContent='';
   };

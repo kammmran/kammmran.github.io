@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Citation Context Analyzer — Academy Tools</title>
+<title>Citation Context Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-quote"></i></div>
       <div>
         <div class="tool-title">Citation Context Analyzer</div>
-        <div class="tool-desc">Finds the in-text citations in your draft and classifies how each is used — supporting, contrasting, methodological or background.</div>
+        <div class="tool-desc">Finds the in-text citations in your draft and classifies how each is used - supporting, contrasting, methodological or background.</div>
       </div>
     </div>
   </div>
@@ -68,7 +68,7 @@ function run(){
       ${Object.entries(tally).map(([k,v])=>`<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value" style="color:var(${lbls[k]})">${v}</div></div>`).join('')}
     </div>
     ${rows.join('')}
-    <div class="muted" style="font-size:12px;margin-top:8px">A high share of "background" can signal shallow engagement; "contrast" and "support" citations show you're positioning your work. Heuristic classification — skim to confirm.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">A high share of "background" can signal shallow engagement; "contrast" and "support" citations show you're positioning your work. Heuristic classification - skim to confirm.</div>`;
 }
 $('#txt').addEventListener('input',run);
 </script>

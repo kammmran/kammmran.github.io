@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chart Generator — Academy Tools</title>
+<title>Chart Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-bar"></i></div>
       <div>
         <div class="tool-title">Chart Generator</div>
-        <div class="tool-desc">Paste labels &amp; values, pick a chart type, and export a clean PNG. All in your browser — no libraries.</div>
+        <div class="tool-desc">Paste labels &amp; values, pick a chart type, and export a clean PNG. All in your browser - no libraries.</div>
       </div>
     </div>
     <div class="row">
@@ -40,7 +40,7 @@
         <button class="tab" data-t="scatter">Scatter</button>
       </div>
 
-      <div class="panel-label" style="margin-top:14px"><span id="dlabel">Data — label, value</span></div>
+      <div class="panel-label" style="margin-top:14px"><span id="dlabel">Data - label, value</span></div>
       <textarea id="data" style="min-height:200px" placeholder="One row per point:&#10;Jan, 42&#10;Feb, 55&#10;Mar, 38"></textarea>
 
       <label class="fld">Title<input type="text" id="title" placeholder="Chart title" value="Monthly results"></label>
@@ -206,7 +206,7 @@ function trunc(s,n){ s=String(s); return s.length>n?s.slice(0,n-1)+'…':s; }
 document.querySelectorAll('#types .tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('#types .tab').forEach(x=>x.classList.remove('active'));
   t.classList.add('active'); type=t.dataset.t;
-  $('#dlabel').textContent = type==='scatter' ? 'Data — x, y' : 'Data — label, value';
+  $('#dlabel').textContent = type==='scatter' ? 'Data - x, y' : 'Data - label, value';
   $('#data').placeholder = type==='scatter' ? 'One row per point:\n1.2, 3.4\n2.5, 5.1\n3.1, 4.8' : 'One row per point:\nJan, 42\nFeb, 55\nMar, 38';
   draw();
 }));

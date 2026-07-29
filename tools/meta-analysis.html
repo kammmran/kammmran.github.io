@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meta-analysis Calculator — Academy Tools</title>
+<title>Meta-analysis Calculator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-chart-dots-3"></i></div>
       <div>
         <div class="tool-title">Meta-analysis Calculator</div>
-        <div class="tool-desc">Inverse-variance pooling — fixed &amp; random effects (DerSimonian–Laird), heterogeneity, and a forest plot.</div>
+        <div class="tool-desc">Inverse-variance pooling - fixed &amp; random effects (DerSimonian–Laird), heterogeneity, and a forest plot.</div>
       </div>
     </div>
   </div>
@@ -50,12 +50,12 @@
     <div class="panel" style="min-height:auto">
       <div class="panel-label"><span>Pooled results</span></div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Fixed effect</div><div class="stat-value" id="fe">—</div></div>
-        <div class="stat-card"><div class="stat-label">Random effect</div><div class="stat-value" id="re">—</div></div>
-        <div class="stat-card"><div class="stat-label">I²</div><div class="stat-value" id="i2">—</div></div>
-        <div class="stat-card"><div class="stat-label">τ²</div><div class="stat-value" id="tau2">—</div></div>
-        <div class="stat-card"><div class="stat-label">Q (df)</div><div class="stat-value" id="q">—</div></div>
-        <div class="stat-card"><div class="stat-label">Studies (k)</div><div class="stat-value" id="k">—</div></div>
+        <div class="stat-card"><div class="stat-label">Fixed effect</div><div class="stat-value" id="fe">-</div></div>
+        <div class="stat-card"><div class="stat-label">Random effect</div><div class="stat-value" id="re">-</div></div>
+        <div class="stat-card"><div class="stat-label">I²</div><div class="stat-value" id="i2">-</div></div>
+        <div class="stat-card"><div class="stat-label">τ²</div><div class="stat-value" id="tau2">-</div></div>
+        <div class="stat-card"><div class="stat-label">Q (df)</div><div class="stat-value" id="q">-</div></div>
+        <div class="stat-card"><div class="stat-label">Studies (k)</div><div class="stat-value" id="k">-</div></div>
       </div>
       <div class="muted" style="font-size:12px;margin-top:10px" id="interp"></div>
     </div>
@@ -125,7 +125,7 @@ function compute(){
   const st = studies();
   const k = st.length;
   const set = (id, v) => $('#'+id).textContent = v;
-  if (k < 1){ ['fe','re','i2','tau2','q','k'].forEach(id => set(id,'—')); $('#forest').innerHTML='<span class="muted">Add studies with valid effect + variance.</span>'; $('#interp').textContent=''; return; }
+  if (k < 1){ ['fe','re','i2','tau2','q','k'].forEach(id => set(id,'-')); $('#forest').innerHTML='<span class="muted">Add studies with valid effect + variance.</span>'; $('#interp').textContent=''; return; }
 
   // Fixed effect (inverse variance)
   let sw = 0, swy = 0, swy2 = 0, sw2 = 0;

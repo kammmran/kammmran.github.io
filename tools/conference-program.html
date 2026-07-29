@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Conference Program Designer — Academy Tools</title>
+<title>Conference Program Designer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -27,9 +27,9 @@
   </div>
 
   <div class="panel no-print" style="min-height:auto;gap:14px">
-    <label class="fld">Program — see syntax below
+    <label class="fld">Program - see syntax below
       <textarea id="src" style="min-height:240px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"># 12th International Conference on Plant Science
-## Day 1 — 14 June 2026
+## Day 1 - 14 June 2026
 = Opening Session | Main Hall
 09:00 | Registration & coffee | break
 09:30 | Welcome address | Prof. A. Chair
@@ -39,7 +39,7 @@
 11:00 | Hyperspectral disease detection | J. Researcher
 11:20 | Drone-based field surveys | T. Lee
 12:00 | Lunch | break
-## Day 2 — 15 June 2026
+## Day 2 - 15 June 2026
 = Session B: Genetics | Main Hall
 09:00 | GWAS in wheat | M. Garcia
 09:20 | Panel discussion | All speakers</textarea>
@@ -90,7 +90,7 @@ function render(){
       const parts=l.split('|').map(x=>x.trim());const isBreak=parts[parts.length-1].toLowerCase()==='break';
       if(isBreak)parts.pop();
       const [time,item,sp,room]=parts;
-      html+=`<div class="item ${isBreak?'brk':''}"><div class="t">${esc(time||'')}</div><div class="d">${esc(item||'')}${sp?` <span class="sp">— ${esc(sp)}</span>`:''}${room?` <span class="rm">· ${esc(room)}</span>`:''}</div></div>`;
+      html+=`<div class="item ${isBreak?'brk':''}"><div class="t">${esc(time||'')}</div><div class="d">${esc(item||'')}${sp?` <span class="sp">- ${esc(sp)}</span>`:''}${room?` <span class="rm">· ${esc(room)}</span>`:''}</div></div>`;
     }
   });
   const cols=$('#cols').value==='2';

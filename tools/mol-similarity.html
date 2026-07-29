@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Molecule Similarity — Academy Tools</title>
+<title>Molecule Similarity - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -87,7 +87,7 @@ function run(){
     if(refIdx) items.sort((a,b)=>(b.sim??-1)-(a.sim??-1));
     $('#results').innerHTML = items.length? items.map(it=>{
       if(!it.ok) return `<div class="sc bad"><div class="pic">Invalid SMILES</div><div class="smi">${esc(it.smi)}</div></div>`;
-      const pct=it.sim==null?'—':(it.sim*100).toFixed(1)+'%';
+      const pct=it.sim==null?'-':(it.sim*100).toFixed(1)+'%';
       return `<div class="sc"><div class="pic">${it.svg}</div>${it.sim!=null?`<div class="bar"><div class="fill" style="width:${it.sim*100}%;background:${color(it.sim)}"></div></div>`:''}<div class="ft"><span>${esc(it.label)}</span><b style="color:${it.sim!=null?color(it.sim):'inherit'}">${pct}</b></div><div class="smi" title="${esc(it.smi)}">${esc(it.smi)}</div></div>`;
     }).join('') : '<div class="muted" style="grid-column:1/-1">Add candidate molecules above.</div>';
   });

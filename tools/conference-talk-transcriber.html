@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Conference Talk Transcriber — Academy Tools</title>
+<title>Conference Talk Transcriber - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-microphone"></i></div>
       <div>
         <div class="tool-title">Conference Talk Transcriber</div>
-        <div class="tool-desc">Turn a live conference presentation into clean text as the speaker talks. Adds paragraph breaks on pauses and timestamped section markers you can drop in. Browser-only — nothing is uploaded.</div>
+        <div class="tool-desc">Turn a live conference presentation into clean text as the speaker talks. Adds paragraph breaks on pauses and timestamped section markers you can drop in. Browser-only - nothing is uploaded.</div>
       </div>
     </div>
   </div>
@@ -38,7 +38,7 @@
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-label">Words</div><div class="stat-value" id="wc">0</div></div>
       <div class="stat-card"><div class="stat-label">Duration</div><div class="stat-value" id="dur">0:00</div></div>
-      <div class="stat-card"><div class="stat-label">Pace (wpm)</div><div class="stat-value" id="wpm">—</div></div>
+      <div class="stat-card"><div class="stat-label">Pace (wpm)</div><div class="stat-value" id="wpm">-</div></div>
       <div class="stat-card"><div class="stat-label">Slide marks</div><div class="stat-value" id="marks">0</div></div>
     </div>
     <div class="row">
@@ -87,7 +87,7 @@ function start(){
 function stop(){recording=false;if(rec)rec.stop();clearInterval(timer);$('#rec').innerHTML='<i class="ti ti-microphone"></i> Start';$('#rec').classList.add('btn-primary');$('#status').textContent='Stopped';$('#interim').textContent='';}
 $('#rec').onclick=()=>recording?stop():start();
 $('#mark').onclick=()=>{marks++;blocks.push({type:'mark',text:'Slide '+marks,t:Date.now()-(t0||Date.now())});render();};
-$('#clear').onclick=()=>{blocks=[];marks=0;t0=0;$('#dur').textContent='0:00';$('#wpm').textContent='—';render();};
+$('#clear').onclick=()=>{blocks=[];marks=0;t0=0;$('#dur').textContent='0:00';$('#wpm').textContent='-';render();};
 function plain(){return blocks.map(b=>b.type==='mark'?`\n--- ${b.text} (${fmt(b.t)}) ---\n`:b.text).join('\n\n');}
 $('#copy').onclick=()=>{navigator.clipboard.writeText(plain());$('#status').textContent='Copied.';};
 $('#txt').onclick=()=>{const b=new Blob([plain()],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='talk-transcript.txt';a.click();};

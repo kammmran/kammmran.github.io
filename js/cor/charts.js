@@ -179,7 +179,7 @@ const Charts = (() => {
       }))
     ];
 
-    // The map above re-invokes m.predict(xFine) per point — collapse to single call
+    // The map above re-invokes m.predict(xFine) per point - collapse to single call
     for (let i = 1; i < datasets.length; i++) {
       const m = models[i - 1];
       const yFine = m.predict ? m.predict(xFine) : new Array(xFine.length).fill(NaN);
@@ -273,7 +273,7 @@ const Charts = (() => {
       data: {
         labels,
         datasets: [{
-          label: `Residuals — ${best.name}`,
+          label: `Residuals - ${best.name}`,
           data: bins,
           backgroundColor: "rgba(37, 99, 235, 0.7)",
           borderColor: "#2563eb",
@@ -325,7 +325,7 @@ const Charts = (() => {
             type: "line"
           },
           {
-            label: `Residual Q–Q — ${best.name}`,
+            label: `Residual Q–Q - ${best.name}`,
             data,
             backgroundColor: "#2563eb",
             borderColor: "#2563eb",
@@ -395,7 +395,7 @@ const Charts = (() => {
   }
 
   /* -------------------------------------------------------
-   * 7. AIC / BIC ranking — show ΔAIC and ΔBIC vs best
+   * 7. AIC / BIC ranking - show ΔAIC and ΔBIC vs best
    * ----------------------------------------------------- */
   function renderAICBIC(canvasId, models) {
     _destroy("aicbic");
@@ -515,7 +515,7 @@ const Charts = (() => {
   }
 
   /* =========================================================
-   * 9. Cook's distance (approximate, per data point — best model)
+   * 9. Cook's distance (approximate, per data point - best model)
    * ======================================================= */
   function renderCooksDistance(canvasId, models, experimental) {
     _destroy("cooks");
@@ -536,7 +536,7 @@ const Charts = (() => {
     charts.cooks = new Chart(ctx, {
       type: "bar",
       data: { labels, datasets: [{
-        label: `Cook's D — ${best.name}`,
+        label: `Cook's D - ${best.name}`,
         data: D,
         backgroundColor: D.map(d => d > threshold ? "rgba(220,38,38,0.8)" : "rgba(37,99,235,0.7)"),
         borderColor: D.map(d => d > threshold ? "#dc2626" : "#2563eb"),
@@ -612,7 +612,7 @@ const Charts = (() => {
     charts.acf = new Chart(ctx, {
       type: "bar",
       data: { labels, datasets: [{
-        label: `ACF — ${best.name}`,
+        label: `ACF - ${best.name}`,
         data: acf,
         backgroundColor: acf.map(v => Math.abs(v) > ci ? "rgba(220,38,38,0.75)" : "rgba(37,99,235,0.7)"),
         borderColor: acf.map(v => Math.abs(v) > ci ? "#dc2626" : "#2563eb"),
@@ -702,9 +702,9 @@ const Charts = (() => {
   }
 
   /* =========================================================
-   * 14. Parameter Sensitivity — magnitude of each parameter
+   * 14. Parameter Sensitivity - magnitude of each parameter
    * 15. Parameter Confidence (proxy: RMSE / sqrt(n) scale per param)
-   * 16. Tornado — same data as Sensitivity, sorted by magnitude
+   * 16. Tornado - same data as Sensitivity, sorted by magnitude
    * ======================================================= */
   function _paramArrays(model) {
     const entries = [];
@@ -971,7 +971,7 @@ const Charts = (() => {
     }, PLOTLY_CONFIG);
   }
 
-  /* 21. 3D Surface — Z = predicted value over (composition, model index) */
+  /* 21. 3D Surface - Z = predicted value over (composition, model index) */
   function render3DSurface(divId, models, experimental, propertyLabel, axisLabel) {
     if (!window.Plotly) return;
     const xMin = Math.min(...experimental.x), xMax = Math.max(...experimental.x);
@@ -989,7 +989,7 @@ const Charts = (() => {
     } }, PLOTLY_CONFIG);
   }
 
-  /* 22. Contour Map — same data, projected */
+  /* 22. Contour Map - same data, projected */
   function renderContour(divId, models, experimental, propertyLabel, axisLabel) {
     if (!window.Plotly) return;
     const xMin = Math.min(...experimental.x), xMax = Math.max(...experimental.x);
@@ -1075,7 +1075,7 @@ const Charts = (() => {
     }, PLOTLY_CONFIG);
   }
 
-  /* 24. Parallel Coordinates — model metrics as parallel axes */
+  /* 24. Parallel Coordinates - model metrics as parallel axes */
   function renderParallelCoords(divId, models) {
     if (!window.Plotly) return;
     const data = [{
@@ -1094,7 +1094,7 @@ const Charts = (() => {
     Plotly.newPlot(divId, data, { ...PLOTLY_BASE, margin: { l: 80, r: 60, t: 30, b: 30 } }, PLOTLY_CONFIG);
   }
 
-  /* 25. Phase Diagram (T–x style) — uses Antoine + the best model
+  /* 25. Phase Diagram (T–x style) - uses Antoine + the best model
    *     as a stand-in. A full VLE solver is out of scope; this
    *     plots property vs composition with a "vapor-line proxy"
    *     equal to the prediction itself.

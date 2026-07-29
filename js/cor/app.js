@@ -141,7 +141,7 @@
         if (!info && sources.pubchem) info = await DataManager.fetchCompound(c.name);
         if (info) {
           fetchedCompounds.push(info);
-          await UI.log(`  · ${c.name} → ${info.formula ?? "—"}  MW=${info.mw ?? "—"}  [${info.source}]`, "dim");
+          await UI.log(`  · ${c.name} → ${info.formula ?? "-"}  MW=${info.mw ?? "-"}  [${info.source}]`, "dim");
         } else {
           await UI.log(`  · ${c.name} → no metadata available`, "warn");
         }
@@ -162,7 +162,7 @@
       await UI.log(`  · dataset: ${dataset.x.length} points  source=${dataset.source}`, "dim");
 
       if (dataset.source === "synthetic") {
-        await UI.log("  · note: no experimental upload — using synthetic reference data", "warn");
+        await UI.log("  · note: no experimental upload - using synthetic reference data", "warn");
       }
 
       // -------- 3. run correlations --------
@@ -186,7 +186,7 @@
           });
           await UI.log(`  · ${def.name}: fit ok  (${def.parameters} params)`, "dim");
         } catch (e) {
-          await UI.log(`  · ${def.name}: fit failed — ${e.message}`, "err");
+          await UI.log(`  · ${def.name}: fit failed - ${e.message}`, "err");
         }
       }
 
@@ -355,7 +355,7 @@
   /* ----------------------- Exports ----------------------- */
   function exportResults(format) {
     if (!state.lastResults || !state.lastDataset) {
-      UI.log("! no results to export — run an analysis first", "warn");
+      UI.log("! no results to export - run an analysis first", "warn");
       return;
     }
     const payload = {
@@ -379,7 +379,7 @@
 
     // CSV
     const lines = [];
-    lines.push("# Mixture Correlation Analyzer — results");
+    lines.push("# Mixture Correlation Analyzer - results");
     lines.push(`# generated: ${payload.generatedAt}`);
     lines.push("name,rank,parameters,rmse,mae,r2,aic,bic,equation");
     for (const m of payload.results) {

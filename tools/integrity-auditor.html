@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Integrity Auditor — Academy Tools</title>
+<title>Research Integrity Auditor - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-scale"></i></div>
       <div>
         <div class="tool-title">Research Integrity Auditor</div>
-        <div class="tool-desc">A whole-project integrity audit across data, analysis, authorship, ethics and reporting — tick what's in place to get an integrity score.</div>
+        <div class="tool-desc">A whole-project integrity audit across data, analysis, authorship, ethics and reporting - tick what's in place to get an integrity score.</div>
       </div>
     </div>
   </div>
@@ -59,7 +59,7 @@ function run(){
   $('#prog').innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:15px">Integrity score</b><span style="color:var(${band})"><b>${pct}%</b> · grade ${grade}</span></div>
     <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>
     <div class="subscores">${GROUPS.map((g,gi)=>{const r=gd[gi]/gt[gi];const c=r>=0.8?'--green':r>=0.5?'--amber':'--red';return `<div class="ss"><b style="color:var(${c})">${Math.round(r*100)}%</b>${g[0]}</div>`;}).join('')}</div>
-    <div class="muted" style="font-size:12px;margin-top:8px">Any unchecked item in Ethics or Authorship is a hard blocker — fix those before anything else.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Any unchecked item in Ethics or Authorship is a hard blocker - fix those before anything else.</div>`;
 }
 document.querySelectorAll('#groups input').forEach(c=>c.addEventListener('change',run));
 run();

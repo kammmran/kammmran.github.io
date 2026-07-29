@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Photoelectric Effect — Academy Tools</title>
+<title>Photoelectric Effect - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-sun-electricity"></i></div>
       <div>
         <div class="tool-title">Photoelectric Effect</div>
-        <div class="tool-desc">KEmax = hf − φ — find ejected-electron energy, threshold frequency and stopping voltage, with the KE-vs-frequency line.</div>
+        <div class="tool-desc">KEmax = hf − φ - find ejected-electron energy, threshold frequency and stopping voltage, with the KE-vs-frequency line.</div>
       </div>
     </div>
   </div>
@@ -84,7 +84,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Threshold λ₀</div><div class="stat-value">${wl0.toFixed(0)} nm</div></div>
       <div class="stat-card"><div class="stat-label">Stopping voltage</div><div class="stat-value">${Vstop.toFixed(3)} V</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">${emitted?'Photon energy exceeds the work function, so electrons are ejected with the leftover energy as KE.':'Photon energy is below φ — no electrons are emitted, no matter how intense the light. Use a shorter wavelength.'} The line\'s slope is Planck\'s constant h; its x-intercept is f₀.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">${emitted?'Photon energy exceeds the work function, so electrons are ejected with the leftover energy as KE.':'Photon energy is below φ - no electrons are emitted, no matter how intense the light. Use a shorter wavelength.'} The line\'s slope is Planck\'s constant h; its x-intercept is f₀.</div>`;
 }
 ['phi','wl'].forEach(id=>$('#'+id).addEventListener('input',()=>{ if(id==='phi') $('#metal').value=String(metals.length-1); run(); }));
 run();

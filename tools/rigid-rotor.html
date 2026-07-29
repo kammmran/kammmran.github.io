@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rotational Energy Levels — Academy Tools</title>
+<title>Rotational Energy Levels - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-rotate-360"></i></div>
       <div>
         <div class="tool-title">Rotational Energy Levels</div>
-        <div class="tool-desc">Rigid-rotor model of a diatomic — E_J = B·J(J+1), the rotational constant B and the spacing of microwave lines.</div>
+        <div class="tool-desc">Rigid-rotor model of a diatomic - E_J = B·J(J+1), the rotational constant B and the spacing of microwave lines.</div>
       </div>
     </div>
   </div>
@@ -81,7 +81,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Line spacing (2B)</div><div class="stat-value">${(2*B_cm).toFixed(3)} cm⁻¹</div></div>
       <div class="stat-card"><div class="stat-label">J=1 energy</div><div class="stat-value" style="font-size:13px">${(2*B_J/(h*c*100)).toFixed(3)} cm⁻¹</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">Levels spread apart with J (∝ J(J+1)); each is (2J+1)-fold degenerate. Pure-rotation (microwave) absorption lines are <b>equally spaced by 2B</b> — measuring that spacing yields the bond length. Larger I (heavier/longer molecule) ⇒ smaller B, closely packed levels.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Levels spread apart with J (∝ J(J+1)); each is (2J+1)-fold degenerate. Pure-rotation (microwave) absorption lines are <b>equally spaced by 2B</b> - measuring that spacing yields the bond length. Larger I (heavier/longer molecule) ⇒ smaller B, closely packed levels.</div>`;
 }
 ['m1','m2','r'].forEach(id=>$('#'+id).addEventListener('input',()=>{ $('#mol').value='0'; run(); }));
 run();

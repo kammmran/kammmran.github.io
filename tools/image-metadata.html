@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Image Metadata Inspector — Academy Tools</title>
+<title>Image Metadata Inspector - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-info-square"></i></div>
       <div>
         <div class="tool-title">Image Metadata Inspector</div>
-        <div class="tool-desc">Read the hidden EXIF/metadata embedded in an image: camera and software used, capture date, editing-software tags, stored DPI, GPS, and more. Useful for integrity checks and for spotting when a "raw" figure was actually processed in Photoshop. Nothing is uploaded — parsing happens in your browser.</div>
+        <div class="tool-desc">Read the hidden EXIF/metadata embedded in an image: camera and software used, capture date, editing-software tags, stored DPI, GPS, and more. Useful for integrity checks and for spotting when a "raw" figure was actually processed in Photoshop. Nothing is uploaded - parsing happens in your browser.</div>
       </div>
     </div>
   </div>
@@ -35,7 +35,7 @@
     <div id="flags"></div>
     <div id="out"></div>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">EXIF is richest in JPEG and TIFF straight from cameras. Many exported figures and screenshots carry little or no EXIF — an absence of metadata is normal and not itself suspicious. Note: software stripping metadata is trivial, so presence is more informative than absence.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">EXIF is richest in JPEG and TIFF straight from cameras. Many exported figures and screenshots carry little or no EXIF - an absence of metadata is normal and not itself suspicious. Note: software stripping metadata is trivial, so presence is more informative than absence.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
@@ -53,7 +53,7 @@ $('#file').onchange=e=>{if(e.target.files[0])handle(e.target.files[0]);};
 // Minimal EXIF parser (TIFF IFD inside JPEG APP1)
 const TAGS={0x010F:'Make',0x0110:'Model',0x0131:'Software',0x0132:'DateTime',0x9003:'DateTimeOriginal',0x9004:'DateTimeDigitized',0x011A:'XResolution',0x011B:'YResolution',0x0128:'ResolutionUnit',0x0112:'Orientation',0x013B:'Artist',0x8298:'Copyright',0x010E:'ImageDescription',0xA002:'PixelXDimension',0xA003:'PixelYDimension',0x829A:'ExposureTime',0x829D:'FNumber',0x8827:'ISO',0x920A:'FocalLength',0x0103:'Compression',0x9290:'SubSecTime',0xC614:'UniqueCameraModel'};
 function parseExif(buf){
-  const dv=new DataView(buf);if(dv.getUint16(0)!==0xFFD8)return {err:'Not a JPEG — EXIF parsing here supports JPEG (and TIFF).',tags:{}};
+  const dv=new DataView(buf);if(dv.getUint16(0)!==0xFFD8)return {err:'Not a JPEG - EXIF parsing here supports JPEG (and TIFF).',tags:{}};
   let off=2;
   while(off<dv.byteLength){
     if(dv.getUint16(off)!==0xFFE1){const len=dv.getUint16(off+2);if(dv.getUint16(off)===0xFFDA)break;off+=2+len;continue;}

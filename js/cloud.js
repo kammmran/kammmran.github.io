@@ -1,4 +1,4 @@
-// CHRONO SHIFT — Cloud (Firebase) wrapper.
+// CHRONO SHIFT - Cloud (Firebase) wrapper.
 //
 // All cloud features are gated by `Cloud.ready`. If Firebase SDK isn't loaded or `firebaseConfig`
 // is missing / placeholder, the module silently no-ops and the game continues on localStorage.
@@ -8,7 +8,7 @@
 // All gameplay data (coins, upgrades, inventory, achievements, daily, loot, high score) is
 // stored in localStorage. To keep accounts isolated on the same browser, each save key is
 // prefixed with the current user's UID. This block reads the UID Firebase persists in
-// localStorage SYNCHRONOUSLY at script load — before script.js runs Upgrades.load() / etc. —
+// localStorage SYNCHRONOUSLY at script load - before script.js runs Upgrades.load() / etc. -
 // so modules pick the correct namespace on first read with no race.
 //
 // Anonymous (signed-out) users keep the legacy unprefixed keys ("csUpgrades", etc.) so
@@ -100,7 +100,7 @@ const Cloud = {
   _onAuthStateChanged(u){
     const newUid = u ? u.uid : null;
     const prevUid = window.__currentUid;
-    // If the UID changed since page load, the localStorage namespace is wrong — every module
+    // If the UID changed since page load, the localStorage namespace is wrong - every module
     // has already loaded from the old user's keys. Migrate anonymous progress (if any) into the
     // new user's namespace on first sign-in, then hard reload so all modules re-read with the
     // correct keys. This guarantees account isolation.
@@ -131,7 +131,7 @@ const Cloud = {
         });
       }
       if(looping){
-        console.warn('[Cloud] auth UID mismatch but reload loop detected — staying on page');
+        console.warn('[Cloud] auth UID mismatch but reload loop detected - staying on page');
         window.__currentUid = newUid;
         // Fall through to normal signed-in handling below.
       }else{
@@ -140,7 +140,7 @@ const Cloud = {
         return;
       }
     }
-    // UID matched the persisted one — modules already loaded the right namespace; nothing to do.
+    // UID matched the persisted one - modules already loaded the right namespace; nothing to do.
     this.user=u;
     if(this._unsubProfile){this._unsubProfile(); this._unsubProfile=null;}
     if(u){
@@ -191,7 +191,7 @@ const Cloud = {
 
   // ── Stat sync ─────────────────────────────────────────
   // Called by game-event hooks. Batches writes to once every _saveDelayMs to stay polite to
-  // the free tier — call this whenever stats change locally, but the write is debounced.
+  // the free tier - call this whenever stats change locally, but the write is debounced.
   syncStats(patch){
     if(!this.ready || !this.user) return;
     this._pendingPatch=Object.assign(this._pendingPatch||{}, patch);
@@ -202,7 +202,7 @@ const Cloud = {
       this._writeProfile(p, 'syncStats');
     }, this._saveDelayMs);
   },
-  // "Immediate" variant — used for high-water-mark fields (bestScore) where waiting 30s could
+  // "Immediate" variant - used for high-water-mark fields (bestScore) where waiting 30s could
   // lose a session-end update. Still rate-limited by _minWriteIntervalMs so rapid game-overs
   // (or any future per-frame caller) can't hammer Firestore. Patches coalesce while waiting.
   syncStatsNow(patch){

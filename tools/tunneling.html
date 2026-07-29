@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quantum Tunneling — Academy Tools</title>
+<title>Quantum Tunneling - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -98,7 +98,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">E / V₀</div><div class="stat-value">${(E/V0).toFixed(2)}</div></div>
       <div class="stat-card"><div class="stat-label">Classical</div><div class="stat-value" style="font-size:13px;color:${classical?'var(--green)':'var(--red)'}">${classical?'passes':'blocked'}</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">${classical?'E ≥ V₀: classically it always passes, yet quantum reflection still gives R > 0.':'E < V₀: classically forbidden — yet there is a finite chance the particle appears on the far side. T falls off roughly exponentially with barrier width and √(mass·(V₀−E)). This drives radioactive α-decay and the scanning tunneling microscope.'}</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">${classical?'E ≥ V₀: classically it always passes, yet quantum reflection still gives R > 0.':'E < V₀: classically forbidden - yet there is a finite chance the particle appears on the far side. T falls off roughly exponentially with barrier width and √(mass·(V₀−E)). This drives radioactive α-decay and the scanning tunneling microscope.'}</div>`;
 }
 ['mass','E','V','L'].forEach(id=>$('#'+id).addEventListener('input',run));
 run();

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pomodoro Timer — Academy Tools</title>
+<title>Pomodoro Timer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -130,7 +130,7 @@ function todayKey() { const d = new Date(); return `${d.getFullYear()}-${String(
 function render() {
   $('#timer-display').textContent = fmt(remaining);
   $('#phase-text').textContent = phase === 'focus' ? 'Focus' : phase === 'short' ? 'Short break' : 'Long break';
-  document.title = `${fmt(remaining)} — ${phase === 'focus' ? 'Focus' : 'Break'}`;
+  document.title = `${fmt(remaining)} - ${phase === 'focus' ? 'Focus' : 'Break'}`;
   for (let i = 1; i <= 4; i++) {
     $(`#dot-${i}`).classList.toggle('done', i <= cycleCount);
   }
@@ -184,9 +184,9 @@ function finishPhase() {
     history.push({ date: todayKey(), mins, task: $('#task').value.trim() || '(unlabeled)', ended: Date.now() });
     cycleCount += 1;
     save();
-    notify(`Focus session done — take a ${cycleCount >= cfg.cycle ? 'long' : 'short'} break.`);
+    notify(`Focus session done - take a ${cycleCount >= cfg.cycle ? 'long' : 'short'} break.`);
   } else {
-    notify(`Break over — back to focus!`);
+    notify(`Break over - back to focus!`);
   }
   ping();
   nextPhase(true);

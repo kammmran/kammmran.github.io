@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plagiarism Similarity Checker — Academy Tools</title>
+<title>Plagiarism Similarity Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-copy-check"></i></div>
       <div>
         <div class="tool-title">Plagiarism Similarity Checker</div>
-        <div class="tool-desc">Compare two documents — overlap score and the exact phrases they share, highlighted. (Text-vs-text; not a web/database scan.)</div>
+        <div class="tool-desc">Compare two documents - overlap score and the exact phrases they share, highlighted. (Text-vs-text; not a web/database scan.)</div>
       </div>
     </div>
   </div>
@@ -29,7 +29,7 @@
   <div class="panel" style="min-height:auto;gap:14px">
     <div class="grid2">
       <label class="fld">Document A (source / reference)<textarea id="a" style="min-height:150px" placeholder="Paste the first text…"></textarea></label>
-      <label class="fld">Document B (your text — checked against A)<textarea id="b" style="min-height:150px" placeholder="Paste the second text…"></textarea></label>
+      <label class="fld">Document B (your text - checked against A)<textarea id="b" style="min-height:150px" placeholder="Paste the second text…"></textarea></label>
     </div>
     <div class="row"><label class="fld" style="flex-direction:row;align-items:center;gap:8px">Match length<select id="n"><option value="4">4 words</option><option value="5" selected>5 words</option><option value="7">7 words</option></select></label>
       <button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Compare</button></div>
@@ -64,7 +64,7 @@ $('#run').addEventListener('click',()=>{
   // highlight in B preserving original text: re-walk bRaw word by word
   let bi=0; const html=esc(bRaw).replace(/[A-Za-z0-9']+/g,(w)=>{ const m=matched[bi]; bi++; return m?`<span class="m">${w}</span>`:w; });
   const band=pct>=25?'--red':pct>=10?'--amber':'--green';
-  const verdict=pct>=25?'High overlap — substantial shared phrasing':pct>=10?'Moderate overlap — paraphrase or quote & cite':'Low overlap';
+  const verdict=pct>=25?'High overlap - substantial shared phrasing':pct>=10?'Moderate overlap - paraphrase or quote & cite':'Low overlap';
   out.innerHTML=`<div class="big" style="color:var(${band})">${pct}<span style="font-size:18px">%</span></div>
     <div style="text-align:center;color:var(${band});font-weight:600;margin-bottom:6px">${verdict}</div>
     <div class="stat-grid" style="margin-bottom:12px">
@@ -74,7 +74,7 @@ $('#run').addEventListener('click',()=>{
     </div>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px">Document B with shared phrases highlighted</div>
     <div id="render">${html}</div>
-    <div class="muted" style="font-size:12px;margin-top:8px">Compares only the two pasted texts (e.g. your draft vs a source, or two of your own papers for self-plagiarism). It does <b>not</b> search the web or any database — use Turnitin/iThenticate for that.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Compares only the two pasted texts (e.g. your draft vs a source, or two of your own papers for self-plagiarism). It does <b>not</b> search the web or any database - use Turnitin/iThenticate for that.</div>`;
 });
 </script>
 

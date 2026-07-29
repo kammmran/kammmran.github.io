@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Journal Scope Matcher — Academy Tools</title>
+<title>Journal Scope Matcher - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -55,14 +55,14 @@ $('#run').addEventListener('click',()=>{
   let num=0,den=0; for(const k in s){ den+=s[k]; if(a[k])num+=s[k]; }
   const fit=Math.round(num/den*100);
   const band=fit>=45?'--green':fit>=22?'--amber':'--red';
-  const verdict=fit>=45?'Strong fit — scope aligns well':fit>=22?'Partial fit — emphasise the shared themes in your cover letter':'Weak fit — consider a different journal';
+  const verdict=fit>=45?'Strong fit - scope aligns well':fit>=22?'Partial fit - emphasise the shared themes in your cover letter':'Weak fit - consider a different journal';
   out.innerHTML=`<div class="big" style="color:var(${band})">${fit}<span style="font-size:18px">%</span></div>
     <div style="text-align:center;color:var(${band});font-weight:600;margin-bottom:12px">${verdict}</div>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px">Shared themes (${shared.length})</div>
-    <div>${shared.length?shared.slice(0,18).map(k=>`<span class="pill shared">${esc(k)}</span>`).join(''):'<span class="muted">none — likely a poor match</span>'}</div>
+    <div>${shared.length?shared.slice(0,18).map(k=>`<span class="pill shared">${esc(k)}</span>`).join(''):'<span class="muted">none - likely a poor match</span>'}</div>
     <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:10px 0 4px">Scope terms your abstract doesn't mention</div>
     <div>${missing.map(k=>`<span class="pill miss">${esc(k)}</span>`).join('')}</div>
-    <div class="muted" style="font-size:12px;margin-top:8px">Keyword-overlap heuristic. A low score with a journal you believe fits often just means your abstract doesn't use the journal's vocabulary — worth aligning either way.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Keyword-overlap heuristic. A low score with a journal you believe fits often just means your abstract doesn't use the journal's vocabulary - worth aligning either way.</div>`;
 });
 </script>
 

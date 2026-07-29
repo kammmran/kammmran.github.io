@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Significant Figures — Academy Tools</title>
+<title>Significant Figures - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -120,7 +120,7 @@ function doCount(){
   out.innerHTML=`<div style="font-size:18px;font-family:ui-monospace,Menlo,monospace;margin-bottom:8px">${highlight(v)}</div>
     <div>Significant figures: <b>${sf}</b></div>
     <div style="margin-top:6px">Rounded to ${n} sig fig${n!==1?'s':''}: <b style="font-family:ui-monospace,Menlo,monospace">${formatSig(x,n)}</b></div>
-    <div class="muted" style="font-size:12px;margin-top:6px">Tip: trailing zeros in a whole number (e.g. 100) are treated as ambiguous — write 1.00×10² to make them count.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:6px">Tip: trailing zeros in a whole number (e.g. 100) are treated as ambiguous - write 1.00×10² to make them count.</div>`;
 }
 
 function leastSigFigs(tokens){ return Math.min(...tokens.map(t=>countSigFigs(t)).filter(x=>x!==null)); }

@@ -69,7 +69,7 @@
         fetchEpisodes()
             .then(items => {
                 if (!items.length) {
-                    grid.innerHTML = '<p class="podcast-empty">No episodes yet — first conversation coming soon.</p>';
+                    grid.innerHTML = '<p class="podcast-empty">No episodes yet - first conversation coming soon.</p>';
                     if (countEl) countEl.textContent = '0';
                     return;
                 }
@@ -141,7 +141,7 @@
                 const epNum = epNumber(idx, items.length);
                 document.title = `Kamran Heydarov - ${meta.title}`;
                 titleEl.textContent = meta.title;
-                epNumEl.textContent = `— Episode ${epNum}`;
+                epNumEl.textContent = `- Episode ${epNum}`;
                 subEl.innerHTML = `
                     <span>${meta.guest || ''}</span>
                     <span class="podcast-dot">·</span>
@@ -206,9 +206,9 @@
                 const { meta, idx } = found;
                 const epNum = epNumber(idx, items.length);
 
-                document.title = `Listen — ${meta.title}`;
+                document.title = `Listen - ${meta.title}`;
                 titleEl.textContent = meta.title;
-                epNumEl.textContent = `— Episode ${epNum}`;
+                epNumEl.textContent = `- Episode ${epNum}`;
                 subEl.innerHTML = `
                     <span>${meta.guest || ''}</span>
                     <span class="podcast-dot">·</span>

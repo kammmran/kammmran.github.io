@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Missing Seminal Papers Detector — Academy Tools</title>
+<title>Missing Seminal Papers Detector - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -28,7 +28,7 @@
 
   <div class="panel" style="min-height:auto;gap:14px">
     <label class="fld">Topic / field<input type="text" id="q" placeholder="e.g. transformer language models"></label>
-    <label class="fld">Your reference list — one per line (titles or DOIs)
+    <label class="fld">Your reference list - one per line (titles or DOIs)
       <textarea id="refs" style="min-height:150px" placeholder="Vaswani et al. Attention is all you need&#10;10.18653/v1/n19-1423"></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Check coverage</button></div>
@@ -74,7 +74,7 @@ $('#run').addEventListener('click',async ()=>{
         <div class="stat-card"><div class="stat-label">Possibly missing</div><div class="stat-value" style="color:var(--red)">${missing}</div></div>
         <div class="stat-card"><div class="stat-label">Coverage</div><div class="stat-value" style="color:var(--green)">${Math.round((works.length-missing)/works.length*100)}%</div></div>
       </div>${rows.join('')}
-      <div class="muted" style="font-size:12px;margin-top:8px">Matching is fuzzy (title/DOI) — double-check flags before assuming a gap. "Not cited" highly-cited papers are the ones a reviewer is most likely to ask about.</div>`;
+      <div class="muted" style="font-size:12px;margin-top:8px">Matching is fuzzy (title/DOI) - double-check flags before assuming a gap. "Not cited" highly-cited papers are the ones a reviewer is most likely to ask about.</div>`;
   }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
 });
 </script>

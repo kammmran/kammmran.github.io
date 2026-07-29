@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Similarity Checker — Academy Tools</title>
+<title>Similarity Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -71,23 +71,23 @@
   <div class="panel" style="margin-top:16px">
     <div class="panel-label"><span>Similarity scores</span></div>
     <div class="stat-grid">
-      <div class="stat-card"><div class="stat-label">Jaccard (n-gram)</div><div class="stat-value" id="m-jaccard" style="color:var(--accent3)">—</div></div>
-      <div class="stat-card"><div class="stat-label">Cosine (TF)</div><div class="stat-value" id="m-cosine">—</div></div>
-      <div class="stat-card"><div class="stat-label">Overlap (containment)</div><div class="stat-value" id="m-overlap">—</div></div>
-      <div class="stat-card"><div class="stat-label">Longest common</div><div class="stat-value" id="m-lcs" style="font-size:14px">—</div></div>
-      <div class="stat-card"><div class="stat-label">Shared n-grams</div><div class="stat-value" id="m-shared">—</div></div>
-      <div class="stat-card"><div class="stat-label">Verdict</div><div class="stat-value" id="m-verdict" style="font-size:14px">—</div></div>
+      <div class="stat-card"><div class="stat-label">Jaccard (n-gram)</div><div class="stat-value" id="m-jaccard" style="color:var(--accent3)">-</div></div>
+      <div class="stat-card"><div class="stat-label">Cosine (TF)</div><div class="stat-value" id="m-cosine">-</div></div>
+      <div class="stat-card"><div class="stat-label">Overlap (containment)</div><div class="stat-value" id="m-overlap">-</div></div>
+      <div class="stat-card"><div class="stat-label">Longest common</div><div class="stat-value" id="m-lcs" style="font-size:14px">-</div></div>
+      <div class="stat-card"><div class="stat-label">Shared n-grams</div><div class="stat-value" id="m-shared">-</div></div>
+      <div class="stat-card"><div class="stat-label">Verdict</div><div class="stat-value" id="m-verdict" style="font-size:14px">-</div></div>
     </div>
   </div>
 
   <div class="panel" style="margin-top:16px">
     <div class="panel-label"><span>Overlap in Text A (matching n-grams highlighted)</span></div>
-    <div id="hi-a" class="output-box" style="white-space:pre-wrap; line-height:1.7">—</div>
+    <div id="hi-a" class="output-box" style="white-space:pre-wrap; line-height:1.7">-</div>
   </div>
 
   <div class="panel" style="margin-top:16px">
     <div class="panel-label"><span>Top shared phrases</span></div>
-    <div id="shared-list" class="muted" style="font-size:13px">—</div>
+    <div id="shared-list" class="muted" style="font-size:13px">-</div>
   </div>
 </main>
 
@@ -141,7 +141,7 @@ function cosine(mapA, mapB) {
 }
 
 function lcs(a, b) {
-  // longest common substring (character-based) — bounded to avoid huge memory
+  // longest common substring (character-based) - bounded to avoid huge memory
   if (!a || !b) return '';
   const MAX = 3000;
   const A = a.slice(0, MAX), B = b.slice(0, MAX);
@@ -188,11 +188,11 @@ function compute() {
   const sp = $('#strip-punct').checked;
 
   if (!a.trim() || !b.trim()) {
-    ['m-jaccard','m-cosine','m-overlap','m-shared'].forEach(id => $('#' + id).textContent = '—');
-    $('#m-lcs').textContent = '—';
-    $('#m-verdict').textContent = '—';
-    $('#hi-a').textContent = '—';
-    $('#shared-list').textContent = '—';
+    ['m-jaccard','m-cosine','m-overlap','m-shared'].forEach(id => $('#' + id).textContent = '-');
+    $('#m-lcs').textContent = '-';
+    $('#m-verdict').textContent = '-';
+    $('#hi-a').textContent = '-';
+    $('#shared-list').textContent = '-';
     return;
   }
 
@@ -227,7 +227,7 @@ function compute() {
   $('#m-verdict').textContent = verdict;
   $('#m-verdict').style.color = vColor;
 
-  $('#hi-a').innerHTML = highlight(tokA, shared, n) || '—';
+  $('#hi-a').innerHTML = highlight(tokA, shared, n) || '-';
 
   // top shared phrases by length
   const top = [...shared].sort((x, y) => y.length - x.length).slice(0, 20);

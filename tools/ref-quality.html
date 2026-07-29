@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reference Quality Score — Academy Tools</title>
+<title>Reference Quality Score - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-award"></i></div>
       <div>
         <div class="tool-title">Reference Quality Score</div>
-        <div class="tool-desc">Scores each reference on completeness — author, year, title, venue, DOI/URL — and gives your bibliography an overall grade.</div>
+        <div class="tool-desc">Scores each reference on completeness - author, year, title, venue, DOI/URL - and gives your bibliography an overall grade.</div>
       </div>
     </div>
   </div>
@@ -30,7 +30,7 @@
     <div class="row">
       <label class="fld">Manuscript year<input type="number" id="yr" style="width:120px" min="1900" max="2100"></label>
     </div>
-    <label class="fld">Reference list — one reference per line
+    <label class="fld">Reference list - one reference per line
       <textarea id="refs" style="min-height:210px" placeholder="Smith, J., & Doe, A. (2021). A title here. Journal of X, 12(3), 45-60. https://doi.org/10.1/x"></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-star"></i> Score references</button></div>
@@ -95,7 +95,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">≤ 5 yr old</div><div class="stat-value">${withYear?(recent/withYear*100).toFixed(0):0}%</div></div>
     </div>
     ${rows.join('')}
-    <div class="muted" style="font-size:12px;margin-top:8px">Heuristic completeness scoring — a low score usually means a field is missing or unparseable, not that the source is bad.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Heuristic completeness scoring - a low score usually means a field is missing or unparseable, not that the source is bad.</div>`;
 }
 $('#run').addEventListener('click',run);
 </script>

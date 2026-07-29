@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unit Converter — Academy Tools</title>
+<title>Unit Converter - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-arrows-exchange-2"></i></div>
       <div>
         <div class="tool-title">Unit Converter</div>
-        <div class="tool-desc">Convert between common units across categories — instantly.</div>
+        <div class="tool-desc">Convert between common units across categories - instantly.</div>
       </div>
     </div>
   </div>
@@ -253,7 +253,7 @@ function convert(v, from, to, cat) {
 }
 
 function fmt(n) {
-  if (!isFinite(n)) return '—';
+  if (!isFinite(n)) return '-';
   if (n === 0) return '0';
   const abs = Math.abs(n);
   if (abs >= 1e9 || abs < 1e-4) return n.toExponential(6);

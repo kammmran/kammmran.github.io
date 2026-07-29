@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Statistics — Academy Tools</title>
+<title>Statistics - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -99,7 +99,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 function parse(t) { return t.split(/[\s,]+/).map(x => parseFloat(x)).filter(x => !isNaN(x)); }
 
 function fmt(n) {
-  if (!isFinite(n)) return '—';
+  if (!isFinite(n)) return '-';
   if (n === 0) return '0';
   const abs = Math.abs(n);
   if (abs >= 1e6 || abs < 1e-3) return n.toExponential(4);
@@ -133,7 +133,7 @@ function compute(arr) {
     if (v > modeC) { modeC = v; modes = [k]; }
     else if (v === modeC) modes.push(k);
   }
-  const modeStr = modeC <= 1 ? '—' : modes.slice(0,3).map(fmt).join(', ') + (modes.length > 3 ? '…' : '');
+  const modeStr = modeC <= 1 ? '-' : modes.slice(0,3).map(fmt).join(', ') + (modes.length > 3 ? '…' : '');
   // Skewness & kurtosis
   const m3 = arr.reduce((s,x) => s + (x-mean)**3, 0) / n;
   const m4 = arr.reduce((s,x) => s + (x-mean)**4, 0) / n;

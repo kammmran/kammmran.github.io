@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paper-to-Podcast Converter — Academy Tools</title>
+<title>Paper-to-Podcast Converter - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-microphone-2"></i></div>
       <div>
         <div class="tool-title">Paper-to-Podcast Converter</div>
-        <div class="tool-desc">Turn a paper into a two-host podcast-style conversation and listen to it narrated by two distinct voices. Paste your text, generate the dialogue script, then press play — a friendly way to review a paper on a commute.</div>
+        <div class="tool-desc">Turn a paper into a two-host podcast-style conversation and listen to it narrated by two distinct voices. Paste your text, generate the dialogue script, then press play - a friendly way to review a paper on a commute.</div>
       </div>
     </div>
   </div>
@@ -44,7 +44,7 @@
     </div>
     <div id="script" style="border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg2);font-size:14px;line-height:1.7;max-height:45vh;overflow:auto"></div>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">The script is built locally with simple heuristics — it paraphrases lightly and adds conversational connective tissue, but it doesn't fact-check or add information beyond your text. Read through before relying on it.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">The script is built locally with simple heuristics - it paraphrases lightly and adds conversational connective tissue, but it doesn't fact-check or add information beyond your text. Read through before relying on it.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
@@ -58,11 +58,11 @@ let voices=[];
 function loadVoices(){voices=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!voices.length)voices=speechSynthesis.getVoices();const o=voices.map((v,i)=>`<option value="${i}">${esc(v.name)} (${v.lang})</option>`).join('');$('#vA').innerHTML=o;$('#vB').innerHTML=o;if(voices[1])$('#vB').value=1;}
 loadVoices();speechSynthesis.onvoiceschanged=loadVoices;
 
-const OPEN=["So, let's dig into this one.","Alright, what's this paper about?","I read this one — it's interesting.","Let's break this down for everyone."];
-const A_LEAD=["So the core idea here is that","What they're claiming is that","The setup is this:","Here's the gist —","The authors found that","Basically,"];
-const B_REACT=["Interesting — so why does that matter?","Got it. And how did they show it?","Okay, that makes sense.","Right, so what's the takeaway?","Huh, that's a neat result.","And does that hold up?"];
+const OPEN=["So, let's dig into this one.","Alright, what's this paper about?","I read this one - it's interesting.","Let's break this down for everyone."];
+const A_LEAD=["So the core idea here is that","What they're claiming is that","The setup is this:","Here's the gist -","The authors found that","Basically,"];
+const B_REACT=["Interesting - so why does that matter?","Got it. And how did they show it?","Okay, that makes sense.","Right, so what's the takeaway?","Huh, that's a neat result.","And does that hold up?"];
 const A_FOLLOW=["Good question. Essentially,","Well,","The way I read it,","Right, so","What stands out is that"];
-const CLOSE=["So overall, a solid contribution worth a closer read.","That's the paper in a nutshell.","Worth keeping on your radar.","A neat result — thanks for walking through it."];
+const CLOSE=["So overall, a solid contribution worth a closer read.","That's the paper in a nutshell.","Worth keeping on your radar.","A neat result - thanks for walking through it."];
 let turns=[];
 function sentences(t){return (t.replace(/\s+/g,' ').match(/[^.!?]+[.!?]+/g)||[t]).map(s=>s.trim()).filter(s=>s.length>15);}
 function pick(a,i){return a[i%a.length];}

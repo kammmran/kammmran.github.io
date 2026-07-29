@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Author Index Generator — Academy Tools</title>
+<title>Author Index Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Entries — one per line: <b>EntryNumber | Author A, Author B, …</b>
+    <label class="fld">Entries - one per line: <b>EntryNumber | Author A, Author B, …</b>
       <textarea id="src" style="min-height:170px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">1 | Jane Researcher, Tom Lee, Carol Advisor
 2 | Tom Lee, Jane Researcher
 3 | Maria Garcia, John Smith
@@ -63,7 +63,7 @@ function gen(){
   const sorted=Object.values(map).sort((a,b)=>a.disp.toLowerCase().localeCompare(b.disp.toLowerCase()));
   if(!sorted.length){$('#status').textContent='Add entries as "number | authors".';return;}
   let html='',curLetter='';const lines=[];
-  sorted.forEach(a=>{const L=a.disp[0].toUpperCase();if(L!==curLetter){curLetter=L;html+=`<div class="grp">${L}</div>`;}const nums=[...a.nums].sort((x,y)=>(parseFloat(x)||0)-(parseFloat(y)||0));html+=`<div class="ix"><b>${esc(a.disp)}</b> — ${nums.map(esc).join(', ')}</div>`;lines.push(`${a.disp} — ${nums.join(', ')}`);});
+  sorted.forEach(a=>{const L=a.disp[0].toUpperCase();if(L!==curLetter){curLetter=L;html+=`<div class="grp">${L}</div>`;}const nums=[...a.nums].sort((x,y)=>(parseFloat(x)||0)-(parseFloat(y)||0));html+=`<div class="ix"><b>${esc(a.disp)}</b> - ${nums.map(esc).join(', ')}</div>`;lines.push(`${a.disp} - ${nums.join(', ')}`);});
   $('#out').style.columnCount=$('#cols').value;
   $('#out').innerHTML=html;text=lines.join('\n');
   $('#status').textContent=sorted.length+' authors';

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contradictory Findings Finder — Academy Tools</title>
+<title>Contradictory Findings Finder - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Findings — one claim per line (paste from several papers)
+    <label class="fld">Findings - one claim per line (paste from several papers)
       <textarea id="txt" style="min-height:180px" placeholder="Vitamin D supplementation reduced the risk of fractures.&#10;Vitamin D supplementation had no significant effect on fracture risk.&#10;Higher screen time increased anxiety in adolescents.&#10;Screen time was not associated with adolescent anxiety."></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Find contradictions</button></div>
@@ -69,7 +69,7 @@ $('#run').addEventListener('click',()=>{
       <div class="c ${p.a.pol==='pos'?'pos':'neg'}">${p.a.pol==='pos'?'▲':'▼'} ${esc(p.a.s)}</div>
       <div class="c ${p.b.pol==='pos'?'pos':'neg'}">${p.b.pol==='pos'?'▲':'▼'} ${esc(p.b.s)}</div>
       <div class="shared">shared terms: ${p.shared.slice(0,6).map(esc).join(', ')}</div></div>`).join('')+
-    `<div class="muted" style="font-size:12px;margin-top:8px">Heuristic — based on direction words (increase/decrease/no effect) and shared keywords. Verify each pair; differences may reflect different populations or methods, not true contradiction.</div>`;
+    `<div class="muted" style="font-size:12px;margin-top:8px">Heuristic - based on direction words (increase/decrease/no effect) and shared keywords. Verify each pair; differences may reflect different populations or methods, not true contradiction.</div>`;
 });
 </script>
 

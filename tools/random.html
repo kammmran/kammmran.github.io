@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Random Generator — Academy Tools</title>
+<title>Random Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-dice"></i></div>
       <div>
         <div class="tool-title">Random Generator</div>
-        <div class="tool-desc">Lorem ipsum, UUIDs, passwords, numbers, dice, coins, colors, dates, names, strings, Gaussian values, picks &amp; teams — generate what you need.</div>
+        <div class="tool-desc">Lorem ipsum, UUIDs, passwords, numbers, dice, coins, colors, dates, names, strings, Gaussian values, picks &amp; teams - generate what you need.</div>
       </div>
     </div>
   </div>
@@ -333,7 +333,7 @@ function genPick() {
   if (!items.length) return 'Add items to the list first.';
   const n = Math.max(1, +document.getElementById('pick-n').value);
   const uniq = document.getElementById('pick-uniq').checked;
-  if (uniq && n > items.length) return `Only ${items.length} items — can't pick ${n} unique.`;
+  if (uniq && n > items.length) return `Only ${items.length} items - can't pick ${n} unique.`;
   const out = [];
   if (uniq) {
     const s = shuffled(items);

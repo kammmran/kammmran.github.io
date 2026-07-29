@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>de Broglie Wavelength — Academy Tools</title>
+<title>de Broglie Wavelength - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-ripple"></i></div>
       <div>
         <div class="tool-title">de Broglie Wavelength</div>
-        <div class="tool-desc">λ = h/p — the matter wavelength of a particle from its speed or kinetic energy.</div>
+        <div class="tool-desc">λ = h/p - the matter wavelength of a particle from its speed or kinetic energy.</div>
       </div>
     </div>
   </div>
@@ -50,7 +50,7 @@ $('#preset').addEventListener('change',()=>{ const p=presets[+$('#preset').value
 $('#mode').addEventListener('change',()=>{ $('#vWrap').style.display=$('#mode').value==='v'?'':'none'; $('#keWrap').style.display=$('#mode').value==='ke'?'':'none'; run(); });
 
 const num=v=>{ const x=parseFloat(v); return Number.isFinite(x)?x:NaN; };
-function fmtLen(m){ if(!isFinite(m)) return '—'; if(m>=1) return m.toPrecision(4)+' m'; if(m>=1e-3) return (m*1e3).toPrecision(4)+' mm'; if(m>=1e-6) return (m*1e6).toPrecision(4)+' µm'; if(m>=1e-9) return (m*1e9).toPrecision(4)+' nm'; if(m>=1e-12) return (m*1e12).toPrecision(4)+' pm'; return m.toExponential(3)+' m'; }
+function fmtLen(m){ if(!isFinite(m)) return '-'; if(m>=1) return m.toPrecision(4)+' m'; if(m>=1e-3) return (m*1e3).toPrecision(4)+' mm'; if(m>=1e-6) return (m*1e6).toPrecision(4)+' µm'; if(m>=1e-9) return (m*1e9).toPrecision(4)+' nm'; if(m>=1e-12) return (m*1e12).toPrecision(4)+' pm'; return m.toExponential(3)+' m'; }
 
 function run(){
   const m=num($('#m').value); let v, ke;
@@ -68,7 +68,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Kinetic energy</div><div class="stat-value" style="font-size:14px">${(ke/eV).toExponential(3)} eV</div></div>
       <div class="stat-card"><div class="stat-label">v / c</div><div class="stat-value" style="color:${rel>0.1?'var(--amber)':'var(--text)'}">${(rel*100).toPrecision(3)}%</div></div>
     </div>
-    ${rel>0.1?'<div class="muted" style="font-size:12px;margin-top:8px"><i class="ti ti-alert-triangle"></i> v exceeds 10% of c — the non-relativistic p = mv used here loses accuracy at these speeds.</div>':'<div class="muted" style="font-size:12px;margin-top:8px">Macroscopic objects have absurdly tiny wavelengths (≪ an atom) — that\'s why their wave nature is never observed.</div>'}`;
+    ${rel>0.1?'<div class="muted" style="font-size:12px;margin-top:8px"><i class="ti ti-alert-triangle"></i> v exceeds 10% of c - the non-relativistic p = mv used here loses accuracy at these speeds.</div>':'<div class="muted" style="font-size:12px;margin-top:8px">Macroscopic objects have absurdly tiny wavelengths (≪ an atom) - that\'s why their wave nature is never observed.</div>'}`;
 }
 ['m','v','ke'].forEach(id=>$('#'+id).addEventListener('input',()=>{ if(id==='m') $('#preset').value=String(presets.length-1); run(); }));
 run();

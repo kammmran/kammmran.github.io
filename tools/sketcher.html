@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Molecule Sketcher — Academy Tools</title>
+<title>Molecule Sketcher - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -38,11 +38,11 @@
     </div>
     <div class="panel" style="min-height:auto">
       <div class="stat-grid" style="grid-template-columns:1fr 1fr">
-        <div class="stat-card"><div class="stat-label">Formula</div><div class="stat-value" id="formula" style="font-size:16px">—</div></div>
-        <div class="stat-card"><div class="stat-label">Molar mass</div><div class="stat-value" id="mw" style="font-size:16px">—</div></div>
+        <div class="stat-card"><div class="stat-label">Formula</div><div class="stat-value" id="formula" style="font-size:16px">-</div></div>
+        <div class="stat-card"><div class="stat-label">Molar mass</div><div class="stat-value" id="mw" style="font-size:16px">-</div></div>
       </div>
-      <div class="cite-block"><div class="cite-label">SMILES <button class="copy-btn" data-t="smiles"><i class="ti ti-copy"></i></button></div><div class="cite-text mono" id="smiles">—</div></div>
-      <div class="cite-block"><div class="cite-label">Molfile <button class="copy-btn" data-t="molfile"><i class="ti ti-copy"></i></button></div><textarea id="molfile" readonly style="min-height:150px;font-size:11px">—</textarea></div>
+      <div class="cite-block"><div class="cite-label">SMILES <button class="copy-btn" data-t="smiles"><i class="ti ti-copy"></i></button></div><div class="cite-text mono" id="smiles">-</div></div>
+      <div class="cite-block"><div class="cite-label">Molfile <button class="copy-btn" data-t="molfile"><i class="ti ti-copy"></i></button></div><textarea id="molfile" readonly style="min-height:150px;font-size:11px">-</textarea></div>
     </div>
   </div>
   <div id="warn" class="muted" style="font-size:12px;margin-top:10px"></div>
@@ -68,7 +68,7 @@ function update(mol){
   try{
     if(!mol) mol = editor.getMolecule();
     const atoms = mol.getAllAtoms();
-    if(!atoms){ $('#formula').textContent='—'; $('#mw').textContent='—'; $('#smiles').textContent='draw something…'; $('#molfile').value=''; last={smiles:'',molfile:''}; return; }
+    if(!atoms){ $('#formula').textContent='-'; $('#mw').textContent='-'; $('#smiles').textContent='draw something…'; $('#molfile').value=''; last={smiles:'',molfile:''}; return; }
     const mf=mol.getMolecularFormula();
     $('#formula').innerHTML = mf.formula.replace(/(\d+)/g,'<sub>$1</sub>');
     $('#mw').textContent = mf.relativeWeight.toFixed(2);
@@ -89,7 +89,7 @@ $('#loadBtn').addEventListener('click',()=>{
   ready(()=>{
     const smi=$('#loadSmi').value.trim(); if(!smi) return;
     try{ const m=OCL.Molecule.fromSmiles(smi); if(m.getAllAtoms()===0) throw 0; editor.setSmiles(smi); update(m); toast('Loaded'); }
-    catch(e){ $('#warn').textContent='Invalid SMILES — could not load.'; }
+    catch(e){ $('#warn').textContent='Invalid SMILES - could not load.'; }
   });
 });
 $('#loadSmi').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#loadBtn').click(); });

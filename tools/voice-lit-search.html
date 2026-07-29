@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Voice-Based Literature Search — Academy Tools</title>
+<title>Voice-Based Literature Search - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-search"></i></div>
       <div>
         <div class="tool-title">Voice-Based Literature Search</div>
-        <div class="tool-desc">Ask a research question out loud and get matching papers. Speech becomes a query, then results stream from the free Crossref API — title, authors, year, venue and a direct DOI link.</div>
+        <div class="tool-desc">Ask a research question out loud and get matching papers. Speech becomes a query, then results stream from the free Crossref API - title, authors, year, venue and a direct DOI link.</div>
       </div>
     </div>
   </div>
@@ -46,7 +46,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 $('#mic').onclick=()=>{
-  if(!SR){$('#status').textContent='Voice input needs Chrome or Edge — type instead.';return;}
+  if(!SR){$('#status').textContent='Voice input needs Chrome or Edge - type instead.';return;}
   const rec=new SR();rec.lang='en-US';rec.interimResults=true;
   $('#status').textContent='Listening…';$('#mic').innerHTML='<i class="ti ti-player-stop"></i> Listening';
   rec.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');$('#q').value=t;if(e.results[e.results.length-1].isFinal){rec.stop();}};

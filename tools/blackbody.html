@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Blackbody Radiation — Academy Tools</title>
+<title>Blackbody Radiation - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -90,7 +90,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Total power (Stefan–B.)</div><div class="stat-value" style="font-size:14px">${power.toExponential(3)} W/m²</div></div>
       <div class="stat-card"><div class="stat-label">vs 300 K</div><div class="stat-value">${(power/(sigma*Math.pow(300,4))).toExponential(2)}×</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">Hotter ⇒ peak shifts to shorter wavelength (λpeak·T = 2.898×10⁻³ m·K) and total power explodes as T⁴. This curve — and its failure under classical physics — is what Planck's quantum hypothesis fixed.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Hotter ⇒ peak shifts to shorter wavelength (λpeak·T = 2.898×10⁻³ m·K) and total power explodes as T⁴. This curve - and its failure under classical physics - is what Planck's quantum hypothesis fixed.</div>`;
 }
 $('#t').addEventListener('input',()=>{ $('#preset').value=''; run(); });
 run();

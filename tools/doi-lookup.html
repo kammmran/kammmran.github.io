@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DOI Lookup — Academy Tools</title>
+<title>DOI Lookup - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -382,7 +382,7 @@ function render() {
     const realIdx = refs.indexOf(r);
     const cite = format(r, style);
     const title = r.title?.[0] || '(no title)';
-    const y = year(r) || '—';
+    const y = year(r) || '-';
     const journal = r['container-title']?.[0] || '';
     const auth = (r.author || []).slice(0, 3).map(a => (a.family || a.name || '')).join(', ') + ((r.author || []).length > 3 ? ', et al.' : '');
     const citeHtml = style === 'bibtex'
@@ -394,7 +394,7 @@ function render() {
         <div style="flex:1; min-width:0">
           <div style="font-weight:600; color:var(--text); margin-bottom:2px">${escapeHtml(title)}</div>
           <div class="ref-meta">
-            <span><i class="ti ti-users" style="vertical-align:middle"></i> ${escapeHtml(auth) || '—'}</span>
+            <span><i class="ti ti-users" style="vertical-align:middle"></i> ${escapeHtml(auth) || '-'}</span>
             <span><i class="ti ti-calendar" style="vertical-align:middle"></i> ${y}</span>
             ${journal ? `<span><i class="ti ti-book" style="vertical-align:middle"></i> ${escapeHtml(journal)}</span>` : ''}
             ${r.DOI ? `<a href="https://doi.org/${r.DOI}" target="_blank" rel="noopener" style="color:var(--accent3)"><i class="ti ti-external-link" style="vertical-align:middle"></i> ${escapeHtml(r.DOI)}</a>` : ''}
@@ -476,7 +476,7 @@ async function bulkFetch() {
   }
   let ok = 0, dup = 0, fail = 0;
   for (let i = 0; i < lines.length; i++) {
-    $('#bulk-progress').innerHTML = `<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Fetching ${i+1}/${lines.length} — ${lines[i]}`;
+    $('#bulk-progress').innerHTML = `<i class="ti ti-loader-2" style="animation:spin 1s linear infinite"></i> Fetching ${i+1}/${lines.length} - ${lines[i]}`;
     try {
       const msg = await fetchDoi(lines[i]);
       const doi = (msg.DOI || '').toLowerCase();
@@ -488,7 +488,7 @@ async function bulkFetch() {
     // polite delay for CrossRef
     await new Promise(r => setTimeout(r, 120));
   }
-  $('#bulk-progress').innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Done — added ${ok}${dup ? `, ${dup} duplicate${dup>1?'s':''}` : ''}${fail ? `, ${fail} failed` : ''}.`;
+  $('#bulk-progress').innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Done - added ${ok}${dup ? `, ${dup} duplicate${dup>1?'s':''}` : ''}${fail ? `, ${fail} failed` : ''}.`;
 }
 
 // === Wire up ===

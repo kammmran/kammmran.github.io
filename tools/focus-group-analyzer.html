@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Focus Group Analyzer — Academy Tools</title>
+<title>Focus Group Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -31,7 +31,7 @@
       <textarea id="txt" style="min-height:150px">Mod: What do you think of the pricing?
 P1: I agree it's too expensive, honestly.
 P2: Exactly, I feel the same way about the cost.
-P3: Actually I disagree — I think the price is fair for the value.
+P3: Actually I disagree - I think the price is fair for the value.
 P1: But the onboarding was confusing and slow.
 P2: Yes, totally, onboarding was a real pain point.
 P3: Hmm, I didn't find onboarding hard at all.</textarea>
@@ -69,7 +69,7 @@ $('#run').onclick=()=>{
   $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Turns</div><div class="stat-value">${turns.length}</div></div>
     <div class="stat-card"><div class="stat-label">Agreements</div><div class="stat-value" style="color:var(--green)">${agree.length}</div></div>
     <div class="stat-card"><div class="stat-label">Disagreements</div><div class="stat-value" style="color:var(--red)">${disagree.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Most vocal</div><div class="stat-value" style="font-size:15px">${esc(lead?lead[0]:'—')}</div></div>`;
+    <div class="stat-card"><div class="stat-label">Most vocal</div><div class="stat-value" style="font-size:15px">${esc(lead?lead[0]:'-')}</div></div>`;
   $('#agree').innerHTML=`<div class="col a"><h3>Consensus / agreement</h3>${agree.length?agree.map(t=>`<div class="q"><b>${esc(t.sp)}:</b> ${esc(t.text)}</div>`).join(''):'<div class="muted" style="font-size:12px">None detected</div>'}</div>`;
   $('#disagree').innerHTML=`<div class="col d"><h3>Conflict / disagreement</h3>${disagree.length?disagree.map(t=>`<div class="q"><b>${esc(t.sp)}:</b> ${esc(t.text)}</div>`).join(''):'<div class="muted" style="font-size:12px">None detected</div>'}</div>`;
   $('#topics').innerHTML='<div class="panel-label" style="margin:8px 0 6px">Key topics</div>'+(topics.map(([t,c])=>`<span class="topic">${esc(t)}<span class="c">${c}</span></span>`).join('')||'<span class="muted" style="font-size:12px">No repeated topics</span>');

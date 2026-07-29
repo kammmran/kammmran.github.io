@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Table of Contents Builder — Academy Tools</title>
+<title>Table of Contents Builder - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Headings — indent (2 spaces or a tab) for sub-levels; add <b>| page</b> at the end for page numbers.
+    <label class="fld">Headings - indent (2 spaces or a tab) for sub-levels; add <b>| page</b> at the end for page numbers.
       <textarea id="src" style="min-height:200px;font-family:ui-monospace,Menlo,monospace;font-size:13px">Introduction | 1
   Background | 2
   Research questions | 4
@@ -83,7 +83,7 @@ function render(){
   items.forEach(it=>{
     const numHtml=it.numStr?`<span class="num">${it.numStr}</span>`:'';
     html+=`<div class="tl l${Math.min(it.level,3)}">${numHtml}<span class="t">${esc(it.title)}</span>${leaders?'<span class="dots"></span>':'<span style="flex:1"></span>'}${showPg&&it.page?`<span class="pg">${esc(it.page)}</span>`:''}</div>`;
-    mdLines.push('  '.repeat(it.level)+`- ${it.numStr?it.numStr+' ':''}${it.title}${showPg&&it.page?' — '+it.page:''}`);
+    mdLines.push('  '.repeat(it.level)+`- ${it.numStr?it.numStr+' ':''}${it.title}${showPg&&it.page?' - '+it.page:''}`);
     htmlLines.push(`<li>${it.numStr?it.numStr+' ':''}${esc(it.title)}${showPg&&it.page?' <span>'+esc(it.page)+'</span>':''}</li>`);
   });
   $('#out').innerHTML=html;md=mdLines.join('\n');htmlStr='<ul>\n'+htmlLines.join('\n')+'\n</ul>';

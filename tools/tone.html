@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scientific Tone Optimizer — Academy Tools</title>
+<title>Scientific Tone Optimizer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -59,11 +59,11 @@ const groups = [
     ['a lot of','many / much'],['lots of','many'],['kind of','somewhat'],['sort of','somewhat'],['stuff','material / items'],
     ['things','factors / elements'],['get','obtain'],['got','obtained'],['big','large'],['cool','notable'],
     ['nowadays','currently'],['okay','acceptable'],['ok','acceptable'],['so','therefore'],['plus','in addition'],
-    ['anyway','regardless'],['basically','essentially'],['actually','—'],['pretty','fairly'],['figure out','determine'],
+    ['anyway','regardless'],['basically','essentially'],['actually','-'],['pretty','fairly'],['figure out','determine'],
   ]},
   {cls:'intensifier', color:'--accent3', items:[
-    ['very','—'],['really','—'],['extremely','—'],['super','—'],['quite','—'],['totally','—'],
-    ['hugely','substantially'],['incredibly','—'],['vastly','considerably'],['highly','—'],
+    ['very','-'],['really','-'],['extremely','-'],['super','-'],['quite','-'],['totally','-'],
+    ['hugely','substantially'],['incredibly','-'],['vastly','considerably'],['highly','-'],
   ]},
   {cls:'emotive', color:'--pink', items:[
     ['amazing','notable'],['awesome','notable'],['wonderful','favourable'],['terrible','poor'],['awful','poor'],
@@ -89,7 +89,7 @@ function run(){
   const band=score>=85?'--green':score>=65?'--amber':'--red';
   const uniq={}; found.forEach(f=>{ const k=f.w.toLowerCase(); if(!uniq[k])uniq[k]={...f,n:0}; uniq[k].n++; });
   const list=Object.values(uniq).sort((a,b)=>b.n-a.n).map(f=>
-    `<div class="sugg-row"><span><span class="cat" style="background:rgba(127,127,127,.12);color:var(${f.color})">${f.cls}</span> <b>${esc(f.w)}</b> ×${f.n}</span><span>${f.sug==='—'?'<em style="color:var(--text3)">consider removing</em>':'→ '+f.sug}</span></div>`).join('');
+    `<div class="sugg-row"><span><span class="cat" style="background:rgba(127,127,127,.12);color:var(${f.color})">${f.cls}</span> <b>${esc(f.w)}</b> ×${f.n}</span><span>${f.sug==='-'?'<em style="color:var(--text3)">consider removing</em>':'→ '+f.sug}</span></div>`).join('');
   out.innerHTML=`
     <div class="stat-grid" style="margin:4px 0 12px">
       <div class="stat-card"><div class="stat-label">Tone score</div><div class="stat-value" style="color:var(${band})">${score}/100</div></div>

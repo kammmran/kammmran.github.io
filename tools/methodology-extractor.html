@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Methodology Extractor — Academy Tools</title>
+<title>Methodology Extractor - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-microscope"></i></div>
       <div>
         <div class="tool-title">Methodology Extractor</div>
-        <div class="tool-desc">Surfaces the methods sentences — design, sample, instruments, analysis — so you can compare how different papers did the work.</div>
+        <div class="tool-desc">Surfaces the methods sentences - design, sample, instruments, analysis - so you can compare how different papers did the work.</div>
       </div>
     </div>
   </div>
@@ -56,7 +56,7 @@ function run(){
   const sents=sentences(t); const tally={}; CATS.forEach(([c])=>tally[c]=0);
   const rows=[];
   sents.forEach(s=>{ const cat=CATS.find(([c,re])=>re.test(s)); if(cat){ tally[cat[0]]++; rows.push([cat[0],s]); } });
-  if(!rows.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No methods sentences detected — paste the Methods/Materials section.</div>'; return; }
+  if(!rows.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No methods sentences detected - paste the Methods/Materials section.</div>'; return; }
   out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">${CATS.map(([c])=>`<div class="stat-card"><div class="stat-label">${c}</div><div class="stat-value" style="font-size:18px">${tally[c]}</div></div>`).join('')}</div>`+
     rows.map(([c,s])=>`<div class="m"><div class="cat">${c}</div>${esc(s)}</div>`).join('')+
     `<div class="muted" style="font-size:12px;margin-top:8px">Heuristic tagging by methodological cue words. Useful for building a methods-comparison matrix across papers.</div>`;

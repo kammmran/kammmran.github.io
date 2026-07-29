@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reviewer Recommendation Engine — Academy Tools</title>
+<title>Reviewer Recommendation Engine - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -55,7 +55,7 @@ $('#run').addEventListener('click',async ()=>{
   try{
     const r=await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(query)}&sort=relevance_score:desc&per_page=80&select=authorships,publication_year,relevance_score&${MAIL}`);
     const d=await r.json(); const works=d.results||[];
-    if(!works.length){ out.innerHTML='<div class="muted">No related work found — try a longer abstract.</div>'; return; }
+    if(!works.length){ out.innerHTML='<div class="muted">No related work found - try a longer abstract.</div>'; return; }
     const NOW=new Date().getFullYear(); const tally={};
     works.forEach(w=>{ const recency=Math.max(0.3,1-(NOW-(w.publication_year||NOW))/20); (w.authorships||[]).forEach(a=>{ const au=a.author; if(!au)return; const inst=(a.institutions||[]).map(i=>i.display_name).join(' ').toLowerCase(); if(excl&&inst.includes(excl))return; const id=au.id; if(!tally[id])tally[id]={name:au.display_name,id,score:0,inst:(a.institutions||[])[0]&&a.institutions[0].display_name||'',n:0}; tally[id].score+=recency; tally[id].n++; }); });
     const ranked=Object.values(tally).filter(a=>a.n>=1).sort((a,b)=>b.score-a.score).slice(0,20);

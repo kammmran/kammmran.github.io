@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reading List — Academy Tools</title>
+<title>Reading List - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -85,7 +85,7 @@
     </div>
     <div class="panel">
       <div class="panel-label"><span>By type</span></div>
-      <div id="by-type" class="muted" style="font-size:13px">—</div>
+      <div id="by-type" class="muted" style="font-size:13px">-</div>
     </div>
   </div>
 </main>
@@ -217,7 +217,7 @@ function render() {
   const entries = Object.entries(types);
   $('#by-type').innerHTML = entries.length
     ? entries.map(([t, n]) => `<div style="padding:4px 0; display:flex; justify-content:space-between"><span>${escapeHtml(t)}</span><b style="color:var(--text2)">${n}</b></div>`).join('')
-    : '—';
+    : '-';
 }
 
 $('#add-btn').addEventListener('click', () => {

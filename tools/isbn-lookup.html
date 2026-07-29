@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ISBN Lookup — Academy Tools</title>
+<title>ISBN Lookup - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -199,11 +199,11 @@ function renderMeta(book) {
   const subjects = (book.subjects || []).slice(0, 5).map(s => s.name).join(' · ');
   metaEl.innerHTML = `
     ${cover ? `<img src="${cover}" class="book-cover" alt="cover">` : ''}
-    <div class="meta-row"><b>Title</b><span>${escapeHtml(book.title || '—')}${book.subtitle ? '<br><small style="color:var(--text2)">' + escapeHtml(book.subtitle) + '</small>' : ''}</span></div>
-    <div class="meta-row"><b>Authors</b><span>${escapeHtml(authors || '—')}</span></div>
-    <div class="meta-row"><b>Published</b><span>${escapeHtml(book.publish_date || '—')}</span></div>
-    <div class="meta-row"><b>Publisher</b><span>${escapeHtml((book.publishers || []).map(p => p.name).join(', ') || '—')}</span></div>
-    <div class="meta-row"><b>Pages</b><span>${book.number_of_pages || '—'}</span></div>
+    <div class="meta-row"><b>Title</b><span>${escapeHtml(book.title || '-')}${book.subtitle ? '<br><small style="color:var(--text2)">' + escapeHtml(book.subtitle) + '</small>' : ''}</span></div>
+    <div class="meta-row"><b>Authors</b><span>${escapeHtml(authors || '-')}</span></div>
+    <div class="meta-row"><b>Published</b><span>${escapeHtml(book.publish_date || '-')}</span></div>
+    <div class="meta-row"><b>Publisher</b><span>${escapeHtml((book.publishers || []).map(p => p.name).join(', ') || '-')}</span></div>
+    <div class="meta-row"><b>Pages</b><span>${book.number_of_pages || '-'}</span></div>
     ${subjects ? `<div class="meta-row"><b>Subjects</b><span>${escapeHtml(subjects)}</span></div>` : ''}
     ${book.url ? `<div class="meta-row"><b>OpenLibrary</b><span><a href="${book.url}" target="_blank" rel="noopener" style="color:var(--accent3)">${escapeHtml(book.url)} <i class="ti ti-external-link"></i></a></span></div>` : ''}
   `;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Co-Author Agreement Generator — Academy Tools</title>
+<title>Co-Author Agreement Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-file-description"></i></div>
       <div>
         <div class="tool-title">Co-Author Agreement Generator</div>
-        <div class="tool-desc">Draft a simple authorship agreement to set expectations early — author order, corresponding author, contribution summary, data ownership, and how disputes and future changes are handled. Fill the form and print a signable document. A template, not legal advice. Local.</div>
+        <div class="tool-desc">Draft a simple authorship agreement to set expectations early - author order, corresponding author, contribution summary, data ownership, and how disputes and future changes are handled. Fill the form and print a signable document. A template, not legal advice. Local.</div>
       </div>
     </div>
   </div>
@@ -69,7 +69,7 @@ function gen(){
   if($('#addremove').checked)items.push('No author will be added or removed without the written agreement of all current authors.');
   if($('#dispute').checked)items.push('Disagreements regarding authorship or order will first be resolved by discussion among authors; if unresolved, they will be referred to the relevant institutional research-integrity office.');
   $('#extra').value.split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>items.push(esc(x)));
-  const sigs=authors.map(a=>`<div class="s"><div class="line"></div><div class="lbl">${esc(a)} — signature &amp; date</div></div>`).join('');
+  const sigs=authors.map(a=>`<div class="s"><div class="line"></div><div class="lbl">${esc(a)} - signature &amp; date</div></div>`).join('');
   $('#doc').innerHTML=`<div class="agr"><h1>Co-Authorship Agreement</h1><div class="sub">${esc($('#title').value)}</div><p style="font-size:13px">This agreement records the understanding among the listed co-authors regarding the preparation and publication of the above manuscript. It is made in good faith and is not a legally binding contract.</p><h3>Terms</h3><ol>${items.map(i=>`<li>${i}</li>`).join('')}</ol><h3>Signatures</h3><div class="sig">${sigs}</div></div>`;
 }
 ['title','journal','authors','corr','order','data','dispute','addremove','extra'].forEach(id=>$('#'+id).addEventListener('input',gen));

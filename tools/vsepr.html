@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VSEPR Geometry Viewer — Academy Tools</title>
+<title>VSEPR Geometry Viewer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -96,7 +96,7 @@ function run(){
   $('#x').value=X; $('#e').value=E;
   const key=X+'_'+E; const d=TABLE[key]; const SN=X+E;
   draw(X,E);
-  if(!d){ $('#info').innerHTML=`<div class="muted" style="margin-top:6px">AX${X}E${E} (steric number ${SN}) is not a standard VSEPR case — try X 1–6 with E 0–3 in a valid combination.</div>`; return; }
+  if(!d){ $('#info').innerHTML=`<div class="muted" style="margin-top:6px">AX${X}E${E} (steric number ${SN}) is not a standard VSEPR case - try X 1–6 with E 0–3 in a valid combination.</div>`; return; }
   $('#info').innerHTML=`
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-label">Notation</div><div class="stat-value">AX${X}E${E}</div></div>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Journal Finder — Academy Tools</title>
+<title>Journal Finder - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-book"></i></div>
       <div>
         <div class="tool-title">Journal Finder</div>
-        <div class="tool-desc">Search scholarly journals by topic or title — works count, citation impact, open-access status and ISSN. Powered by OpenAlex.</div>
+        <div class="tool-desc">Search scholarly journals by topic or title - works count, citation impact, open-access status and ISSN. Powered by OpenAlex.</div>
       </div>
     </div>
   </div>
@@ -55,7 +55,7 @@ $('#f').addEventListener('submit',async e=>{
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d=await r.json();
     if(!d.results||!d.results.length){ out.innerHTML='<div class="muted">No journals found. Try a broader term.</div>'; return; }
-    out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${d.meta.count.toLocaleString()} sources matched — top ${d.results.length}, ranked by works.</div>`+
+    out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${d.meta.count.toLocaleString()} sources matched - top ${d.results.length}, ranked by works.</div>`+
       d.results.map(s=>{
         const issn=(s.issn_l||(s.issn&&s.issn[0])||'');
         const pub=s.host_organization_name||'';
@@ -66,7 +66,7 @@ $('#f').addEventListener('submit',async e=>{
             <span class="pill">${(s.works_count||0).toLocaleString()} works</span>
             <span class="pill">${(s.cited_by_count||0).toLocaleString()} citations</span>
             <span class="pill">2-yr impact ≈ ${(s.summary_stats&&s.summary_stats['2yr_mean_citedness']||0).toFixed(2)}</span>
-            <span class="pill">h-index ${s.summary_stats&&s.summary_stats.h_index||'—'}</span>
+            <span class="pill">h-index ${s.summary_stats&&s.summary_stats.h_index||'-'}</span>
             ${s.is_oa?'<span class="pill oa">Open Access</span>':''}
             ${s.homepage_url?`<a class="src" href="${esc(s.homepage_url)}" target="_blank" rel="noopener">homepage ↗</a>`:''}
           </div>

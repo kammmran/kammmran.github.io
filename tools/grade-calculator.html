@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grade Calculator — Academy Tools</title>
+<title>Grade Calculator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -55,11 +55,11 @@
     <div class="panel" style="margin-top:16px">
       <div class="panel-label"><span>Current standing</span></div>
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Weighted score</div><div class="stat-value" id="r-weighted" style="color:var(--accent3)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Weighted score</div><div class="stat-value" id="r-weighted" style="color:var(--accent3)">-</div></div>
         <div class="stat-card"><div class="stat-label">Weight completed</div><div class="stat-value" id="r-wcomp">0%</div></div>
-        <div class="stat-card"><div class="stat-label">Letter (US)</div><div class="stat-value" id="r-letter">—</div></div>
-        <div class="stat-card"><div class="stat-label">If remaining = 100%</div><div class="stat-value" id="r-best" style="color:var(--green)">—</div></div>
-        <div class="stat-card"><div class="stat-label">If remaining = 0%</div><div class="stat-value" id="r-worst" style="color:var(--red)">—</div></div>
+        <div class="stat-card"><div class="stat-label">Letter (US)</div><div class="stat-value" id="r-letter">-</div></div>
+        <div class="stat-card"><div class="stat-label">If remaining = 100%</div><div class="stat-value" id="r-best" style="color:var(--green)">-</div></div>
+        <div class="stat-card"><div class="stat-label">If remaining = 0%</div><div class="stat-value" id="r-worst" style="color:var(--red)">-</div></div>
       </div>
     </div>
   </section>
@@ -84,7 +84,7 @@
       </div>
       <div class="panel">
         <div class="panel-label"><span>You need on the final</span></div>
-        <div id="f-result" style="font-size:48px; font-weight:700; text-align:center; padding:24px 0; color:var(--accent3); font-variant-numeric:tabular-nums">—</div>
+        <div id="f-result" style="font-size:48px; font-weight:700; text-align:center; padding:24px 0; color:var(--accent3); font-variant-numeric:tabular-nums">-</div>
         <div id="f-msg" class="muted" style="text-align:center; font-size:13px"></div>
         <div class="divider"></div>
         <div class="panel-label"><span>What different finals get you</span></div>
@@ -116,7 +116,7 @@ let rows = JSON.parse(localStorage.getItem(STORE) || 'null') || [
 
 function save() { localStorage.setItem(STORE, JSON.stringify(rows)); }
 function letter(p) {
-  if (p == null) return '—';
+  if (p == null) return '-';
   if (p >= 93) return 'A';
   if (p >= 90) return 'A-';
   if (p >= 87) return 'B+';
@@ -138,7 +138,7 @@ function renderRows() {
     row.className = 'grade-row';
     row.innerHTML = `
       <input type="text" data-name="${i}" placeholder="Category" value="${escapeHtml(r.name)}" style="flex:2">
-      <input type="number" data-score="${i}" placeholder="—" value="${r.score}" style="width:110px" step="0.1">
+      <input type="number" data-score="${i}" placeholder="-" value="${r.score}" style="width:110px" step="0.1">
       <input type="number" data-max="${i}" value="${r.max}" style="width:90px" step="0.1">
       <input type="number" data-weight="${i}" value="${r.weight}" style="width:90px" step="0.1">
       <button class="rm-btn" data-rm="${i}"><i class="ti ti-x"></i></button>
@@ -177,11 +177,11 @@ function compute() {
   const best = (weightedSum + remaining) * 1; // best case if you got 100% on remaining
   const worst = weightedSum * 1; // worst case: 0 on remaining
 
-  $('#r-weighted').textContent = current == null ? '—' : current.toFixed(2) + '%';
+  $('#r-weighted').textContent = current == null ? '-' : current.toFixed(2) + '%';
   $('#r-wcomp').textContent = weightCompleted.toFixed(1) + '%';
   $('#r-letter').textContent = letter(current);
-  $('#r-best').textContent = remaining > 0 ? best.toFixed(2) + '%' : (current == null ? '—' : current.toFixed(2) + '%');
-  $('#r-worst').textContent = remaining > 0 ? worst.toFixed(2) + '%' : (current == null ? '—' : current.toFixed(2) + '%');
+  $('#r-best').textContent = remaining > 0 ? best.toFixed(2) + '%' : (current == null ? '-' : current.toFixed(2) + '%');
+  $('#r-worst').textContent = remaining > 0 ? worst.toFixed(2) + '%' : (current == null ? '-' : current.toFixed(2) + '%');
 
   // warn if weights don't sum to 100
   if (Math.abs(totalWeight - 100) > 0.01) {
@@ -195,13 +195,13 @@ function computeFinal() {
   const target = parseFloat($('#f-target').value);
   const resEl = $('#f-result'), msgEl = $('#f-msg'), tEl = $('#f-table');
   if (isNaN(cur) || isNaN(w) || isNaN(target)) {
-    resEl.textContent = '—';
+    resEl.textContent = '-';
     msgEl.textContent = 'Fill all three fields to calculate.';
     tEl.innerHTML = '';
     return;
   }
   if (w <= 0 || w > 100) {
-    resEl.textContent = '—'; msgEl.textContent = 'Final weight must be between 0 and 100.';
+    resEl.textContent = '-'; msgEl.textContent = 'Final weight must be between 0 and 100.';
     tEl.innerHTML = ''; return;
   }
   // current grade represents (100-w)% of total → contributes cur * (100-w)/100
@@ -210,13 +210,13 @@ function computeFinal() {
   resEl.textContent = needed.toFixed(2) + '%';
   if (needed > 100) {
     resEl.style.color = 'var(--red)';
-    msgEl.innerHTML = `<i class="ti ti-alert-triangle" style="color:var(--red)"></i> Not reachable — you'd need above 100% on the final.`;
+    msgEl.innerHTML = `<i class="ti ti-alert-triangle" style="color:var(--red)"></i> Not reachable - you'd need above 100% on the final.`;
   } else if (needed <= 0) {
     resEl.style.color = 'var(--green)';
     msgEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Even a 0 on the final keeps you at your target.`;
   } else if (needed < 50) {
     resEl.style.color = 'var(--green)';
-    msgEl.innerHTML = `<i class="ti ti-mood-smile" style="color:var(--green)"></i> Looking good — should be achievable.`;
+    msgEl.innerHTML = `<i class="ti ti-mood-smile" style="color:var(--green)"></i> Looking good - should be achievable.`;
   } else {
     resEl.style.color = 'var(--accent3)';
     msgEl.innerHTML = `<i class="ti ti-target" style="color:var(--accent3)"></i> Aim for at least ${Math.ceil(needed)}% on the final.`;

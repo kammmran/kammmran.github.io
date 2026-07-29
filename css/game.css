@@ -311,7 +311,7 @@ ul.rd li{font-size:12px;color:#bbb;line-height:1.6;margin-bottom:5px}
 .hb-fr-add input{flex:1;background:rgba(10,10,30,.9);color:#fff;border:1px solid rgba(0,245,255,.4);border-radius:8px;padding:8px 14px;font-family:monospace;font-size:14px;letter-spacing:3px;text-transform:uppercase}
 .hb-fr-add input:focus{outline:none;border-color:#ffcc00;background:rgba(255,200,0,.06)}
 
-/* Character lobby — 2-column layout with leaderboard side panel */
+/* Character lobby - 2-column layout with leaderboard side panel */
 .char-layout{display:flex;gap:18px;align-items:flex-start}
 .char-main{flex:1;min-width:0}
 .char-lb-side{flex:0 0 280px;background:rgba(10,10,30,.55);border:1px solid rgba(161,0,255,.28);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;max-height:520px}
@@ -412,7 +412,7 @@ ul.rd li{font-size:12px;color:#bbb;line-height:1.6;margin-bottom:5px}
   .page-section{padding:16px 18px}
 }
 
-/* Stats strip — used on Home Base header */
+/* Stats strip - used on Home Base header */
 .page-stats{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px}
 .page-stat{
   flex:1; min-width:140px;
@@ -526,7 +526,7 @@ ul.rd li{font-size:12px;color:#bbb;line-height:1.6;margin-bottom:5px}
 @media(max-width:768px){.wpn-ref-grid{grid-template-columns:1fr}}
 
 /* ─────────────────────────────────────────────────────────────────────
-   TONE-DOWN PASS — appended block. Calms menu / page / panel chrome.
+   TONE-DOWN PASS - appended block. Calms menu / page / panel chrome.
    Scope: menu pages only. The in-game HUD selectors above (#hud, .sp,
    .hp-*, .sk, .wp, #comboBox, .badge, #leaveBtn, #touch, #gameCanvas)
    are NOT redeclared and keep their original neon identity.
@@ -534,10 +534,10 @@ ul.rd li{font-size:12px;color:#bbb;line-height:1.6;margin-bottom:5px}
    remove lift-on-hover transforms, remove text-glow animations.
    ───────────────────────────────────────────────────────────────────── */
 
-/* Body / page background — single calm gradient, no radial bloom */
+/* Body / page background - single calm gradient, no radial bloom */
 body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 
-/* Main title — single color, no gradient/float/heavy spacing */
+/* Main title - single color, no gradient/float/heavy spacing */
 .gt{
   font-size:60px; font-weight:900; letter-spacing:4px;
   color:var(--c); background:none; -webkit-text-fill-color:initial; -webkit-background-clip:initial; background-clip:initial;
@@ -550,7 +550,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 }
 .gbest{font-size:13px;color:#888;margin-bottom:24px;font-weight:600;letter-spacing:1px;text-shadow:none}
 
-/* Panel — calmer pop-in, no inner glow, lighter shadow */
+/* Panel - calmer pop-in, no inner glow, lighter shadow */
 .panel{
   background:rgba(8,8,18,.92); border:1px solid rgba(161,0,255,.25);
   border-radius:14px; padding:36px 44px;
@@ -568,7 +568,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .psub{font-size:12px;color:#888;margin:4px 0}
 .rec{font-size:15px;color:#ffcc00;font-weight:700;animation:none}
 
-/* Buttons — flat fill, simple hover, no shine sweep, no lift */
+/* Buttons - flat fill, simple hover, no shine sweep, no lift */
 .btn{
   background:var(--c); color:#0a0a18; border:none;
   padding:14px 36px; font-size:15px; font-weight:700; letter-spacing:1.5px;
@@ -579,7 +579,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .btn-g{background:rgba(30,30,50,.85);color:#ddd;border:1px solid rgba(161,0,255,.3);box-shadow:none}
 .btn-g:hover{background:rgba(161,0,255,.18);border-color:var(--c);filter:none;color:#fff}
 
-/* Page chrome — flatter header + section cards */
+/* Page chrome - flatter header + section cards */
 .page{background:#06060f;animation:fadeIn .18s ease-out}
 .page-header{
   background:rgba(8,8,18,.95); border-bottom:1px solid rgba(161,0,255,.2);
@@ -613,7 +613,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .page-stat .val{color:#fff}
 .page-stat.coin .val{color:#ffd24a}
 
-/* Mode select / Difficulty / Map / Char cards — flat hover */
+/* Mode select / Difficulty / Map / Char cards - flat hover */
 .mode-card,.dc,.char-card{
   background:rgba(20,20,32,.7); border:1px solid rgba(255,255,255,.07);
   transition:background .15s ease, border-color .15s ease;
@@ -639,7 +639,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 }
 .upg-buy:hover:not(:disabled){transform:none;box-shadow:none;filter:brightness(1.12)}
 
-/* Home Base cards — flat */
+/* Home Base cards - flat */
 .hb-coin{
   background:rgba(255,200,0,.08); border:1px solid rgba(255,200,0,.3);
   color:#ffd24a; box-shadow:none; letter-spacing:1px;
@@ -723,7 +723,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .hb-loot-btn:hover:not(:disabled){transform:none;box-shadow:none;filter:brightness(1.12)}
 .hb-loot-btn.buy{background:#ffaa00;color:#0a0a18}
 
-/* Loot reveal modal — calmer pop */
+/* Loot reveal modal - calmer pop */
 .loot-modal{
   background:rgba(18,8,32,.96); border:1px solid rgba(255,0,212,.45);
   box-shadow:0 12px 40px rgba(0,0,0,.6); animation:fadeIn .2s ease-out;
@@ -755,7 +755,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .hb-fr-mycode b{background:rgba(255,200,0,.08);color:#ffd24a}
 .hb-fr-add input{background:rgba(20,20,32,.9);border:1px solid rgba(0,245,255,.3)}
 
-/* Quick-chat wheel — keep functional layout, calm the tiles */
+/* Quick-chat wheel - keep functional layout, calm the tiles */
 .qc-tile{
   background:rgba(20,20,32,.95); border:2px solid rgba(0,245,255,.35);
   box-shadow:0 4px 12px rgba(0,0,0,.4);
@@ -768,7 +768,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .menu-btns *{text-shadow:none}
 
 /* ─────────────────────────────────────────────────────────────────────
-   HOME BASE DASHBOARD — single-screen tile grid + popup modals.
+   HOME BASE DASHBOARD - single-screen tile grid + popup modals.
    No-scroll page: stats strip + loadout bar + 3x3 tile grid fit in
    the viewport. Each tile opens a modal that owns the full section
    content (existing buildHomeXxx renderers target inner IDs unchanged).
@@ -800,7 +800,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .eq-strip-compact .slot-num{font-size:8px;letter-spacing:1px;color:#888}
 .eq-strip-compact .nm{font-size:11px;font-weight:700;color:#ddd;letter-spacing:.5px}
 
-/* Tile grid — 3 columns desktop, 2 on narrower screens, 1 on phone. */
+/* Tile grid - 3 columns desktop, 2 on narrower screens, 1 on phone. */
 .hb-tile-grid{
   flex:1;
   display:grid;
@@ -880,7 +880,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 }
 
 /* ─────────────────────────────────────────────────────────────────────
-   CLOUD SIGN-IN CARD — viewport-anchored top-right. Two states:
+   CLOUD SIGN-IN CARD - viewport-anchored top-right. Two states:
    1) Signed out: prominent "Sign in with Google" pill with brand glyph.
    2) Signed in: avatar + name chip; click reveals a popover menu with
       the user's friend code + quick actions + sign-out.
@@ -931,7 +931,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .cloud-user-caret{color:#888;font-size:10px;margin-left:2px;transition:transform .15s ease}
 .cloud-user-chip.open .cloud-user-caret{transform:rotate(180deg)}
 
-/* Popover menu — opens below the chip when the chip is clicked */
+/* Popover menu - opens below the chip when the chip is clicked */
 .cloud-menu{
   position:absolute; top:calc(100% + 8px); right:0;
   min-width:220px;
@@ -964,7 +964,7 @@ body.menu{background:linear-gradient(180deg,#0a0a1a 0%,#050511 100%)}
 .cloud-menu-item.danger{color:#ff7799}
 .cloud-menu-item.danger:hover{background:rgba(255,0,85,.12); color:#ff5577}
 
-/* Mobile — anchor to the very top-right and shrink the chip text */
+/* Mobile - anchor to the very top-right and shrink the chip text */
 @media(max-width:600px){
   .cloud-card{top:10px;right:10px}
   .cloud-signin-sub{display:none}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Atomic Orbital Viewer — Academy Tools</title>
+<title>Atomic Orbital Viewer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -79,7 +79,7 @@ function render(){
       <div class="stat-card"><div class="stat-label">Orbitals in subshell</div><div class="stat-value">${2*o.l+1}</div></div>
     </div>
     <div style="margin-top:8px;font-size:13px"><b>Shape:</b> ${o.sh}</div>
-    <div class="muted" style="font-size:12px;margin-top:6px">Number of angular (planar) nodes equals ℓ: s has 0, p has 1, d has 2. Adjacent lobes have opposite phase — overlap of like phases is what forms bonding molecular orbitals.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:6px">Number of angular (planar) nodes equals ℓ: s has 0, p has 1, d has 2. Adjacent lobes have opposite phase - overlap of like phases is what forms bonding molecular orbitals.</div>`;
 }
 document.querySelectorAll('.obtn').forEach(b=>b.addEventListener('click',()=>{ active=b.dataset.k; render(); }));
 render();

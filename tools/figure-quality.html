@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Figure Quality Checker — Academy Tools</title>
+<title>Figure Quality Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -73,12 +73,12 @@ function handle(file){
       <div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:12px 0 4px">Effective print resolution at journal widths</div>
       <table><tr><th>Placement</th><th>DPI</th><th>Verdict</th></tr>${dpiRows.join('')}</table>
       <div style="margin-top:10px;font-size:13px;display:flex;flex-direction:column;gap:5px">
-        ${judge(w>=1050,'Meets ~300 dpi at single-column width','Below 300 dpi at single-column — may look pixelated in print')}
-        ${judge(!/jpe?g/i.test(type),'Lossless format (good for line art/plots)','JPEG — fine for photos, but use PNG/TIFF/PDF for plots & line art')}
+        ${judge(w>=1050,'Meets ~300 dpi at single-column width','Below 300 dpi at single-column - may look pixelated in print')}
+        ${judge(!/jpe?g/i.test(type),'Lossless format (good for line art/plots)','JPEG - fine for photos, but use PNG/TIFF/PDF for plots & line art')}
       </div>
-      <div class="muted" style="font-size:12px;margin-top:8px">DPI is computed as pixel width ÷ print width. Most journals want ≥300 dpi (photos/halftones) and ≥600–1200 dpi (line art). Vector formats (SVG/PDF/EPS) are resolution-independent — always preferred for charts.</div>`;
+      <div class="muted" style="font-size:12px;margin-top:8px">DPI is computed as pixel width ÷ print width. Most journals want ≥300 dpi (photos/halftones) and ≥600–1200 dpi (line art). Vector formats (SVG/PDF/EPS) are resolution-independent - always preferred for charts.</div>`;
   };
-  img.onerror=()=>{ out.innerHTML='<div class="muted">Couldn\'t read that image (vector formats like SVG/PDF can\'t be measured in-browser — but they\'re resolution-independent and safe to use).</div>'; };
+  img.onerror=()=>{ out.innerHTML='<div class="muted">Couldn\'t read that image (vector formats like SVG/PDF can\'t be measured in-browser - but they\'re resolution-independent and safe to use).</div>'; };
   img.src=url;
 }
 </script>

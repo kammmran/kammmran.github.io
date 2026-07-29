@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hydrogen Emission Spectrum — Academy Tools</title>
+<title>Hydrogen Emission Spectrum - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -94,7 +94,7 @@ function run(){
     <td>${l.E.toFixed(3)} eV</td>
     <td>${l.visible?`<span class="swatch" style="background:${wlToRGB(l.wl)}"></span>visible`:(l.wl<380?'UV':'IR')}</td></tr>`).join('');
   $('#lines').innerHTML=`<table><tr><th>Transition</th><th>Wavelength</th><th>Photon energy</th><th>Region</th></tr>${rows}</table>
-    <div class="muted" style="font-size:12px;margin-top:8px">1/λ = R<sub>H</sub>(1/n₁² − 1/n₂²), R<sub>H</sub> = 1.097×10⁷ m⁻¹. Only the Balmer series (n₁=2) falls in the visible range — that's the familiar red/cyan/blue/violet H lines.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">1/λ = R<sub>H</sub>(1/n₁² − 1/n₂²), R<sub>H</sub> = 1.097×10⁷ m⁻¹. Only the Balmer series (n₁=2) falls in the visible range - that's the familiar red/cyan/blue/violet H lines.</div>`;
 }
 ['series','nmax'].forEach(id=>$('#'+id).addEventListener('input',run));
 run();

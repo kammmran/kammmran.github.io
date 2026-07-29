@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Submission Readiness Checker — Academy Tools</title>
+<title>Submission Readiness Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-clipboard-check"></i></div>
       <div>
         <div class="tool-title">Manuscript Submission Readiness Checker</div>
-        <div class="tool-desc">The final pre-submission audit — tick off everything the journal will check, and don't hit "submit" until you're green.</div>
+        <div class="tool-desc">The final pre-submission audit - tick off everything the journal will check, and don't hit "submit" until you're green.</div>
       </div>
     </div>
   </div>
@@ -57,7 +57,7 @@ function run(){
   const pct=Math.round(done/total*100); const band=pct>=100?'--green':pct>=70?'--amber':'--red';
   $('#prog').innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:15px">Submission readiness</b><span style="color:var(${band})"><b>${pct}%</b> · ${done}/${total}</span></div>
     <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>
-    <div style="font-size:13px;color:var(${band})">${pct>=100?'Ready to submit ✓':pct>=70?'Almost there — clear the remaining items.':'Not ready — several essentials outstanding.'}</div>`;
+    <div style="font-size:13px;color:var(${band})">${pct>=100?'Ready to submit ✓':pct>=70?'Almost there - clear the remaining items.':'Not ready - several essentials outstanding.'}</div>`;
 }
 document.querySelectorAll('#groups input').forEach(c=>c.addEventListener('change',run));
 run();

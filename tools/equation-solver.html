@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Equation Solver — Academy Tools</title>
+<title>Equation Solver - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
@@ -250,7 +250,7 @@ function solveSys3() {
     let pivot = i;
     for (let k = i + 1; k < n; k++) if (Math.abs(M[k][i]) > Math.abs(M[pivot][i])) pivot = k;
     if (Math.abs(M[pivot][i]) < 1e-12) {
-      $('#S3-out').innerHTML = steps.join('') + '<div class="step complex">Singular matrix — no unique solution.</div>';
+      $('#S3-out').innerHTML = steps.join('') + '<div class="step complex">Singular matrix - no unique solution.</div>';
       return;
     }
     if (pivot !== i) { [M[i], M[pivot]] = [M[pivot], M[i]]; steps.push(matStep(`Swap row ${i+1} ↔ row ${pivot+1}`, M)); }

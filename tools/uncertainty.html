@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Heisenberg Uncertainty — Academy Tools</title>
+<title>Heisenberg Uncertainty - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-arrows-horizontal"></i></div>
       <div>
         <div class="tool-title">Heisenberg Uncertainty Principle</div>
-        <div class="tool-desc">Δx·Δp ≥ ħ/2 — the minimum momentum (and velocity) spread implied by a position uncertainty, and the energy–time form.</div>
+        <div class="tool-desc">Δx·Δp ≥ ħ/2 - the minimum momentum (and velocity) spread implied by a position uncertainty, and the energy–time form.</div>
       </div>
     </div>
   </div>
@@ -80,7 +80,7 @@ function et(){
       <div class="stat-card"><div class="stat-label">in eV</div><div class="stat-value" style="font-size:15px">${(dE/eV).toExponential(3)} eV</div></div>
       <div class="stat-card"><div class="stat-label">Line width (ΔE/h)</div><div class="stat-value" style="font-size:14px">${(dE/6.626e-34).toExponential(2)} Hz</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">A short-lived excited state (small Δt) has a large energy uncertainty — this is the natural linewidth seen in spectroscopy.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">A short-lived excited state (small Δt) has a large energy uncertainty - this is the natural linewidth seen in spectroscopy.</div>`;
 }
 ['dx','mass'].forEach(id=>$('#'+id).addEventListener('input',xp));
 $('#dt').addEventListener('input',et);

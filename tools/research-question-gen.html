@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Question Generator — Academy Tools</title>
+<title>Research Question Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -60,7 +60,7 @@ function run(){
   qs.push(['Mechanistic', `To what extent, and through what mechanism, does ${I} influence ${o} in ${p}${ctx}?`]);
   if(c) qs.push(['Effect-size', `What is the effect size of ${I} relative to ${c} on ${o} in ${p}${ctx}?`]);
   qs.push(['Exploratory', `What factors are associated with ${o} among ${p}${ctx}?`]);
-  out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">PICO(T): <b>${esc(p)}</b> · <b>${esc(i||'—')}</b> · <b>${esc(c||'—')}</b> · <b>${esc(o)}</b>${t?` · <b>${esc(t)}</b>`:''}</div>`+
+  out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">PICO(T): <b>${esc(p)}</b> · <b>${esc(i||'-')}</b> · <b>${esc(c||'-')}</b> · <b>${esc(o)}</b>${t?` · <b>${esc(t)}</b>`:''}</div>`+
     qs.map(([ty,q])=>`<div class="q"><div class="ty">${ty}</div>${esc(q)}</div>`).join('')+
     `<div class="muted" style="font-size:12px;margin-top:8px">Refine with FINER: is it <b>F</b>easible, <b>I</b>nteresting, <b>N</b>ovel, <b>E</b>thical, <b>R</b>elevant? Pick the phrasing that matches your study design.</div>`;
 }

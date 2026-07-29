@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dependency Analyzer — Academy Tools</title>
+<title>Dependency Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -81,7 +81,7 @@ function analyze(){
     <div class="stat-card"><div class="stat-label">Unpinned</div><div class="stat-value" style="color:${ext.length-pinned?'var(--red)':'var(--green)'}">${ext.length-pinned}</div></div>
     <div class="stat-card"><div class="stat-label">Reproducibility</div><div class="stat-value" style="color:${repScore>=90?'var(--green)':repScore>=60?'var(--amber)':'var(--red)'}">${repScore}%</div></div>`;
   let html='';
-  if(ext.length)html+=`<table><tr><th>Package</th><th>Version spec</th><th>Pinning</th></tr>${ext.map(d=>`<tr><td>${esc(d.name)}</td><td style="font-family:monospace">${esc(d.ver||'—')}</td><td class="${d.pin==='pin'?'pin':d.pin==='loose'?'loose':'none'}">${d.pin==='pin'?'✓ exact':d.pin==='loose'?'~ range':'✗ none'}</td></tr>`).join('')}</table>`;
+  if(ext.length)html+=`<table><tr><th>Package</th><th>Version spec</th><th>Pinning</th></tr>${ext.map(d=>`<tr><td>${esc(d.name)}</td><td style="font-family:monospace">${esc(d.ver||'-')}</td><td class="${d.pin==='pin'?'pin':d.pin==='loose'?'loose':'none'}">${d.pin==='pin'?'✓ exact':d.pin==='loose'?'~ range':'✗ none'}</td></tr>`).join('')}</table>`;
   if(imports.length)html+=`<div class="muted" style="font-size:12px;margin-top:10px"><b>Imports detected:</b> ${imports.map(d=>esc(d.name)+(d.std?' <span style="color:var(--text3)">(stdlib)</span>':'')).join(', ')}</div>`;
   $('#out').innerHTML=html||'<div class="muted" style="font-size:13px">No dependencies recognised.</div>';
 }

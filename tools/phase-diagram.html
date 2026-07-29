@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Phase Diagram — Academy Tools</title>
+<title>Phase Diagram - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-chart-dots-2"></i></div>
       <div>
         <div class="tool-title">Phase Diagram Explorer</div>
-        <div class="tool-desc">Interactive P–T diagram for water or CO₂ — move the point or type P and T to see which phase the substance is in.</div>
+        <div class="tool-desc">Interactive P–T diagram for water or CO₂ - move the point or type P and T to see which phase the substance is in.</div>
       </div>
     </div>
   </div>
@@ -117,7 +117,7 @@ function render(){
     $('#info').innerHTML=`<div class="stat-grid"><div class="stat-card"><div class="stat-label">At ${T} K, ${P} atm</div><div class="stat-value" style="color:var(--red)">${ph}</div></div>
       <div class="stat-card"><div class="stat-label">Triple point</div><div class="stat-value" style="font-size:13px">${d.triple[0]} K · ${d.triple[1]} atm</div></div>
       <div class="stat-card"><div class="stat-label">Critical point</div><div class="stat-value" style="font-size:13px">${d.crit[0]} K · ${d.crit[1]} atm</div></div></div>
-      <div class="muted" style="font-size:12px;margin-top:8px">Click anywhere on the diagram to move the point. ${d.negSlope?'Water\'s solid–liquid line slopes slightly left — ice is less dense than liquid water.':'CO₂ has no liquid phase at 1 atm: it sublimes directly from solid to gas.'} Boundaries are schematic.</div>`;
+      <div class="muted" style="font-size:12px;margin-top:8px">Click anywhere on the diagram to move the point. ${d.negSlope?'Water\'s solid–liquid line slopes slightly left - ice is less dense than liquid water.':'CO₂ has no liquid phase at 1 atm: it sublimes directly from solid to gas.'} Boundaries are schematic.</div>`;
   }
 }
 $('#svg').addEventListener('click',e=>{

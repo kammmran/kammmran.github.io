@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Gap Finder — Academy Tools</title>
+<title>Research Gap Finder - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -33,7 +33,7 @@
     </form>
     <div id="out"></div>
     <div id="combo" style="display:none">
-      <label class="fld">Test a specific angle (combined with your topic) — low counts signal a gap
+      <label class="fld">Test a specific angle (combined with your topic) - low counts signal a gap
         <div class="row" style="gap:8px"><input type="text" id="angle" placeholder="e.g. machine learning, children, longitudinal, Africa" style="flex:1"><button class="btn" id="testBtn">Test</button></div>
       </label>
       <div id="comboOut"></div>
@@ -72,8 +72,8 @@ $('#f').addEventListener('submit',async e=>{
     const max=Math.max(...g.map(x=>x.count),1);
     out.innerHTML=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px">Sub-areas by study volume <span style="text-transform:none;letter-spacing:0">(green = thin / candidate gap)</span></div>`+
       g.map(c=>{ const r=c.count/max; const cls=r<0.18?'lo':r<0.5?'mid':'hi'; return `<span class="pill ${cls}">${esc(c.key_display_name)} · ${c.count.toLocaleString()}</span>`; }).join('');
-    $('#combo').style.display=''; $('#framework').innerHTML=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:14px 0 8px">Gap framework — questions to interrogate the field</div>`+
-      FRAMEWORK.map(([t,d2,q2])=>`<div class="gap-card"><b>${t}</b> — ${d2}<div style="color:var(--text3);margin-top:3px">↳ ${q2}</div></div>`).join('');
+    $('#combo').style.display=''; $('#framework').innerHTML=`<div style="font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin:14px 0 8px">Gap framework - questions to interrogate the field</div>`+
+      FRAMEWORK.map(([t,d2,q2])=>`<div class="gap-card"><b>${t}</b> - ${d2}<div style="color:var(--text3);margin-top:3px">↳ ${q2}</div></div>`).join('');
   }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
 });
 
@@ -86,8 +86,8 @@ $('#testBtn').addEventListener('click',async ()=>{
       fetch(`https://api.openalex.org/works?search=${encodeURIComponent(TOPIC)}&${MAIL}`).then(r=>r.json())
     ]);
     const n=both.meta.count, base_n=base.meta.count; const pct=base_n?(n/base_n*100):0;
-    const verdict=n<50?{t:'Strong gap — very few papers',c:'--green'}:pct<3?{t:'Likely gap — under-explored angle',c:'--green'}:pct<10?{t:'Some coverage — room to contribute',c:'--amber'}:{t:'Well covered',c:'--red'};
-    o.innerHTML=`<div class="gap-card"><b>"${esc(TOPIC)}" × "${esc(a)}"</b>: ${n.toLocaleString()} papers (${pct.toFixed(1)}% of topic) — <span style="color:var(${verdict.c})">${verdict.t}</span></div>`;
+    const verdict=n<50?{t:'Strong gap - very few papers',c:'--green'}:pct<3?{t:'Likely gap - under-explored angle',c:'--green'}:pct<10?{t:'Some coverage - room to contribute',c:'--amber'}:{t:'Well covered',c:'--red'};
+    o.innerHTML=`<div class="gap-card"><b>"${esc(TOPIC)}" × "${esc(a)}"</b>: ${n.toLocaleString()} papers (${pct.toFixed(1)}% of topic) - <span style="color:var(${verdict.c})">${verdict.t}</span></div>`;
   }catch(err){ o.innerHTML=`<div class="muted">Error: ${esc(err.message)}</div>`; }
 });
 </script>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Future Work Aggregator — Academy Tools</title>
+<title>Future Work Aggregator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Paste paper(s) — separate multiple with a blank line or a line of ---
+    <label class="fld">Paste paper(s) - separate multiple with a blank line or a line of ---
       <textarea id="txt" style="min-height:200px" placeholder="Paper 1 text…&#10;---&#10;Paper 2 text…"></textarea>
     </label>
     <div id="out"></div>
@@ -50,13 +50,13 @@ function run(){
   const papers=t.split(/\n\s*---+\s*\n|\n\s*\n/).map(p=>p.trim()).filter(Boolean);
   let total=0; const rows=[];
   papers.forEach((p,i)=>{ sentences(p).forEach(s=>{ if(CUES.test(s)){ total++; rows.push([papers.length>1?`Paper ${i+1}`:'',s]); } }); });
-  if(!rows.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No future-work statements found — these usually live in the Conclusion/Discussion.</div>'; return; }
+  if(!rows.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No future-work statements found - these usually live in the Conclusion/Discussion.</div>'; return; }
   out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
       <div class="stat-card"><div class="stat-label">Papers</div><div class="stat-value">${papers.length}</div></div>
       <div class="stat-card"><div class="stat-label">Future directions</div><div class="stat-value" style="color:var(--amber)">${total}</div></div>
     </div>`+
     rows.map(([src,s])=>`<div class="fw">${src?`<div class="src">${src}</div>`:''}${esc(s)}</div>`).join('')+
-    `<div class="muted" style="font-size:12px;margin-top:8px">A ready-made list of open problems — great for motivating your own contribution or a review's "future directions" section.</div>`;
+    `<div class="muted" style="font-size:12px;margin-top:8px">A ready-made list of open problems - great for motivating your own contribution or a review's "future directions" section.</div>`;
 }
 $('#txt').addEventListener('input',run);
 </script>

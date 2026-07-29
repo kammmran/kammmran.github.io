@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentiment Analyzer for Interviews — Academy Tools</title>
+<title>Sentiment Analyzer for Interviews - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -30,7 +30,7 @@
     <label class="fld">Transcript ("Name: text" lines recommended)
       <textarea id="txt" style="min-height:150px" placeholder="Interviewer: How did the new system feel?&#10;Participant: Honestly it was frustrating and confusing at first, but later I loved how fast it became.">Interviewer: How did you find the new workflow?
 Participant: At first it was really frustrating and confusing. I hated the setup.
-Participant: But once it clicked, I absolutely loved it — it felt fast and empowering.
+Participant: But once it clicked, I absolutely loved it - it felt fast and empowering.
 Interviewer: Any concerns going forward?
 Participant: I'm a bit worried about reliability, though overall I'm optimistic and excited.</textarea>
     </label>
@@ -40,7 +40,7 @@ Participant: I'm a bit worried about reliability, though overall I'm optimistic 
     <div id="timeline"></div>
     <span class="muted" id="status" style="font-size:12px"></span>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">Lexicon-based scoring with negation handling. It catches polarity, not sarcasm or context — treat scores as signposts and read the flagged turns yourself.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">Lexicon-based scoring with negation handling. It catches polarity, not sarcasm or context - treat scores as signposts and read the flagged turns yourself.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
@@ -74,8 +74,8 @@ $('#run').onclick=()=>{
   const neg=[...turns].filter(t=>t.sc<0).sort((a,b)=>a.sc-b.sc)[0];
   $('#overall').innerHTML=`<div class="stat-card"><div class="stat-label">Overall tone</div><div class="stat-value" style="color:${col(avg)}">${label}</div></div>
     <div class="stat-card"><div class="stat-label">Mean score</div><div class="stat-value" style="color:${col(avg)}">${avg.toFixed(2)}</div></div>
-    <div class="stat-card"><div class="stat-label">Most positive</div><div class="stat-value" style="color:var(--green);font-size:14px">${pos?esc(pos.text.slice(0,30))+'…':'—'}</div></div>
-    <div class="stat-card"><div class="stat-label">Most negative</div><div class="stat-value" style="color:var(--red);font-size:14px">${neg?esc(neg.text.slice(0,30))+'…':'—'}</div></div>`;
+    <div class="stat-card"><div class="stat-label">Most positive</div><div class="stat-value" style="color:var(--green);font-size:14px">${pos?esc(pos.text.slice(0,30))+'…':'-'}</div></div>
+    <div class="stat-card"><div class="stat-label">Most negative</div><div class="stat-value" style="color:var(--red);font-size:14px">${neg?esc(neg.text.slice(0,30))+'…':'-'}</div></div>`;
   $('#speakers').innerHTML='<div class="panel-label" style="margin:8px 0 6px">By speaker</div>'+Object.entries(bySp).map(([sp,d])=>{const m=d.sum/d.c;const w=Math.min(50,Math.abs(m)*60);return `<div class="spk"><div style="width:120px;font-weight:600">${esc(sp)}</div><div class="bar"><div class="mid"></div><div class="fill" style="${m>=0?'left:50%':'right:50%'};width:${w}%;background:${col(m)}"></div></div><div style="width:48px;text-align:right;color:${col(m)}">${m.toFixed(2)}</div></div>`;}).join('');
   $('#timeline').innerHTML='<div class="panel-label" style="margin:10px 0 6px">Turn by turn</div>'+turns.map(t=>`<div class="turn ${t.sc>0.15?'pos':t.sc<-0.15?'neg':''}"><span class="who">${esc(t.sp)}</span><span class="sc" style="color:${col(t.sc)}">${t.sc.toFixed(2)}</span><div>${esc(t.text)}</div></div>`).join('');
   $('#status').textContent='Analyzed '+turns.length+' turns';

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Word Counter — Academy Tools</title>
+<title>Word Counter - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -174,7 +174,7 @@ function render() {
     const pct = Math.min(100, (c.words / goal) * 100);
     goalFill.style.width = pct + '%';
     goalFill.style.background = pct >= 100 ? 'var(--green)' : 'var(--accent)';
-    goalLabel.textContent = `${c.words} / ${goal} words · ${pct.toFixed(0)}%${pct >= 100 ? ' — goal reached!' : ''}`;
+    goalLabel.textContent = `${c.words} / ${goal} words · ${pct.toFixed(0)}%${pct >= 100 ? ' - goal reached!' : ''}`;
   } else {
     goalBar.style.display = 'none';
   }
@@ -196,7 +196,7 @@ function render() {
       `<span class="chip" style="margin:3px 4px 3px 0; background:var(--surface2)"><b>${w}</b> · ${w.length} chars</span>`
     ).join('');
   } else {
-    longestEl.innerHTML = '<span class="muted">—</span>';
+    longestEl.innerHTML = '<span class="muted">-</span>';
   }
 
   if (mode === 'compare') {
@@ -219,8 +219,8 @@ function render() {
       `<div class="stat-card"><div class="stat-label">${k}</div><div class="stat-value">${v}</div></div>`
     ).join('');
 
-    onlyA.innerHTML = uniqueA.slice(0, 25).map(w => `<span class="chip accent" style="margin:2px 4px 2px 0">${w} <span style="opacity:.7">${fmA.get(w)}</span></span>`).join('') || '<span class="muted">—</span>';
-    onlyB.innerHTML = uniqueB.slice(0, 25).map(w => `<span class="chip teal" style="margin:2px 4px 2px 0">${w} <span style="opacity:.7">${fmB.get(w)}</span></span>`).join('') || '<span class="muted">—</span>';
+    onlyA.innerHTML = uniqueA.slice(0, 25).map(w => `<span class="chip accent" style="margin:2px 4px 2px 0">${w} <span style="opacity:.7">${fmA.get(w)}</span></span>`).join('') || '<span class="muted">-</span>';
+    onlyB.innerHTML = uniqueB.slice(0, 25).map(w => `<span class="chip teal" style="margin:2px 4px 2px 0">${w} <span style="opacity:.7">${fmB.get(w)}</span></span>`).join('') || '<span class="muted">-</span>';
   }
 }
 

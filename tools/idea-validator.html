@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Idea Validator — Academy Tools</title>
+<title>Research Idea Validator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -55,7 +55,7 @@ function run(){
   const pct=Math.round(done/total*100);
   const weak=per.filter(p=>p.n/p.t<0.5).map(p=>p.name);
   const band=pct>=80?'--green':pct>=55?'--amber':'--red';
-  const verdict=pct>=80?'Strong idea — go for it':pct>=55?'Promising — refine the weak areas':'Needs rework before proceeding';
+  const verdict=pct>=80?'Strong idea - go for it':pct>=55?'Promising - refine the weak areas':'Needs rework before proceeding';
   $('#out').innerHTML=`
     <div class="row" style="justify-content:space-between"><b style="font-size:15px">FINER score</b><span style="color:var(${band})"><b>${pct}%</b></span></div>
     <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>

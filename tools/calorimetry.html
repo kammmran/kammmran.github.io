@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calorimetry — Academy Tools</title>
+<title>Calorimetry - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -20,7 +20,7 @@
     <div class="tool-title-block">
       <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-flame"></i></div>
       <div>
-        <div class="tool-title">Calorimetry — q = m·c·ΔT</div>
+        <div class="tool-title">Calorimetry - q = m·c·ΔT</div>
         <div class="tool-desc">Heat transfer from mass, specific heat and temperature change. Leave one blank to solve.</div>
       </div>
     </div>
@@ -66,7 +66,7 @@ function solve(){
     if(!Number.isFinite(r)) throw 0;
   }catch(e){ out.innerHTML='<span class="muted">Check inputs (no zeros where divided).</span>'; return; }
   let extra='';
-  if(label==='q'){ const kj=r/1000; extra=` <span class="muted">(${kj.toFixed(4)} kJ, ${(r/4.184).toFixed(2)} cal)</span>`; extra+=`<div class="muted" style="font-size:13px;margin-top:6px">${r>0?'Heat absorbed — endothermic.':r<0?'Heat released — exothermic.':''}</div>`; }
+  if(label==='q'){ const kj=r/1000; extra=` <span class="muted">(${kj.toFixed(4)} kJ, ${(r/4.184).toFixed(2)} cal)</span>`; extra+=`<div class="muted" style="font-size:13px;margin-top:6px">${r>0?'Heat absorbed - endothermic.':r<0?'Heat released - exothermic.':''}</div>`; }
   out.innerHTML=`<b>${label} = ${r.toPrecision(5)} ${unit}</b>${extra}`;
 }
 document.querySelectorAll('.chip.pre').forEach(ch=>ch.addEventListener('click',()=>{ $('#c').value=ch.dataset.c; solve(); }));

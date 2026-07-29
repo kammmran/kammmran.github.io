@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Abstract Quality Evaluator — Academy Tools</title>
+<title>Abstract Quality Evaluator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-clipboard-check"></i></div>
       <div>
         <div class="tool-title">Abstract Quality Evaluator</div>
-        <div class="tool-desc">Heuristic checks for a strong research abstract — structure (IMRaD), length, hedging, numbers, and readability.</div>
+        <div class="tool-desc">Heuristic checks for a strong research abstract - structure (IMRaD), length, hedging, numbers, and readability.</div>
       </div>
     </div>
   </div>
@@ -93,7 +93,7 @@ function evaluate(){
 
   // 1. Length
   if (wc >= 150 && wc <= 300) add(20,'ok','Length is ideal', `${wc} words (target 150–300).`);
-  else if (wc >= 100 && wc < 350) add(20,'warn','Length acceptable', `${wc} words — many journals cap at 250–300.`);
+  else if (wc >= 100 && wc < 350) add(20,'warn','Length acceptable', `${wc} words - many journals cap at 250–300.`);
   else add(20,'bad', wc<100?'Too short':'Too long', `${wc} words (target 150–300).`);
 
   // 2. Structure / IMRaD coverage
@@ -114,7 +114,7 @@ function evaluate(){
   const hedgeCount = HEDGES.reduce((a,h)=> a + (lower.match(new RegExp('\\b'+h+'\\b','g'))||[]).length, 0);
   const hedgeRatio = hedgeCount / Math.max(1, sentences.length);
   if (hedgeRatio <= 0.5) add(10,'ok','Confident tone', `${hedgeCount} hedging word(s).`);
-  else if (hedgeRatio <= 1) add(10,'warn','Somewhat hedged', `${hedgeCount} hedging words — trim "may/might/could/possibly".`);
+  else if (hedgeRatio <= 1) add(10,'warn','Somewhat hedged', `${hedgeCount} hedging words - trim "may/might/could/possibly".`);
   else add(10,'bad','Over-hedged', `${hedgeCount} hedging words dilute your claims.`);
 
   // 5. Sentence length / readability
@@ -122,14 +122,14 @@ function evaluate(){
   const syl = words.reduce((a,w)=>a+syllables(w),0);
   const flesch = 206.835 - 1.015*avgLen - 84.6*(syl/Math.max(1,wc));
   if (avgLen <= 25) add(15,'ok','Readable sentence length', `Avg ${avgLen.toFixed(0)} words/sentence (Flesch ${flesch.toFixed(0)}).`);
-  else if (avgLen <= 35) add(15,'warn','Long sentences', `Avg ${avgLen.toFixed(0)} words/sentence — consider splitting.`);
+  else if (avgLen <= 35) add(15,'warn','Long sentences', `Avg ${avgLen.toFixed(0)} words/sentence - consider splitting.`);
   else add(15,'bad','Sentences too long', `Avg ${avgLen.toFixed(0)} words/sentence hurts clarity.`);
 
   // 6. No undefined acronyms (heuristic: acronym used before any "(ACRONYM)")
   const acronyms = [...new Set((text.match(/\b[A-Z]{2,5}\b/g)||[]).filter(a=>!['DNA','RNA','USA','PCR','AI','ML'].includes(a)))];
   if (acronyms.length === 0) add(0,'ok','','');
-  // (acronyms check is informational, weight 0 — skip from list if empty)
-  if (acronyms.length){ add(0, acronyms.length>4?'warn':'ok','Acronyms used', `${acronyms.slice(0,6).join(', ')}${acronyms.length>6?'…':''} — make sure each is defined on first use.`); }
+  // (acronyms check is informational, weight 0 - skip from list if empty)
+  if (acronyms.length){ add(0, acronyms.length>4?'warn':'ok','Acronyms used', `${acronyms.slice(0,6).join(', ')}${acronyms.length>6?'…':''} - make sure each is defined on first use.`); }
 
   const pct = Math.round(score / maxScore * 100);
   $('#scoreFill').style.width = pct + '%';

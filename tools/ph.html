@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>pH Calculator — Academy Tools</title>
+<title>pH Calculator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -111,7 +111,7 @@ function strong(){
   let ph,poh;
   if(type==='acid'){ ph=-Math.log10(c); poh=14-ph; }
   else { poh=-Math.log10(c); ph=14-poh; }
-  const note = (ph<0||ph>14)?' <span class="muted">(very concentrated — ideal approximation breaks down)</span>':'';
+  const note = (ph<0||ph>14)?' <span class="muted">(very concentrated - ideal approximation breaks down)</span>':'';
   $('#s_out').innerHTML = `pH = <b>${ph.toFixed(3)}</b> · pOH = <b>${poh.toFixed(3)}</b>${note}<div class="muted" style="font-size:12px;margin-top:6px">Assumes complete dissociation and activity = concentration.</div>`;
 }
 ['s_conc','s_type'].forEach(id=>$('#'+id).addEventListener('input',strong));

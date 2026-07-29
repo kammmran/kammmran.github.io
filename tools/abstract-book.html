@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Abstract Book Generator — Academy Tools</title>
+<title>Abstract Book Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-book-2"></i></div>
       <div>
         <div class="tool-title">Abstract Book / Proceedings Generator</div>
-        <div class="tool-desc">Compile submitted abstracts into a polished book with a title page, an auto-generated table of contents, sequential abstract numbering, and an alphabetical author index. Paste structured entries or import JSON, then print to PDF. Ideal for conference organisers and proceedings editors — runs entirely in your browser.</div>
+        <div class="tool-desc">Compile submitted abstracts into a polished book with a title page, an auto-generated table of contents, sequential abstract numbering, and an alphabetical author index. Paste structured entries or import JSON, then print to PDF. Ideal for conference organisers and proceedings editors - runs entirely in your browser.</div>
       </div>
     </div>
   </div>
@@ -31,7 +31,7 @@
       <label class="fld">Book title<input id="title" value="Book of Abstracts"></label>
       <label class="fld">Subtitle / event<input id="subtitle" value="12th International Conference on Plant Science · Vienna 2026"></label>
     </div>
-    <label class="fld">Abstracts — separate each with a line of <b>---</b>. Per entry:<br>line 1 = title · line 2 = Authors (comma-separated) · remaining lines = abstract body. Optional <code>@Track</code> on its own line sets the section.
+    <label class="fld">Abstracts - separate each with a line of <b>---</b>. Per entry:<br>line 1 = title · line 2 = Authors (comma-separated) · remaining lines = abstract body. Optional <code>@Track</code> on its own line sets the section.
       <textarea id="src" style="min-height:240px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px">@Phenotyping
 Hyperspectral detection of pre-symptomatic crop disease
 Jane Researcher, Tom Lee, Carol Advisor
@@ -127,11 +127,11 @@ function render(){
   if($('#idx').checked){
     const idx={};ordered.forEach(e=>e.authors.forEach(a=>{const key=normName(a);(idx[key]=idx[key]||{name:a,nums:[]}).nums.push(e.num);}));
     const sorted=Object.values(idx).sort((a,b)=>a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
-    html+=`<div class="page"><div class="sec-title" style="color:${accent}">Author Index</div>${sorted.map(a=>`<div class="idx-row"><b>${esc(a.name)}</b> — ${a.nums.join(', ')}</div>`).join('')}</div>`;
+    html+=`<div class="page"><div class="sec-title" style="color:${accent}">Author Index</div>${sorted.map(a=>`<div class="idx-row"><b>${esc(a.name)}</b> - ${a.nums.join(', ')}</div>`).join('')}</div>`;
   }
   $('#book').innerHTML=html;$('#status').textContent=`${entries.length} abstracts compiled`;
 }
-function tocRow(e){return `<div class="toc-row"><span class="n">${e.num}.</span><span class="t">${esc(e.title)} <span style="color:#777;font-style:italic">— ${esc(e.authors.slice(0,3).join(', '))}${e.authors.length>3?' et al.':''}</span></span></div>`;}
+function tocRow(e){return `<div class="toc-row"><span class="n">${e.num}.</span><span class="t">${esc(e.title)} <span style="color:#777;font-style:italic">- ${esc(e.authors.slice(0,3).join(', '))}${e.authors.length>3?' et al.':''}</span></span></div>`;}
 function normName(a){const p=a.replace(/[.,]/g,'').trim().split(/\s+/);return (p[p.length-1]+' '+(p[0]||'')).toLowerCase();}
 $('#render').onclick=render;
 ['title','subtitle','src','accent','toc','idx','bytrack'].forEach(id=>$('#'+id).addEventListener('input',render));

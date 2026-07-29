@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>P-Hacking Risk Analyzer — Academy Tools</title>
+<title>P-Hacking Risk Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -32,7 +32,7 @@
   </div>
 
   <div class="panel" id="p-pcurve" style="min-height:auto;gap:12px">
-    <label class="fld">Paste reported p-values — one per line (e.g. <span class="muted">0.048</span>, <span class="muted">p&lt;.05</span>, <span class="muted">p = .032</span>)
+    <label class="fld">Paste reported p-values - one per line (e.g. <span class="muted">0.048</span>, <span class="muted">p&lt;.05</span>, <span class="muted">p = .032</span>)
       <textarea id="pv" style="min-height:150px" placeholder="0.049&#10;p = .047&#10;0.012&#10;p < .05&#10;0.043"></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="runp"><i class="ti ti-scan"></i> Scan</button></div>
@@ -102,9 +102,9 @@ function runP(){
 const qrp=[
   {t:'The study (hypotheses + analysis plan) was <b>pre-registered</b>.', w:18},
   {t:'The sample size was decided <b>in advance</b> (a priori power analysis), not by checking results as data came in.', w:16},
-  {t:'<b>All</b> measured outcomes and conditions are reported — no selective reporting of only the significant ones.', w:16},
+  {t:'<b>All</b> measured outcomes and conditions are reported - no selective reporting of only the significant ones.', w:16},
   {t:'Multiple comparisons are <b>corrected for</b> (Bonferroni, FDR, etc.).', w:14},
-  {t:'Hypotheses were stated <b>before</b> seeing the data (no HARKing — hypothesizing after results are known).', w:12},
+  {t:'Hypotheses were stated <b>before</b> seeing the data (no HARKing - hypothesizing after results are known).', w:12},
   {t:'No data points were excluded without a <b>pre-specified</b>, documented rule.', w:10},
   {t:'Exploratory analyses are <b>clearly labelled</b> as exploratory, not confirmatory.', w:8},
   {t:'Raw data and analysis code are <b>openly available</b>.', w:6},
@@ -119,7 +119,7 @@ function runQ(){
   const lvl=risk<25?'Low risk':risk<55?'Moderate risk':risk<80?'High risk':'Very high risk';
   const unchecked=qrp.filter((q,i)=>!$('#q'+i).checked);
   $('#qout').innerHTML=`
-    <div style="margin-top:4px">QRP risk <b style="color:var(${band})">${risk}% — ${lvl}</b></div>
+    <div style="margin-top:4px">QRP risk <b style="color:var(${band})">${risk}% - ${lvl}</b></div>
     <div class="meter"><div style="width:${risk}%;background:var(${band})"></div></div>
     ${unchecked.length?`<div class="muted" style="font-size:12px">Address these safeguards: ${unchecked.length} of ${qrp.length} not in place.</div>`:'<div style="font-size:13px;color:var(--green)">All safeguards in place. 👍</div>'}`;
 }

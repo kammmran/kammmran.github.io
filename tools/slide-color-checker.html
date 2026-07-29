@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Presentation Color Accessibility Checker — Academy Tools</title>
+<title>Presentation Color Accessibility Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Palette — one hex colour per line, optionally <b>#hex Name</b>
+    <label class="fld">Palette - one hex colour per line, optionally <b>#hex Name</b>
       <textarea id="src" style="min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:13px">#0b2545 Background
 #ffffff White text
 #e8b84b Accent gold
@@ -39,7 +39,7 @@
     <div class="panel-label" style="margin-top:6px">Colour-blind preview</div>
     <div id="cb"></div>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">WCAG thresholds: <b>AA</b> needs 4.5:1 (normal) or 3:1 (large/bold ≥24px); <b>AAA</b> needs 7:1 / 4.5:1. Slides are viewed at distance, so prefer pairs comfortably above AA. The colour-blind rows simulate protan/deutan/tritan vision — if two palette colours collapse together, don't rely on them alone to distinguish data.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">WCAG thresholds: <b>AA</b> needs 4.5:1 (normal) or 3:1 (large/bold ≥24px); <b>AAA</b> needs 7:1 / 4.5:1. Slides are viewed at distance, so prefer pairs comfortably above AA. The colour-blind rows simulate protan/deutan/tritan vision - if two palette colours collapse together, don't rely on them alone to distinguish data.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}
@@ -62,7 +62,7 @@ function render(){
   const cols=parse();if(!cols.length){$('#matrix').innerHTML='';return;}
   let head='<tr><th>text ＼ bg</th>'+cols.map(c=>`<th><span class="sw" style="background:${c.hex}"></span>${esc(c.name)}</th>`).join('')+'</tr>';
   let body=cols.map(t=>`<tr><th style="text-align:left"><span class="sw" style="background:${t.hex}"></span>${esc(t.name)}</th>`+cols.map(b=>{
-    if(t.hex===b.hex)return '<td style="background:var(--bg2);color:var(--text3)">—</td>';
+    if(t.hex===b.hex)return '<td style="background:var(--bg2);color:var(--text3)">-</td>';
     const r=ratio(t.hex,b.hex);const aa=r>=4.5,aaa=r>=7,aaL=r>=3;
     const col=aaa?'var(--green)':aa?'var(--green)':aaL?'var(--amber)':'var(--red)';
     const badge=aaa?'AAA':aa?'AA':aaL?'AA large':'fail';

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cornell Notes — Academy Tools</title>
+<title>Cornell Notes - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -138,7 +138,7 @@ function renderDraftSelect() {
     const d = state.drafts[id];
     const opt = document.createElement('option');
     opt.value = id;
-    opt.textContent = (d.title || '(untitled)') + (d.date ? ` — ${d.date}` : '');
+    opt.textContent = (d.title || '(untitled)') + (d.date ? ` - ${d.date}` : '');
     if (id === state.active) opt.selected = true;
     sel.appendChild(opt);
   });

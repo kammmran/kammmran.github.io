@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CRISPR Guide Designer — Academy Tools</title>
+<title>CRISPR Guide Designer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -33,11 +33,11 @@ ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAGGCACCCTAGCTAACGGCCGCTAGCTAGGCTAGGCCATTACG
     </label>
     <div class="row" style="gap:10px;flex-wrap:wrap;font-size:12px">
       <label class="fld">Nuclease / PAM<select id="pam">
-        <option value="NGG|3p|20">SpCas9 — NGG (3', 20 nt)</option>
-        <option value="NGRRT|3p|21">SaCas9 — NGRRT (3', 21 nt)</option>
-        <option value="NNGRRT|3p|21">SaCas9 — NNGRRT (3', 21 nt)</option>
-        <option value="TTTV|5p|23">Cas12a/Cpf1 — TTTV (5', 23 nt)</option>
-        <option value="NG|3p|20">Cas9-NG — NG (3', 20 nt)</option>
+        <option value="NGG|3p|20">SpCas9 - NGG (3', 20 nt)</option>
+        <option value="NGRRT|3p|21">SaCas9 - NGRRT (3', 21 nt)</option>
+        <option value="NNGRRT|3p|21">SaCas9 - NNGRRT (3', 21 nt)</option>
+        <option value="TTTV|5p|23">Cas12a/Cpf1 - TTTV (5', 23 nt)</option>
+        <option value="NG|3p|20">Cas9-NG - NG (3', 20 nt)</option>
       </select></label>
       <label class="fld">GC min<input id="gcmin" type="number" value="40" style="width:60px"></label>
       <label class="fld">GC max<input id="gcmax" type="number" value="70" style="width:60px"></label>
@@ -46,7 +46,7 @@ ATGGCCATTGTAATGGGCCGCTGAAAGGGTGCCCGATAGGCACCCTAGCTAACGGCCGCTAGCTAGGCTAGGCCATTACG
     <span class="muted" id="status" style="font-size:12px"></span>
     <div id="out"></div>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">On-target scoring here is a simple heuristic (GC window, no poly-T, no long runs). It does <b>not</b> predict off-targets — always run candidates through a genome-wide off-target tool (e.g. CRISPOR, Cas-OFFinder) before use.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">On-target scoring here is a simple heuristic (GC window, no poly-T, no long runs). It does <b>not</b> predict off-targets - always run candidates through a genome-wide off-target tool (e.g. CRISPOR, Cas-OFFinder) before use.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}

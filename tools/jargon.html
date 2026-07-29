@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Academic Jargon Simplifier — Academy Tools</title>
+<title>Academic Jargon Simplifier - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -128,14 +128,14 @@ function render(){
     cur = m.idx + m.len;
   });
   html += esc(text.slice(cur));
-  $('#preview').innerHTML = html || '<span class="muted">No suggestions — looks clean!</span>';
+  $('#preview').innerHTML = html || '<span class="muted">No suggestions - looks clean!</span>';
 
   // dedupe list for display
   const seen = new Map();
   matches.forEach(m => { const key = m.from.toLowerCase(); if (!seen.has(key)) seen.set(key, { ...m, n: 0 }); seen.get(key).n++; });
   $('#list').innerHTML = [...seen.values()].map(m =>
     `<div class="sg"><span class="from">${esc(m.from)}</span><span class="arr">→</span><span class="to">${esc(m.to)}</span>${m.n>1?`<span class="chip">${m.n}×</span>`:''}<span class="spacer"></span><button class="btn btn-sm" data-key="${esc(m.key)}">Apply</button></div>`
-  ).join('') || '<span class="muted" style="font-size:13px">No suggestions — your text is concise.</span>';
+  ).join('') || '<span class="muted" style="font-size:13px">No suggestions - your text is concise.</span>';
 
   $('#list').querySelectorAll('button').forEach(b => b.addEventListener('click', () => applyOne(b.dataset.key)));
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Impact Factor & Quartile Lookup — Academy Tools</title>
+<title>Impact Factor & Quartile Lookup - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-trending-up"></i></div>
       <div>
         <div class="tool-title">Impact Factor &amp; Quartile Lookup</div>
-        <div class="tool-desc">A journal's citation impact and an indicative tier, from OpenAlex open metrics. (JCR/Scopus quartiles are proprietary — this is an open-data estimate.)</div>
+        <div class="tool-desc">A journal's citation impact and an indicative tier, from OpenAlex open metrics. (JCR/Scopus quartiles are proprietary - this is an open-data estimate.)</div>
       </div>
     </div>
   </div>
@@ -71,7 +71,7 @@ function show(s){
     <div style="text-align:center;margin:6px 0 12px">
       <div class="q" style="color:var(${col})">${tier.split(' ')[0]}</div>
       <div style="color:var(${col});font-weight:600">${tier}</div>
-      <div class="muted" style="font-size:11px">indicative tier from open citation data — not an official JCR/Scopus quartile</div>
+      <div class="muted" style="font-size:11px">indicative tier from open citation data - not an official JCR/Scopus quartile</div>
     </div>
     <div style="font-weight:600;font-size:15px;text-align:center;margin-bottom:10px">${esc(s.display_name)}</div>
     <div class="stat-grid">
@@ -80,9 +80,9 @@ function show(s){
       <div class="stat-card"><div class="stat-label">Total works</div><div class="stat-value">${(s.works_count||0).toLocaleString()}</div></div>
       <div class="stat-card"><div class="stat-label">Total citations</div><div class="stat-value">${(s.cited_by_count||0).toLocaleString()}</div></div>
       <div class="stat-card"><div class="stat-label">Open access</div><div class="stat-value" style="font-size:14px">${s.is_oa?'Yes':'No'}</div></div>
-      <div class="stat-card"><div class="stat-label">ISSN-L</div><div class="stat-value" style="font-size:14px">${esc(s.issn_l||'—')}</div></div>
+      <div class="stat-card"><div class="stat-label">ISSN-L</div><div class="stat-value" style="font-size:14px">${esc(s.issn_l||'-')}</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">The "2-yr mean citedness" is OpenAlex's open analogue of the Journal Impact Factor. Official Clarivate JIF and Scopus CiteScore/quartiles require a paid subscription — use this for triage, then confirm on the journal's own page.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">The "2-yr mean citedness" is OpenAlex's open analogue of the Journal Impact Factor. Official Clarivate JIF and Scopus CiteScore/quartiles require a paid subscription - use this for triage, then confirm on the journal's own page.</div>`;
 }
 </script>
 

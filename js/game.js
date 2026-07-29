@@ -137,7 +137,7 @@ const DIFFS=[
 // ──────────────────────────────────────────────
 // SKILLS
 // ──────────────────────────────────────────────
-// SKILL_EFFECTS — id → function(player, skillObj). Each character's `skills` array references
+// SKILL_EFFECTS - id → function(player, skillObj). Each character's `skills` array references
 // these by id. Effects are kept here in a single table for readability.
 const SKILL_EFFECTS={
   // NEON (original kit)
@@ -278,7 +278,7 @@ const SKILL_EFFECTS={
   },
 };
 
-// SKILL_DEFS — per-id metadata (name, icon, default maxCd). Each character's `skills` entry
+// SKILL_DEFS - per-id metadata (name, icon, default maxCd). Each character's `skills` entry
 // is a thin reference {id, ...overrides}; the rest is filled from this table.
 const SKILL_DEFS={
   shieldPulse:  {name:'Shield Pulse',  icon:'🛡', maxCd:480},
@@ -312,11 +312,11 @@ function makeSkill(id){
 // ──────────────────────────────────────────────
 const GUNS=[
   // The first 3 are FREE (always owned + default-equipped to slots 0/1/2). The rest are
-  // store-only — see Inventory. `cost`=0 means free; missing implies non-buyable.
+  // store-only - see Inventory. `cost`=0 means free; missing implies non-buyable.
   // Optional fields used by tryShoot / bullet physics:
-  //   • pellets, spread — shotgun-style multi-bullet spawn (radians)
-  //   • range            — bullet self-destructs after this many world units traveled
-  //   • explode          — AOE radius applied to all obstacles on bullet hit
+  //   • pellets, spread - shotgun-style multi-bullet spawn (radians)
+  //   • range            - bullet self-destructs after this many world units traveled
+  //   • explode          - AOE radius applied to all obstacles on bullet hit
   {id:'pistol',      icon:'🔫', name:'Pistol',      color:'#ffcc00', speed:14, dmg:1,   ammo:Infinity,maxAmmo:Infinity, pierce:false, freeze:false, rof:18, lastShot:0, sz:5, cost:0},
   {id:'plasma',      icon:'⚡', name:'Plasma',      color:'#00f5ff', speed:20, dmg:2,   ammo:0,       maxAmmo:60,       pierce:true,  freeze:false, rof:8,  lastShot:0, sz:4, cost:0},
   {id:'timegun',     icon:'❄',  name:'TimeGun',     color:'#a100ff', speed:11, dmg:1,   ammo:0,       maxAmmo:40,       pierce:false, freeze:true,  rof:24, lastShot:0, sz:7, cost:0},
@@ -333,9 +333,9 @@ const GUNS_BY_ID = GUNS.reduce((m,g)=>{m[g.id]=g;return m;},{});
 //
 // Per-gun cosmetic variants. Each gun has a 'default' (always owned, free) plus 2-4 unlockable
 // skins. `src` values:
-//   shop — purchasable with coins
-//   loot — only obtainable from loot boxes (rare prestige variant)
-//   milestone — unlocked when a per-gun stat threshold is hit (e.g., 100 kills with the gun)
+//   shop - purchasable with coins
+//   loot - only obtainable from loot boxes (rare prestige variant)
+//   milestone - unlocked when a per-gun stat threshold is hit (e.g., 100 kills with the gun)
 // A skin's `color` overrides the gun's bullet color and HUD tint. `trail` picks a per-frame
 // particle pattern from PARTICLE_TRAILS below (null = no extra trail beyond the gun default).
 // ──────────────────────────────────────────────
@@ -406,7 +406,7 @@ function allShopSkins(){
 // Each character has its OWN 3-skill kit (referenced by skill id from SKILL_DEFS).
 // The last two characters (AEGIS, LIFTER) are co-op specialists. Their `coop` ability on the
 // G/L key is SEPARATE from their 3 skills.
-// Character is locked at lobby select — there is no in-game character cycle.
+// Character is locked at lobby select - there is no in-game character cycle.
 // `art` field picks the per-character visual in drawPlayer().
 // ──────────────────────────────────────────────
 const CHARACTERS=[
@@ -459,7 +459,7 @@ let activeBoss=null;
 //
 // One global coin balance shared across all characters; upgrades are per-character (keyed by
 // character name so reordering CHARACTERS doesn't break saves). All five tracks cap at tier 5.
-// PRICES[i] is the cost to BUY the (i+1)th tier — index 0 buys tier 1, index 4 buys tier 5.
+// PRICES[i] is the cost to BUY the (i+1)th tier - index 0 buys tier 1, index 4 buys tier 5.
 // Persisted to localStorage on every change.
 // ──────────────────────────────────────────────
 const Upgrades={
@@ -541,7 +541,7 @@ const Achievements={
         if(a.is()){
           this.data.unlocked[a.id]=Date.now();
           Upgrades.addCoins(a.reward);
-          // Float a banner near the top of the canvas if we have one — else just SFX.
+          // Float a banner near the top of the canvas if we have one - else just SFX.
           if(typeof FT!=='undefined'&&typeof canvas!=='undefined'){
             FT.add(canvas.width/2,80,'🏆 '+a.name+' +'+a.reward+'🪙','#ffcc00',22,true);
           }
@@ -682,7 +682,7 @@ Daily.load();
 //
 // Mystery boxes earned from boss kills (guaranteed), level clears (8% chance), and daily
 // mission completion (25% bonus chance). Also purchasable from Home Base for 300 coins.
-// Opening a box rolls a single reward from a weighted table — see rollReward().
+// Opening a box rolls a single reward from a weighted table - see rollReward().
 // Storage: localStorage['csLootBoxes'].
 // ──────────────────────────────────────────────
 const LootBox={
@@ -961,7 +961,7 @@ const Coupons={
     if(def.coins) Upgrades.addCoins(def.coins);
     this.data.redeemed[code]=Date.now();
     this.save();
-    // Best-effort celebratory banner — silently no-ops if no canvas yet.
+    // Best-effort celebratory banner - silently no-ops if no canvas yet.
     try{
       if(typeof FT!=='undefined'&&typeof canvas!=='undefined'){
         FT.add(canvas.width/2,90,'🎟 '+def.label+' +'+def.coins+'🪙','#ffcc00',24,true);
@@ -1015,7 +1015,7 @@ function saveBest(){
   if(score>highScore){
     highScore=score;
     localStorage.setItem(userKey('csBest2'),highScore);
-    // Cloud high-water-mark sync — bypass the debounce since this only happens at game-end.
+    // Cloud high-water-mark sync - bypass the debounce since this only happens at game-end.
     if(typeof Cloud!=='undefined' && Cloud.isSignedIn()){
       Cloud.syncStatsNow({bestScore:highScore, totalCoins:Upgrades.data.coins, totalKills:totalKills, levelsCleared:level});
     }
@@ -1037,7 +1037,7 @@ function refreshBest(){
 // ──────────────────────────────────────────────
 const bgC=document.getElementById('bg'),bgX=bgC.getContext('2d');
 bgC.width=window.innerWidth;bgC.height=window.innerHeight;
-// Active background theme — set in initLevel from the picked LAYOUT (or per-level for MIX).
+// Active background theme - set in initLevel from the picked LAYOUT (or per-level for MIX).
 // Defaults to 'neon' for the main menu.
 let currentBgTheme='neon';
 // Long-lived theme decoration state. Lazily-initialized so the menu doesn't pay the cost.
@@ -1074,7 +1074,7 @@ function _bgInitGears(){
 }
 function _bgInitAlien(){
   if(BG_DECO.mountains) return;
-  // Two parallax mountain layers — back layer darker, front layer brighter, each made of jagged peaks.
+  // Two parallax mountain layers - back layer darker, front layer brighter, each made of jagged peaks.
   const mk=(count,baseY,amp,hue)=>Array.from({length:count},(_,i)=>({
     px:i/(count-1), y:baseY+(Math.random()-0.5)*amp, hue,
   }));
@@ -1117,7 +1117,7 @@ function drawBgSpire(){
   _bgInitNebula();
   // Hard clear with a near-black blue-purple wash so nebula colors pop.
   bgX.fillStyle='rgba(2,2,18,.35)';bgX.fillRect(0,0,bgC.width,bgC.height);
-  // Nebula blobs — large soft radial gradients, drifting slowly. Use additive-ish via 'lighter'.
+  // Nebula blobs - large soft radial gradients, drifting slowly. Use additive-ish via 'lighter'.
   bgX.save();
   bgX.globalCompositeOperation='lighter';
   BG_DECO.nebula.forEach(n=>{
@@ -1139,7 +1139,7 @@ function drawBgSpire(){
     bgX.fillStyle=s.col+a+')';
     bgX.beginPath();bgX.arc(s.x,s.y,s.r*1.4,0,Math.PI*2);bgX.fill();
   });
-  // Shooting star — fires occasionally, streaks across, leaves a fading tail.
+  // Shooting star - fires occasionally, streaks across, leaves a fading tail.
   const ss=BG_DECO.shootingStar;
   if(ss.life<=0){
     ss.cooldown--;
@@ -1167,7 +1167,7 @@ function drawBgFoundry(){
   grad.addColorStop(0.7,'rgba(50,12,5,0.22)');
   grad.addColorStop(1,'rgba(120,30,0,0.30)');
   bgX.fillStyle=grad;bgX.fillRect(0,0,bgC.width,bgC.height);
-  // Rotating gear silhouettes — thin outlines, very dark, soft red shadow.
+  // Rotating gear silhouettes - thin outlines, very dark, soft red shadow.
   BG_DECO.gears.forEach(g=>{
     g.rot+=g.spd;
     bgX.save();bgX.translate(g.x,g.y);bgX.rotate(g.rot);
@@ -1190,7 +1190,7 @@ function drawBgFoundry(){
     bgX.beginPath();bgX.arc(0,0,g.r*0.18,0,Math.PI*2);bgX.stroke();
     bgX.restore();
   });
-  // Lava ember drift — tiny rising orange particles using the starfield as seed positions.
+  // Lava ember drift - tiny rising orange particles using the starfield as seed positions.
   stars.forEach(s=>{
     s.tw+=s.spd;
     // Reuse star y as a rising-ember offset; wrap when off-screen at top.
@@ -1204,14 +1204,14 @@ function drawBgFoundry(){
 // Alien world (used by ENDLESS): horizon mountains, dual moons, drifting clouds, deep teal sky.
 function drawBgAlien(){
   _bgInitAlien();
-  // Sky gradient — teal top, peachy near the horizon.
+  // Sky gradient - teal top, peachy near the horizon.
   const sky=bgX.createLinearGradient(0,0,0,bgC.height);
   sky.addColorStop(0,'rgba(6,18,40,0.30)');
   sky.addColorStop(0.55,'rgba(30,12,60,0.28)');
   sky.addColorStop(0.85,'rgba(120,40,80,0.25)');
   sky.addColorStop(1,'rgba(255,140,70,0.22)');
   bgX.fillStyle=sky;bgX.fillRect(0,0,bgC.width,bgC.height);
-  // Dual moons — one large pale, one small blood-orange. Offset horizontally; gentle bob.
+  // Dual moons - one large pale, one small blood-orange. Offset horizontally; gentle bob.
   const moonY=bgC.height*0.22 + Math.sin(bgT*0.5)*6;
   bgX.save();bgX.globalAlpha=0.9;
   bgX.shadowColor='rgba(200,200,255,0.6)';bgX.shadowBlur=24;
@@ -1226,7 +1226,7 @@ function drawBgAlien(){
     bgX.globalAlpha=a;bgX.fillStyle=`rgba(255,255,255,${a})`;
     bgX.beginPath();bgX.arc(s.x,s.y*0.45,s.r*0.9,0,Math.PI*2);bgX.fill();
   });
-  // Clouds — soft elongated ellipses drifting slowly across the upper-middle band.
+  // Clouds - soft elongated ellipses drifting slowly across the upper-middle band.
   BG_DECO.clouds.forEach(c=>{
     c.x+=c.spd;
     if(c.x-c.w>bgC.width) c.x=-c.w;
@@ -1235,7 +1235,7 @@ function drawBgAlien(){
     bgX.beginPath();bgX.ellipse(c.x, c.y, c.w*0.5, c.w*0.12, 0, 0, Math.PI*2);bgX.fill();
     bgX.restore();
   });
-  // Mountain silhouettes — two parallax layers. Build a jagged polygon path for each.
+  // Mountain silhouettes - two parallax layers. Build a jagged polygon path for each.
   BG_DECO.mountains.forEach((m,li)=>{
     bgX.save();
     bgX.fillStyle = m.layer[0].hue + (li===0 ? '0.85)' : '0.95)');
@@ -1249,7 +1249,7 @@ function drawBgAlien(){
 }
 drawBg();
 
-// Vertical climb world. WORLD_W matches the canvas width — no horizontal scrolling.
+// Vertical climb world. WORLD_W matches the canvas width - no horizontal scrolling.
 // WORLD_H is much taller than the canvas so the camera scrolls upward as you climb.
 // Declared up here so LAYOUTS below can reference them in trap coordinates. Mutable so the
 // Battle Royale arena can override to a larger horizontal world (BR_WORLD_W/H).
@@ -1257,10 +1257,10 @@ let WORLD_W=1200;
 let WORLD_H=3200;
 
 // ──────────────────────────────────────────────
-// LEVEL LAYOUTS — three themed climbs, an endless mode, and a mixer.
+// LEVEL LAYOUTS - three themed climbs, an endless mode, and a mixer.
 //
 // Each entry carries a `build(level)` generator returning {platforms, traps}. Platforms and
-// hazards are re-rolled every level so the same theme never plays out the same way twice —
+// hazards are re-rolled every level so the same theme never plays out the same way twice -
 // NEON stays beginner-friendly, SPIRE stays crumble-heavy, FOUNDRY stays lava + saws.
 //
 // Coordinates: y=0 is the top of the world, y=WORLD_H (3200) is the bottom. Player spawns at
@@ -1285,7 +1285,7 @@ const LAYOUTS=[
     theme:'foundry',
     build: buildVoidFoundry,
   },
-  // ENDLESS — see buildEndlessChunk. The chunk is rebuilt every level by initLevel().
+  // ENDLESS - see buildEndlessChunk. The chunk is rebuilt every level by initLevel().
   {
     name:'ENDLESS',
     desc:'Procedural climb that never ends. Difficulty ramps every 1000m.',
@@ -1293,11 +1293,11 @@ const LAYOUTS=[
     theme:'alien',
     build: buildEndlessChunk,
   },
-  // MIX — randomly picks one of the 3 themes each level. The picked theme name is included in
+  // MIX - randomly picks one of the 3 themes each level. The picked theme name is included in
   // the result so initLevel can flash it on screen.
   {
     name:'MIX',
-    desc:'Random theme each level — surprise climb.',
+    desc:'Random theme each level - surprise climb.',
     theme:'mix',
     build: buildMixChunk,
   },
@@ -1341,7 +1341,7 @@ function buildChunk(opts){
   const pairChance     = o.pairChance     || 0; // sometimes spawn 2 platforms at same y
 
   const platforms=[
-    // Spawn floor — full width unless lava overrides it.
+    // Spawn floor - full width unless lava overrides it.
     {x:0,y:WORLD_H-60,w:WORLD_W,h:60},
   ];
   const traps=[];
@@ -1420,7 +1420,7 @@ function buildVoidFoundry(lvl){
     skipChance: 0.18,
   });
 }
-// MIX — picks one of the three themed builders per level. The picked theme name is stitched
+// MIX - picks one of the three themed builders per level. The picked theme name is stitched
 // onto the returned chunk so initLevel can flash it on screen.
 function buildMixChunk(lvl){
   const choices = [
@@ -1456,14 +1456,14 @@ function buildEndlessChunk(lvl){
     const crumbleChance=Math.min(0.45, 0.08 + tier*0.05);
     const type=Math.random()<crumbleChance ? 'crumble' : 'solid';
     platforms.push({x,y,w:Math.max(120,w),h:18,type});
-    // Sprinkle hazards — chance scales with tier.
+    // Sprinkle hazards - chance scales with tier.
     if(Math.random() < Math.min(0.55, 0.15 + tier*0.06)){
       const spikeW=80+Math.floor(Math.random()*120);
       const sx=Math.max(60, Math.min(WORLD_W-spikeW-60, x+Math.random()*Math.max(40,w-spikeW)));
       traps.push({type:'spike',x:sx,y:y-14,w:spikeW,h:14});
     }
   }
-  // Portal landing pad at the top — same layout convention as the hand-designed maps.
+  // Portal landing pad at the top - same layout convention as the hand-designed maps.
   platforms.push({x:480,y:170,w:240,h:18});
   // Wide-sweeping saws every few hundred units, density scales with tier.
   const sawCount=2+Math.min(6,tier);
@@ -1492,7 +1492,7 @@ let lcTimer=null;
 // Picked from the map-select screen; 0..2 indexes LAYOUTS.
 let selectedMap=0;
 
-// Per-player keymaps. Character is locked at lobby select — there is no in-game cycle.
+// Per-player keymaps. Character is locked at lobby select - there is no in-game cycle.
 // 1P  : full keyboard. WASD/arrows move, ↑/W/Space jump, Shift dash, X / click shoot,
 //       Q E R fire skills, 1/2/3 swap weapons, G co-op, B rewind.
 // 2PA : left half. WASD move, LShift dash, F shoot, 1/2/3 skills, Q cycles weapon, G co-op.
@@ -1627,7 +1627,7 @@ function openCharPanel(){
   if(p2sec)p2sec.style.display=(selModeIdx===1)?'block':'none';
   if(hint){
     if(selModeIdx===0)hint.textContent='Pick your hero. Co-op specialists (AEGIS, LIFTER) only help in 2-player.';
-    else if(selModeIdx===1)hint.textContent='Pick your heroes. AEGIS + LIFTER can boost / shield each other — try one of them on at least one player.';
+    else if(selModeIdx===1)hint.textContent='Pick your heroes. AEGIS + LIFTER can boost / shield each other - try one of them on at least one player.';
     else hint.textContent='Pick YOUR hero. Your friend picks theirs on their own browser.';
   }
   refreshCharCoinPill();
@@ -1673,7 +1673,7 @@ function buildCharLeaderboard(){
   if(!mine && Cloud.profile){
     footer=`<div class="hb-lb-divider">…</div>
       <div class="hb-lb-row me">
-        <div class="hb-lb-rank">—</div>
+        <div class="hb-lb-rank">-</div>
         <div class="hb-lb-avatar default"></div>
         <div class="hb-lb-name">${escapeHtml(Cloud.profile.displayName||'You')}</div>
         <div class="hb-lb-score">${(Cloud.profile.bestScore|0).toLocaleString()}</div>
@@ -1700,7 +1700,7 @@ function openUpgrades(charIdx){
 // ──────────────────────────────────────────────
 // HOME BASE
 //
-// Central hub. Renders the roster (with an UPGRADE button per character — the char-select
+// Central hub. Renders the roster (with an UPGRADE button per character - the char-select
 // panel no longer owns this entrypoint) and the achievement grid.
 // ──────────────────────────────────────────────
 function openHomeBase(){
@@ -1725,7 +1725,7 @@ function openHomeBase(){
   const msg=document.getElementById('hbCouponMsg'); if(msg){msg.textContent=''; msg.className='hb-coupon-msg';}
   showPanel('homePanel');
 }
-// Tile dashboard — 9 shortcuts, each with a live badge. Click → openHbModal(key).
+// Tile dashboard - 9 shortcuts, each with a live badge. Click → openHbModal(key).
 function buildHomeTiles(){
   const grid=document.getElementById('hbTileGrid'); if(!grid) return;
   // Compute badge values from current state.
@@ -1917,7 +1917,7 @@ function refreshCloudUI(){
         else av.style.display='none';
       }
       const codeEl=document.getElementById('cloudMyCode');
-      if(codeEl) codeEl.textContent = (Cloud.profile && Cloud.profile.shortCode) || '— — —';
+      if(codeEl) codeEl.textContent = (Cloud.profile && Cloud.profile.shortCode) || '- - -';
     } else {
       // Make sure any open popover is cleared on sign-out.
       const chipNode=document.getElementById('cloudUserChip');
@@ -1983,7 +1983,7 @@ function buildHomeLeaderboard(){
   if(!mine && Cloud.profile){
     footer=`<div class="hb-lb-divider">…</div>
       <div class="hb-lb-row me">
-        <div class="hb-lb-rank">—</div>
+        <div class="hb-lb-rank">-</div>
         <div class="hb-lb-avatar default"></div>
         <div class="hb-lb-name">${escapeHtml(Cloud.profile.displayName||'You')}</div>
         <div class="hb-lb-score">${(Cloud.profile.bestScore|0).toLocaleString()}</div>
@@ -1991,7 +1991,7 @@ function buildHomeLeaderboard(){
   }
   wrap.innerHTML=rowHtml+footer;
 }
-// Friends panel — list current friends + add-by-code input.
+// Friends panel - list current friends + add-by-code input.
 function buildHomeFriends(){
   const wrap=document.getElementById('hbFriends'); if(!wrap) return;
   if(typeof Cloud==='undefined' || !Cloud.isReady()){
@@ -2002,9 +2002,9 @@ function buildHomeFriends(){
     wrap.innerHTML=`<div class="hb-cloud-empty">Sign in to add friends and compare scores.</div>`;
     return;
   }
-  const myCode=(Cloud.profile&&Cloud.profile.shortCode)||'—';
+  const myCode=(Cloud.profile&&Cloud.profile.shortCode)||'-';
   const friendRows=Cloud.friends.length===0
-    ? `<div class="hb-cloud-empty">No friends yet — share your code or add one below.</div>`
+    ? `<div class="hb-cloud-empty">No friends yet - share your code or add one below.</div>`
     : Cloud.friends.map(f=>`
         <div class="hb-fr-row">
           ${f.photoURL?`<img class="hb-fr-avatar" src="${f.photoURL}" alt="">`:`<div class="hb-fr-avatar default"></div>`}
@@ -2136,7 +2136,7 @@ function resetAllProgress(){
     try{localStorage.removeItem(userKey(k));}catch(e){}
   });
   const msg=document.getElementById('resetMsg');
-  if(msg){msg.textContent='Progress wiped — reloading…'; msg.className='hb-coupon-msg ok';}
+  if(msg){msg.textContent='Progress wiped - reloading…'; msg.className='hb-coupon-msg ok';}
   setTimeout(()=>{location.reload();}, 600);
 }
 function buildHomeRoster(){
@@ -2197,7 +2197,7 @@ function buildHomeStore(){
         <button class="hb-store-slot${slot===2?' on':''}" onclick="equipGun('${g.id}',2)">SLOT 3</button>
       </div>`;
     }
-    // Ammo capacity tier row — visible on owned, non-infinite guns. Shows ★ filled per tier and
+    // Ammo capacity tier row - visible on owned, non-infinite guns. Shows ★ filled per tier and
     // a BUY button at the next price (or MAX when tier 3 is reached).
     let ammoTierRow='';
     if(owned && g.maxAmmo!==Infinity){
@@ -2251,7 +2251,7 @@ function applyCoupon(){
   msg.className='hb-coupon-msg '+(r.ok?'ok':'err');
   if(r.ok) inp.value='';
   refreshHomeCoinPill();
-  // A successful redemption boosts the balance — refresh store BUY-affordability too.
+  // A successful redemption boosts the balance - refresh store BUY-affordability too.
   if(r.ok) buildHomeStore();
 }
 
@@ -2261,7 +2261,7 @@ function applyCoupon(){
 function buildUpgradePanel(charIdx){
   const ch=CHARACTERS[charIdx]; if(!ch) return;
   const u=Upgrades.forChar(ch.name);
-  const titleEl=document.getElementById('upgTitle'); if(titleEl) titleEl.textContent='UPGRADES — '+ch.name;
+  const titleEl=document.getElementById('upgTitle'); if(titleEl) titleEl.textContent='UPGRADES - '+ch.name;
   const coinEl=document.getElementById('upgCoins'); if(coinEl) coinEl.textContent=Upgrades.data.coins;
   const list=document.getElementById('upgList'); if(!list) return;
   list.innerHTML=Upgrades.TRACKS.map(t=>{
@@ -2327,7 +2327,7 @@ function updateHUD(){
   // Coin balance from persistent Upgrades storage.
   const coinEl=document.getElementById('hCoins');
   if(coinEl)coinEl.textContent=Upgrades.data.coins;
-  // Altitude — show how far up the player has climbed (0m at the bottom, max at the portal).
+  // Altitude - show how far up the player has climbed (0m at the bottom, max at the portal).
   // In endless mode it's the cumulative total across all completed chunks plus current climb.
   const hEl=document.getElementById('hHeight');
   if(hEl&&p1){
@@ -2376,7 +2376,7 @@ function updateModeBar(){
 }
 
 // Rewrites the .sk-icon, .sk-key, and `title` on each skill slot to match the player's
-// CURRENT character's kit. Called once at game start from startGame() — character is locked
+// CURRENT character's kit. Called once at game start from startGame() - character is locked
 // for the run so we don't need to refresh every frame.
 function refreshSkillHUD(){
   const self = players[0]; if (!self) return;
@@ -2441,12 +2441,12 @@ function initLevel(){
 
   // Load the climb for this level. Each map's build(level) re-rolls platform + trap positions
   // every level so the same chosen map never plays out twice. selectedMap stays fixed across a
-  // run — what varies is the layout inside that theme.
+  // run - what varies is the layout inside that theme.
   const pickedLayout=LAYOUTS[selectedMap]||LAYOUTS[0];
   const source = pickedLayout.build
     ? pickedLayout.build(level)
     : pickedLayout; // defensive fallback (no static layouts ship anymore)
-  // Only MIX mode announces the picked theme — for other maps the name doesn't change so the
+  // Only MIX mode announces the picked theme - for other maps the name doesn't change so the
   // banner would just be noise. ENDLESS already has its own per-chunk feedback.
   if(typeof FT!=='undefined'&&typeof canvas!=='undefined'
      && pickedLayout.name==='MIX' && source.name){
@@ -2469,7 +2469,7 @@ function initLevel(){
     }
   });
 
-  // Enemies — count scales with level. Spawn on platforms scattered through the climb so they
+  // Enemies - count scales with level. Spawn on platforms scattered through the climb so they
   // aren't stuck in mid-air. Endless mode adds a tier bonus (per 1000m) on top of base scaling.
   const eTier=isEndlessRun()?endlessDifficultyTier():0;
   const baseSpeed=1.0+(level-1)*.15+eTier*0.35;
@@ -2509,7 +2509,7 @@ function initLevel(){
       color:tp==='tank'?'#880000':tp==='chaser'?'#ff6600':tp==='spinner'?'#cc00ff':'#ff0055'});
   }
 
-  // BOSS — every BOSS_LEVEL_INTERVAL levels, spawn one boss matching the current backdrop
+  // BOSS - every BOSS_LEVEL_INTERVAL levels, spawn one boss matching the current backdrop
   // theme. Endless mode skips it (the climb is meant to be uninterrupted). Boss HP scales with
   // difficulty (D.hpM) and the boss tier (one tier added per BOSS_LEVEL_INTERVAL).
   activeBoss=null;
@@ -2535,7 +2535,7 @@ function initLevel(){
     };
     obstacles.push(boss);
     activeBoss=boss;
-    // Bosses don't increment the regular enemy count — they're tracked via activeBoss for the
+    // Bosses don't increment the regular enemy count - they're tracked via activeBoss for the
     // HUD and portal-lock logic.
     AU.enemyDie(true); // dramatic intro hit-bass; placeholder until a dedicated bossIntro sfx exists
     if(typeof FT!=='undefined'&&typeof canvas!=='undefined'){
@@ -2545,7 +2545,7 @@ function initLevel(){
 
   enemiesLeft=cnt;
 
-  // Portal — at the TOP of the vertical world. Locked on HARD/PRO until enemies cleared.
+  // Portal - at the TOP of the vertical world. Locked on HARD/PRO until enemies cleared.
   // If the level spawned with no enemies (rare), unlock immediately so we don't fire a stray
   // "PORTAL UNLOCKED!" splash on frame 1.
   // Endless mode has NO portal: the climb is uninterrupted. Reaching the top transparently
@@ -2560,7 +2560,7 @@ function initLevel(){
     portal={x:WORLD_W/2-35,y:80,width:70,height:110,rot:0,pt:0,locked:portalLocked};
   }
 
-  // Collectibles (orbs) — scattered along the climb so picking them up is part of the route.
+  // Collectibles (orbs) - scattered along the climb so picking them up is part of the route.
   collectibles=[];
   const orbCnt=8+level*2;
   for(let i=0;i<orbCnt;i++){
@@ -2645,7 +2645,7 @@ function tryShoot(p){
   const skinDef = Inventory.equippedSkinDef(gun.id);
   const bulletColor = (skinDef && skinDef.color) || gun.color;
   const skinTrail = skinDef && skinDef.trail;
-  // Multi-pellet (shotgun) — fire `pellets` bullets in a spread cone. Single-shot guns just
+  // Multi-pellet (shotgun) - fire `pellets` bullets in a spread cone. Single-shot guns just
   // loop once with no jitter. Each pellet inherits the gun's pierce/freeze/explode/range tags.
   const pellets=gun.pellets|0||1;
   const spread=gun.spread||0;
@@ -2743,7 +2743,7 @@ function isKey(list){
 }
 
 function updatePlayerInput(p){
-  // Skip input entirely for dead BR players and bots — bots get AI handling in brBotTick,
+  // Skip input entirely for dead BR players and bots - bots get AI handling in brBotTick,
   // dead players stay frozen until the round ends.
   if(brMode && (p.bot || !p.alive)) return;
   const km=p.keymap;
@@ -2796,7 +2796,7 @@ function updatePlayerInput(p){
         p.sniperCharged=true;tryShoot(p);p.sniperCharged=false;p.fireTimer=0;
       }
     } else if(isFlame){
-      // Flamethrower is a true continuous stream — fire every frame while held. The rate gate
+      // Flamethrower is a true continuous stream - fire every frame while held. The rate gate
       // inside tryShoot is already bypassed for flame, and ammo is Infinity so it never stops.
       tryShoot(p);
     } else if(p.fireTimer%curGun.rof===1){
@@ -2883,12 +2883,12 @@ function resolvePlat(pl,plat){
 }
 
 function killEnemy(obs,idx){
-  // BOSS KILL — dedicated reward + cleanup path. Bosses don't decrement enemiesLeft (they
+  // BOSS KILL - dedicated reward + cleanup path. Bosses don't decrement enemiesLeft (they
   // weren't counted in the spawn loop) but their death must still unlock the portal.
   if(obs.type==='boss'){
     const def=obs.boss&&obs.boss.def;
     const cx=obs.x+obs.width/2, cy=obs.y+obs.height/2;
-    // Massive death VFX — multi-burst of particles, screen shake, flash, sfx.
+    // Massive death VFX - multi-burst of particles, screen shake, flash, sfx.
     for(let i=0;i<3;i++){
       PS.enemyDie(cx + (Math.random()-0.5)*60, cy + (Math.random()-0.5)*60, def?def.color:'#ff0055');
       PS.orbBurst(cx + (Math.random()-0.5)*40, cy + (Math.random()-0.5)*40);
@@ -2909,7 +2909,7 @@ function killEnemy(obs,idx){
     collectibles.push({x:cx+20, y:cy, r:10, collected:false, pulse:0, type:'plasma'});
     obstacles.splice(idx,1);
     activeBoss=null;
-    // Notify daily missions that a boss fell — completes any "defeat boss" mission.
+    // Notify daily missions that a boss fell - completes any "defeat boss" mission.
     if(typeof Daily!=='undefined' && Daily.onBossKill) Daily.onBossKill(def);
     // Guaranteed loot box from every boss kill.
     if(typeof LootBox!=='undefined') LootBox.add(1, 'BOSS');
@@ -3009,7 +3009,7 @@ function updatePhysics(){
     if(p.x<0){p.x=0;p.vx=0;}
     if(p.x+p.width>WORLD_W){p.x=WORLD_W-p.width;p.vx=0;}
     // Falling past the bottom of the world is handled by the lava trap (Foundry map) or by
-    // a respawn — no flat -18 anymore. On maps without lava, we clamp + respawn so the player
+    // a respawn - no flat -18 anymore. On maps without lava, we clamp + respawn so the player
     // can never just disappear.
     if(p.y>WORLD_H+40){
       SFX.hit();AU.hit();p.hp-=18;
@@ -3040,13 +3040,13 @@ function updatePhysics(){
   players.forEach(p => {
     p.skills.forEach(sk=>{if(sk.cd>0)sk.cd--;});
     if(p.adrenalineT>0 && !p.dash.active && p.dash.charges<p.dash.maxCh){
-      // Extra dash recharge tick — net 2× recharge speed (the base loop also tick'd it once).
+      // Extra dash recharge tick - net 2× recharge speed (the base loop also tick'd it once).
       p.dash.cd++;
       if(p.dash.cd>=p.dash.maxCd){p.dash.cd=0;p.dash.charges=Math.min(p.dash.maxCh,p.dash.charges+1);}
     }
   });
 
-  // Snares (Emerald) — enemies inside the zone lose horizontal momentum and can't move down.
+  // Snares (Emerald) - enemies inside the zone lose horizontal momentum and can't move down.
   snares=snares.filter(s=>{
     s.t--;
     if(s.t<=0)return false;
@@ -3059,7 +3059,7 @@ function updatePhysics(){
     return true;
   });
 
-  // Singularities (VOID) — enemies within 300px get pulled toward the anchor each frame.
+  // Singularities (VOID) - enemies within 300px get pulled toward the anchor each frame.
   singularities=singularities.filter(sg=>{
     sg.t--;
     if(sg.t<=0)return false;
@@ -3074,7 +3074,7 @@ function updatePhysics(){
     return true;
   });
 
-  // Flame trail (Crimson) — damage any enemy overlapping the player's recent path.
+  // Flame trail (Crimson) - damage any enemy overlapping the player's recent path.
   players.forEach(p=>{
     if(p.flameTrailT<=0)return;
     const trailRect={x:p.x-2,y:p.y-2,w:p.width+4,h:p.height+4};
@@ -3172,10 +3172,10 @@ function updatePhysics(){
     } else if(b.gunId==='plasma'){
       PS.emit(b.x,b.y,1,{speed:0.6,spread:Math.PI*2,color:['#00f5ff','#aaffff'],size:2.2,decay:0.08,glow:true});
     } else if(b.gunId==='timegun'){
-      // Snowflake trail — small frozen specks drifting in the bullet's wake.
+      // Snowflake trail - small frozen specks drifting in the bullet's wake.
       PS.emit(b.x-b.vx*0.3, b.y-b.vy*0.3, 1, {speed:0.8, spread:Math.PI*2, color:['#cceeff','#88aaff','#fff'], size:2.5, decay:0.06, glow:true, grav:0.04});
     }
-    // Skin overlay trail — extra particles on top of the gun's base trail to make skins distinct.
+    // Skin overlay trail - extra particles on top of the gun's base trail to make skins distinct.
     if(b.skinTrail){
       const t=b.skinTrail;
       if(t==='poison'){
@@ -3205,7 +3205,7 @@ function updatePhysics(){
         PS.bulletHit(b.x,b.y,b.color);
         // Bug fix: re-freezing a frozen enemy used to be a no-op. Refresh the timer instead.
         if(b.freeze){ob.frozenT=Math.max(ob.frozenT,180);FT.add(ob.x+ob.width/2,ob.y,'FROZEN!','#66aaff',14);}
-        // Flamethrower DOT — stamp a burn timer on the enemy; obstacle update drains HP per frame.
+        // Flamethrower DOT - stamp a burn timer on the enemy; obstacle update drains HP per frame.
         if(b.burn){ob.burnT=Math.max(ob.burnT||0, b.burn);}
         // Rocket / AOE: damage every other obstacle within `explode` radius of impact point.
         // Damage-only here; we splice killed obstacles in a single sweep below to avoid
@@ -3236,7 +3236,7 @@ function updatePhysics(){
     return !hit;
   });
 
-  // ENEMY BULLETS — enemies aim at the closest player
+  // ENEMY BULLETS - enemies aim at the closest player
   if(D.enemyShoot){
     obstacles.forEach(ob=>{
       ob.shootTimer--;
@@ -3291,7 +3291,7 @@ function updatePhysics(){
       if(obs.hp<=0){killEnemy(obs,i);return;}
     }
     if(obs.frozenT>0){obs.frozenT--;return;}
-    // BOSS update — homing flight + state-machine attack pattern. Phase escalates at 66% / 33%
+    // BOSS update - homing flight + state-machine attack pattern. Phase escalates at 66% / 33%
     // HP. Bosses ignore the standard wall-bounce / random-walk physics below.
     if(obs.type==='boss' && obs.boss){
       const b=obs.boss, def=b.def;
@@ -3330,14 +3330,14 @@ function updatePhysics(){
       obs.vx=Math.max(-cap, Math.min(cap, obs.vx));
       obs.vy=Math.max(-cap, Math.min(cap, obs.vy));
       obs.x+=obs.vx*fts; obs.y+=obs.vy*fts;
-      // Soft world bounds — bosses bounce off so they don't fly off the map.
+      // Soft world bounds - bosses bounce off so they don't fly off the map.
       if(obs.x<20){obs.x=20; obs.vx*=-0.6;}
       if(obs.x+obs.width>WORLD_W-20){obs.x=WORLD_W-20-obs.width; obs.vx*=-0.6;}
       if(obs.y<100){obs.y=100; obs.vy*=-0.6;}
       if(obs.y+obs.height>WORLD_H-80){obs.y=WORLD_H-80-obs.height; obs.vy*=-0.6;}
       obs.glow=(obs.glow+.12)%(Math.PI*2);
 
-      // Attack cooldown — fires depend on phase. Phase 1: single shot. Phase 2: triple volley.
+      // Attack cooldown - fires depend on phase. Phase 1: single shot. Phase 2: triple volley.
       // Phase 3: triple volley + faster cadence.
       const baseCd = def.pattern==='charge' ? 110 : 90;
       const cd = b.phase===1 ? baseCd : b.phase===2 ? Math.floor(baseCd*0.75) : Math.floor(baseCd*0.55);
@@ -3413,7 +3413,7 @@ function updatePhysics(){
     });
   });
 
-  // COLLECTIBLES — any player can pick up
+  // COLLECTIBLES - any player can pick up
   collectibles.forEach(col=>{
     if(col.collected)return;
     col.pulse=(col.pulse+.07)%(Math.PI*2);
@@ -3437,7 +3437,7 @@ function updatePhysics(){
   });
 
   if(portal){
-    // Portal — any player reaching it triggers level complete (non-endless modes only).
+    // Portal - any player reaching it triggers level complete (non-endless modes only).
     portal.rot+=.025;portal.pt=(portal.pt+.05)%(Math.PI*2);
     if(!portal.locked){
       for(const pl of players){
@@ -3531,7 +3531,7 @@ function render(){
   if(overdriveTmr>0){ctx.save();ctx.shadowColor='#ffcc00';ctx.shadowBlur=14;ctx.fillStyle='rgba(255,200,0,.95)';ctx.font='bold 12px Segoe UI';ctx.textAlign='center';ctx.fillText('⚡ OVERDRIVE '+Math.ceil(overdriveTmr/60)+'s',canvas.width/2,42);ctx.restore();}
   if(enemiesLeft>0){ctx.fillStyle='rgba(255,0,85,.85)';ctx.font='bold 13px Segoe UI';ctx.textAlign='center';ctx.fillText('ENEMIES LEFT: '+enemiesLeft,canvas.width/2,canvas.height-8);ctx.textAlign='left';}
 
-  // BOSS HP BAR — screen-fixed strip at the top center while a boss is active. Pulses red when
+  // BOSS HP BAR - screen-fixed strip at the top center while a boss is active. Pulses red when
   // the boss is in its final (<33% HP) phase.
   if(activeBoss && activeBoss.hp>0){
     const b=activeBoss, def=b.boss&&b.boss.def;
@@ -3548,7 +3548,7 @@ function render(){
     ctx.shadowBlur=0;
     ctx.fillStyle='rgba(0,0,0,.65)';
     ctx.fillRect(barX, barY+6, barW, barH);
-    // Fill — color shifts from red→orange→yellow as HP drops; pulses in phase 3.
+    // Fill - color shifts from red→orange→yellow as HP drops; pulses in phase 3.
     const phaseBoost = b.boss && b.boss.phase===3 ? (0.6 + 0.4*Math.sin(gTime*0.25)) : 1;
     const fillColor = pct>0.66 ? '#ff3344' : pct>0.33 ? '#ff8822' : '#ffcc00';
     ctx.fillStyle=fillColor;
@@ -3582,12 +3582,12 @@ function render(){
   ctx.restore();
 }
 
-// Draws the entire world from the perspective of `viewer` — used per viewport in split-screen.
+// Draws the entire world from the perspective of `viewer` - used per viewport in split-screen.
 function drawWorld(viewer){
   // Platforms
   platforms.forEach(p=>{
     if(p.disabled){
-      // Crumbled — draw a faint outline showing it'll respawn.
+      // Crumbled - draw a faint outline showing it'll respawn.
       ctx.save();ctx.strokeStyle='rgba(161,0,255,.18)';ctx.setLineDash([6,6]);ctx.lineWidth=1;
       ctx.strokeRect(p.x,p.y,p.width,p.height);ctx.setLineDash([]);ctx.restore();
       return;
@@ -3686,7 +3686,7 @@ function drawWorld(viewer){
     }
   });
 
-  // Portal (skipped entirely in endless mode — portal is null there)
+  // Portal (skipped entirely in endless mode - portal is null there)
   if(portal){
     ctx.save();
     const pg=Math.sin(portal.pt)*.5+.5;
@@ -3705,7 +3705,7 @@ function drawWorld(viewer){
     ctx.fillStyle=portal.locked?'rgba(255,0,85,.85)':'rgba(0,245,255,.7)';ctx.font='11px Segoe UI';ctx.textAlign='center';
     ctx.fillText(portal.locked?'🔒 KILL ALL!':'PORTAL',portal.x+portal.width/2,portal.y-10);ctx.textAlign='left';
   }
-  // Battle Royale teleporter — pulsing magenta gateway. Touching it = instant win.
+  // Battle Royale teleporter - pulsing magenta gateway. Touching it = instant win.
   if(brMode && brTeleporter){
     const t=brTeleporter;
     ctx.save();
@@ -3727,7 +3727,7 @@ function drawWorld(viewer){
     ctx.textAlign='left';
   }
 
-  // Snares (Emerald skill) — drawn as a pulsing green grid zone
+  // Snares (Emerald skill) - drawn as a pulsing green grid zone
   snares.forEach(s=>{
     const a=Math.min(1,s.t/60)*(0.4+Math.sin(gTime*.12)*.15);
     ctx.save();ctx.shadowColor='#00ff88';ctx.shadowBlur=14;
@@ -3741,7 +3741,7 @@ function drawWorld(viewer){
     ctx.restore();
   });
 
-  // Singularities (VOID skill) — pulsing purple anchor with a swirl ring
+  // Singularities (VOID skill) - pulsing purple anchor with a swirl ring
   singularities.forEach(sg=>{
     const r=20+Math.sin(gTime*.2)*8;
     ctx.save();ctx.shadowColor='#ff00d4';ctx.shadowBlur=22;
@@ -3753,7 +3753,7 @@ function drawWorld(viewer){
     ctx.restore();
   });
 
-  // Flame trail (Crimson skill) — orange wisps along recent player positions
+  // Flame trail (Crimson skill) - orange wisps along recent player positions
   players.forEach(p=>{
     if(p.flameTrailT<=0)return;
     p.trail.forEach((t,idx)=>{
@@ -3783,14 +3783,14 @@ function drawWorld(viewer){
       // Outer rim (orange)
       ctx.fillStyle='#c87a00';
       ctx.beginPath(); ctx.ellipse(cx,cy,rW,rH,0,0,Math.PI*2); ctx.fill();
-      // Inner face — bright gold gradient
+      // Inner face - bright gold gradient
       const g=ctx.createRadialGradient(cx-rW*0.35,cy-rH*0.4,1,cx,cy,Math.max(rW,rH));
       g.addColorStop(0,'#fff5b0');
       g.addColorStop(0.45,'#ffd24a');
       g.addColorStop(1,'#e09500');
       ctx.fillStyle=g;
       ctx.beginPath(); ctx.ellipse(cx,cy,rW*0.78,rH*0.82,0,0,Math.PI*2); ctx.fill();
-      // Inscription — $ when facing the camera, fades as it spins edge-on
+      // Inscription - $ when facing the camera, fades as it spins edge-on
       const faceA=Math.abs(spin);
       if(faceA>0.35){
         ctx.shadowBlur=0;
@@ -3824,11 +3824,11 @@ function drawWorld(viewer){
     ctx.fillStyle='#ff0055';ctx.beginPath();ctx.arc(b.x,b.y,5,0,Math.PI*2);ctx.fill();ctx.restore();
   });
 
-  // Player bullets — most guns draw as glowing orbs; flame/railgun/sniper have bespoke looks.
+  // Player bullets - most guns draw as glowing orbs; flame/railgun/sniper have bespoke looks.
   bullets.forEach(b=>{
     const gun=GUNS_BY_ID[b.gunId] || GUNS[b.gun];
     if(b.gunId==='flamethrower'){
-      // Layered radial gradient — outer dark red, mid bright orange, hot yellow core.
+      // Layered radial gradient - outer dark red, mid bright orange, hot yellow core.
       ctx.save();ctx.globalAlpha=b.life;
       const r=b.sz;
       const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,r);
@@ -3900,7 +3900,7 @@ function drawWorld(viewer){
       ctx.lineTo(-hw, 0);
       ctx.closePath();
       ctx.fill();
-      // Halo ring — pulsing.
+      // Halo ring - pulsing.
       if(def){
         ctx.save();
         ctx.globalAlpha = 0.5 + Math.sin(gTime*0.1) * 0.3;
@@ -4079,7 +4079,7 @@ function drawCharArt(pl, ch){
       break;
     }
     case 'emerald': {
-      // Leaf crown — three triangles on top
+      // Leaf crown - three triangles on top
       ctx.shadowColor='#00ff88';ctx.shadowBlur=10;
       ctx.fillStyle='#00ff88';
       for(let i=0;i<3;i++){
@@ -4119,7 +4119,7 @@ function drawCharArt(pl, ch){
       break;
     }
     case 'lifter': {
-      // Orange goggles — two larger circles
+      // Orange goggles - two larger circles
       ctx.fillStyle='rgba(0,0,0,.5)';ctx.beginPath();ctx.arc(x+10,y+12,5,0,Math.PI*2);ctx.arc(x+w-10,y+12,5,0,Math.PI*2);ctx.fill();
       ctx.shadowColor='#ff8800';ctx.shadowBlur=8;
       ctx.fillStyle='#ffaa00';ctx.beginPath();ctx.arc(x+10,y+12,3.5,0,Math.PI*2);ctx.arc(x+w-10,y+12,3.5,0,Math.PI*2);ctx.fill();
@@ -4147,14 +4147,14 @@ function drawCharArt(pl, ch){
 // NETWORKING (online 2P)
 //
 // Roles:
-//   'host'  — owns the authoritative simulation. P1 is its keyboard. P2 is driven by remote
+//   'host'  - owns the authoritative simulation. P1 is its keyboard. P2 is driven by remote
 //             inputs received over the data channel. Sends the world state to the guest at
 //             ~30Hz.
-//   'guest' — does not simulate. Receives world state and renders it. Sends its keyboard
+//   'guest' - does not simulate. Receives world state and renders it. Sends its keyboard
 //             input as P2's input over the data channel at ~30Hz.
 //
 // The KEYMAP_ONLINE_REMOTE keymap below uses synthetic key names (prefixed with __net) so
-// the existing input pipeline (anyKey/isKey) works unchanged — Net.applyRemoteToKeys()
+// the existing input pipeline (anyKey/isKey) works unchanged - Net.applyRemoteToKeys()
 // stamps them into the keys[] map each frame on the host.
 // ──────────────────────────────────────────────
 const KEYMAP_ONLINE_REMOTE={
@@ -4197,7 +4197,7 @@ const Net={
     keys['__netSK1']=!!ri.sk1; keys['__netSK2']=!!ri.sk2; keys['__netSK3']=!!ri.sk3;
     keys['__netWP']=!!ri.wp; keys['__netCO']=!!ri.co;
   },
-  // Compact world snapshot. Trails and float-text are skipped — they regenerate visually.
+  // Compact world snapshot. Trails and float-text are skipped - they regenerate visually.
   // Platforms are only included when the level changes (or on the first packet of a session)
   // since they're static within a level.
   packState(){
@@ -4334,7 +4334,7 @@ function brStart(opts){
   gTime=0;
   state='playing';
   // Teleporter pinned directly above the center peak platform (y=360, w=300) so it's the same
-  // place every round — players can learn the ascent path. Hand-crafted arena, not random.
+  // place every round - players can learn the ascent path. Hand-crafted arena, not random.
   brTeleporter={x:BR_WORLD_W*0.5-30, y:280, w:60, h:80, rot:0};
   // Camera centered on local player.
   players.forEach(p=>{ p.cameraY = Math.max(0, Math.min(BR_WORLD_H-canvas.height, p.y - canvas.height*0.4)); });
@@ -4350,10 +4350,10 @@ function brStart(opts){
 function brBuildArena(){
   platforms=[]; obstacles=[]; collectibles=[]; bullets=[]; enemyBullets=[]; traps=[]; snares=[]; singularities=[];
 
-  // Lava death floor — single full-width trap. brTick() turns contact into elimination.
+  // Lava death floor - single full-width trap. brTick() turns contact into elimination.
   traps.push({type:'spike', x:0, y:BR_WORLD_H-20, w:BR_WORLD_W, h:20});
 
-  // Side walls — keep players inside the arena horizontally.
+  // Side walls - keep players inside the arena horizontally.
   platforms.push({x:0,             y:0, width:20, height:BR_WORLD_H, type:'solid', crumbleT:0, disabled:false});
   platforms.push({x:BR_WORLD_W-20, y:0, width:20, height:BR_WORLD_H, type:'solid', crumbleT:0, disabled:false});
 
@@ -4362,12 +4362,12 @@ function brBuildArena(){
     platforms.push({x:p.x, y:p.y, width:p.w, height:p.h, type:'solid', crumbleT:0, disabled:false});
   });
 
-  // Low tier: 3 platforms — flanks mirrored, center wider for vertical staging.
+  // Low tier: 3 platforms - flanks mirrored, center wider for vertical staging.
   platforms.push({x:300,  y:900, width:220, height:20, type:'solid', crumbleT:0, disabled:false});
   platforms.push({x:940,  y:750, width:320, height:20, type:'solid', crumbleT:0, disabled:false});
   platforms.push({x:1880, y:900, width:220, height:20, type:'solid', crumbleT:0, disabled:false});
 
-  // Mid tier: 3 platforms — center is highest, encourages climbing the middle to contest peak.
+  // Mid tier: 3 platforms - center is highest, encourages climbing the middle to contest peak.
   platforms.push({x:380,  y:650, width:240, height:20, type:'solid', crumbleT:0, disabled:false});
   platforms.push({x:960,  y:550, width:280, height:20, type:'solid', crumbleT:0, disabled:false});
   platforms.push({x:1780, y:650, width:240, height:20, type:'solid', crumbleT:0, disabled:false});
@@ -4387,7 +4387,7 @@ function brBuildArena(){
     p.invincTimer = 60; // brief spawn protection
   });
 
-  portal = null;        // no level-end portal — teleporter handled separately
+  portal = null;        // no level-end portal - teleporter handled separately
   portalLocked = false;
   enemiesLeft = 0;
 }
@@ -4526,7 +4526,7 @@ function brEndMatch(winner){
   brMatchOver = true;
   // Final placement order: winner at position 1, then by reverse-elimination order.
   if(winner && brPlacement[0]!==winner.pid){
-    // Winner wasn't in the placement list (still alive) — prepend.
+    // Winner wasn't in the placement list (still alive) - prepend.
     brPlacement = [winner.pid, ...brPlacement.filter(p=>p!==winner.pid)];
   }
   // Local player's placement (1 = winner, 2 = runner-up, etc).
@@ -4542,7 +4542,7 @@ function brEndMatch(winner){
     const ch=CHARACTERS[p.char]||{name:'?'};
     return {name: (p.bot?'BOT ':'')+ch.name+' (P'+(pid+1)+')', kills: p.brKills|0, pid};
   }).filter(Boolean);
-  const winnerName = winner ? (winner.bot?'BOT ':'')+(CHARACTERS[winner.char]||{name:'?'}).name : '—';
+  const winnerName = winner ? (winner.bot?'BOT ':'')+(CHARACTERS[winner.char]||{name:'?'}).name : '-';
   const results = {placement:myPlacement, winner:winnerName, kills:myKills, coinsEarned:coins, board};
   state='gameover';
   if(typeof refreshCloudUI==='function') refreshCloudUI();
@@ -4652,7 +4652,7 @@ function restartGame(){
   endlessMeters=0;
   gTime=0;
   players.forEach(p=>{
-    // Only zero ammo on guns with finite max ammo — flame / pistol stay at Infinity.
+    // Only zero ammo on guns with finite max ammo - flame / pistol stay at Infinity.
     if(p.guns[1].maxAmmo!==Infinity) p.guns[1].ammo=0;
     if(p.guns[2].maxAmmo!==Infinity) p.guns[2].ammo=0;
     p.guns.forEach(g=>{g.lastShot=0;});
@@ -4731,7 +4731,7 @@ function startGame(directMode=null, directDiff=null){
   player=players[0];
   players.forEach(applyCharacter);
   // Persistent per-character upgrades stack on top of the character base stats. Must run AFTER
-  // applyCharacter (which sets base speed/jump) and BEFORE the gun-reset block below — the
+  // applyCharacter (which sets base speed/jump) and BEFORE the gun-reset block below - the
   // dash maxCh is bumped here.
   players.forEach(applyUpgrades);
 
@@ -4752,9 +4752,9 @@ function startGame(directMode=null, directDiff=null){
   level=1;score=0;rewinds=D.rewinds;totalKills=0;
   // Reset gun ammo / lastShot so the first level has a clean firing state. lastShot in
   // particular must be zero or the player can't fire until gTime catches up.
-  // NOTE: do NOT overwrite p.speed here — applyCharacter+applyUpgrades already set it.
+  // NOTE: do NOT overwrite p.speed here - applyCharacter+applyUpgrades already set it.
   players.forEach(p => {
-    // Reset ammo on non-infinite guns only — clobbering Infinity → 0 makes infinite-ammo
+    // Reset ammo on non-infinite guns only - clobbering Infinity → 0 makes infinite-ammo
     // guns (flame) start at 0/∞ and then pick up the +15 plasma bonus, showing "15/∞".
     if(p.guns[1].maxAmmo!==Infinity) p.guns[1].ammo=0;
     if(p.guns[2].maxAmmo!==Infinity) p.guns[2].ammo=0;
@@ -4771,7 +4771,7 @@ function startGame(directMode=null, directDiff=null){
 }
 
 // ──────────────────────────────────────────────
-// QUICK CHAT — emoji wheel + floating bubbles
+// QUICK CHAT - emoji wheel + floating bubbles
 //
 // Press V (or the on-screen button if added later) to open the radial wheel. Click an emoji
 // (or press 1-9 for the first nine) to send. The pick spawns a local bubble above the player
@@ -4817,14 +4817,14 @@ const QuickChat={
       try{ Net.conn.send({t:'e', emoji, pid:localPid}); }catch(e){}
     }
   },
-  // Remote packet handler — called from modules/online-2p.js connection data handlers.
+  // Remote packet handler - called from modules/online-2p.js connection data handlers.
   onReceive(d){
     if(!d || typeof d.emoji!=='string') return;
     const pid=(d.pid|0);
     this.spawnBubble(pid, d.emoji);
   },
   spawnBubble(pid, emoji){
-    // One bubble per player at a time — latest replaces any prior.
+    // One bubble per player at a time - latest replaces any prior.
     this.bubbles=this.bubbles.filter(b=>b.pid!==pid);
     this.bubbles.push({pid, emoji, t:this.BUBBLE_LIFE, age:0});
     if(typeof AU!=='undefined' && AU.collect) AU.collect();
@@ -4951,7 +4951,7 @@ bindT('tL','l');bindT('tR','r');bindT('tJp','jp');bindT('tSh','sh');bindT('tDs',
 window.addEventListener('resize',()=>{bgC.width=window.innerWidth;bgC.height=window.innerHeight;});
 
 // ──────────────────────────────────────────────
-// SETTINGS — volumes + music track. Persisted in localStorage.
+// SETTINGS - volumes + music track. Persisted in localStorage.
 // ──────────────────────────────────────────────
 const Settings={
   load(){
@@ -5012,7 +5012,7 @@ function applySettingsUI(){
 }
 applySettingsUI();
 
-// BOOT — only show the menu if we're on the menu page (index.html). Module pages have their
+// BOOT - only show the menu if we're on the menu page (index.html). Module pages have their
 // own bootstrap that calls startGame() directly with the right player count. Music is
 // armed on first user gesture so browsers don't block the AudioContext.
 refreshBest();

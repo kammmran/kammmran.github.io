@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Key Findings Extractor — Academy Tools</title>
+<title>Key Findings Extractor - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-key"></i></div>
       <div>
         <div class="tool-title">Key Findings Extractor</div>
-        <div class="tool-desc">Pulls out the result/finding sentences — the contributions, effects and significant outcomes — from a paper's text.</div>
+        <div class="tool-desc">Pulls out the result/finding sentences - the contributions, effects and significant outcomes - from a paper's text.</div>
       </div>
     </div>
   </div>
@@ -51,14 +51,14 @@ function run(){
   if(!t){ out.innerHTML=''; return; }
   const sents=sentences(t);
   const found=sents.map(s=>({s,score:(CUES.test(s)?2:0)+(NUM.test(s)?1:0)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score);
-  if(!found.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No clear result sentences detected — try pasting the Results/Discussion or the abstract.</div>'; return; }
+  if(!found.length){ out.innerHTML='<div class="muted" style="margin-top:6px">No clear result sentences detected - try pasting the Results/Discussion or the abstract.</div>'; return; }
   out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
       <div class="stat-card"><div class="stat-label">Sentences scanned</div><div class="stat-value">${sents.length}</div></div>
       <div class="stat-card"><div class="stat-label">Key findings</div><div class="stat-value" style="color:var(--green)">${found.length}</div></div>
       <div class="stat-card"><div class="stat-label">With statistics</div><div class="stat-value">${found.filter(x=>NUM.test(x.s)).length}</div></div>
     </div>`+
     found.map(x=>{ let h=esc(x.s).replace(/(\d+(\.\d+)?\s?%|p\s*[<>=]\s*0?\.\d+)/gi,'<span class="hl">$1</span>'); return `<div class="find">${h}</div>`; }).join('')+
-    `<div class="muted" style="font-size:12px;margin-top:8px">Heuristic — flags sentences with result/effect language and statistics. Skim to confirm; copy the ones that capture the real contributions.</div>`;
+    `<div class="muted" style="font-size:12px;margin-top:8px">Heuristic - flags sentences with result/effect language and statistics. Skim to confirm; copy the ones that capture the real contributions.</div>`;
 }
 $('#txt').addEventListener('input',run);
 </script>

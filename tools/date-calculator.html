@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Date Calculator — Academy Tools</title>
+<title>Date Calculator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -46,12 +46,12 @@
       <div class="panel">
         <div class="panel-label"><span>Difference</span></div>
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-label">Days</div><div class="stat-value" id="d-days">—</div></div>
-          <div class="stat-card"><div class="stat-label">Weeks</div><div class="stat-value" id="d-weeks">—</div></div>
-          <div class="stat-card"><div class="stat-label">Months</div><div class="stat-value" id="d-months">—</div></div>
-          <div class="stat-card"><div class="stat-label">Years</div><div class="stat-value" id="d-years">—</div></div>
-          <div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value" id="d-hours">—</div></div>
-          <div class="stat-card"><div class="stat-label">Y · M · D</div><div class="stat-value" id="d-ymd" style="font-size:14px">—</div></div>
+          <div class="stat-card"><div class="stat-label">Days</div><div class="stat-value" id="d-days">-</div></div>
+          <div class="stat-card"><div class="stat-label">Weeks</div><div class="stat-value" id="d-weeks">-</div></div>
+          <div class="stat-card"><div class="stat-label">Months</div><div class="stat-value" id="d-months">-</div></div>
+          <div class="stat-card"><div class="stat-label">Years</div><div class="stat-value" id="d-years">-</div></div>
+          <div class="stat-card"><div class="stat-label">Hours</div><div class="stat-value" id="d-hours">-</div></div>
+          <div class="stat-card"><div class="stat-label">Y · M · D</div><div class="stat-value" id="d-ymd" style="font-size:14px">-</div></div>
         </div>
       </div>
     </div>
@@ -79,7 +79,7 @@
       </div>
       <div class="panel">
         <div class="panel-label"><span>Result</span></div>
-        <div style="font-size:32px; font-weight:700; color:var(--accent3); text-align:center; padding:18px 0" id="a-result">—</div>
+        <div style="font-size:32px; font-weight:700; color:var(--accent3); text-align:center; padding:18px 0" id="a-result">-</div>
         <div class="muted" style="text-align:center; font-size:13px" id="a-weekday"></div>
       </div>
     </div>
@@ -96,12 +96,12 @@
       <div class="panel">
         <div class="panel-label"><span>Age</span></div>
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-label">Years</div><div class="stat-value" id="ag-y">—</div></div>
-          <div class="stat-card"><div class="stat-label">Months</div><div class="stat-value" id="ag-m">—</div></div>
-          <div class="stat-card"><div class="stat-label">Days</div><div class="stat-value" id="ag-d">—</div></div>
-          <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="ag-td">—</div></div>
-          <div class="stat-card"><div class="stat-label">Total weeks</div><div class="stat-value" id="ag-tw">—</div></div>
-          <div class="stat-card"><div class="stat-label">Next birthday in</div><div class="stat-value" id="ag-next" style="font-size:14px">—</div></div>
+          <div class="stat-card"><div class="stat-label">Years</div><div class="stat-value" id="ag-y">-</div></div>
+          <div class="stat-card"><div class="stat-label">Months</div><div class="stat-value" id="ag-m">-</div></div>
+          <div class="stat-card"><div class="stat-label">Days</div><div class="stat-value" id="ag-d">-</div></div>
+          <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="ag-td">-</div></div>
+          <div class="stat-card"><div class="stat-label">Total weeks</div><div class="stat-value" id="ag-tw">-</div></div>
+          <div class="stat-card"><div class="stat-label">Next birthday in</div><div class="stat-value" id="ag-next" style="font-size:14px">-</div></div>
         </div>
       </div>
     </div>
@@ -128,9 +128,9 @@
       <div class="panel">
         <div class="panel-label"><span>Counts</span></div>
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="w-total">—</div></div>
-          <div class="stat-card"><div class="stat-label">Working days</div><div class="stat-value" id="w-work" style="color:var(--green)">—</div></div>
-          <div class="stat-card"><div class="stat-label">Weekend days</div><div class="stat-value" id="w-weekend" style="color:var(--text2)">—</div></div>
+          <div class="stat-card"><div class="stat-label">Total days</div><div class="stat-value" id="w-total">-</div></div>
+          <div class="stat-card"><div class="stat-label">Working days</div><div class="stat-value" id="w-work" style="color:var(--green)">-</div></div>
+          <div class="stat-card"><div class="stat-label">Weekend days</div><div class="stat-value" id="w-weekend" style="color:var(--text2)">-</div></div>
         </div>
       </div>
     </div>
@@ -146,8 +146,8 @@
         <input type="time" id="c-time" value="00:00">
       </div>
       <div style="text-align:center; padding:24px 0">
-        <div id="c-label-out" style="font-size:14px; color:var(--text2); margin-bottom:10px">—</div>
-        <div id="c-display" style="font-size:42px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent3)">—</div>
+        <div id="c-label-out" style="font-size:14px; color:var(--text2); margin-bottom:10px">-</div>
+        <div id="c-display" style="font-size:42px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--accent3)">-</div>
         <div id="c-detail" class="muted" style="font-size:13px; margin-top:8px"></div>
       </div>
     </div>

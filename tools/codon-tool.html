@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Codon Usage &amp; Optimization — Academy Tools</title>
+<title>Codon Usage &amp; Optimization - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -61,7 +61,7 @@ $('#run').onclick=()=>{
     else{prot='';const dna=raw.replace(/U/g,'T');for(let i=0;i+3<=dna.length;i+=3)prot+=CODON[dna.substr(i,3)]||'';}
     if(!prot){$('#status').textContent='Could not read protein.';return;}
     const opt=prot.split('').map(a=>PREF[host][a]||'NNN').join('');
-    $('#out').innerHTML=`<div class="panel-label" style="margin-bottom:6px">Optimized CDS for ${host==='ecoli'?'E. coli':'human'} (${prot.length} aa) <span class="copy" data-c="${opt}"><i class="ti ti-copy"></i></span></div><div class="seqbox">${opt.replace(/.{3}/g,'$& ')}</div><div class="muted" style="font-size:12px;margin-top:8px">Greedy "one best codon per residue" optimization — maximises codon frequency but not GC balance or motif avoidance. Review for restriction sites and repeats before synthesis.</div>`;
+    $('#out').innerHTML=`<div class="panel-label" style="margin-bottom:6px">Optimized CDS for ${host==='ecoli'?'E. coli':'human'} (${prot.length} aa) <span class="copy" data-c="${opt}"><i class="ti ti-copy"></i></span></div><div class="seqbox">${opt.replace(/.{3}/g,'$& ')}</div><div class="muted" style="font-size:12px;margin-top:8px">Greedy "one best codon per residue" optimization - maximises codon frequency but not GC balance or motif avoidance. Review for restriction sites and repeats before synthesis.</div>`;
     $('#status').textContent='Optimized';return;
   }
   // analyze

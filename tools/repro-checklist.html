@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reproducibility Audit Checklist — Academy Tools</title>
+<title>Reproducibility Audit Checklist - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -69,7 +69,7 @@ function render(){
     <div class="stat-card"><div class="stat-label">Readiness</div><div class="stat-value" style="color:${col}">${pct}%</div></div>
     <div class="stat-card"><div class="stat-label">Level</div><div class="stat-value" style="font-size:16px;color:${col}">${lvl}</div></div>
     <div class="stat-card"><div class="stat-label">Top gap</div><div class="stat-value" style="font-size:13px">${gaps.length?esc(gaps[0][0].slice(0,24))+'…':'none 🎉'}</div></div>`;
-  $('#report').innerHTML=`<div style="background:#fff;color:#111;border-radius:8px;padding:24px;font-family:Georgia,serif"><h2 style="margin:0 0 6px">Reproducibility Audit — ${pct}% (${lvl})</h2><p style="font-size:13px;color:#555">Score ${got}/${total}. ${gaps.length?'Highest-impact gaps:':'All items complete.'}</p><ul style="font-size:13.5px">${gaps.slice(0,5).map(g=>`<li>${esc(g[0])} (+${g[1]})</li>`).join('')}</ul></div>`;
+  $('#report').innerHTML=`<div style="background:#fff;color:#111;border-radius:8px;padding:24px;font-family:Georgia,serif"><h2 style="margin:0 0 6px">Reproducibility Audit - ${pct}% (${lvl})</h2><p style="font-size:13px;color:#555">Score ${got}/${total}. ${gaps.length?'Highest-impact gaps:':'All items complete.'}</p><ul style="font-size:13.5px">${gaps.slice(0,5).map(g=>`<li>${esc(g[0])} (+${g[1]})</li>`).join('')}</ul></div>`;
 }
 $('#list').addEventListener('change',e=>{const k=e.target.dataset.k;if(k!=null){state[k]=e.target.checked;render();}});
 $('#print').onclick=()=>window.print();

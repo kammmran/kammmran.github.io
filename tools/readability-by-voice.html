@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Readability-by-Voice Analyzer — Academy Tools</title>
+<title>Readability-by-Voice Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(244,114,182,0.12);color:var(--pink)"><i class="ti ti-ear"></i></div>
       <div>
         <div class="tool-title">Readability-by-Voice Analyzer</div>
-        <div class="tool-desc">Hear your manuscript read aloud while awkward, overlong, and hard-to-say sentences are flagged in real time. Reading sentences aloud is the oldest editing trick — this one does the reading and points at the rough spots.</div>
+        <div class="tool-desc">Hear your manuscript read aloud while awkward, overlong, and hard-to-say sentences are flagged in real time. Reading sentences aloud is the oldest editing trick - this one does the reading and points at the rough spots.</div>
       </div>
     </div>
   </div>
@@ -40,7 +40,7 @@
       <div class="stat-card"><div class="stat-label">Sentences</div><div class="stat-value" id="sc">0</div></div>
       <div class="stat-card"><div class="stat-label">Avg words/sentence</div><div class="stat-value" id="avg">0</div></div>
       <div class="stat-card"><div class="stat-label">Flagged</div><div class="stat-value" id="fl" style="color:var(--amber)">0</div></div>
-      <div class="stat-card"><div class="stat-label">Flesch ease</div><div class="stat-value" id="fre">—</div></div>
+      <div class="stat-card"><div class="stat-label">Flesch ease</div><div class="stat-value" id="fre">-</div></div>
     </div>
     <div id="out" style="border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--bg2);font-size:15px;line-height:1.9;max-height:40vh;overflow:auto"></div>
   </div>
@@ -66,9 +66,9 @@ function analyze(){
   const html=sents.map((s,i)=>{
     const words=s.match(/\b[\w''-]+\b/g)||[];const wc=words.length;totW+=wc;words.forEach(w=>totS+=syll(w));
     const cls=[];const reasons=[];
-    if(wc>28){cls.push('long');reasons.push(`${wc} words — consider splitting`);}
+    if(wc>28){cls.push('long');reasons.push(`${wc} words - consider splitting`);}
     const commas=(s.match(/,/g)||[]).length;const conj=(s.match(/\b(which|that|and|or|because|although|while|whereas)\b/gi)||[]).length;
-    if((commas>=3||conj>=4)&&wc>18){cls.push('awk');reasons.push('clause-heavy — hard to follow aloud');}
+    if((commas>=3||conj>=4)&&wc>18){cls.push('awk');reasons.push('clause-heavy - hard to follow aloud');}
     if(/\b(was|were|is|are|been|be|being)\b\s+\w+(ed|en)\b/i.test(s)){cls.push('pass');reasons.push('passive voice');}
     if(cls.length)flagged++;
     return `<span class="sent ${cls.join(' ')}" id="s${i}" title="${esc(reasons.join('; ')||'reads cleanly')}">${esc(s)} </span>`;

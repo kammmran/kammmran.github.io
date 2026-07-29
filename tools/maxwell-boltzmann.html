@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maxwell–Boltzmann Distribution — Academy Tools</title>
+<title>Maxwell–Boltzmann Distribution - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -49,7 +49,7 @@ const $ = s => document.querySelector(s);
 const NS='http://www.w3.org/2000/svg';
 const R=8.314;
 const gases=[['O₂',32],['N₂',28.01],['H₂',2.016],['He',4.003],['CO₂',44.01],['H₂O',18.02],['Ar',39.95],['CH₄',16.04],['Cl₂',70.9],['Ne',20.18]];
-$('#gas').innerHTML=gases.map(([n,m],i)=>`<option value="${m}">${n} — ${m} g/mol</option>`).join('')+'<option value="custom">Custom…</option>';
+$('#gas').innerHTML=gases.map(([n,m],i)=>`<option value="${m}">${n} - ${m} g/mol</option>`).join('')+'<option value="custom">Custom…</option>';
 $('#gas').addEventListener('change',()=>{ if($('#gas').value!=='custom'){ $('#mm').value=$('#gas').value; } run(); });
 
 function f(v,M,T){ return 4*Math.PI*Math.pow(M/(2*Math.PI*R*T),1.5)*v*v*Math.exp(-M*v*v/(2*R*T)); }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>H-index Calculator — Academy Tools</title>
+<title>H-index Calculator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -42,14 +42,14 @@
     <div class="panel">
       <div class="panel-label"><span>Metrics</span></div>
       <div class="stat-grid" id="stats">
-        <div class="stat-card"><div class="stat-label">h-index</div><div class="stat-value" id="h">—</div></div>
-        <div class="stat-card"><div class="stat-label">i10-index</div><div class="stat-value" id="i10">—</div></div>
-        <div class="stat-card"><div class="stat-label">g-index</div><div class="stat-value" id="g">—</div></div>
-        <div class="stat-card"><div class="stat-label">Papers</div><div class="stat-value" id="n">—</div></div>
-        <div class="stat-card"><div class="stat-label">Total citations</div><div class="stat-value" id="total">—</div></div>
-        <div class="stat-card"><div class="stat-label">Mean / paper</div><div class="stat-value" id="mean">—</div></div>
-        <div class="stat-card"><div class="stat-label">Median</div><div class="stat-value" id="median">—</div></div>
-        <div class="stat-card"><div class="stat-label">Max</div><div class="stat-value" id="max">—</div></div>
+        <div class="stat-card"><div class="stat-label">h-index</div><div class="stat-value" id="h">-</div></div>
+        <div class="stat-card"><div class="stat-label">i10-index</div><div class="stat-value" id="i10">-</div></div>
+        <div class="stat-card"><div class="stat-label">g-index</div><div class="stat-value" id="g">-</div></div>
+        <div class="stat-card"><div class="stat-label">Papers</div><div class="stat-value" id="n">-</div></div>
+        <div class="stat-card"><div class="stat-label">Total citations</div><div class="stat-value" id="total">-</div></div>
+        <div class="stat-card"><div class="stat-label">Mean / paper</div><div class="stat-value" id="mean">-</div></div>
+        <div class="stat-card"><div class="stat-label">Median</div><div class="stat-value" id="median">-</div></div>
+        <div class="stat-card"><div class="stat-label">Max</div><div class="stat-value" id="max">-</div></div>
       </div>
       <div class="divider"></div>
       <div class="panel-label" style="margin-bottom:8px"><span>Citation profile</span></div>
@@ -99,7 +99,7 @@ function render(){
   const set = (id, v) => $('#' + id).textContent = v;
 
   if (!n){
-    ['h','i10','g','n','total','mean','median','max'].forEach(id => set(id, '—'));
+    ['h','i10','g','n','total','mean','median','max'].forEach(id => set(id, '-'));
     $('#chart').innerHTML = '<span class="muted">Enter citation counts to see metrics.</span>';
     return;
   }

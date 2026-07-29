@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Speaker Identification Tool — Academy Tools</title>
+<title>Speaker Identification Tool - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -33,7 +33,7 @@
       <span class="muted" id="status" style="font-size:12px;margin-left:auto"></span>
     </div>
     <div id="meter" style="height:14px;border-radius:7px;background:var(--bg3);overflow:hidden"><div id="meterbar" style="height:100%;width:0;background:var(--teal);transition:width .05s"></div></div>
-    <div class="row"><span class="muted" style="font-size:12px">Current pitch:</span><b id="pitch">—</b><span class="muted" style="font-size:12px">→ likely</span><b id="who" style="color:var(--accent3)">—</b></div>
+    <div class="row"><span class="muted" style="font-size:12px">Current pitch:</span><b id="pitch">-</b><span class="muted" style="font-size:12px">→ likely</span><b id="who" style="color:var(--accent3)">-</b></div>
     <div id="timeline" style="display:flex;height:30px;border-radius:6px;overflow:hidden;border:1px solid var(--border);background:var(--bg2)"></div>
     <div id="stats" class="stat-grid"></div>
     <div class="row"><button class="btn" id="clear"><i class="ti ti-trash"></i> Reset</button></div>
@@ -105,7 +105,7 @@ async function start(){
 }
 function stop(){listening=false;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());$('#rec').innerHTML='<i class="ti ti-microphone"></i> Start listening';$('#rec').classList.add('btn-primary');$('#status').textContent='Stopped';}
 $('#rec').onclick=()=>listening?stop():start();
-$('#clear').onclick=()=>{frames=[];centroids=null;t0=0;$('#timeline').innerHTML='';$('#stats').innerHTML='';$('#pitch').textContent='—';$('#who').textContent='—';};
+$('#clear').onclick=()=>{frames=[];centroids=null;t0=0;$('#timeline').innerHTML='';$('#stats').innerHTML='';$('#pitch').textContent='-';$('#who').textContent='-';};
 </script>
 </body>
 </html>

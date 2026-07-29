@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Abstract-to-Presentation Generator — Academy Tools</title>
+<title>Abstract-to-Presentation Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-presentation"></i></div>
       <div>
         <div class="tool-title">Abstract-to-Presentation Generator</div>
-        <div class="tool-desc">Turn an abstract into a starter slide outline. The tool maps sentences to the standard talk arc — Title, Background, Question, Methods, Results, Conclusion — and drafts bullet points for each. Edit, then copy as Markdown ready for the Slide Deck Generator. Heuristic, local, a starting point not a finished deck.</div>
+        <div class="tool-desc">Turn an abstract into a starter slide outline. The tool maps sentences to the standard talk arc - Title, Background, Question, Methods, Results, Conclusion - and drafts bullet points for each. Edit, then copy as Markdown ready for the Slide Deck Generator. Heuristic, local, a starting point not a finished deck.</div>
       </div>
     </div>
   </div>
@@ -88,7 +88,7 @@ function splitBullets(s){
   const parts=s.split(/,\s+(?:and|while|but|whereas)\s+|;\s+/);
   return parts.map(p=>p.replace(/^(and|but|while|whereas)\s+/i,'').replace(/[.;]$/,'').trim()).filter(Boolean).slice(0,2);
 }
-$('#copy').onclick=()=>{if(md){navigator.clipboard.writeText(md);$('#status').textContent='Markdown copied — paste into Slide Deck Generator.';}};
+$('#copy').onclick=()=>{if(md){navigator.clipboard.writeText(md);$('#status').textContent='Markdown copied - paste into Slide Deck Generator.';}};
 $('#gen').click();
 </script>
 </body>

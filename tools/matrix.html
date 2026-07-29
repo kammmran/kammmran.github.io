@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Matrix Calculator — Academy Tools</title>
+<title>Matrix Calculator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -133,7 +133,7 @@ function fmt(n) {
 }
 
 function renderMatrix(M) {
-  if (!M || !M.length) return '—';
+  if (!M || !M.length) return '-';
   const widths = M[0].map((_, j) => Math.max(...M.map(r => fmt(r[j]).length)));
   return M.map(r => r.map((v, j) => fmt(v).padStart(widths[j])).join('  ')).join('\n');
 }

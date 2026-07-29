@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Statistical Red-Flag Checker — Academy Tools</title>
+<title>Statistical Red-Flag Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -112,7 +112,7 @@ function pval(){
     const ratio=Math.abs(Math.log10((p||1e-12)/(rep||1e-12)));
     let cls,msg;
     if(Math.abs(p-rep)<=0.5*Math.pow(10,-decimals(rep))||ratio<0.05){ cls='ok'; msg='Reported p is consistent with the statistic.'; }
-    else if((p<0.05)!==(rep<0.05)){ cls='bad'; msg=`Significance disagrees! Reported p=${rep} but recomputed p=${p.toFixed(4)} — they fall on opposite sides of .05.`; }
+    else if((p<0.05)!==(rep<0.05)){ cls='bad'; msg=`Significance disagrees! Reported p=${rep} but recomputed p=${p.toFixed(4)} - they fall on opposite sides of .05.`; }
     else { cls='warn'; msg=`Reported p=${rep} differs from recomputed ${p.toFixed(4)}. Check rounding, tails, or df.`; }
     html+=`<div class="flag ${cls}">${msg}</div>`;
   }
@@ -134,8 +134,8 @@ function grim(){
   // also check neighbours
   let ok=false; for(let s=estSum-1;s<=estSum+1;s++){ if((s/totalN).toFixed(dec)===mean.toFixed(dec)){ ok=true; break; } }
   out.innerHTML = ok
-    ? `<div class="flag ok"><i class="ti ti-circle-check"></i> Consistent — mean ${mean.toFixed(dec)} is achievable with N=${totalN} integer responses (sum ≈ ${estSum}).</div>`
-    : `<div class="flag bad"><i class="ti ti-alert-triangle"></i> GRIM-inconsistent — no integer total over N=${totalN} rounds to ${mean.toFixed(dec)}. Nearest possible: ${(Math.round(mean*totalN)/totalN).toFixed(dec)}. This can indicate a reporting/typo error.</div>`;
+    ? `<div class="flag ok"><i class="ti ti-circle-check"></i> Consistent - mean ${mean.toFixed(dec)} is achievable with N=${totalN} integer responses (sum ≈ ${estSum}).</div>`
+    : `<div class="flag bad"><i class="ti ti-alert-triangle"></i> GRIM-inconsistent - no integer total over N=${totalN} rounds to ${mean.toFixed(dec)}. Nearest possible: ${(Math.round(mean*totalN)/totalN).toFixed(dec)}. This can indicate a reporting/typo error.</div>`;
 }
 
 $('#test').addEventListener('change',updateFields);

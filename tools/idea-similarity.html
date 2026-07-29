@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Idea Similarity Detector — Academy Tools</title>
+<title>Research Idea Similarity Detector - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -30,7 +30,7 @@
     <label class="fld">Your new idea
       <textarea id="query" style="min-height:70px" placeholder="Describe the idea you want to check…"></textarea>
     </label>
-    <label class="fld">Existing ideas / projects — one per line
+    <label class="fld">Existing ideas / projects - one per line
       <textarea id="list" style="min-height:130px" placeholder="Idea A description…&#10;Idea B description…&#10;Idea C description…"></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-search"></i> Check overlap</button></div>
@@ -61,8 +61,8 @@ $('#run').addEventListener('click',()=>{
   const qv=tf(q);
   const res=list.map(p=>{ const pv=tf(p); return {p,sim:cosine(qv,pv),sh:shared(qv,pv)}; }).sort((a,b)=>b.sim-a.sim);
   const maxSim=Math.round(res[0].sim*100);
-  const verdict=maxSim>=60?{t:'Likely duplicate / strong overlap',c:'--red'}:maxSim>=35?{t:'Notable overlap — differentiate clearly',c:'--amber'}:{t:'Distinct from the list',c:'--green'};
-  out.innerHTML=`<div style="margin-bottom:10px">Highest overlap: <b style="color:var(${verdict.c})">${maxSim}%</b> — ${verdict.t}</div>`+
+  const verdict=maxSim>=60?{t:'Likely duplicate / strong overlap',c:'--red'}:maxSim>=35?{t:'Notable overlap - differentiate clearly',c:'--amber'}:{t:'Distinct from the list',c:'--green'};
+  out.innerHTML=`<div style="margin-bottom:10px">Highest overlap: <b style="color:var(${verdict.c})">${maxSim}%</b> - ${verdict.t}</div>`+
     res.map(x=>{ const pc=Math.round(x.sim*100); const c=pc>=60?'--red':pc>=35?'--amber':'--green'; const dup=pc>=60; return `<div class="prow ${dup?'dup':''}"><div class="bar"><div style="width:${pc}%;background:var(${c})"></div></div><span style="width:42px;color:var(${c})">${pc}%</span><span style="flex:1">${esc(x.p.slice(0,80))}${x.p.length>80?'…':''}</span>${x.sh.length?`<span class="tag" style="background:var(--surface2);color:var(--text3)">${x.sh.slice(0,3).map(esc).join(', ')}</span>`:''}</div>`; }).join('')+
     `<div class="muted" style="font-size:12px;margin-top:8px">Word-overlap similarity (cosine). The tags show the shared terms driving each match. Verify high scores manually.</div>`;
 });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Merge — Academy Tools</title>
+<title>PDF Merge - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js" defer></script>
@@ -142,7 +142,7 @@ mergeBtn.addEventListener('click', async () => {
     const a = document.createElement('a');
     a.href = url; a.download = 'merged.pdf'; a.click();
     URL.revokeObjectURL(url);
-    statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Done — merged ${files.length} file${files.length>1?'s':''}.`;
+    statusEl.innerHTML = `<i class="ti ti-circle-check" style="color:var(--green)"></i> Done - merged ${files.length} file${files.length>1?'s':''}.`;
   } catch (e) {
     statusEl.innerHTML = `<i class="ti ti-alert-circle" style="color:var(--red)"></i> ${e.message}`;
   } finally {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Self-Citation Analyzer — Academy Tools</title>
+<title>Self-Citation Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,16 +21,16 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-quote"></i></div>
       <div>
         <div class="tool-title">Self-Citation Analyzer</div>
-        <div class="tool-desc">Paste your author name(s) and a reference list — see what fraction of the references are your own work.</div>
+        <div class="tool-desc">Paste your author name(s) and a reference list - see what fraction of the references are your own work.</div>
       </div>
     </div>
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Author name(s) — one per line (e.g. <span class="muted">Kamran Heydarov</span>)
+    <label class="fld">Author name(s) - one per line (e.g. <span class="muted">Kamran Heydarov</span>)
       <textarea id="authors" style="min-height:70px" placeholder="Kamran Heydarov&#10;A. N. Other"></textarea>
     </label>
-    <label class="fld">Reference list — one reference per line
+    <label class="fld">Reference list - one reference per line
       <textarea id="refs" style="min-height:200px" placeholder="Heydarov, K., & Smith, J. (2021). A study of things. Journal of X, 12(3), 45-60.&#10;Doe, J. (2019). Another paper. Nature, 5, 1-9."></textarea>
     </label>
     <div class="row">
@@ -96,7 +96,7 @@ function run(){
   });
   const total = refs.length;
   const rate = (selfCount/total*100);
-  let band = rate<10?{c:'--green',t:'low — typical'}:rate<25?{c:'--amber',t:'moderate'}:{c:'--red',t:'high — reviewers may flag'};
+  let band = rate<10?{c:'--green',t:'low - typical'}:rate<25?{c:'--amber',t:'moderate'}:{c:'--red',t:'high - reviewers may flag'};
   out.innerHTML = `
     <div class="stat-grid" style="margin:10px 0 14px">
       <div class="stat-card"><div class="stat-label">References</div><div class="stat-value">${total}</div></div>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Code Complexity &amp; Quality Analyzer — Academy Tools</title>
+<title>Code Complexity &amp; Quality Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-code"></i></div>
       <div>
         <div class="tool-title">Code Complexity &amp; Quality Analyzer</div>
-        <div class="tool-desc">Paste a function or file (Python, JS, R, Java…) and get readability metrics: lines of code, comment ratio, estimated cyclomatic complexity, maximum nesting depth, longest line, and a quality score with suggestions. A quick static check for research code. Local — your code is never uploaded.</div>
+        <div class="tool-desc">Paste a function or file (Python, JS, R, Java…) and get readability metrics: lines of code, comment ratio, estimated cyclomatic complexity, maximum nesting depth, longest line, and a quality score with suggestions. A quick static check for research code. Local - your code is never uploaded.</div>
       </div>
     </div>
   </div>
@@ -80,10 +80,10 @@ function analyze(){
   const commentRatio=loc?comments/loc*100:0;
   // quality score
   let score=100;const tips=[];
-  if(cc>15){score-=25;tips.push(['',`Cyclomatic complexity is ${cc} — consider splitting into smaller functions (aim < 10).`]);}else if(cc>10){score-=12;tips.push(['',`Complexity ${cc} is moderate; some refactoring could help.`]);}else tips.push(['good',`Complexity ${cc} is healthy.`]);
-  if(maxNest>4){score-=18;tips.push(['',`Max nesting depth ${maxNest} — flatten with early returns or guard clauses.`]);}else tips.push(['good',`Nesting depth ${maxNest} is fine.`]);
-  if(commentRatio<5&&loc>15){score-=12;tips.push(['',`Only ${commentRatio.toFixed(0)}% comments — add docstrings/comments for research reproducibility.`]);}else if(commentRatio>5)tips.push(['good',`Comment ratio ${commentRatio.toFixed(0)}%.`]);
-  if(maxLine>100){score-=8;tips.push(['',`Longest line is ${maxLine} chars — wrap to ~80–100 for readability.`]);}
+  if(cc>15){score-=25;tips.push(['',`Cyclomatic complexity is ${cc} - consider splitting into smaller functions (aim < 10).`]);}else if(cc>10){score-=12;tips.push(['',`Complexity ${cc} is moderate; some refactoring could help.`]);}else tips.push(['good',`Complexity ${cc} is healthy.`]);
+  if(maxNest>4){score-=18;tips.push(['',`Max nesting depth ${maxNest} - flatten with early returns or guard clauses.`]);}else tips.push(['good',`Nesting depth ${maxNest} is fine.`]);
+  if(commentRatio<5&&loc>15){score-=12;tips.push(['',`Only ${commentRatio.toFixed(0)}% comments - add docstrings/comments for research reproducibility.`]);}else if(commentRatio>5)tips.push(['good',`Comment ratio ${commentRatio.toFixed(0)}%.`]);
+  if(maxLine>100){score-=8;tips.push(['',`Longest line is ${maxLine} chars - wrap to ~80–100 for readability.`]);}
   score=Math.max(0,Math.round(score));
   $('#stats').innerHTML=`<div class="stat-card"><div class="stat-label">Lines of code</div><div class="stat-value">${loc}</div></div>
     <div class="stat-card"><div class="stat-label">Cyclomatic</div><div class="stat-value" style="color:${cc>10?'var(--red)':'var(--green)'}">${cc}</div></div>

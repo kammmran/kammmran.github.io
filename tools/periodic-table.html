@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Periodic Table — Academy Tools</title>
+<title>Periodic Table - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -105,7 +105,7 @@ function buildTable(){
 function showDetail(e){
   const d = $('#detail');
   d.style.display = 'block';
-  const enText = e.en == null ? '—' : e.en.toFixed(2);
+  const enText = e.en == null ? '-' : e.en.toFixed(2);
   d.innerHTML = `
     <div class="dt-head">
       <div class="dt-sym" style="background:${cellColor(e)}"><div class="n">${e.number}</div><div class="s">${e.symbol}</div></div>
@@ -117,7 +117,7 @@ function showDetail(e){
     <div class="stat-grid">
       <div class="stat-card"><div class="stat-label">Atomic number</div><div class="stat-value">${e.number}</div></div>
       <div class="stat-card"><div class="stat-label">Atomic weight</div><div class="stat-value">${e.weight}</div></div>
-      <div class="stat-card"><div class="stat-label">Group</div><div class="stat-value">${e.ypos>=9?'—':e.xpos}</div></div>
+      <div class="stat-card"><div class="stat-label">Group</div><div class="stat-value">${e.ypos>=9?'-':e.xpos}</div></div>
       <div class="stat-card"><div class="stat-label">Period</div><div class="stat-value">${e.ypos>=9?(e.ypos===9?6:7):e.ypos}</div></div>
       <div class="stat-card"><div class="stat-label">Electronegativity</div><div class="stat-value">${enText}</div></div>
       <div class="stat-card"><div class="stat-label">Category</div><div class="stat-value" style="font-size:13px">${CATEGORY_LABELS[e.category]}</div></div>

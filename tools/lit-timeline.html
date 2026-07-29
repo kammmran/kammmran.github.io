@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Literature Timeline Builder — Academy Tools</title>
+<title>Literature Timeline Builder - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-timeline"></i></div>
       <div>
         <div class="tool-title">Literature Timeline Builder</div>
-        <div class="tool-desc">Plot a field's landmark papers across time — each dot a highly-cited work, sized by its citation count. Powered by OpenAlex.</div>
+        <div class="tool-desc">Plot a field's landmark papers across time - each dot a highly-cited work, sized by its citation count. Powered by OpenAlex.</div>
       </div>
     </div>
   </div>
@@ -63,9 +63,9 @@ $('#f').addEventListener('submit',async e=>{
     svg+=`<line x1="${pl}" y1="${baseY}" x2="${W-pr}" y2="${baseY}" stroke="var(--border2)"/>`;
     for(let y=ymin;y<=ymax;y+=Math.max(1,Math.ceil((ymax-ymin)/8))){ svg+=`<line x1="${X(y)}" y1="${baseY}" x2="${X(y)}" y2="${baseY+4}" stroke="var(--border2)"/><text x="${X(y)}" y="${baseY+16}" text-anchor="middle">${y}</text>`; }
     w.forEach(x=>{ const rad=4+ (x.cited_by_count/cmax)*16; const jitter=(Math.random()-0.5)*40; const cy=baseY-22-Math.abs(jitter);
-      svg+=`<circle cx="${X(x.publication_year)}" cy="${cy}" r="${rad.toFixed(1)}" fill="rgba(45,212,191,0.35)" stroke="var(--teal)"><title>${esc(x.display_name)} (${x.publication_year}) — ${x.cited_by_count.toLocaleString()} cites</title></circle>`; });
+      svg+=`<circle cx="${X(x.publication_year)}" cy="${cy}" r="${rad.toFixed(1)}" fill="rgba(45,212,191,0.35)" stroke="var(--teal)"><title>${esc(x.display_name)} (${x.publication_year}) - ${x.cited_by_count.toLocaleString()} cites</title></circle>`; });
     svg+=`<text x="${pl}" y="18">circle size = citation count · hover for title</text></svg>`;
-    const top=w.slice(0,12).map(x=>{ const a=x.authorships&&x.authorships[0]&&x.authorships[0].author.display_name||''; const doi=x.doi?x.doi:''; return `<div class="prow"><span class="yr">${x.publication_year}</span>${doi?`<a class="lnk" href="${esc(doi)}" target="_blank" rel="noopener">${esc(x.display_name)}</a>`:esc(x.display_name)} <span style="color:var(--text3)">— ${esc(a)}${a?' et al.':''} · ${x.cited_by_count.toLocaleString()} cites</span></div>`; }).join('');
+    const top=w.slice(0,12).map(x=>{ const a=x.authorships&&x.authorships[0]&&x.authorships[0].author.display_name||''; const doi=x.doi?x.doi:''; return `<div class="prow"><span class="yr">${x.publication_year}</span>${doi?`<a class="lnk" href="${esc(doi)}" target="_blank" rel="noopener">${esc(x.display_name)}</a>`:esc(x.display_name)} <span style="color:var(--text3)">- ${esc(a)}${a?' et al.':''} · ${x.cited_by_count.toLocaleString()} cites</span></div>`; }).join('');
     out.innerHTML=svg+`<div style="margin-top:12px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3)">Most-cited works</div>`+top;
   }catch(err){ out.innerHTML=`<div class="muted">Couldn't reach OpenAlex (${esc(err.message)}).</div>`; }
 });

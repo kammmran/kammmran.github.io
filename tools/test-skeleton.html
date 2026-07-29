@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unit Test Skeleton Generator — Academy Tools</title>
+<title>Unit Test Skeleton Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,14 +21,14 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-test-pipe"></i></div>
       <div>
         <div class="tool-title">Unit Test Skeleton Generator</div>
-        <div class="tool-desc">Paste Python or JavaScript function definitions and get ready-to-fill test skeletons — pytest/unittest for Python, Jest for JS — one stub per function with argument placeholders and TODO assertions, plus edge-case reminders. Removes the boilerplate so you actually write the tests. Local.</div>
+        <div class="tool-desc">Paste Python or JavaScript function definitions and get ready-to-fill test skeletons - pytest/unittest for Python, Jest for JS - one stub per function with argument placeholders and TODO assertions, plus edge-case reminders. Removes the boilerplate so you actually write the tests. Local.</div>
       </div>
     </div>
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
     <div class="row" style="gap:10px"><label class="fld">Language<select id="lang"><option value="py">Python (pytest)</option><option value="pyu">Python (unittest)</option><option value="js">JavaScript (Jest)</option></select></label><span class="muted" id="status" style="font-size:12px;margin-left:auto"></span></div>
-    <label class="fld">Source — paste your functions
+    <label class="fld">Source - paste your functions
       <textarea id="src" style="min-height:150px;font-family:ui-monospace,monospace;font-size:12.5px">def normalize(values, lo=0.0, hi=1.0):
     ...
 
@@ -41,7 +41,7 @@ def merge_intervals(intervals):
     <div class="row"><button class="btn btn-primary" id="gen"><i class="ti ti-wand"></i> Generate tests</button><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button><button class="btn" id="dl"><i class="ti ti-download"></i> Download</button></div>
     <pre id="out" style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;overflow:auto;font-size:12.5px;line-height:1.5;max-height:50vh"></pre>
   </div>
-  <div class="muted" style="font-size:12px;margin-top:10px">These are skeletons, not generated assertions — the tool can't know what your functions should return, so it leaves TODOs and edge-case prompts (empty input, boundaries, types). Fill them in with expected values.</div>
+  <div class="muted" style="font-size:12px;margin-top:10px">These are skeletons, not generated assertions - the tool can't know what your functions should return, so it leaves TODOs and edge-case prompts (empty input, boundaries, types). Fill them in with expected values.</div>
 </main>
 
 <style>.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--text2)}</style>
@@ -52,7 +52,7 @@ function parsePy(src){const re=/def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)/g;const fns=[
 function parseJs(src){const fns=[];let m;
   const re1=/function\s+([A-Za-z_$]\w*)\s*\(([^)]*)\)/g;while((m=re1.exec(src)))fns.push({name:m[1],args:argList(m[2])});
   const re2=/(?:const|let|var)\s+([A-Za-z_$]\w*)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*=>/g;while((m=re2.exec(src)))fns.push({name:m[1],args:argList(m[2])});
-  const re3=/([A-Za-z_$]\w*)\s*\(([^)]*)\)\s*{/g;// methods — best effort, skip keywords
+  const re3=/([A-Za-z_$]\w*)\s*\(([^)]*)\)\s*{/g;// methods - best effort, skip keywords
   return fns;
 }
 function argList(s){return s.split(',').map(a=>a.trim().split(/[=:]/)[0].trim().replace(/^\.\.\./,'')).filter(Boolean);}

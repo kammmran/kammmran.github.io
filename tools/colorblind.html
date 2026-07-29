@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Color Blindness Simulator — Academy Tools</title>
+<title>Color Blindness Simulator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -50,7 +50,7 @@
       <div class="dropzone" id="drop">
         <i class="ti ti-photo-up"></i>
         <div class="dropzone-title">Drop an image or click to choose</div>
-        <div class="dropzone-hint">PNG, JPG, GIF, WebP — stays on your device.</div>
+        <div class="dropzone-hint">PNG, JPG, GIF, WebP - stays on your device.</div>
         <input type="file" id="file" accept="image/*" hidden>
       </div>
       <div id="img-grid" class="img-grid" style="margin-top:14px"></div>
@@ -60,7 +60,7 @@
   <div class="panel" style="margin-top:16px">
     <div class="panel-label"><span>About</span></div>
     <div style="font-size:13px; line-height:1.7; color:var(--text2)">
-      Roughly <b style="color:var(--text)">8% of men</b> and <b style="color:var(--text)">0.5% of women</b> have some form of color vision deficiency. The most common is red–green (deuteranomaly/protanomaly). Use this tool to check whether your design — chart, slide, or interface — still communicates without color, and consider pairing color with shape, label, or pattern.
+      Roughly <b style="color:var(--text)">8% of men</b> and <b style="color:var(--text)">0.5% of women</b> have some form of color vision deficiency. The most common is red–green (deuteranomaly/protanomaly). Use this tool to check whether your design - chart, slide, or interface - still communicates without color, and consider pairing color with shape, label, or pattern.
     </div>
   </div>
 </main>
@@ -85,14 +85,14 @@ const $ = s => document.querySelector(s);
 
 const TYPES = [
   ['normal', 'Normal vision', 'Baseline reference'],
-  ['protanomaly', 'Protanomaly', 'Reduced red — common (~1% males)'],
+  ['protanomaly', 'Protanomaly', 'Reduced red - common (~1% males)'],
   ['protanopia', 'Protanopia', 'No red receptors (~1% males)'],
-  ['deuteranomaly', 'Deuteranomaly', 'Reduced green — most common (~5% males)'],
+  ['deuteranomaly', 'Deuteranomaly', 'Reduced green - most common (~5% males)'],
   ['deuteranopia', 'Deuteranopia', 'No green receptors (~1% males)'],
-  ['tritanomaly', 'Tritanomaly', 'Reduced blue — rare'],
-  ['tritanopia', 'Tritanopia', 'No blue receptors — rare'],
+  ['tritanomaly', 'Tritanomaly', 'Reduced blue - rare'],
+  ['tritanopia', 'Tritanopia', 'No blue receptors - rare'],
   ['achromatomaly', 'Achromatomaly', 'Partial color loss'],
-  ['achromatopsia', 'Achromatopsia', 'Total color blindness — very rare']
+  ['achromatopsia', 'Achromatopsia', 'Total color blindness - very rare']
 ];
 
 function renderColor() {

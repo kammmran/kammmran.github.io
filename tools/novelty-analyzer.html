@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Research Novelty Analyzer — Academy Tools</title>
+<title>Research Novelty Analyzer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -57,7 +57,7 @@ function run(){
   // articulation score: presence of novelty + contribution + contrast to prior
   let score=0; if(novS)score+=40; if(conS)score+=35; if(/\b(unlike|in contrast to|whereas|compared to (previous|prior|existing)|gap)\b/i.test(t))score+=25;
   const band=score>=75?'--green':score>=40?'--amber':'--red';
-  const verdict=score>=75?'Novelty is clearly articulated':score>=40?'Novelty is partly stated — make it explicit':'Novelty is unclear — a reviewer will ask "what is new?"';
+  const verdict=score>=75?'Novelty is clearly articulated':score>=40?'Novelty is partly stated - make it explicit':'Novelty is unclear - a reviewer will ask "what is new?"';
   out.innerHTML=`<div class="stat-grid" style="margin-bottom:12px">
       <div class="stat-card"><div class="stat-label">Articulation score</div><div class="stat-value" style="color:var(${band})">${score}/100</div></div>
       <div class="stat-card"><div class="stat-label">Novelty cues</div><div class="stat-value" style="color:var(--teal)">${novWords}</div></div>

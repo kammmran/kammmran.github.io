@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Predatory Journal Detector — Academy Tools</title>
+<title>Predatory Journal Detector - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -64,7 +64,7 @@ function run(){
   let score=0; FLAGS.forEach((f,i)=>{ if($('#f'+i).checked) score+=f[0]; });
   const pct=Math.round(score/TOTAL*100);
   const band=pct>=50?'--red':pct>=20?'--amber':'--green';
-  const verdict=pct>=50?'High risk — likely predatory. Do not submit.':pct>=20?'Caution — several red flags. Verify on DOAJ / Think-Check-Submit before submitting.':pct>0?'Low risk — a few minor concerns. Still verify indexing.':'No red flags ticked. Confirm indexing and reputation anyway.';
+  const verdict=pct>=50?'High risk - likely predatory. Do not submit.':pct>=20?'Caution - several red flags. Verify on DOAJ / Think-Check-Submit before submitting.':pct>0?'Low risk - a few minor concerns. Still verify indexing.':'No red flags ticked. Confirm indexing and reputation anyway.';
   $('#out').innerHTML=`<div class="row" style="justify-content:space-between"><b style="font-size:15px">Predatory-risk score</b><span style="color:var(${band})"><b>${pct}%</b></span></div>
     <div class="meter"><div style="width:${pct}%;background:var(${band})"></div></div>
     <div style="font-weight:600;color:var(${band})">${verdict}</div>

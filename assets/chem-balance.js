@@ -55,7 +55,7 @@
       pivotCols.push(c); r++;
     }
     const freeCols = [...Array(cols).keys()].filter(c => !pivotCols.includes(c));
-    if (freeCols.length !== 1) throw new Error(freeCols.length === 0 ? 'No solution (over-determined).' : 'Underdetermined — multiple independent reactions.');
+    if (freeCols.length !== 1) throw new Error(freeCols.length === 0 ? 'No solution (over-determined).' : 'Underdetermined - multiple independent reactions.');
 
     const free = freeCols[0];
     const x = new Array(cols).fill([0,1]);

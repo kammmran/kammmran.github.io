@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Compton Scattering — Academy Tools</title>
+<title>Compton Scattering - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-angle"></i></div>
       <div>
         <div class="tool-title">Compton Scattering</div>
-        <div class="tool-desc">Δλ = (h/mₑc)(1 − cos θ) — the wavelength shift of a photon scattering off an electron, and the recoil energy.</div>
+        <div class="tool-desc">Δλ = (h/mₑc)(1 − cos θ) - the wavelength shift of a photon scattering off an electron, and the recoil energy.</div>
       </div>
     </div>
   </div>
@@ -85,7 +85,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Electron recoil KE</div><div class="stat-value" style="color:var(--green)">${(Erecoil/eV).toExponential(3)} eV</div></div>
       <div class="stat-card"><div class="stat-label">Compton λ_C</div><div class="stat-value" style="font-size:13px">2.426 pm</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">The shift depends only on angle, never on λ — at θ = 0 there's no shift, at θ = 180° (back-scatter) it's the maximum 2λ_C. That a photon loses energy in a billiard-ball collision proved light carries momentum p = h/λ.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">The shift depends only on angle, never on λ - at θ = 0 there's no shift, at θ = 180° (back-scatter) it's the maximum 2λ_C. That a photon loses energy in a billiard-ball collision proved light carries momentum p = h/λ.</div>`;
 }
 ['wl','ang'].forEach(id=>$('#'+id).addEventListener('input',run));
 run();

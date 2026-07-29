@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Statistical Test Recommender — Academy Tools</title>
+<title>Statistical Test Recommender - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -98,7 +98,7 @@ function rec(){
     <div class="t">${test}</div>
     ${alt?`<div class="alt"><i class="ti ti-arrows-left-right"></i> ${alt}</div>`:''}
     ${note?`<div class="alt">${note}</div>`:''}</div>
-    <div class="muted" style="font-size:12px;margin-top:8px">Guidance only — always check the test's assumptions (independence, normality, equal variances, expected cell counts) before reporting.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">Guidance only - always check the test's assumptions (independence, normality, equal variances, expected cell counts) before reporting.</div>`;
 }
 document.querySelectorAll('#goal,#dv,#groups,#paired,#norm,#predtype').forEach(el=>el.addEventListener('change',rec));
 rec();

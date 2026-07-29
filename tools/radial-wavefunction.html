@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hydrogen Radial Distribution — Academy Tools</title>
+<title>Hydrogen Radial Distribution - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(96,165,250,0.12);color:var(--blue)"><i class="ti ti-chart-area-line"></i></div>
       <div>
         <div class="tool-title">Hydrogen Radial Distribution</div>
-        <div class="tool-desc">The radial wavefunction Rₙₗ(r) and probability 4πr²R² for hydrogen — see shells, radial nodes and where the electron most likely is.</div>
+        <div class="tool-desc">The radial wavefunction Rₙₗ(r) and probability 4πr²R² for hydrogen - see shells, radial nodes and where the electron most likely is.</div>
       </div>
     </div>
   </div>
@@ -73,7 +73,7 @@ function run(){
   for(let i=0;i<=N;i++){ const r=rmax*i/N; let Rv; try{ Rv=R(n,l,r); }catch(e){ Rv=null; } if(Rv==null){ valid=false; break; } const y=mode==='rdf'?4*Math.PI*r*r*Rv*Rv:Rv; xs.push(r); ys.push(y); }
   const svg=$('#svg'); svg.innerHTML='';
   const W=760,H=320,pl=50,pr=20,pt=18,pb=38,iw=W-pl-pr,ih=H-pt-pb;
-  if(!valid){ $('#info').innerHTML='<div class="muted">That (n,ℓ) combination isn\'t tabulated here — try n = 1–4 with ℓ = 0…n−1.</div>'; return; }
+  if(!valid){ $('#info').innerHTML='<div class="muted">That (n,ℓ) combination isn\'t tabulated here - try n = 1–4 with ℓ = 0…n−1.</div>'; return; }
   const ymin=Math.min(0,...ys), ymax=Math.max(...ys); const span=(ymax-ymin)||1;
   const X=r=>pl+r/rmax*iw, Y=y=>pt+(ymax-y)/span*ih;
   const ln=(x1,y1,x2,y2,c,d)=>{const l2=document.createElementNS(NS,'line');l2.setAttribute('x1',x1);l2.setAttribute('y1',y1);l2.setAttribute('x2',x2);l2.setAttribute('y2',y2);l2.setAttribute('stroke',c);l2.setAttribute('stroke-width','1.2');if(d)l2.setAttribute('stroke-dasharray',d);svg.appendChild(l2);};
@@ -96,7 +96,7 @@ function run(){
       ${mode==='rdf'?`<div class="stat-card"><div class="stat-label">Most probable r</div><div class="stat-value" style="color:var(--green)">${peakR.toFixed(1)} a₀</div></div>`:''}
       <div class="stat-card"><div class="stat-label">⟨shell⟩ ≈ n²a₀</div><div class="stat-value">${(n*n)} a₀</div></div>
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">a₀ = 0.529 Å. The radial distribution 4πr²R² gives the probability of finding the electron in a thin shell at radius r — its peaks are the orbital "shells". Radial nodes = n − ℓ − 1.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">a₀ = 0.529 Å. The radial distribution 4πr²R² gives the probability of finding the electron in a thin shell at radius r - its peaks are the orbital "shells". Radial nodes = n − ℓ − 1.</div>`;
 }
 ['n','l','mode'].forEach(id=>$('#'+id).addEventListener('input',run));
 run();

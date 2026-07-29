@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Concentration Converter — Academy Tools</title>
+<title>Concentration Converter - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -55,7 +55,7 @@
 const $ = s => document.querySelector(s);
 const num = id => { const v=parseFloat($('#'+id).value); return Number.isFinite(v)?v:null; };
 
-function fmt(v){ if(!Number.isFinite(v)) return '—'; if(v!==0&&(Math.abs(v)<1e-3||Math.abs(v)>=1e6)) return v.toExponential(4); return v.toPrecision(6).replace(/\.?0+$/,''); }
+function fmt(v){ if(!Number.isFinite(v)) return '-'; if(v!==0&&(Math.abs(v)<1e-3||Math.abs(v)>=1e6)) return v.toExponential(4); return v.toPrecision(6).replace(/\.?0+$/,''); }
 
 function calc(){
   const mm=num('mm'), dens=num('dens')||1.0, amt=num('amt'), unit=$('#unit').value;

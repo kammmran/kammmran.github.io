@@ -351,13 +351,13 @@ Here are some feature ideas organized by category:
 **Map & Visualization**
 - 3D terrain visualization using Cesium.js or Three.js, overlaying mineral deposits on actual topographic elevation data
 - Heatmap layer toggle showing deposit density clusters globally
-- Draw & measure tools — let users sketch regions and calculate area/perimeter for field notes
+- Draw & measure tools - let users sketch regions and calculate area/perimeter for field notes
 - Time-slider for geological eras, animating deposit formation over geologic time
 - Side-by-side map comparison (e.g., copper deposits vs. tectonic plate boundaries)
 
 **Data & Analysis**
-- AI-powered mineral predictor — input a chemical formula or crystal system and get likely mineral matches
-- Correlation engine — surface statistical relationships between deposit types and geographic/tectonic features
+- AI-powered mineral predictor - input a chemical formula or crystal system and get likely mineral matches
+- Correlation engine - surface statistical relationships between deposit types and geographic/tectonic features
 - Export dashboard charts as PNG/PDF reports with a single click
 - CSV/KML upload so researchers can overlay their own field data on the map
 - Periodic table interface linking elements directly to their mineral sources on the map
@@ -365,27 +365,27 @@ Here are some feature ideas organized by category:
 **Quiz & Education**
 - Streak tracking and leaderboard with session-based or account-based scoring
 - Difficulty tiers (Beginner / Field Geologist / Expert) adjusting question pool complexity
-- Flashcard mode — rapid-fire mineral image review without multiple choice
+- Flashcard mode - rapid-fire mineral image review without multiple choice
 - Explanation panel after each answer showing why the correct answer is right, with a link to the RRUFF entry
 - Quiz history log so users can review past questions they got wrong
 
 **User & Community**
 - User accounts with saved map bookmarks, personal deposit notes, and quiz stats
-- Annotation layer — let logged-in users pin field observations to coordinates with photos and descriptions
-- Public/private collections — curate sets of minerals or deposits and share them via link
+- Annotation layer - let logged-in users pin field observations to coordinates with photos and descriptions
+- Public/private collections - curate sets of minerals or deposits and share them via link
 - Discussion threads attached to specific deposit markers
 
 **Search & Discovery**
 - Full-text global search bar (mineral name, country, deposit type) jumping directly to the relevant map marker
 - "Mineral of the Day" widget on the homepage with rotating RRUFF imagery and key facts
-- Related minerals panel in map popups — surfaces chemically or structurally similar minerals
+- Related minerals panel in map popups - surfaces chemically or structurally similar minerals
 - Advanced filter builder (e.g., "show only skarn deposits in Asia with microprobe data available")
 
 **API & Integrations**
 - Public REST API with documentation so external tools can query your deposit database
 - Webhooks or RSS feed for new dataset additions
 - Mindat.org or GeoROC cross-reference links alongside the existing Wikipedia/Google links
-- RRUFF spectrum comparison — plot two minerals' Raman spectra side by side in the popup canvas
+- RRUFF spectrum comparison - plot two minerals' Raman spectra side by side in the popup canvas
 
 **Performance & UX**
 - Progressive Web App (PWA) support for offline map tile caching in the field
@@ -393,4 +393,4 @@ Here are some feature ideas organized by category:
 - Mobile-optimized touch gestures for the map (pinch-zoom, swipe layers)
 - Skeleton loading states replacing blank screens during API fetches
 
-The highest-impact quick wins would probably be **full-text search**, **user accounts + bookmarks**, and the **quiz explanation panel** — they add depth without requiring major architectural changes. The most ambitious but differentiating feature would be the **AI mineral predictor** or **field data upload**, since those turn the app from a read-only explorer into an active research tool.
+The highest-impact quick wins would probably be **full-text search**, **user accounts + bookmarks**, and the **quiz explanation panel** - they add depth without requiring major architectural changes. The most ambitious but differentiating feature would be the **AI mineral predictor** or **field data upload**, since those turn the app from a read-only explorer into an active research tool.

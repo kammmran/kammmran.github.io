@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reaction Energy Profile — Academy Tools</title>
+<title>Reaction Energy Profile - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(248,113,113,0.12);color:var(--red)"><i class="ti ti-mountain"></i></div>
       <div>
         <div class="tool-title">Reaction Energy Profile</div>
-        <div class="tool-desc">Draw an activation-energy diagram from reactant/product energies and Eₐ — see ΔH, the reverse barrier and catalysis effect.</div>
+        <div class="tool-desc">Draw an activation-energy diagram from reactant/product energies and Eₐ - see ΔH, the reverse barrier and catalysis effect.</div>
       </div>
     </div>
   </div>
@@ -95,7 +95,7 @@ function run(){
       <div class="stat-card"><div class="stat-label">Eₐ reverse</div><div class="stat-value">${EaRev.toFixed(1)}</div></div>
       ${Eac!=null?`<div class="stat-card"><div class="stat-label">Catalyst lowers Eₐ by</div><div class="stat-value" style="color:var(--amber)">${(Ea-Eac).toFixed(1)}</div></div>`:''}
     </div>
-    <div class="muted" style="font-size:12px;margin-top:8px">A catalyst lowers Eₐ (both directions) but never changes ΔH — the reactant and product levels stay put.</div>`;
+    <div class="muted" style="font-size:12px;margin-top:8px">A catalyst lowers Eₐ (both directions) but never changes ΔH - the reactant and product levels stay put.</div>`;
 }
 ['er','ep','ea','eac'].forEach(id=>$('#'+id).addEventListener('input',run));
 run();

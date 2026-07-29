@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Percent Yield & Composition — Academy Tools</title>
+<title>Percent Yield & Composition - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -75,7 +75,7 @@ function yieldCalc(){
   if(th<=0){ $('#y_out').innerHTML='<span class="muted">Theoretical yield must be positive.</span>'; return; }
   const pct=a/th*100;
   const color = pct>100?'var(--amber)':pct>=70?'var(--green)':'var(--text)';
-  let note = pct>100?' <span class="muted">(>100% — likely impurity or measurement error)</span>':'';
+  let note = pct>100?' <span class="muted">(>100% - likely impurity or measurement error)</span>':'';
   $('#y_out').innerHTML=`Percent yield = <b style="color:${color}">${pct.toFixed(2)}%</b>${note}`;
 }
 ['y_act','y_theo'].forEach(id=>$('#'+id).addEventListener('input',yieldCalc));

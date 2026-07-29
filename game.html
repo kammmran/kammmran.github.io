@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>CHRONO SHIFT — Combat Edition</title>
+<title>CHRONO SHIFT - Combat Edition</title>
 <link rel="stylesheet" href="css/game.css">
 </head>
 <body class="menu">
@@ -24,7 +24,7 @@
   </div>
 </div>
 
-<!-- HOME BASE — single-screen dashboard. Each tile opens a modal with the section's content. -->
+<!-- HOME BASE - single-screen dashboard. Each tile opens a modal with the section's content. -->
 <div class="page" id="homePanel">
   <div class="page-header">
     <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
@@ -45,7 +45,7 @@
         <div class="page-stat"><div class="lbl">GUNS OWNED</div><div class="val" id="hbStatGuns">0/0</div></div>
       </div>
 
-      <!-- Compact equipped loadout (always visible — at-a-glance reference) -->
+      <!-- Compact equipped loadout (always visible - at-a-glance reference) -->
       <div class="hb-equipped-bar">
         <span class="hb-equipped-label">🎯 LOADOUT</span>
         <div class="eq-strip eq-strip-compact" id="hbEqStrip"></div>
@@ -156,7 +156,7 @@
 </div>
 </div>
 
-<!-- SETTINGS — full-page -->
+<!-- SETTINGS - full-page -->
 <div class="page" id="settingsPanel">
   <div class="page-header">
     <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
@@ -223,7 +223,7 @@
   </div>
 </div>
 
-<!-- README — full-page -->
+<!-- README - full-page -->
 <div class="page" id="readmePanel">
   <div class="page-header">
     <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
@@ -238,23 +238,23 @@
           <span class="build-pill">COMBAT EDITION</span>
         </div>
         <h3 style="margin-top:4px">CHRONO SHIFT</h3>
-        <p>A neon-soaked vertical platformer where timing wins fights. Pick a mode, pick a map, pick a hero — then climb. Solo, local two-player split-screen, or online co-op via a 6-character room code.</p>
+        <p>A neon-soaked vertical platformer where timing wins fights. Pick a mode, pick a map, pick a hero - then climb. Solo, local two-player split-screen, or online co-op via a 6-character room code.</p>
       </div>
 
       <div class="page-grid-2">
 
         <div class="page-section">
           <div class="page-section-title"><span class="ico">🎯</span>OBJECTIVE</div>
-          <p>Climb upward to the portal at the top of the map. HARD / PRO require all enemies dead first. PRO enemies shoot back. In <b>ENDLESS</b> mode there is no portal — keep climbing until you die.</p>
+          <p>Climb upward to the portal at the top of the map. HARD / PRO require all enemies dead first. PRO enemies shoot back. In <b>ENDLESS</b> mode there is no portal - keep climbing until you die.</p>
         </div>
 
         <div class="page-section">
           <div class="page-section-title"><span class="ico">🗺</span>MAPS</div>
           <ul>
-            <li><b>NEON ASCENT</b> — beginner climb, wide platforms.</li>
-            <li><b>CHRONO SPIRE</b> — crumbling platforms required.</li>
-            <li><b>VOID FOUNDRY</b> — lava floor, dense saws, big gaps. LIFTER recommended.</li>
-            <li><b>ENDLESS</b> — procedural climb; difficulty ramps every 1000m.</li>
+            <li><b>NEON ASCENT</b> - beginner climb, wide platforms.</li>
+            <li><b>CHRONO SPIRE</b> - crumbling platforms required.</li>
+            <li><b>VOID FOUNDRY</b> - lava floor, dense saws, big gaps. LIFTER recommended.</li>
+            <li><b>ENDLESS</b> - procedural climb; difficulty ramps every 1000m.</li>
           </ul>
         </div>
 
@@ -266,7 +266,7 @@
           <li><b>Home Base hub.</b> Roster, gun store, coupon entry, achievements all in one full-screen page.</li>
           <li><b>Gun Store.</b> 5 new buyable guns (Shotgun, Sniper, Rail Gun, Flame, Rocket) with a 3-slot equip loadout.</li>
           <li><b>Coupon system.</b> Redeem codes for coins. Try <code style="background:rgba(255,200,0,.15);padding:2px 6px;border-radius:4px;color:#ffcc00">kammmran</code>.</li>
-          <li><b>Endless mode.</b> No portal, no level break — climb until you die. Difficulty ramps per 1000m.</li>
+          <li><b>Endless mode.</b> No portal, no level break - climb until you die. Difficulty ramps per 1000m.</li>
           <li><b>Achievements.</b> 6 milestones tracking distance, kills, score, and level progress.</li>
           <li><b>Classic gold coins.</b> The coin pickup got a proper spinning-gold-coin look.</li>
         </ul>
@@ -280,7 +280,7 @@
         <div class="page-section">
           <div class="page-section-title"><span class="ico">👤</span>CREDITS</div>
           <p>Built by Kamran Heydarov · 2026 · part of <i>kamranheydarov.tech</i>.</p>
-          <p>Audio synthesized at runtime via WebAudio — no external assets.</p>
+          <p>Audio synthesized at runtime via WebAudio - no external assets.</p>
         </div>
       </div>
 
@@ -351,7 +351,7 @@
     <div class="mode-card" id="mp4" onclick="selMap(4)">
       <div class="mc-icon">🎲</div>
       <div class="mc-name">MIX</div>
-      <div class="mc-desc">Random theme each level — surprise climb.</div>
+      <div class="mc-desc">Random theme each level - surprise climb.</div>
     </div>
   </div>
   <button class="btn btn-g" onclick="showPanel('modePanel')" style="margin-right:10px">← BACK</button>
@@ -447,9 +447,9 @@
   <div class="char-coin-pill" id="charCoinPill">🪙 <span id="charCoinTotal">0</span></div>
 </div>
 
-<!-- UPGRADE PANEL — opened from a character card's UPGRADE button. -->
+<!-- UPGRADE PANEL - opened from a character card's UPGRADE button. -->
 <div class="panel" id="upgradePanel" style="min-width:540px;max-width:92vw">
-  <div class="pt" id="upgTitle">UPGRADES — NEON</div>
+  <div class="pt" id="upgTitle">UPGRADES - NEON</div>
   <div class="ps">Coins: <span id="upgCoins">0</span> 🪙</div>
   <div class="upg-list" id="upgList"></div>
   <div style="margin-top:14px">
@@ -457,7 +457,7 @@
   </div>
 </div>
 
-<!-- MANUAL — full-page with tabs -->
+<!-- MANUAL - full-page with tabs -->
 <div class="page" id="howPanel">
   <div class="page-header">
     <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
@@ -523,7 +523,7 @@
             <div class="ci"><span class="ck" style="color:#00ff88">EMERALD</span><span class="cd">Slow / high jump. Bloom Heal · Vine Snare · Sky Leap.</span></div>
             <div class="ci"><span class="ck" style="color:#ffcc00">VOID</span><span class="cd">Well-rounded. Phase Shift · Void Bomb · Singularity.</span></div>
             <div class="ci"><span class="ck" style="color:#00ffaa">AEGIS · CO-OP</span><span class="cd">Shields teammate (G). Bulwark · Reflect Wave · Group Aegis.</span></div>
-            <div class="ci"><span class="ck" style="color:#ffaa00">LIFTER · CO-OP</span><span class="cd">Boosts teammate skyward (G) — essential on VOID FOUNDRY. Updraft · Stomp · Catapult Pulse.</span></div>
+            <div class="ci"><span class="ck" style="color:#ffaa00">LIFTER · CO-OP</span><span class="cd">Boosts teammate skyward (G) - essential on VOID FOUNDRY. Updraft · Stomp · Catapult Pulse.</span></div>
           </div>
         </div>
       </div>
@@ -605,11 +605,11 @@
       <div class="cloud-user-status"><span class="cloud-online-dot"></span><span>Online</span></div>
     </div>
     <span class="cloud-user-caret">▾</span>
-    <!-- Popover menu — shows on click. Profile actions live here. -->
+    <!-- Popover menu - shows on click. Profile actions live here. -->
     <div class="cloud-menu" id="cloudMenu" onclick="event.stopPropagation()">
       <div class="cloud-menu-code">
         <span class="cloud-menu-code-label">YOUR CODE</span>
-        <span class="cloud-menu-code-val" id="cloudMyCode">—</span>
+        <span class="cloud-menu-code-val" id="cloudMyCode">-</span>
       </div>
       <button class="cloud-menu-item" onclick="openHomeBase();closeCloudMenu();">🏠 Open Home Base</button>
       <button class="cloud-menu-item" onclick="openHbModal('leaderboard');showPanel('homePanel');closeCloudMenu();">🏆 Leaderboard</button>
@@ -619,12 +619,12 @@
   </div>
 </div>
 
-<!-- Loot box reveal modal — populated by openLootBox() in script.js -->
+<!-- Loot box reveal modal - populated by openLootBox() in script.js -->
 <div id="lootModalBg" class="loot-modal-bg" onclick="if(event.target===this)closeLootModal()">
   <div class="loot-modal">
     <div class="loot-modal-title">📦 LOOT REVEAL</div>
-    <div id="lootModalPrize" class="loot-modal-prize">—</div>
-    <div id="lootModalDetail" class="loot-modal-detail">—</div>
+    <div id="lootModalPrize" class="loot-modal-prize">-</div>
+    <div id="lootModalDetail" class="loot-modal-detail">-</div>
     <button class="loot-modal-close" onclick="closeLootModal()">AWESOME</button>
   </div>
 </div>
@@ -634,7 +634,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-<script src="js/firebase-config.js" onerror="console.log('[Cloud] js/firebase-config.js not present — cloud features disabled.')"></script>
+<script src="js/firebase-config.js" onerror="console.log('[Cloud] js/firebase-config.js not present - cloud features disabled.')"></script>
 <script src="js/cloud.js"></script>
 
 <script src="js/game.js"></script>

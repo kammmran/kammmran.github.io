@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deadline Tracker — Academy Tools</title>
+<title>Deadline Tracker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -124,7 +124,7 @@ function dueTs(t) {
 }
 
 function fmtDue(t) {
-  if (!t.date) return '—';
+  if (!t.date) return '-';
   const ts = dueTs(t);
   const now = Date.now();
   const diff = ts - now;

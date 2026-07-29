@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dataset Finder — Academy Tools</title>
+<title>Dataset Finder - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-database-search"></i></div>
       <div>
         <div class="tool-title">Dataset Finder</div>
-        <div class="tool-desc">Discover openly published research datasets by topic — title, repository, year and DOI. Powered by DataCite.</div>
+        <div class="tool-desc">Discover openly published research datasets by topic - title, repository, year and DOI. Powered by DataCite.</div>
       </div>
     </div>
   </div>
@@ -53,7 +53,7 @@ $('#f').addEventListener('submit',async e=>{
     const d=await r.json();
     const items=d.data||[];
     if(!items.length){ out.innerHTML='<div class="muted">No datasets found. Try different keywords.</div>'; return; }
-    out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${(d.meta&&d.meta.total||items.length).toLocaleString()} datasets matched — top ${items.length}.</div>`+
+    out.innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${(d.meta&&d.meta.total||items.length).toLocaleString()} datasets matched - top ${items.length}.</div>`+
       items.map(it=>{
         const a=it.attributes; const title=(a.titles&&a.titles[0]&&a.titles[0].title)||'(untitled)';
         const repo=(a.publisher&&(a.publisher.name||a.publisher))||a.client_id||''; const yr=a.publicationYear||'';

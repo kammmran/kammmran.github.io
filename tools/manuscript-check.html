@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Manuscript Completeness — Academy Tools</title>
+<title>Manuscript Completeness - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(74,222,128,0.12);color:var(--green)"><i class="ti ti-checklist"></i></div>
       <div>
         <div class="tool-title">Manuscript Completeness Checker</div>
-        <div class="tool-desc">Paste your full manuscript — it checks for the expected IMRaD sections and common submission essentials.</div>
+        <div class="tool-desc">Paste your full manuscript - it checks for the expected IMRaD sections and common submission essentials.</div>
       </div>
     </div>
   </div>
@@ -82,7 +82,7 @@ function evaluate(){
   if(!text.trim()){ $('#checks').innerHTML='<span class="muted">Paste your manuscript to run the checks.</span>'; $('#fill').style.width='0%'; $('#num').textContent='0%'; return; }
 
   const checks=[]; let score=0, max=0;
-  // section headings — look at line starts for stronger signal
+  // section headings - look at line starts for stronger signal
   const lines=text.split(/\n/).map(l=>l.trim());
   SECTIONS.forEach(([name,re])=>{
     max+=2;
@@ -90,7 +90,7 @@ function evaluate(){
     const anywhere=re.test(lower);
     if(asHeading){ score+=2; checks.push(['ok',name,'Section heading found.']); }
     else if(anywhere){ score+=1; checks.push(['warn',name,'Mentioned but not as a clear heading.']); }
-    else checks.push(['bad',name,'Not found — add this section.']);
+    else checks.push(['bad',name,'Not found - add this section.']);
   });
 
   // citations present

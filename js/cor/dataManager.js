@@ -257,15 +257,15 @@ const DataManager = (() => {
       return {
         name: name,
         cid,
-        formula: p.MolecularFormula ?? "—",
+        formula: p.MolecularFormula ?? "-",
         mw: p.MolecularWeight ? parseFloat(p.MolecularWeight) : null,
-        smiles: p.CanonicalSMILES ?? "—",
+        smiles: p.CanonicalSMILES ?? "-",
         density: null,
         bp: null,
         source: "pubchem"
       };
     } catch (err) {
-      // Network or CORS failure — silently fall back
+      // Network or CORS failure - silently fall back
       return null;
     }
   }
@@ -345,7 +345,7 @@ const DataManager = (() => {
 
     // ----- density axis (for Lee-Gonzalez-Eakin) -------------------
     if (variable === "density") {
-      // 0.05 to 0.50 g/cc — gas-phase range
+      // 0.05 to 0.50 g/cc - gas-phase range
       const x = Array.from({ length: n }, (_, i) => 0.05 + i * (0.45 / (n - 1)));
       let y;
       switch (property) {
@@ -397,14 +397,14 @@ const DataManager = (() => {
     switch (property) {
       /* ---------- Primary ---------- */
       case "density":
-        // ρ in g/cm³ — water/ethanol-like, small negative excess
+        // ρ in g/cm³ - water/ethanol-like, small negative excess
         y = x.map(xi => 0.789 * xi + 0.997 * (1 - xi)
                        + xi * (1 - xi) * (-0.05 + 0.02 * (xi - 0.5))
                        + 0.002 * wig(xi));
         break;
 
       case "viscosity":
-        // mPa·s — asymmetric maximum
+        // mPa·s - asymmetric maximum
         y = x.map(xi => {
           const x2 = 1 - xi;
           return 0.6 * xi + 1.8 * x2 + xi * x2 * (1.5 + 0.3 * (xi - x2))
@@ -413,7 +413,7 @@ const DataManager = (() => {
         break;
 
       case "excessMolarVolume":
-        // cm³/mol — characteristic negative excess
+        // cm³/mol - characteristic negative excess
         y = x.map(xi => {
           const x2 = 1 - xi, d = xi - x2;
           return xi * x2 * (-4.2 + 0.8 * d - 0.5 * d * d) + 0.03 * wig(xi);
@@ -421,7 +421,7 @@ const DataManager = (() => {
         break;
 
       case "activityCoefficient":
-        // γ — Margules-like, ≥ 1, peaks near dilute
+        // γ - Margules-like, ≥ 1, peaks near dilute
         y = x.map(xi => {
           const x2 = 1 - xi;
           return Math.exp(x2 * x2 * (1.1 + 0.4 * xi)) + 0.02 * wig(xi);
@@ -429,7 +429,7 @@ const DataManager = (() => {
         break;
 
       case "vaporPressure":
-        // kPa — log-mixed with positive deviation
+        // kPa - log-mixed with positive deviation
         y = x.map(xi => {
           const lnP = xi * Math.log(5.5) + (1 - xi) * Math.log(12.0)
                     + xi * (1 - xi) * 0.45;
@@ -445,19 +445,19 @@ const DataManager = (() => {
         break;
 
       case "surfaceTension":
-        // mN/m — ethanol 22, water 72, strong negative excess
+        // mN/m - ethanol 22, water 72, strong negative excess
         y = x.map(xi => 22 * xi + 72 * (1 - xi)
                        - xi * (1 - xi) * 42
                        + 0.4 * wig(xi));
         break;
 
       case "electricalConductivity":
-        // mS/cm — parabolic with a maximum
+        // mS/cm - parabolic with a maximum
         y = x.map(xi => 0.05 + xi * (1 - xi) * 4.5 + 0.05 * wig(xi));
         break;
 
       case "speedOfSound":
-        // m/s — water ~1480, ethanol ~1180
+        // m/s - water ~1480, ethanol ~1180
         y = x.map(xi => 1180 * xi + 1480 * (1 - xi)
                        + xi * (1 - xi) * 30
                        + 3 * wig(xi));
@@ -465,20 +465,20 @@ const DataManager = (() => {
 
       /* ---------- Other ---------- */
       case "solubility":
-        // mol/L — increases through midrange (cosolvency)
+        // mol/L - increases through midrange (cosolvency)
         y = x.map(xi => 0.2 + xi * (1 - xi) * 1.8 + 0.4 * xi
                        + 0.02 * wig(xi));
         break;
 
       case "heatCapacity":
-        // J/(mol·K) — ethanol 112, water 75
+        // J/(mol·K) - ethanol 112, water 75
         y = x.map(xi => 112 * xi + 75 * (1 - xi)
                        - xi * (1 - xi) * 6
                        + 0.4 * wig(xi));
         break;
 
       case "thermalConductivity":
-        // W/(m·K) — water 0.60, ethanol 0.17
+        // W/(m·K) - water 0.60, ethanol 0.17
         y = x.map(xi => 0.17 * xi + 0.60 * (1 - xi)
                        - xi * (1 - xi) * 0.04
                        + 0.004 * wig(xi));
@@ -500,7 +500,7 @@ const DataManager = (() => {
         break;
 
       case "molecularWeight":
-        // MW (g/mol) — light end ~80 → heavy end ~450
+        // MW (g/mol) - light end ~80 → heavy end ~450
         y = x.map(xi => 80 * xi + 450 * (1 - xi)
                        + xi * (1 - xi) * 25
                        + 2 * wig(xi));
@@ -513,7 +513,7 @@ const DataManager = (() => {
         break;
 
       case "watsonK":
-        // Watson K factor — paraffinic ~12.5, aromatic ~10
+        // Watson K factor - paraffinic ~12.5, aromatic ~10
         y = x.map(xi => 12.5 * xi + 10.5 * (1 - xi)
                        - xi * (1 - xi) * 0.4
                        + 0.06 * wig(xi));
@@ -531,7 +531,7 @@ const DataManager = (() => {
       return { ...uploadedData, variable: variable || "composition" };
     }
     // We don't fetch experimental mixture data from PubChem (PubChem
-    // doesn't have mixture excess properties broadly) — instead we use a
+    // doesn't have mixture excess properties broadly) - instead we use a
     // synthetic dataset derived from the property, anchored to component
     // properties where possible.
     return synthesizeDataset(property, components, variable || "composition");

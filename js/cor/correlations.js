@@ -9,7 +9,7 @@
  *   - "vapor"        : vapor-pressure correlations
  *
  * Each correlation is registered in CorrelationRegistry. To add a new
- * correlation, call registerCorrelation({...}) — the UI auto-detects it.
+ * correlation, call registerCorrelation({...}) - the UI auto-detects it.
  *
  * Convention:
  *   x          -> mole fraction of component 1 (binary: x₂ = 1 − x₁)
@@ -79,7 +79,7 @@ function _solve(A, b) {
   return x;
 }
 
-/* Locate y at pure-component endpoints (x≈1 and x≈0) — used by mixing rules
+/* Locate y at pure-component endpoints (x≈1 and x≈0) - used by mixing rules
  * such as Grünberg-Nissan, McAllister, Arrhenius, Jouyban-Acree that
  * require pure-fluid property values.
  */
@@ -101,7 +101,7 @@ function _fallback(y) {
 }
 
 /* =====================================================================
- * GENERAL — generic curve fits
+ * GENERAL - generic curve fits
  * =================================================================== */
 
 /* 1. Linear  y = a + b·x */
@@ -127,7 +127,7 @@ CorrelationRegistry.registerCorrelation({
   name: "Polynomial (cubic)",
   equation: "y = a₀ + a₁x + a₂x² + a₃x³",
   parameters: 4,
-  description: "Cubic polynomial — flexible for smooth property variations.",
+  description: "Cubic polynomial - flexible for smooth property variations.",
   fit(x, y) {
     const X = x.map(xi => [1, xi, xi * xi, xi * xi * xi]);
     const p = _lsq(X, y);
@@ -138,7 +138,7 @@ CorrelationRegistry.registerCorrelation({
   }
 });
 
-/* 3. Exponential  y = a·exp(b·x)   — linearize via ln(y) */
+/* 3. Exponential  y = a·exp(b·x)   - linearize via ln(y) */
 CorrelationRegistry.registerCorrelation({
   id: "exponential", category: "general",
   name: "Exponential",
@@ -175,13 +175,13 @@ CorrelationRegistry.registerCorrelation({
   }
 });
 
-/* 5. Power law  y = a · x^b   — linearize via ln(y) = ln(a) + b·ln(x) */
+/* 5. Power law  y = a · x^b   - linearize via ln(y) = ln(a) + b·ln(x) */
 CorrelationRegistry.registerCorrelation({
   id: "powerlaw", category: "general",
   name: "Power Law",
   equation: "y = a · x₁ᵇ",
   parameters: 2,
-  description: "Scaling relation — used for viscosity / diffusion.",
+  description: "Scaling relation - used for viscosity / diffusion.",
   fit(x, y) {
     if (!y.every(v => v > 0)) return _fallback(y);
     const eps = 1e-3;
@@ -195,7 +195,7 @@ CorrelationRegistry.registerCorrelation({
 });
 
 /* =====================================================================
- * EXCESS — mixture / activity coefficient models
+ * EXCESS - mixture / activity coefficient models
  * =================================================================== */
 
 /* 6. Margules (3-suffix)
@@ -250,7 +250,7 @@ CorrelationRegistry.registerCorrelation({
 
 /* 8. Van Laar
  *    Yᴱ = A·B·x₁·x₂ / (A·x₁ + B·x₂)
- *    Nonlinear in (A, B) — coarse + refined grid search.
+ *    Nonlinear in (A, B) - coarse + refined grid search.
  */
 CorrelationRegistry.registerCorrelation({
   id: "vanlaar", category: "excess",
@@ -299,7 +299,7 @@ CorrelationRegistry.registerCorrelation({
   name: "Wilson",
   equation: "Yᴱ = -x₁ln(x₁+Λ₁₂x₂) - x₂ln(x₂+Λ₂₁x₁)",
   parameters: 2,
-  description: "Wilson model — strongly non-ideal liquid mixtures.",
+  description: "Wilson model - strongly non-ideal liquid mixtures.",
   fit(x, y) {
     const search = (L1lo, L1hi, L2lo, L2hi, step) => {
       let best = null;
@@ -344,7 +344,7 @@ CorrelationRegistry.registerCorrelation({
   name: "NRTL (α = 0.3)",
   equation: "Yᴱ = x₁x₂[τ₂₁G₂₁/(x₁+x₂G₂₁) + τ₁₂G₁₂/(x₂+x₁G₁₂)]",
   parameters: 2,
-  description: "Non-Random Two Liquid — common for VLE calculations.",
+  description: "Non-Random Two Liquid - common for VLE calculations.",
   fit(x, y) {
     const alpha = 0.3;
     const eval_ssr = (t12, t21) => {
@@ -387,7 +387,7 @@ CorrelationRegistry.registerCorrelation({
 
 /* 11. UNIFAC-style surrogate
  *    Y ≈ q₁·x₂² + q₂·x₁² + q₃·x₁·x₂
- *    Group-contribution placeholder — a full UNIFAC requires functional
+ *    Group-contribution placeholder - a full UNIFAC requires functional
  *    group decomposition not available without an external database.
  */
 CorrelationRegistry.registerCorrelation({
@@ -421,7 +421,7 @@ CorrelationRegistry.registerCorrelation({
   name: "Jouyban-Acree",
   equation: "ln(Y) = x₁lnY₁ + x₂lnY₂ + x₁x₂ Σ Aⱼ(x₁−x₂)ʲ",
   parameters: 3,
-  description: "Solvent-mixture model — density, viscosity, solubility.",
+  description: "Solvent-mixture model - density, viscosity, solubility.",
   fit(x, y) {
     if (!y.every(v => v > 0)) return _fallback(y);
     const lnY = y.map(Math.log);
@@ -450,7 +450,7 @@ CorrelationRegistry.registerCorrelation({
 });
 
 /* =====================================================================
- * VISCOSITY — empirical viscosity mixing rules
+ * VISCOSITY - empirical viscosity mixing rules
  * =================================================================== */
 
 /* 13. Grünberg-Nissan
@@ -529,7 +529,7 @@ CorrelationRegistry.registerCorrelation({
   name: "Arrhenius (ideal)",
   equation: "ln(η) = x₁lnη₁ + x₂lnη₂",
   parameters: 2,
-  description: "Ideal log-mixing rule — zero interaction parameters.",
+  description: "Ideal log-mixing rule - zero interaction parameters.",
   fit(x, y) {
     if (!y.every(v => v > 0)) return _fallback(y);
     const { y1, y2 } = _endpoints(x, y);
@@ -545,7 +545,7 @@ CorrelationRegistry.registerCorrelation({
 });
 
 /* =====================================================================
- * PETROLEUM — mixing rules and pseudo-component correlations
+ * PETROLEUM - mixing rules and pseudo-component correlations
  *
  * Many petroleum correlations (Standing, Beggs–Robinson, Lee–Gonzalez–Eakin,
  * Twu, Kesler–Lee, Riazi–Daubert) are temperature- or API-gravity-based,
@@ -564,7 +564,7 @@ CorrelationRegistry.registerCorrelation({
   name: "Kay's Rule",
   equation: "y = x₁y₁ + x₂y₂",
   parameters: 2,
-  description: "Linear mole-fraction mixing — pseudo-critical properties.",
+  description: "Linear mole-fraction mixing - pseudo-critical properties.",
   fit(x, y) {
     const { y1, y2 } = _endpoints(x, y);
     return {
@@ -605,7 +605,7 @@ CorrelationRegistry.registerCorrelation({
   name: "Refutas (VBI)",
   equation: "VBI(η) = 14.534·ln(ln(η+0.8)) + 10.975",
   parameters: 2,
-  description: "Refutas viscosity-blending index — refinery viscosity mixing.",
+  description: "Refutas viscosity-blending index - refinery viscosity mixing.",
   fit(x, y) {
     if (!y.every(v => v > 0)) return _fallback(y);
     const VBI = v => 14.534 * Math.log(Math.log(v + 0.8)) + 10.975;
@@ -622,7 +622,7 @@ CorrelationRegistry.registerCorrelation({
 /* =====================================================================
  * PETROLEUM (TEMPERATURE-DEPENDENT)
  *
- * These correlations are NOT composition-based — they take temperature
+ * These correlations are NOT composition-based - they take temperature
  * as the independent variable. Use them when the "Variable Axis" is set
  * to Temperature. The x array is interpreted as T in °C.
  * =================================================================== */
@@ -637,7 +637,7 @@ CorrelationRegistry.registerCorrelation({
   name: "Pedersen (μ vs T)",
   equation: "μ = A · exp(B / T)",
   parameters: 2,
-  description: "Pedersen-style Arrhenius viscosity — heavy oil μ(T).",
+  description: "Pedersen-style Arrhenius viscosity - heavy oil μ(T).",
   fit(x, y) {
     if (!y.every(v => v > 0)) return _fallback(y);
     const T = x.map(t => t + 273.15);
@@ -721,7 +721,7 @@ CorrelationRegistry.registerCorrelation({
 });
 
 /* =====================================================================
- * PETROLEUM (DENSITY-DEPENDENT) — gas viscosity
+ * PETROLEUM (DENSITY-DEPENDENT) - gas viscosity
  * =================================================================== */
 
 /* 23. Lee-Gonzalez-Eakin gas viscosity
@@ -761,7 +761,7 @@ CorrelationRegistry.registerCorrelation({
 });
 
 /* =====================================================================
- * VAPOR — vapor pressure correlations
+ * VAPOR - vapor pressure correlations
  * =================================================================== */
 
 /* 16. Antoine-type  ln(y) = A − B / (C + x)   (3 params)

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Literature Review Agent — Academy Tools</title>
+<title>Literature Review Agent - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -27,7 +27,7 @@
   </div>
 
   <div class="panel" style="min-height:auto;gap:14px">
-    <label class="fld">Paste abstracts — separate each paper with a blank line or <code>---</code> (optionally start a paper with "Author (Year):")
+    <label class="fld">Paste abstracts - separate each paper with a blank line or <code>---</code> (optionally start a paper with "Author (Year):")
       <textarea id="txt" style="min-height:180px" placeholder="Smith (2020): Abstract text of paper one…&#10;---&#10;Lee (2021): Abstract text of paper two…"></textarea>
     </label>
     <div class="row"><button class="btn btn-primary" id="run"><i class="ti ti-wand"></i> Synthesize</button><button class="btn" id="copy"><i class="ti ti-copy"></i> Copy</button></div>
@@ -65,7 +65,7 @@ $('#run').addEventListener('click',()=>{
   html+=`<h3>Synthesis prompts</h3><ul>
     <li>Within each theme, where do the papers <b>agree</b>, and where do they <b>conflict</b>?</li>
     <li>What methods recur across themes, and which are unique?</li>
-    <li>What gap cuts across all themes — and how does your work address it?</li></ul>`;
+    <li>What gap cuts across all themes - and how does your work address it?</li></ul>`;
   out.innerHTML=html;
 });
 $('#copy').addEventListener('click',()=>{ const t=$('#out').innerText.trim(); if(t){navigator.clipboard.writeText(t); const b=$('#copy'); b.innerHTML='<i class="ti ti-check"></i> Copied'; setTimeout(()=>b.innerHTML='<i class="ti ti-copy"></i> Copy',1400);} });

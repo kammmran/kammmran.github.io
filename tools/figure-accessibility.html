@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Figure Accessibility Checker — Academy Tools</title>
+<title>Figure Accessibility Checker - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -82,7 +82,7 @@ function run(){
   const rel=reliance>0.5?['bad','High']:reliance>0.3?['warn','Moderate']:['ok','Low'];
   const colPct=Math.round(colored/(W*H/4*1)*100)||0;
   $('#report').innerHTML=`<div class="crow">Red–green colour reliance<span class="v ${rel[0]}">${rel[1]} (${Math.round(reliance*100)}%)</span></div>
-    <div class="crow">Recommendation<span class="v" style="font-weight:500;text-align:right">${reliance>0.3?'Add non-colour cues (shapes, line styles, labels) or a CB-safe palette':'Looks robust — still verify legends are labelled'}</span></div>
+    <div class="crow">Recommendation<span class="v" style="font-weight:500;text-align:right">${reliance>0.3?'Add non-colour cues (shapes, line styles, labels) or a CB-safe palette':'Looks robust - still verify legends are labelled'}</span></div>
     <div class="muted" style="font-size:12px;margin:4px 0 2px">Compare the panels below: if categories that differ in the Original become hard to tell apart in any simulation, encode them with more than colour.</div>`;
 }
 </script>

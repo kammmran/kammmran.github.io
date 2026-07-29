@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Publication Branding Kit — Academy Tools</title>
+<title>Publication Branding Kit - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-color-swatch"></i></div>
       <div>
         <div class="tool-title">Publication / Lab Branding Kit</div>
-        <div class="tool-desc">Define a consistent visual identity for your lab or research group — a colour palette with tints, a font pairing, and usage notes — and generate a one-page brand sheet. Export the sheet as a printable page and the tokens as CSS/JSON so every poster, slide and figure stays on-brand. Local.</div>
+        <div class="tool-desc">Define a consistent visual identity for your lab or research group - a colour palette with tints, a font pairing, and usage notes - and generate a one-page brand sheet. Export the sheet as a printable page and the tokens as CSS/JSON so every poster, slide and figure stays on-brand. Local.</div>
       </div>
     </div>
   </div>
@@ -73,13 +73,13 @@ function render(){
     <div class="swgrid">${cols.map(([n,c])=>`<div><div class="sw" style="background:${c};color:${txt(c)}">${esc(n)}<br>${c.toUpperCase()}</div><div class="tints">${[0.2,0.4,0.6,0.8].map(p=>`<div style="flex:1;background:${tint(c,p)}"></div>`).join('')}</div></div>`).join('')}</div>
     <div class="lbl">Typography</div>
     <div style="display:flex;gap:30px;flex-wrap:wrap">
-      <div><div style="font-family:${hf};font-size:30px;color:${c1};font-weight:800">Heading — ${esc(hf.split(',')[0].replace(/'/g,''))}</div><div style="font-family:${hf};color:#555">Aa Bb Cc · 0123456789</div></div>
-      <div><div style="font-family:${bf};font-size:18px;color:#222">Body — ${esc(bf.split(',')[0].replace(/'/g,''))}</div><div style="font-family:${bf};color:#555;max-width:300px;font-size:13px">The quick brown fox jumps over the lazy dog. Use for paragraphs, captions and labels.</div></div>
+      <div><div style="font-family:${hf};font-size:30px;color:${c1};font-weight:800">Heading - ${esc(hf.split(',')[0].replace(/'/g,''))}</div><div style="font-family:${hf};color:#555">Aa Bb Cc · 0123456789</div></div>
+      <div><div style="font-family:${bf};font-size:18px;color:#222">Body - ${esc(bf.split(',')[0].replace(/'/g,''))}</div><div style="font-family:${bf};color:#555;max-width:300px;font-size:13px">The quick brown fox jumps over the lazy dog. Use for paragraphs, captions and labels.</div></div>
     </div>
     <div class="lbl">Usage</div>
     <ul style="font-size:13px;line-height:1.6;color:#333;margin:0;padding-left:18px">
       <li>Use <b style="color:${c1}">Primary</b> for headers and key UI; <b style="color:${c2}">Secondary</b> for supporting elements.</li>
-      <li>Reserve <b style="color:${c3}">Accent</b> for highlights and calls to action — never as a large background behind body text.</li>
+      <li>Reserve <b style="color:${c3}">Accent</b> for highlights and calls to action - never as a large background behind body text.</li>
       <li>Maintain clear space around the logo equal to the height of its initials.</li>
       <li>Keep the same font pairing across posters, slides, and figures for a coherent identity.</li>
     </ul>

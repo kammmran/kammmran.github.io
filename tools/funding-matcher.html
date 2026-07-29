@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Funding Opportunity Matcher — Academy Tools</title>
+<title>Funding Opportunity Matcher - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -75,7 +75,7 @@ $('#run').addEventListener('click',()=>{
   const scored=FUNDERS.filter(f=>REGION_OK(f,reg) && (stage==='any'||f.s.includes('any')||f.s.includes(stage)))
     .map(f=>{ const fw=f.kw.split(' '); let hits=0; words.forEach(w=>{ if(fw.some(k=>k.includes(w)||w.includes(k))) hits++; }); const score=Math.min(100, 25+hits*18); return {f,score,hits}; })
     .sort((a,b)=>b.score-a.score);
-  $('#out').innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${scored.length} funders match your region & stage — ranked by topical fit. Always confirm eligibility & deadlines on the funder's site.</div>`+
+  $('#out').innerHTML=`<div class="muted" style="font-size:12px;margin-bottom:8px">${scored.length} funders match your region & stage - ranked by topical fit. Always confirm eligibility & deadlines on the funder's site.</div>`+
     scored.map(({f,score})=>`<div class="frow">
       <h3><a href="${f.url}" target="_blank" rel="noopener">${esc(f.n)}</a></h3>
       <div class="bar"><div style="width:${score}%"></div></div>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bohr Atom Model — Academy Tools</title>
+<title>Bohr Atom Model - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 <script src="../assets/chem-data.js"></script>
@@ -50,7 +50,7 @@ const ORDER=[['1s',2],['2s',2],['2p',6],['3s',2],['3p',6],['4s',2],['3d',10],['4
 function shells(Z){ let left=Z; const sh={}; for(const [orb,cap] of ORDER){ if(left<=0)break; const n=+orb[0]; const e=Math.min(cap,left); sh[n]=(sh[n]||0)+e; left-=e; } return Object.keys(sh).sort((a,b)=>a-b).map(n=>sh[n]); }
 
 const els = (window.CHEM&&CHEM.ELEMENTS)||[];
-$('#el').innerHTML = els.map(e=>`<option value="${e.number}">${e.number} — ${e.symbol} · ${e.name}</option>`).join('');
+$('#el').innerHTML = els.map(e=>`<option value="${e.number}">${e.number} - ${e.symbol} · ${e.name}</option>`).join('');
 $('#el').value = 11; // sodium
 
 const NS='http://www.w3.org/2000/svg';

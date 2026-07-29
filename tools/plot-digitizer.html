@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Plot Digitizer — Academy Tools</title>
+<title>Plot Digitizer - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(124,109,240,0.15);color:var(--accent3)"><i class="ti ti-chart-dots"></i></div>
       <div>
         <div class="tool-title">Plot Digitizer</div>
-        <div class="tool-desc">Recover the underlying data from a chart image. Calibrate the two axes by clicking known reference points, then click each data point to read off real coordinates — supports linear and log scales. Export the recovered series as CSV. Works on scatter, line and bar plots; runs entirely in your browser.</div>
+        <div class="tool-desc">Recover the underlying data from a chart image. Calibrate the two axes by clicking known reference points, then click each data point to read off real coordinates - supports linear and log scales. Export the recovered series as CSV. Works on scatter, line and bar plots; runs entirely in your browser.</div>
       </div>
     </div>
   </div>
@@ -108,7 +108,7 @@ function updateTable(){
   const rows=data.map((d,i)=>{const v=toData(d.px,d.py);return `<tr><td>${i+1}</td><td>${fmt(v.x)}</td><td>${fmt(v.y)}</td></tr>`;});
   $('#table').innerHTML=`<table><tr><th>#</th><th>X</th><th>Y</th></tr>${rows.join('')}</table>`;
 }
-function fmt(n){if(!isFinite(n))return'—';const a=Math.abs(n);return (a>=1e4||(a<1e-3&&a>0))?n.toExponential(3):n.toFixed(4).replace(/\.?0+$/,'');}
+function fmt(n){if(!isFinite(n))return'-';const a=Math.abs(n);return (a>=1e4||(a<1e-3&&a>0))?n.toExponential(3):n.toFixed(4).replace(/\.?0+$/,'');}
 $('#undo').onclick=()=>{data.pop();draw();updateTable();};
 $('#clearpts').onclick=()=>{data=[];draw();updateTable();};
 ['logx','logy','x1v','x2v','y1v','y2v'].forEach(id=>$('#'+id).addEventListener('input',updateTable));

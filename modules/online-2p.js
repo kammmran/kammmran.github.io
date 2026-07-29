@@ -11,7 +11,7 @@
   const map=Math.max(0,Math.min(LAYOUTS.length-1,parseInt(params.get('map')||'0',10)));
   // Online: each browser only knows its OWN character pick. The friend's pick will arrive on
   // their browser via the same query param (in the URL they opened). The partner stays at the
-  // engine default until they actually join — visible default is CRIMSON for the remote side.
+  // engine default until they actually join - visible default is CRIMSON for the remote side.
   const p1=Math.max(0,Math.min(CHARACTERS.length-1,parseInt(params.get('p1')||'0',10)));
   // Engine globals.
   playerCount=2;
@@ -76,7 +76,7 @@
   }
   // Spin up a fresh peer with a new code. Retries automatically on `unavailable-id`
   // collisions (very rare with a 6-char alphabet, but the broker is shared).
-  // The code is only revealed in the UI after the broker confirms registration —
+  // The code is only revealed in the UI after the broker confirms registration -
   // otherwise a fast guest could enter the code before the host exists on the
   // broker and would get a "could not reach" error.
   function spinHost(){
@@ -90,7 +90,7 @@
       if(e.type==='unavailable-id'){
         hostRetryAttempts++;
         if(hostRetryAttempts<HOST_MAX_RETRIES){
-          document.getElementById('hostStatus').textContent='♻ Code taken — generating another…';
+          document.getElementById('hostStatus').textContent='♻ Code taken - generating another…';
           setTimeout(spinHost,250);
         }else{
           showError('Could not generate a free code. Check your connection and try again.');
@@ -143,7 +143,7 @@
     let joinAttempts=0;
     const JOIN_MAX_ATTEMPTS=3;
 
-    // `peer-unavailable` means the broker doesn't know that code yet — usually
+    // `peer-unavailable` means the broker doesn't know that code yet - usually
     // because the host hasn't finished registering. Retry a couple of times
     // before giving up.
     peer.on('error',e=>{
@@ -151,7 +151,7 @@
       if(e.type==='peer-unavailable'){
         joinAttempts++;
         if(joinAttempts<JOIN_MAX_ATTEMPTS){
-          document.getElementById('joinStatus').textContent='⏳ Host not ready yet — retrying ('+joinAttempts+'/'+JOIN_MAX_ATTEMPTS+')…';
+          document.getElementById('joinStatus').textContent='⏳ Host not ready yet - retrying ('+joinAttempts+'/'+JOIN_MAX_ATTEMPTS+')…';
           setTimeout(()=>tryConnect(code),1200);
           return;
         }

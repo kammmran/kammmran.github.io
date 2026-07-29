@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Certificate Generator — Academy Tools</title>
+<title>Certificate Generator - Academy Tools</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="../assets/theme.css">
 </head>
@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(251,191,36,0.12);color:var(--amber)"><i class="ti ti-certificate"></i></div>
       <div>
         <div class="tool-title">Certificate Generator</div>
-        <div class="tool-desc">Produce certificates of participation, presentation, or achievement for conferences, workshops and courses. Customise the wording and signatures, then export a single PNG — or paste a list of names and batch-export one certificate per person. Runs entirely in your browser.</div>
+        <div class="tool-desc">Produce certificates of participation, presentation, or achievement for conferences, workshops and courses. Customise the wording and signatures, then export a single PNG - or paste a list of names and batch-export one certificate per person. Runs entirely in your browser.</div>
       </div>
     </div>
   </div>
@@ -101,7 +101,7 @@ $('#batchGo').onclick=async()=>{
   const names=$('#names').value.split('\n').map(n=>n.trim()).filter(Boolean);
   if(!names.length){$('#status').textContent='Add some names.';return;}
   for(let i=0;i<names.length;i++){draw(names[i]);await new Promise(r=>cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='certificate-'+slug(names[i])+'.png';a.click();setTimeout(r,250);}));$('#status').textContent=`Downloaded ${i+1}/${names.length}…`;}
-  $('#status').textContent='Done — '+names.length+' certificates.';draw($('#name').value);
+  $('#status').textContent='Done - '+names.length+' certificates.';draw($('#name').value);
 };
 draw($('#name').value);
 </script>

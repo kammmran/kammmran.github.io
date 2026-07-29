@@ -51,7 +51,7 @@ const Estimators = (() => {
     return _riaziD([31.9583, -0.85077, 2.91976, -1.41246e-3, 0.20876, -1.04293e-3], Tb_K, SG);
   }
 
-  /* Kesler-Lee (1976) — critical properties + acentric factor
+  /* Kesler-Lee (1976) - critical properties + acentric factor
    * Tc = 341.7 + 811·SG + (0.4244 + 0.1174·SG)·Tb
    *      + (0.4669 - 3.2623·SG)·1e5 / Tb         (Tb,Tc in °R; output here in K)
    * ln Pc = 8.3634 - 0.0566/SG
@@ -93,7 +93,7 @@ const Estimators = (() => {
     return { Tc: Tc_K, Pc: Pc_bar, omega };
   }
 
-  /* Twu (1984) characterization — perturbation about an n-paraffin.
+  /* Twu (1984) characterization - perturbation about an n-paraffin.
    * Returns Tc (K), Pc (bar), Vc (cm³/mol), MW (g/mol).
    * Output is reasonable for Tb in 200–800 K.
    */
@@ -136,7 +136,7 @@ const Estimators = (() => {
     return { Tc, Pc, Vc, MW };
   }
 
-  /* Bulk run — for a list of components with Tb (°C → K) and density (→ SG):
+  /* Bulk run - for a list of components with Tb (°C → K) and density (→ SG):
    * returns per-component estimates plus mixture pseudo-criticals
    * (Kay's rule: linear mole-fraction average).
    */

@@ -1,7 +1,7 @@
 /* =====================================================================
  * ui.js
  * DOM construction, event wiring, console animations.
- * Pure rendering/state helpers — no thermodynamics here.
+ * Pure rendering/state helpers - no thermodynamics here.
  * =================================================================== */
 
 const UI = (() => {
@@ -152,8 +152,8 @@ const UI = (() => {
     excess:         "Mixture / Excess",
     viscosity:      "Viscosity",
     petroleum:      "Petroleum / Mixing Rules",
-    petroleum_t:    "Petroleum — vs Temperature",
-    petroleum_rho:  "Petroleum — vs Density",
+    petroleum_t:    "Petroleum - vs Temperature",
+    petroleum_rho:  "Petroleum - vs Density",
     vapor:          "Vapor Pressure"
   };
   const CATEGORY_ORDER = ["general", "excess", "viscosity", "petroleum",
@@ -199,7 +199,7 @@ const UI = (() => {
       }
     }
 
-    // sensible defaults — one from each main category
+    // sensible defaults - one from each main category
     ["linear", "poly3", "rk4", "jouyban_acree"].forEach(id => {
       const card = grid.querySelector(`[data-model-id="${id}"]`);
       if (card) card.classList.add("active");
@@ -227,11 +227,11 @@ const UI = (() => {
       card.className = "meta-card";
       card.innerHTML = `
         <div class="mc-name-h">${c.name ?? "?"} <span style="float:right; font-size:10px; color:var(--text-faint)">[${c.source ?? "?"}]</span></div>
-        <div class="mk">Formula</div>    <div class="mv">${c.formula ?? "—"}</div>
-        <div class="mk">MW (g/mol)</div>  <div class="mv">${c.mw ?? "—"}</div>
-        <div class="mk">Density</div>    <div class="mv">${c.density ?? "—"}</div>
-        <div class="mk">Boiling Pt</div>  <div class="mv">${c.bp ?? "—"}</div>
-        <div class="mk">SMILES</div>      <div class="mv" style="word-break:break-all">${c.smiles ?? "—"}</div>
+        <div class="mk">Formula</div>    <div class="mv">${c.formula ?? "-"}</div>
+        <div class="mk">MW (g/mol)</div>  <div class="mv">${c.mw ?? "-"}</div>
+        <div class="mk">Density</div>    <div class="mv">${c.density ?? "-"}</div>
+        <div class="mk">Boiling Pt</div>  <div class="mv">${c.bp ?? "-"}</div>
+        <div class="mk">SMILES</div>      <div class="mv" style="word-break:break-all">${c.smiles ?? "-"}</div>
         ${c.cid ? `<div class="mk">PubChem CID</div><div class="mv">${c.cid}</div>` : ""}
       `;
       body.appendChild(card);
@@ -288,7 +288,7 @@ const UI = (() => {
         <td>${(tw?.MW ?? rd.MW).toFixed(1)}</td>
         <td>${(tw?.Tc ?? kl?.Tc ?? rd.Tc).toFixed(1)}</td>
         <td>${(tw?.Pc ?? kl?.Pc ?? rd.Pc).toFixed(2)}</td>
-        <td>${kl?.omega != null ? kl.omega.toFixed(3) : "—"}</td>
+        <td>${kl?.omega != null ? kl.omega.toFixed(3) : "-"}</td>
       </tr>`;
     }
     html += `</tbody></table></div>`;
