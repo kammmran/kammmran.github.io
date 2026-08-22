@@ -47,18 +47,7 @@
     "file": "data/projects/chemgraph-old-version-knime-based.md",
     "date": "2025-07-30"
   },
-  {
-    "type": "project",
-    "title": "IELTS TIMER",
-    "file": "data/projects/ielts-timer.md",
-    "date": "2025-07-30"
-  },
-  {
-    "type": "project",
-    "title": "ILTHERMO GUI",
-    "file": "data/projects/ilthermo-gui.md",
-    "date": "2025-07-30"
-  },
+
   {
     "type": "project",
     "title": "MentorCorp: Specialized Consultancy Group for Targeted Mentorship and Research in Management Practices",
@@ -99,12 +88,6 @@
     "type": "project",
     "title": "TEMA HX design",
     "file": "data/projects/tema-hx-design.md",
-    "date": "2025-07-30"
-  },
-  {
-    "type": "project",
-    "title": "ILpyTHERMO",
-    "file": "data/projects/ilpythermo.md",
     "date": "2025-07-30"
   }
 ]
