@@ -21,7 +21,7 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-pencil"></i></div>
       <div>
         <div class="tool-title">Molecule Sketcher</div>
-        <div class="tool-desc">Draw a structure and read off its SMILES, molfile, formula and molar mass live. Or load a SMILES to edit.</div>
+        <div class="tool-desc">Draw a structure and read off its SMILES, molfile, SDF, formula and molar mass live. Or load a SMILES to edit.</div>
       </div>
     </div>
   </div>
@@ -42,7 +42,13 @@
         <div class="stat-card"><div class="stat-label">Molar mass</div><div class="stat-value" id="mw" style="font-size:16px">-</div></div>
       </div>
       <div class="cite-block"><div class="cite-label">SMILES <button class="copy-btn" data-t="smiles"><i class="ti ti-copy"></i></button></div><div class="cite-text mono" id="smiles">-</div></div>
-      <div class="cite-block"><div class="cite-label">Molfile <button class="copy-btn" data-t="molfile"><i class="ti ti-copy"></i></button></div><textarea id="molfile" readonly style="min-height:150px;font-size:11px">-</textarea></div>
+      <div class="cite-block">
+        <div class="cite-label">
+          <div class="tabs fmt-tabs" id="fmtTabs"><button class="tab active" data-f="molfile">Molfile</button><button class="tab" data-f="sdf">SDF</button></div>
+          <span><button class="copy-btn" data-t="file" title="Copy"><i class="ti ti-copy"></i></button><button class="copy-btn" id="saveFile" title="Download"><i class="ti ti-download"></i></button></span>
+        </div>
+        <textarea id="fileOut" readonly style="min-height:150px;font-size:11px">-</textarea>
+      </div>
     </div>
   </div>
   <div id="warn" class="muted" style="font-size:12px;margin-top:10px"></div>
@@ -55,6 +61,7 @@
   .cite-label{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;display:flex;justify-content:space-between}
   .cite-text.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;word-break:break-all;min-height:20px}
   .copy-btn{background:none;border:none;color:var(--text3);cursor:pointer}.copy-btn:hover{color:var(--accent3)}
+  .fmt-tabs{margin:0;padding:2px}.fmt-tabs .tab{padding:3px 10px;font-size:12px;text-transform:none;letter-spacing:0}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/openchemlib@8/dist/openchemlib-full.js"></script>
@@ -63,19 +70,28 @@ const $ = s => document.querySelector(s);
 function toast(m){ const t=$('#toast'); t.querySelector('span').textContent=m; t.classList.add('show'); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove('show'),1800); }
 function ready(cb){ if(window.OCL&&OCL.StructureEditor)return cb(); let n=0;const iv=setInterval(()=>{if(window.OCL&&OCL.StructureEditor){clearInterval(iv);cb();}else if(++n>80){clearInterval(iv);$('#warn').textContent='Could not load the structure editor.';}},100); }
 
-let editor=null, last={smiles:'',molfile:''};
+let editor=null, last={smiles:'',molfile:'',sdf:''}, fmt='molfile';
+
+// SD file = the molfile, then "> <NAME>" data items, closed by $$$$
+function toSdf(molfile, data){
+  const items = Object.entries(data).map(([k,v])=>`>  <${k}>\n${v}\n`).join('\n');
+  return molfile.replace(/\s+$/,'') + '\n' + items + '\n$$$$\n';
+}
+
 function update(mol){
   try{
     if(!mol) mol = editor.getMolecule();
     const atoms = mol.getAllAtoms();
-    if(!atoms){ $('#formula').textContent='-'; $('#mw').textContent='-'; $('#smiles').textContent='draw something…'; $('#molfile').value=''; last={smiles:'',molfile:''}; return; }
+    if(!atoms){ $('#formula').textContent='-'; $('#mw').textContent='-'; $('#smiles').textContent='draw something…'; $('#fileOut').value=''; last={smiles:'',molfile:'',sdf:''}; return; }
     const mf=mol.getMolecularFormula();
+    const mw=mf.relativeWeight.toFixed(2);
     $('#formula').innerHTML = mf.formula.replace(/(\d+)/g,'<sub>$1</sub>');
-    $('#mw').textContent = mf.relativeWeight.toFixed(2);
+    $('#mw').textContent = mw;
     const smi = mol.toIsomericSmiles();
     $('#smiles').textContent = smi;
-    $('#molfile').value = mol.toMolfile();
-    last = { smiles: smi, molfile: mol.toMolfile() };
+    const molfile = mol.toMolfile();
+    last = { smiles: smi, molfile, sdf: toSdf(molfile, { SMILES: smi, Formula: mf.formula, MW: mw }) };
+    $('#fileOut').value = last[fmt];
   }catch(e){}
 }
 
@@ -94,7 +110,14 @@ $('#loadBtn').addEventListener('click',()=>{
 });
 $('#loadSmi').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#loadBtn').click(); });
 $('#clearBtn').addEventListener('click',()=>{ ready(()=>{ editor.setMolecule(new OCL.Molecule(0,0)); update(); }); });
-document.querySelectorAll('.copy-btn').forEach(b=>b.addEventListener('click',()=>{ const v=b.dataset.t==='smiles'?last.smiles:last.molfile; if(v){ navigator.clipboard.writeText(v); toast('Copied'); } }));
+document.querySelectorAll('.copy-btn[data-t]').forEach(b=>b.addEventListener('click',()=>{ const v=b.dataset.t==='smiles'?last.smiles:last[fmt]; if(v){ navigator.clipboard.writeText(v); toast('Copied'); } }));
+$('#fmtTabs').addEventListener('click',e=>{
+  const t=e.target.closest('.tab'); if(!t) return;
+  fmt=t.dataset.f;
+  document.querySelectorAll('#fmtTabs .tab').forEach(x=>x.classList.toggle('active',x===t));
+  $('#fileOut').value=last[fmt];
+});
+$('#saveFile').addEventListener('click',()=>{ const v=last[fmt]; if(!v) return; const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([v],{type:'text/plain'})); a.download='molecule.'+(fmt==='sdf'?'sdf':'mol'); a.click(); toast('Saved'); });
 </script>
 
 </body>

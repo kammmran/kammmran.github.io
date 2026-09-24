@@ -10,6 +10,21 @@
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
+<style>
+  /* the rendered output sits on white paper, like a printed page */
+  #preview { flex: 1; min-height: 260px; padding: 24px; background: #fff; color: #1a1a1a; border-radius: var(--radius-sm); overflow: auto; }
+  #preview.eq, #preview.tikz { display: flex; align-items: center; justify-content: center; text-align: center; font-size: 20px; }
+  #preview.doc { display: block; text-align: left; font-family: KaTeX_Main, 'Times New Roman', serif; font-size: 17px; line-height: 1.7; }
+  #preview.doc p { margin: 0 0 .9em; }
+  #preview.tikz svg { max-width: 100%; height: auto; }
+  #preview .placeholder { color: #8a8a99; font-style: italic; font-size: 14px; font-family: -apple-system, sans-serif; }
+  .ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+  .ref-card { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; text-align: left; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); cursor: pointer; transition: border-color .15s, background .15s; }
+  .ref-card:hover { border-color: var(--accent); background: var(--surface2); }
+  .ref-math { font-size: 17px; min-height: 30px; display: flex; align-items: center; overflow-x: auto; }
+  .ref-code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--text2); white-space: pre-wrap; word-break: break-word; }
+  .panel-note { text-transform: none; letter-spacing: 0; font-weight: 400; }
+</style>
 </head>
 <body>
 
@@ -25,35 +40,36 @@
       <div class="tool-icon" style="background:rgba(45,212,191,0.12);color:var(--teal)"><i class="ti ti-math-function"></i></div>
       <div>
         <div class="tool-title">LaTeX Preview</div>
-        <div class="tool-desc">Live KaTeX rendering with image export, document mode, and a snippet library.</div>
+        <div class="tool-desc">Live equations, mixed documents and TikZ diagrams, with PNG, SVG and HTML export.</div>
       </div>
     </div>
   </div>
 
-  <div class="tabs">
+  <div class="tabs" id="tabs">
     <button class="tab active" data-mode="equation">Equation</button>
     <button class="tab" data-mode="document">Document (mixed text)</button>
+    <button class="tab" data-mode="tikz">TikZ diagram</button>
   </div>
 
   <div class="workspace">
     <div class="panel">
       <div class="panel-label">
-        <span>LaTeX source</span>
+        <span id="src-label">LaTeX source</span>
         <div class="panel-actions">
           <button class="btn btn-sm" id="copy-btn"><i class="ti ti-copy"></i> Copy</button>
           <button class="btn btn-sm" id="clear-btn"><i class="ti ti-eraser"></i> Clear</button>
         </div>
       </div>
-      <textarea id="src" placeholder="\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}">\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}</textarea>
+      <textarea id="src" spellcheck="false"></textarea>
       <div class="row" style="margin-top:10px">
-        <label class="row" style="gap:6px; font-size:13px; color:var(--text2)">
+        <label class="row" id="display-opt" style="gap:6px; font-size:13px; color:var(--text2)">
           <input type="checkbox" id="display" checked> Display mode (larger)
         </label>
         <span class="spacer"></span>
-        <span class="muted" id="hint" style="font-size:12px">In document mode, wrap math in <code>$…$</code> or <code>$$…$$</code></span>
+        <span class="muted" id="hint" style="font-size:12px"></span>
       </div>
       <div class="divider"></div>
-      <div class="panel-label"><span>Snippets</span></div>
+      <div class="panel-label"><span id="snip-label">Snippets</span></div>
       <div class="row" style="gap:6px; flex-wrap:wrap" id="snippets"></div>
       <div class="divider"></div>
       <div class="panel-label">
@@ -69,44 +85,39 @@
         <span>Rendered</span>
         <div class="panel-actions">
           <button class="btn btn-sm" id="png-btn"><i class="ti ti-download"></i> PNG</button>
+          <button class="btn btn-sm" id="svg-btn" style="display:none"><i class="ti ti-download"></i> SVG</button>
           <button class="btn btn-sm" id="html-btn"><i class="ti ti-download"></i> HTML</button>
           <button class="btn btn-sm" id="print-btn"><i class="ti ti-printer"></i> Print</button>
         </div>
       </div>
-      <div id="preview" class="output-box" style="font-size:18px; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; padding:24px"></div>
+      <div id="preview" class="eq"></div>
       <div id="err" style="color:var(--red); font-size:13px; margin-top:8px; min-height:18px"></div>
     </div>
   </div>
 
   <div class="panel" style="margin-top:16px; min-height:auto">
-    <div class="panel-label"><span>Quick reference</span></div>
-    <div class="stat-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr))">
-      <div class="stat-card"><div class="stat-label">Fraction</div><div style="font-family:monospace; font-size:13px">\frac{a}{b}</div></div>
-      <div class="stat-card"><div class="stat-label">Square root</div><div style="font-family:monospace; font-size:13px">\sqrt{x}</div></div>
-      <div class="stat-card"><div class="stat-label">Superscript</div><div style="font-family:monospace; font-size:13px">x^{2}</div></div>
-      <div class="stat-card"><div class="stat-label">Subscript</div><div style="font-family:monospace; font-size:13px">x_{i}</div></div>
-      <div class="stat-card"><div class="stat-label">Greek</div><div style="font-family:monospace; font-size:13px">\alpha \beta \pi</div></div>
-      <div class="stat-card"><div class="stat-label">Sum / Product</div><div style="font-family:monospace; font-size:13px">\sum \prod</div></div>
-      <div class="stat-card"><div class="stat-label">Integral</div><div style="font-family:monospace; font-size:13px">\int_a^b</div></div>
-      <div class="stat-card"><div class="stat-label">Limit</div><div style="font-family:monospace; font-size:13px">\lim_{x \to 0}</div></div>
-      <div class="stat-card"><div class="stat-label">Matrix</div><div style="font-family:monospace; font-size:13px">\begin{pmatrix}…\end{pmatrix}</div></div>
-      <div class="stat-card"><div class="stat-label">Cases</div><div style="font-family:monospace; font-size:13px">\begin{cases}…\end{cases}</div></div>
-      <div class="stat-card"><div class="stat-label">Vector</div><div style="font-family:monospace; font-size:13px">\vec{v}</div></div>
-      <div class="stat-card"><div class="stat-label">Bold</div><div style="font-family:monospace; font-size:13px">\mathbf{x}</div></div>
-    </div>
+    <div class="panel-label"><span>Quick reference</span><span class="muted panel-note">Click to insert</span></div>
+    <div class="ref-grid" id="ref"></div>
   </div>
 </main>
 
 <div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg">Copied!</span></div>
 
 <script>
-const src = document.getElementById('src');
-const preview = document.getElementById('preview');
-const err = document.getElementById('err');
-const display = document.getElementById('display');
-const histEl = document.getElementById('history');
+// Keep "<\/" escaped in this script (strings and comments). A plain closing body tag here
+// makes dev servers like Live Server inject their reload script into the middle of this one.
+const $ = id => document.getElementById(id);
+const src = $('src'), preview = $('preview'), err = $('err'), display = $('display');
+const snipEl = $('snippets'), refEl = $('ref'), histEl = $('history');
 
-const SNIPPETS = [
+const KATEX_CSS = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+const TIKZ_CDN = 'https://cdn.jsdelivr.net/npm/@drgrice1/tikzjax@1.0.0-beta24/dist';
+// TeX packages TikZJax ships; tikz and xcolor are always loaded
+const TIKZ_PACKAGES = ['amsbsy', 'amsfonts', 'amsgen', 'amsmath', 'amsopn', 'amssymb', 'amstext', 'array',
+  'etoolbox', 'hf-tikz', 'pgfplots', 'tikz-3dplot', 'tikz-cd', 'xparse'];
+const TIKZ_BUILTIN = ['tikz', 'pgf', 'xcolor', 'graphicx'];
+
+const MATH_SNIPPETS = [
   { l: '∑', s: '\\sum_{i=1}^{n} x_i' },
   { l: '∫', s: '\\int_0^{\\infty} e^{-x^2}\\, dx' },
   { l: '∂', s: '\\frac{\\partial f}{\\partial x}' },
@@ -119,149 +130,506 @@ const SNIPPETS = [
   { l: '∇', s: '\\nabla \\cdot \\vec{F}' },
 ];
 
-const snipEl = document.getElementById('snippets');
-snipEl.innerHTML = SNIPPETS.map(s => `<button class="btn btn-sm" data-snip="${s.s.replace(/"/g,'&quot;')}">${s.l}</button>`).join('');
-snipEl.querySelectorAll('[data-snip]').forEach(b => b.addEventListener('click', () => {
-  const t = b.dataset.snip;
-  const a = src.selectionStart, c = src.selectionEnd;
-  src.value = src.value.slice(0, a) + t + src.value.slice(c);
-  src.focus();
-  src.selectionStart = a; src.selectionEnd = a + t.length;
-  render();
-}));
+const MATH_REF = [
+  ['Fraction', '\\frac{a}{b}'],
+  ['Square root', '\\sqrt{x}'],
+  ['n-th root', '\\sqrt[n]{x}'],
+  ['Superscript', 'x^{2}'],
+  ['Subscript', 'x_{i}'],
+  ['Greek', '\\alpha \\; \\beta \\; \\pi \\; \\Omega'],
+  ['Sum', '\\sum_{i=1}^{n} x_i'],
+  ['Product', '\\prod_{i=1}^{n} x_i'],
+  ['Integral', '\\int_a^b f(x)\\,dx'],
+  ['Limit', '\\lim_{x \\to 0} f(x)'],
+  ['Derivative', '\\frac{dy}{dx}'],
+  ['Partial', '\\frac{\\partial f}{\\partial x}'],
+  ['Matrix', '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}'],
+  ['Cases', '\\begin{cases} x & x \\ge 0 \\\\ -x & x < 0 \\end{cases}'],
+  ['Vector', '\\vec{v}'],
+  ['Bold', '\\mathbf{x}'],
+  ['Hat / bar', '\\hat{x} \\; \\bar{x}'],
+  ['Relations', '\\le \\; \\ge \\; \\neq \\; \\approx'],
+  ['Arrows', '\\to \\; \\Rightarrow \\; \\leftrightarrow'],
+  ['Sets', '\\in \\; \\subset \\; \\cup \\; \\cap'],
+  ['Text in math', '\\text{if } x > 0'],
+];
+
+const TIKZ_TEMPLATES = [
+  { l: 'Plot', s: `\\begin{tikzpicture}
+  \\draw[->] (-0.5,0) -- (3.5,0) node[right] {$x$};
+  \\draw[->] (0,-0.5) -- (0,3.2) node[above] {$y$};
+  \\draw[thick, blue, domain=0:2.4, samples=40] plot (\\x, {0.5*\\x*\\x}) node[right] {$y = x^2/2$};
+  \\fill[red] (1.5,1.125) circle (2pt) node[below right] {$P$};
+\\end{tikzpicture}` },
+  { l: 'Flowchart', s: `\\usetikzlibrary{positioning}
+
+\\begin{tikzpicture}[box/.style={draw, rounded corners, minimum width=2.6cm, minimum height=0.8cm}]
+  \\node[box] (a) {Collect data};
+  \\node[box, below=of a] (b) {Train model};
+  \\node[box, below=of b] (c) {Validate};
+  \\draw[->] (a) -- (b);
+  \\draw[->] (b) -- (c);
+  \\draw[->] (c.east) -- ++(0.8,0) |- (b.east) node[pos=0.25, right] {tune};
+\\end{tikzpicture}` },
+  { l: 'Energy profile', s: `\\begin{tikzpicture}
+  \\draw[->] (0,0) -- (0,4) node[above] {Energy};
+  \\draw[->] (0,0) -- (7,0) node[below left] {Reaction coordinate};
+  \\draw[thick, blue] (0.3,1.5) -- (1.3,1.5)
+    .. controls (2.6,1.5) and (2.6,3.4) .. (3.5,3.4)
+    .. controls (4.4,3.4) and (4.4,0.8) .. (5.7,0.8) -- (6.7,0.8);
+  \\node[above] at (0.8,1.5) {Reactants};
+  \\node[above] at (3.5,3.4) {TS};
+  \\node[above] at (6.2,0.8) {Products};
+  \\draw[dotted] (2.0,3.4) -- (3.5,3.4);
+  \\draw[<->, dashed] (2.0,1.5) -- (2.0,3.4) node[midway, left] {$E_a$};
+\\end{tikzpicture}` },
+  { l: 'pgfplots chart', s: `\\usepackage{pgfplots}
+
+\\begin{tikzpicture}
+  \\begin{axis}[xlabel=$x$, ylabel=$y$, grid=major, legend pos=north west]
+    \\addplot[blue, thick, domain=0:3] {x^2};
+    \\addlegendentry{$x^2$}
+    \\addplot[red, thick, domain=0:3] {2*x};
+    \\addlegendentry{$2x$}
+  \\end{axis}
+\\end{tikzpicture}` },
+  { l: 'Commutative diagram', s: `\\usepackage{tikz-cd}
+
+\\begin{tikzcd}
+  A \\arrow[r, "f"] \\arrow[d, "g"'] & B \\arrow[d, "h"] \\\\
+  C \\arrow[r, "k"'] & D
+\\end{tikzcd}` },
+];
+
+const TIKZ_REF = [
+  ['Line', '\\draw (0,0) -- (2,1);'],
+  ['Arrow', '\\draw[->] (0,0) -- (2,0);'],
+  ['Circle', '\\draw (0,0) circle (1);'],
+  ['Rectangle', '\\draw (0,0) rectangle (2,1);'],
+  ['Filled shape', '\\fill[blue!20] (0,0) circle (0.5);'],
+  ['Style', '\\draw[thick, red, dashed] (0,0) -- (2,0);'],
+  ['Label', '\\node at (1,1) {$x^2$};'],
+  ['Boxed node', '\\node[draw, rounded corners] (a) at (0,0) {Start};'],
+  ['Connect nodes', '\\draw[->] (a) -- (b);'],
+  ['Grid', '\\draw[help lines] (0,0) grid (3,2);'],
+  ['Curve', '\\draw (0,0) .. controls (1,1) and (2,-1) .. (3,0);'],
+  ['Function plot', '\\draw[domain=0:2, samples=50] plot (\\x, {\\x*\\x});'],
+  ['Loop', '\\foreach \\i in {0,...,4} \\fill (\\i,0) circle (2pt);'],
+  ['Axis (pgfplots)', '\\begin{axis}[xlabel=$x$, ylabel=$y$]\n  \\addplot[domain=0:2] {x^2};\n\\end{axis}'],
+  ['Library', '\\usetikzlibrary{arrows.meta, positioning}'],
+  ['Package', '\\usepackage{pgfplots}'],
+];
+
+const MODES = {
+  equation: {
+    label: 'LaTeX source', snipLabel: 'Snippets', history: 'latex-history',
+    hint: 'One equation, no <code>$</code> signs needed.',
+    sample: '\\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+  },
+  document: {
+    label: 'LaTeX source', snipLabel: 'Snippets', history: 'latex-doc-history',
+    hint: 'Wrap math in <code>$…$</code> or <code>$$…$$</code>.',
+    sample: 'The quadratic formula is\n$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\n\nFor any value $a \\neq 0$, this gives the roots of $ax^2 + bx + c = 0$.',
+  },
+  tikz: {
+    label: 'TikZ source', snipLabel: 'Templates', history: 'tikz-history',
+    hint: 'Real TeX in your browser - the first render loads about 7 MB. Supports pgfplots and tikz-cd.',
+    sample: TIKZ_TEMPLATES[0].s,
+  },
+};
+
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch (e) { return []; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  remove(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+
+function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+
+// ---------------------------------------------------------------- modes
 
 let mode = 'equation';
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  mode = t.dataset.mode;
-  if (mode === 'document') {
-    if (!src.value.includes('$')) src.value = "The quadratic formula is\n$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\n\nFor any value $a \\neq 0$, this gives the roots of $ax^2 + bx + c = 0$.";
-  }
-  render();
-}));
+const sources = { equation: MODES.equation.sample, document: MODES.document.sample, tikz: MODES.tikz.sample };
 
-function renderDocument() {
-  preview.style.display = 'block';
-  preview.style.textAlign = 'left';
-  preview.style.lineHeight = '1.7';
-  preview.style.fontSize = '15px';
-  preview.style.fontFamily = "'Inter', sans-serif";
-  preview.innerHTML = escapeHtml(src.value).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-  preview.innerHTML = '<p>' + preview.innerHTML + '</p>';
-  if (window.renderMathInElement) {
-    try {
-      renderMathInElement(preview, {
-        delimiters: [
-          { left: '$$', right: '$$', display: true },
-          { left: '$', right: '$', display: false },
-          { left: '\\(', right: '\\)', display: false },
-          { left: '\\[', right: '\\]', display: true },
-        ],
-        throwOnError: false,
-      });
-      err.textContent = '';
-    } catch (e) { err.textContent = e.message; }
-  }
+function setMode(m) {
+  if (m === mode) return;
+  sources[mode] = src.value;
+  mode = m;
+  src.value = sources[m];
+  document.querySelectorAll('#tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.mode === m));
+  applyModeUI();
+  render();
 }
 
-function renderEquation() {
-  preview.style.display = 'flex';
-  preview.style.textAlign = 'center';
-  preview.style.fontFamily = '';
-  preview.style.fontSize = '20px';
+function applyModeUI() {
+  const M = MODES[mode];
+  $('src-label').textContent = M.label;
+  $('snip-label').textContent = M.snipLabel;
+  $('hint').innerHTML = M.hint;
+  $('display-opt').style.display = mode === 'equation' ? '' : 'none';
+  $('svg-btn').style.display = mode === 'tikz' ? '' : 'none';
+  preview.className = { equation: 'eq', document: 'doc', tikz: 'tikz' }[mode];
+  preview.innerHTML = '';
   err.textContent = '';
+  if (mode === 'tikz') loadTikz();
+  renderSnippets();
+  renderReference();
+  renderHistory();
+}
+
+document.querySelectorAll('#tabs .tab').forEach(t => t.addEventListener('click', () => setMode(t.dataset.mode)));
+
+// ------------------------------------------------------- snippets & reference
+
+function insertAtCursor(text, at = src.selectionStart, end = src.selectionEnd) {
+  src.value = src.value.slice(0, at) + text + src.value.slice(end);
+  src.focus();
+  src.selectionStart = at; src.selectionEnd = at + text.length;
+  render();
+}
+
+function insertMath(tex) { insertAtCursor(mode === 'document' ? '$' + tex + '$' : tex); }
+
+// TikZ commands only work inside a picture: insert at the cursor when it is inside one,
+// otherwise just before the last \end{tikzpicture}. Preamble lines go at the top.
+function insertTikz(code) {
+  if (/^\\use(tikzlibrary|package)/.test(code)) return insertAtCursor(code + '\n', 0, 0);
+  const v = src.value, a = src.selectionStart;
+  const endAt = v.lastIndexOf('\\end{tikzpicture}');
+  if (endAt < 0) return insertAtCursor(code);
+  const begin = v.lastIndexOf('\\begin{tikzpicture}', a);
+  const inside = begin >= 0 && a > begin && a <= v.indexOf('\\end{tikzpicture}', begin);
+  if (inside) insertAtCursor(code);
+  else insertAtCursor('  ' + code.replace(/\n/g, '\n  ') + '\n', endAt, endAt);
+}
+
+function renderSnippets() {
+  const list = mode === 'tikz' ? TIKZ_TEMPLATES : MATH_SNIPPETS;
+  snipEl.innerHTML = list.map((s, i) => `<button class="btn btn-sm" data-i="${i}">${escapeHtml(s.l)}</button>`).join('');
+}
+
+snipEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-i]');
+  if (!b) return;
+  if (mode === 'tikz') { src.value = TIKZ_TEMPLATES[+b.dataset.i].s; render(); }
+  else insertMath(MATH_SNIPPETS[+b.dataset.i].s);
+});
+
+function renderReference() {
+  const tikz = mode === 'tikz';
+  if (!tikz && !window.katex) { setTimeout(renderReference, 60); return; }
+  const list = tikz ? TIKZ_REF : MATH_REF;
+  refEl.innerHTML = list.map(([label, code], i) => `
+    <button class="ref-card" data-i="${i}">
+      <span class="stat-label">${escapeHtml(label)}</span>
+      ${tikz ? '' : '<span class="ref-math"><\/span>'}
+      <span class="ref-code">${escapeHtml(code)}</span>
+    </button>`).join('');
+  if (!tikz) refEl.querySelectorAll('.ref-math').forEach((el, i) => {
+    katex.render(MATH_REF[i][1], el, { throwOnError: false });
+  });
+}
+
+refEl.addEventListener('click', e => {
+  const b = e.target.closest('.ref-card');
+  if (!b) return;
+  if (mode === 'tikz') insertTikz(TIKZ_REF[+b.dataset.i][1]);
+  else insertMath(MATH_REF[+b.dataset.i][1]);
+});
+
+// ---------------------------------------------------------------- rendering
+
+function renderEquation() {
+  err.textContent = '';
+  if (!src.value.trim()) { preview.innerHTML = '<span class="placeholder">Type an equation<\/span>'; return; }
   try {
     katex.render(src.value, preview, { displayMode: display.checked, throwOnError: true });
+    scheduleHistory();
   } catch (e) {
-    preview.innerHTML = '<span class="muted" style="font-style:italic">Invalid LaTeX</span>';
+    preview.innerHTML = '<span class="placeholder">Invalid LaTeX<\/span>';
     err.textContent = e.message;
   }
 }
 
-function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]); }
+function renderDocument() {
+  err.textContent = '';
+  preview.innerHTML = '<p>' + escapeHtml(src.value).replace(/\n\n/g, '<\/p><p>').replace(/\n/g, '<br>') + '<\/p>';
+  try {
+    renderMathInElement(preview, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false },
+        { left: '\\[', right: '\\]', display: true },
+      ],
+      throwOnError: false,
+    });
+    scheduleHistory();
+  } catch (e) { err.textContent = e.message; }
+}
+
+// ---- TikZ, compiled by TikZJax (TeX running as WebAssembly)
+
+let tikzLoaded = false, tikzWrapped = false, tikzNote = '';
+
+function loadTikz() {
+  if (tikzLoaded) return;
+  tikzLoaded = true;
+  const css = document.createElement('link');
+  css.rel = 'stylesheet'; css.href = TIKZ_CDN + '/fonts.css';
+  document.head.appendChild(css);
+  const js = document.createElement('script');
+  js.src = TIKZ_CDN + '/tikzjax.js';
+  document.head.appendChild(js);
+}
+
+// TikZJax prints the TeX log with console.log. Keep it (quietly) so errors can be explained.
+const texLog = [];
+const consoleLog = console.log.bind(console);
+console.log = (...args) => {
+  if (typeof args[0] !== 'string') return consoleLog(...args);
+  texLog.push(args[0]);
+  if (texLog.length > 600) texLog.splice(0, 200);
+};
+
+// Pull \usetikzlibrary / \usepackage lines out of the source (TikZJax takes them as
+// attributes) and drop \documentclass and \begin{document}. Blank lines are kept so
+// TeX line numbers still match the editor.
+function splitTikz(text) {
+  const libs = [], pkgs = {}, skipped = [];
+  let body = text
+    .replace(/\\documentclass(\[[^\]]*\])?\{[^}]*\}/g, '')
+    .replace(/\\(begin|end)\{document\}/g, '')
+    .replace(/\\usetikzlibrary\{([^}]*)\}/g, (_, list) => {
+      libs.push(...list.split(',').map(s => s.trim()).filter(Boolean));
+      return '';
+    })
+    .replace(/\\usepackage(?:\[([^\]]*)\])?\{([^}]*)\}/g, (_, opt, list) => {
+      list.split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+        if (TIKZ_PACKAGES.includes(name)) pkgs[name] = opt || '';
+        else if (!TIKZ_BUILTIN.includes(name)) skipped.push(name);
+      });
+      return '';
+    });
+  if (/\\begin\{axis\}/.test(body) && !('pgfplots' in pkgs)) pkgs.pgfplots = '';
+  if (/\\begin\{tikzcd\}/.test(body) && !('tikz-cd' in pkgs)) pkgs['tikz-cd'] = '';
+  const wrap = body.trim() && !/\\begin\{(tikzpicture|tikzcd)\}|\\tikz\b/.test(body);
+  if (wrap) body = '\\begin{tikzpicture}\n' + body + '\n\\end{tikzpicture}';
+  return { body, libs, pkgs, skipped, wrap };
+}
+
+function renderTikz() {
+  loadTikz();
+  const { body, libs, pkgs, skipped, wrap } = splitTikz(src.value);
+  tikzWrapped = wrap;
+  tikzNote = skipped.length ? `Not available here, ignored: ${skipped.join(', ')}` : '';
+  err.textContent = tikzNote;
+  if (!body.trim()) { preview.innerHTML = '<span class="placeholder">Write a tikzpicture<\/span>'; return; }
+  const s = document.createElement('script');
+  s.type = 'text/tikz';
+  s.dataset.showConsole = 'true';
+  if (libs.length) s.dataset.tikzLibraries = libs.join(',');
+  if (Object.keys(pkgs).length) s.dataset.texPackages = JSON.stringify(pkgs);
+  s.textContent = body;
+  preview.replaceChildren(s);
+}
+
+// First "! ..." error of the latest TeX run, mapped back to an editor line
+function texError() {
+  let start = 0;
+  texLog.forEach((l, i) => { if (l.startsWith('This is e-TeX')) start = i; });
+  const run = texLog.slice(start);
+  const i = run.findIndex(l => l.startsWith('! '));
+  if (i < 0) return 'TeX could not compile this diagram.';
+  const msg = run[i].slice(2);
+  const loc = run.slice(i).map(l => l.match(/^l\.(\d+)\s?(.*)$/)).find(Boolean);
+  if (!loc) return msg;
+  const line = +loc[1] - 1 - (tikzWrapped ? 1 : 0);
+  const near = loc[2].trim().slice(-30);
+  return `Line ${line}: ${msg}` + (near ? ` (near "${near}")` : '');
+}
+
+preview.addEventListener('tikzjax-load-finished', e => {
+  // show the diagram larger than print size on screen; exports keep the real size
+  const w = parseFloat(e.target.getAttribute('width'));
+  if (w) e.target.style.width = w * 1.5 + 'pt';
+  err.textContent = tikzNote;
+  scheduleHistory();
+});
+
+// On failure TikZJax swaps in a broken image; replace it with the TeX error.
+new MutationObserver(() => {
+  const bad = preview.querySelector('img[src*="invalid.site"]');
+  if (!bad) return;
+  bad.outerHTML = '<span class="placeholder">Could not render<\/span>';
+  err.textContent = texError();
+}).observe(preview, { childList: true, subtree: true });
 
 function render() {
-  if (!window.katex) { setTimeout(render, 60); return; }
+  if (mode === 'tikz') return renderTikz();
+  if (!window.katex || !window.renderMathInElement) { setTimeout(render, 60); return; }
   if (mode === 'document') renderDocument(); else renderEquation();
-  saveHistory();
 }
 
 let pending;
-function debounced() { clearTimeout(pending); pending = setTimeout(render, 80); }
-
-src.addEventListener('input', debounced);
+src.addEventListener('input', () => {
+  clearTimeout(pending);
+  pending = setTimeout(render, mode === 'tikz' ? 900 : 80);
+});
 display.addEventListener('change', render);
+
+// ---------------------------------------------------------------- history
+
+let histTimer;
+function scheduleHistory() { clearTimeout(histTimer); histTimer = setTimeout(saveHistory, 1500); }
 
 function saveHistory() {
   const v = src.value.trim();
   if (!v) return;
-  let h = JSON.parse(localStorage.getItem('latex-history') || '[]');
-  h = h.filter(x => x !== v);
-  h.unshift(v);
-  h = h.slice(0, 12);
-  localStorage.setItem('latex-history', JSON.stringify(h));
+  const key = MODES[mode].history;
+  store.set(key, [v, ...store.get(key).filter(x => x !== v)].slice(0, 12));
   renderHistory();
 }
+
 function renderHistory() {
-  const h = JSON.parse(localStorage.getItem('latex-history') || '[]');
-  if (!h.length) { histEl.innerHTML = '<span class="muted">No history yet.</span>'; return; }
+  const h = store.get(MODES[mode].history);
+  if (!h.length) { histEl.innerHTML = '<span class="muted">No history yet.<\/span>'; return; }
   histEl.innerHTML = h.slice(0, 8).map((item, i) => {
-    const short = item.length > 50 ? item.slice(0, 50) + '…' : item;
+    const flat = item.replace(/\s+/g, ' ');
+    const short = flat.length > 60 ? flat.slice(0, 60) + '…' : flat;
     return `<div class="row" style="padding:5px 0; border-bottom:1px solid var(--border); gap:8px">
-      <code style="flex:1; font-size:12px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${escapeHtml(short)}</code>
-      <button class="btn btn-sm" data-load="${i}">Load</button>
-    </div>`;
+      <code style="flex:1; font-size:12px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${escapeHtml(short)}<\/code>
+      <button class="btn btn-sm" data-load="${i}">Load<\/button>
+    <\/div>`;
   }).join('');
-  histEl.querySelectorAll('[data-load]').forEach(b => b.addEventListener('click', () => {
-    const h = JSON.parse(localStorage.getItem('latex-history') || '[]');
-    src.value = h[+b.dataset.load];
-    render();
-  }));
 }
-document.getElementById('clear-history').addEventListener('click', () => {
-  localStorage.removeItem('latex-history'); renderHistory();
+
+histEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-load]');
+  if (!b) return;
+  src.value = store.get(MODES[mode].history)[+b.dataset.load];
+  render();
 });
 
-document.getElementById('copy-btn').addEventListener('click', () => {
-  navigator.clipboard.writeText(src.value).then(() => {
-    const t = document.getElementById('toast'); document.getElementById('toast-msg').textContent='Source copied';
-    t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1500);
-  });
-});
-document.getElementById('clear-btn').addEventListener('click', () => { src.value = ''; render(); });
+$('clear-history').addEventListener('click', () => { store.remove(MODES[mode].history); renderHistory(); });
 
-document.getElementById('png-btn').addEventListener('click', async () => {
+// ---------------------------------------------------------------- actions
+
+function toast(msg) {
+  const t = $('toast');
+  $('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function download(name, blob) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+$('copy-btn').addEventListener('click', () => {
+  navigator.clipboard.writeText(src.value).then(() => toast('Source copied'));
+});
+$('clear-btn').addEventListener('click', () => { src.value = ''; render(); });
+
+function toBase64(buf) {
+  const bytes = new Uint8Array(buf);
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+
+// The finished TikZ SVG (not the loading spinner), as a standalone file with its TeX fonts embedded
+async function standaloneSvg() {
+  const svg = Array.from(preview.querySelectorAll(':scope > svg')).find(s => !s.querySelector('animate'));
+  if (!svg) return null;
+  const clone = svg.cloneNode(true);
+  clone.removeAttribute('style');
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const families = [...new Set(Array.from(clone.querySelectorAll('[font-family]'), el => el.getAttribute('font-family')))];
+  const faces = await Promise.all(families.map(async f => {
+    try {
+      const res = await fetch(`${TIKZ_CDN}/fonts/${f}.woff2`);
+      if (!res.ok) return '';
+      return `@font-face{font-family:${f};src:url(data:font/woff2;base64,${toBase64(await res.arrayBuffer())}) format("woff2")}`;
+    } catch (e) { return ''; }
+  }));
+  const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  style.textContent = faces.join('\n');
+  clone.insertBefore(style, clone.firstChild);
+  return new XMLSerializer().serializeToString(clone);
+}
+
+async function tikzPng(svgText, scale = 4, pad = 8) {
+  const url = URL.createObjectURL(new Blob([svgText], { type: 'image/svg+xml' }));
+  const img = new Image();
+  await new Promise((ok, fail) => { img.onload = ok; img.onerror = fail; img.src = url; });
+  const w = img.naturalWidth, h = img.naturalHeight;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.ceil((w + 2 * pad) * scale);
+  canvas.height = Math.ceil((h + 2 * pad) * scale);
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img, pad * scale, pad * scale, w * scale, h * scale);
+  URL.revokeObjectURL(url);
+  return new Promise(ok => canvas.toBlob(ok, 'image/png'));
+}
+
+async function exportBody() {
+  if (mode !== 'tikz') return preview.innerHTML;
+  const svg = await standaloneSvg();
+  if (!svg) err.textContent = 'Nothing to export yet - wait for the diagram to finish rendering.';
+  return svg;
+}
+
+function exportPage(title, body, extra = '') {
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${title}<\/title>
+<link rel="stylesheet" href="${KATEX_CSS}">
+<style>body{font-family:-apple-system,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.65;color:#000;text-align:${mode === 'document' ? 'left' : 'center'}}<\/style>
+<\/head><body>${body}${extra}<\/body><\/html>`;
+}
+
+$('png-btn').addEventListener('click', async () => {
+  if (mode === 'tikz') {
+    const svg = await exportBody();
+    if (svg) download('diagram.png', await tikzPng(svg));
+    return;
+  }
   if (!window.html2canvas) { err.textContent = 'Library loading…'; return; }
   const canvas = await html2canvas(preview, { backgroundColor: '#ffffff', scale: 2 });
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png'); a.download = 'equation.png'; a.click();
+  canvas.toBlob(b => download(mode === 'document' ? 'document.png' : 'equation.png', b), 'image/png');
 });
 
-document.getElementById('html-btn').addEventListener('click', () => {
-  const katexCss = document.querySelector('link[href*="katex"]').href;
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Equation</title>
-<link rel="stylesheet" href="${katexCss}">
-<style>body{font-family:-apple-system,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.65}</style>
-</head><body>${preview.innerHTML}</body></html>`;
-  const blob = new Blob([html], { type: 'text/html' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = 'equation.html'; a.click();
+$('svg-btn').addEventListener('click', async () => {
+  const svg = await exportBody();
+  if (svg) download('diagram.svg', new Blob([svg], { type: 'image/svg+xml' }));
 });
 
-document.getElementById('print-btn').addEventListener('click', () => {
-  const katexCss = document.querySelector('link[href*="katex"]').href;
-  const w = window.open('', '_blank');
-  w.document.write(`<!DOCTYPE html><html><head><title>Print</title>
-<link rel="stylesheet" href="${katexCss}">
-<style>body{font-family:-apple-system,sans-serif;max-width:760px;margin:40px auto;padding:0 20px;line-height:1.65;color:#000}</style>
-</head><body>${preview.innerHTML}<scr` + `ipt>setTimeout(()=>window.print(),300)</scr` + `ipt></body></html>`);
+$('html-btn').addEventListener('click', async () => {
+  const body = await exportBody();
+  if (!body) return;
+  const name = { equation: 'equation', document: 'document', tikz: 'diagram' }[mode];
+  download(name + '.html', new Blob([exportPage(name, body)], { type: 'text/html' }));
+});
+
+$('print-btn').addEventListener('click', async () => {
+  const w = window.open('', '_blank');   // open now, before any await, so it is not blocked
+  const body = await exportBody();
+  if (!body) { w.close(); return; }
+  const printScript = '<script>window.addEventListener("load",()=>document.fonts.ready.then(()=>setTimeout(()=>window.print(),100)))<\/script>';
+  w.document.write(exportPage('Print', body, printScript));
   w.document.close();
 });
 
-renderHistory();
-function start() { if (window.katex) render(); else setTimeout(start, 60); }
-start();
+// ---------------------------------------------------------------- start
+
+src.value = MODES.equation.sample;
+applyModeUI();
+render();
 </script>
 
 </body>

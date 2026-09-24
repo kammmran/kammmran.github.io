@@ -1,7 +1,7 @@
 
 A free, browser-only toolbox aimed at students, researchers, and anyone who works with text, PDFs, and data on a daily basis. Every tool runs entirely in the browser - no uploads, no accounts, no tracking. Open a page, do the thing, close the tab.
 
-The collection lives at [academy.html](academy.html) and bundles 20 single-purpose utilities that I kept needing while writing, reviewing, and reading academic material.
+The collection lives at [academy.html](academy.html) and bundles 50 single-purpose utilities that I kept needing while writing, reviewing, and reading academic material.
 
 ## Why it exists
 

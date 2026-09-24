@@ -911,6 +911,64 @@ h4 {
     overflow-wrap: anywhere;
 }
 
+/* --------------------------------------------------------------- Academy */
+
+.tool-search {
+    width: 260px;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper);
+    font-family: var(--sans);
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.tool-search:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.tool-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 18px 40px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.tool-link {
+    display: block;
+    text-decoration: none;
+}
+
+.tool-name {
+    font-weight: 600;
+    color: var(--text);
+    transition: color 0.15s ease;
+}
+
+.tool-link:hover .tool-name {
+    color: var(--accent);
+}
+
+.tool-desc {
+    display: block;
+    margin-top: 2px;
+    font-family: var(--sans);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
+
+.tool-empty {
+    margin: 0;
+    font-style: italic;
+    color: var(--muted);
+}
+
 /* ------------------------------------------------------------ Responsive */
 
 @media (max-width: 900px) {
@@ -994,6 +1052,10 @@ h4 {
 
     .page-header {
         margin-bottom: 28px;
+    }
+
+    .tool-search {
+        width: 100%;
     }
 
     .profile {

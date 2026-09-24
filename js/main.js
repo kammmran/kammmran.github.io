@@ -17,6 +17,16 @@ function renderMarkdown(md) {
         .replace(/<iframe(?![^>]*\bloading=)/g, '<iframe loading="lazy"');
 }
 
+// The page already shows the project title, so drop a leading markdown
+// heading that only repeats it (e.g. "## TruthRadar").
+function stripTitleHeading(md, names) {
+    const match = md.match(/^\s*#{1,6}\s+(.+?)\s*#*\s*(?:\n|$)/);
+    if (!match) return md;
+    const norm = s => s.replace(/[*_`]/g, '').trim().toLowerCase();
+    const repeatsTitle = names.some(name => name && norm(name) === norm(match[1]));
+    return repeatsTitle ? md.slice(match[0].length) : md;
+}
+
 function escapeHtml(text) {
     return String(text).replace(/[&<>"']/g, c => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -107,8 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             content.innerHTML = ordered.map(p => {
                 const meta = [escapeHtml(p.category || 'Other'), formatDate(p.date)].filter(Boolean).join(' &middot; ');
-                const body = p.content.trim()
-                    ? renderMarkdown(p.content)
+                const md = stripTitleHeading(p.content, [p.title, p.short]);
+                const body = md.trim()
+                    ? renderMarkdown(md)
                     : '<p class="project-empty">A write-up for this project is coming soon.</p>';
                 return `
                     <article id="proj-${p.slug}" class="project-post-content" hidden>
