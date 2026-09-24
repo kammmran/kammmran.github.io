@@ -1,3 +1,5 @@
+PyPI: [pyionics](https://pypi.org/project/pyionics/)
+
 ## Installation
 
 ```bash

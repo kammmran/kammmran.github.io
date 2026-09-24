@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV - Kamran Heydarov</title>
-    <meta name="description" content="Curriculum vitae of Kamran Heydarov: education, experience, projects and skills.">
+    <title>Projects - Kamran Heydarov</title>
+    <meta name="description" content="Research software, scientific tools and other projects by Kamran Heydarov.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
@@ -16,30 +16,29 @@
             <a class="nav-brand" href="index.html">Kamran Heydarov</a>
             <ul class="nav-menu">
                 <li><a href="index.html" class="nav-link">About</a></li>
-                <li><a href="projects.html" class="nav-link">Projects</a></li>
+                <li><a href="projects.html" class="nav-link active" aria-current="page">Projects</a></li>
                 <li><a href="podcast.html" class="nav-link">Podcast</a></li>
-                <li><a href="cv.html" class="nav-link active" aria-current="page">CV</a></li>
+                <li><a href="cv.html" class="nav-link">CV</a></li>
                 <li><a href="contact.html" class="nav-link">Contact</a></li>
             </ul>
         </nav>
     </header>
 
     <main class="page">
-        <header class="page-header page-header-row">
-            <div>
-                <h1 class="page-title">Curriculum Vitae</h1>
-                <p class="page-lede">Education, experience, projects and skills.</p>
-            </div>
-            <div class="button-row">
-                <a class="button" href="docs/cv.pdf" download="Kamran-Heydarov-CV.pdf">Download PDF</a>
-                <a class="button button-ghost" href="docs/cv.pdf" target="_blank" rel="noopener">Open in new tab</a>
-            </div>
+        <header class="page-header">
+            <h1 class="page-title">Projects</h1>
+            <p class="page-lede">Research software, scientific tools and other work, grouped by area.</p>
         </header>
 
-        <div class="cv-frame">
-            <object data="docs/cv.pdf" type="application/pdf" class="pdf-viewer" aria-label="Curriculum vitae (PDF)">
-                <p class="pdf-fallback">This browser cannot show the PDF here. <a href="docs/cv.pdf">Open the CV (PDF)</a> instead.</p>
-            </object>
+        <div class="project-container">
+            <aside class="project-sidebar">
+                <div class="project-select-wrap">
+                    <label class="project-select-label" for="project-select">Browse projects</label>
+                    <select id="project-select" class="project-select"></select>
+                </div>
+                <nav id="project-menu" class="project-menu" aria-label="Projects"></nav>
+            </aside>
+            <div id="project-content" class="project-content"></div>
         </div>
     </main>
 
@@ -53,5 +52,8 @@
             </ul>
         </div>
     </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>

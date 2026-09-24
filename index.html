@@ -3,49 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kamran Heydarov - Projects</title>
+    <title>Kamran Heydarov</title>
+    <meta name="description" content="Kamran Heydarov, M.Sc. student in Chemoinformatics at the University of Strasbourg. QSPR modelling, machine learning and open-source software for ionic liquids.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <h3>Kamran Heydarov</h3>
-            </div>
+    <header class="site-header">
+        <nav class="navbar" aria-label="Main">
+            <a class="nav-brand" href="index.html">Kamran Heydarov</a>
             <ul class="nav-menu">
-                                <li class="nav-item">
-                    <a href="index.html" class="nav-link active"><span>Projects</span></a>
-                </li>
-                
-                <li class="nav-item">
-                    <a href="podcast.html" class="nav-link"><span>Podcast</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="cv.html" class="nav-link"><span>CV</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="contact.html" class="nav-link"><span>Contact</span></a>
-                </li>
-                <li class="nav-item">
-                    <a href="https://kammmran.github.io/uni42lab" class="nav-link" target="_blank" rel="noopener"><span>Uni42Lab</span></a>
-                </li>
+                <li><a href="index.html" class="nav-link active" aria-current="page">About</a></li>
+                <li><a href="projects.html" class="nav-link">Projects</a></li>
+                <li><a href="podcast.html" class="nav-link">Podcast</a></li>
+                <li><a href="cv.html" class="nav-link">CV</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
             </ul>
-        </div>
-    </nav>
-    <main class="main-content">
-        <div class="content-container" id="content-container">
-            <div class="project-container">
-                <aside class="project-sidebar">
-                    <div id="project-menu" class="year-menu"></div>
-                </aside>
-                <main id="project-content" class="project-content"></main>
+        </nav>
+    </header>
+
+    <main class="page">
+        <header class="profile">
+            <h1 class="profile-name">Kamran Heydarov</h1>
+            <p class="profile-role">M.Sc. student in Chemoinformatics</p>
+            <p class="profile-affiliation">University of Strasbourg</p>
+            <ul class="profile-links">
+                <li><a href="mailto:k.a.heydarov@gmail.com">Email</a></li>
+                <li><a href="https://github.com/kammmran" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href="https://pypi.org/project/pyionics/" target="_blank" rel="noopener">PyPI</a></li>
+                <li><a href="docs/cv.pdf">CV (PDF)</a></li>
+            </ul>
+        </header>
+
+        <div class="about-grid">
+            <div class="about-main">
+                <section class="section bio" aria-labelledby="about-title">
+                    <h2 class="section-title" id="about-title">About</h2>
+                    <p>I am a Chemoinformatics M.Sc. student at the University of Strasbourg, working where physical chemistry, molecular modelling and machine learning meet.</p>
+                    <p>My work covers the full QSPR workflow: curating experimental data from chemical databases, computing and selecting molecular descriptors, training and validating ensemble models, and turning them into documented tools that non-specialists can use. I build and maintain open-source Python software for ionic liquid data and properties, including <a href="projects.html#pyionics">pyionics</a> and <a href="projects.html#ilqspr">ILQSPR</a>.</p>
+                    <p>I am particularly interested in data-driven design of ionic liquids and sustainable solvents.</p>
+                </section>
+
+                <section class="section" aria-labelledby="interests-title">
+                    <h2 class="section-title" id="interests-title">Research interests</h2>
+                    <ul class="interest-list">
+                        <li>QSPR modelling and machine learning for physicochemical properties</li>
+                        <li>Ionic liquids and sustainable solvents</li>
+                        <li>Curation of experimental chemical data</li>
+                        <li>Open-source scientific software</li>
+                        <li>Computational chemistry (DFT)</li>
+                    </ul>
+                </section>
+
+                <section class="section" aria-labelledby="work-title">
+                    <h2 class="section-title" id="work-title">Selected work</h2>
+                    <ol class="work-list">
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#ilqspr">ILQSPR: QSPR modelling of ionic liquid-solvent mixtures</a>
+                            <p class="work-meta">With Dr. Shamkhal Baybekov &middot; 2025 - present &middot; Manuscript in preparation</p>
+                            <p class="work-desc">Consensus XGBoost models that predict the density and refractive index of ionic liquids, pure and mixed with water, ethanol or isopropanol (R<sup>2</sup> = 0.90-0.96).</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#ilqspr">Details</a></li>
+                                <li><a class="tag-link" href="https://github.com/sbaybekov/qspr-il-density-refractive-index" target="_blank" rel="noopener">Code</a></li>
+                                <li><a class="tag-link" href="https://qspr-il-density-refractive-index.streamlit.app/" target="_blank" rel="noopener">App</a></li>
+                                <li><a class="tag-link" href="https://ilqspr.readthedocs.io/en/latest/" target="_blank" rel="noopener">Docs</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#pyionics">pyionics</a>
+                            <p class="work-meta">Python library &middot; 2025 - present</p>
+                            <p class="work-desc">Access to NIST ILThermo data on ionic liquids: download datasets, convert them to CSV or TSV, merge them and add SMILES.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#pyionics">Details</a></li>
+                                <li><a class="tag-link" href="https://pypi.org/project/pyionics/" target="_blank" rel="noopener">PyPI</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#chemgraph">ChemGraph</a>
+                            <p class="work-meta">Process simulation software &middot; Executive Director &middot; 2025 - 2026</p>
+                            <p class="work-desc">An open-source web tool for designing and simulating process flow diagrams, supported by ASOIU and used in teaching and research.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#chemgraph">Details</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#academy">Academy</a>
+                            <p class="work-meta">Browser tools for students and researchers &middot; 2026</p>
+                            <p class="work-desc">A free collection of single-purpose tools for working with text, PDFs and data. Everything runs in the browser; nothing is uploaded.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#academy">Details</a></li>
+                                <li><a class="tag-link" href="academy.html">Open</a></li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p><a href="projects.html">All projects</a></p>
+                </section>
+
+                <section class="section" aria-labelledby="news-title">
+                    <h2 class="section-title" id="news-title">Recent highlights</h2>
+                    <ul class="news">
+                        <li><span class="news-date">2026</span><span><a href="projects.html#chron-shift">Chron Shift</a> was selected as one of the top 15 studios for the Xsolla-IDDA Baku game incubator.</span></li>
+                        <li><span class="news-date">2026</span><span>Built the website of the <a href="https://asoiu.edu.az/mpmc2026" target="_blank" rel="noopener">MacroFrontiers 2026</a> international conference.</span></li>
+                        <li><span class="news-date">2026</span><span>Released <a href="projects.html#marimo4obs">marimo4obs</a>, an Obsidian plugin for marimo notebooks.</span></li>
+                        <li><span class="news-date">2025</span><span>Joined ASOIU as Django Developer and Chief Specialist, working on the university's <a href="projects.html#press">scholarly publishing platforms</a>.</span></li>
+                        <li><span class="news-date">2025</span><span>Graduated with a B.Sc. in Chemical Engineering from ASOIU.</span></li>
+                    </ul>
+                </section>
             </div>
+
+            <aside class="about-aside">
+                <section class="section" aria-labelledby="education-title">
+                    <h2 class="section-title" id="education-title">Education</h2>
+                    <ul class="entries">
+                        <li class="entry">
+                            <p class="entry-title">M.Sc. in Chemoinformatics</p>
+                            <p class="entry-sub">University of Strasbourg</p>
+                            <p class="entry-meta">Expected Jun 2027 &middot; Baku</p>
+                        </li>
+                        <li class="entry">
+                            <p class="entry-title">B.Sc. in Chemical Engineering</p>
+                            <p class="entry-sub">Azerbaijan State Oil and Industry University</p>
+                            <p class="entry-meta">Jun 2025 &middot; Baku</p>
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="section" aria-labelledby="experience-title">
+                    <h2 class="section-title" id="experience-title">Experience</h2>
+                    <ul class="entries">
+                        <li class="entry">
+                            <p class="entry-title">Django Developer &amp; Chief Specialist</p>
+                            <p class="entry-sub">Azerbaijan State Oil and Industry University</p>
+                            <p class="entry-meta">Sep 2025 - Jun 2026</p>
+                        </li>
+                        <li class="entry">
+                            <p class="entry-title">Executive Editor</p>
+                            <p class="entry-sub">Baku Mathematical Journal</p>
+                        </li>
+                        <li class="entry">
+                            <p class="entry-title">Data-Oriented Lab Assistant</p>
+                            <p class="entry-sub">Azerbaijan State Oil and Industry University</p>
+                            <p class="entry-meta">Sep 2023 - Feb 2025</p>
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="section" aria-labelledby="tools-title">
+                    <h2 class="section-title" id="tools-title">Methods &amp; tools</h2>
+                    <p class="inline-list">Python, RDKit, Mordred, scikit-learn, XGBoost, KNIME, DFT, Django, Streamlit, LaTeX</p>
+                </section>
+
+                <section class="section" aria-labelledby="languages-title">
+                    <h2 class="section-title" id="languages-title">Languages</h2>
+                    <p class="inline-list">Azerbaijani (native), Turkish (native), English (fluent), Russian (B1)</p>
+                </section>
+            </aside>
         </div>
     </main>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="js/main.js"></script>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span>&copy; 2026 Kamran Heydarov</span>
+            <ul class="footer-links">
+                <li><a href="mailto:k.a.heydarov@gmail.com">Email</a></li>
+                <li><a href="https://github.com/kammmran" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href="docs/cv.pdf">CV</a></li>
+            </ul>
+        </div>
+    </footer>
 </body>
 </html>

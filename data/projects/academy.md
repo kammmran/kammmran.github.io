@@ -1,4 +1,3 @@
-# Academy - Tools for Students & Researchers
 
 A free, browser-only toolbox aimed at students, researchers, and anyone who works with text, PDFs, and data on a daily basis. Every tool runs entirely in the browser - no uploads, no accounts, no tracking. Open a page, do the thing, close the tab.
 

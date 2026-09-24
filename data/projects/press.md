@@ -64,7 +64,9 @@ Eventually, I had to stop development because the IT department did not allow fu
 
 Despite these limitations, I believe the project achieved meaningful results.
 
-Currently, I serve as an **editor of one of the journals** and manage the process of applying for indexing in **DOAJ** and **Scopus**.
+Currently, I serve as **Executive Editor** of the *Baku Mathematical Journal* and manage the process of applying for indexing in **DOAJ** and **Scopus**.
+
+I also coordinated the journal's migration to **Elsevier Digital Commons**, across nine international working meetings with the Elsevier team covering site structure, metadata preparation and article migration. DOIs and metadata for the university's journals are registered through **Crossref**.
 
 This work is especially interesting because the Editor-in-Chief of the journal is a very knowledgeable and capable person, which makes the collaboration productive and motivating.
 
