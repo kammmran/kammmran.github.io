@@ -2,6 +2,22 @@
   {
     "type": "project",
     "category": "Research & Engineering",
+    "title": "Chemical Space Analysis of Ionic Liquids",
+    "short": "IL Chemical Space",
+    "file": "data/projects/il-chemical-space.md",
+    "date": "2026-03"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "AI-Driven Modelling of Element Migration in Oil-Contaminated Soils",
+    "short": "Geochemical Soil Modelling",
+    "file": "data/projects/geochem-soils.md",
+    "date": "2026"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
     "title": "ILQSPR: QSPR Modelling of IL-Solvent Mixtures",
     "short": "ILQSPR",
     "file": "data/projects/ilqspr.md",
