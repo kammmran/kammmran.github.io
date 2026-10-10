@@ -2,6 +2,14 @@
   {
     "type": "project",
     "category": "Research & Engineering",
+    "title": "ENodorIM: From Molecule to Smell",
+    "short": "ENodorIM",
+    "file": "data/projects/enodorim.md",
+    "date": "2026-10"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
     "title": "Chemical Space Analysis of Ionic Liquids",
     "short": "IL Chemical Space",
     "file": "data/projects/il-chemical-space.md",
