@@ -322,6 +322,24 @@ h4 {
     color: #fff;
 }
 
+/* Status marker shown beside a title, e.g. [ONGOING] */
+.status-badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 7px;
+    border: 1px solid var(--accent-line);
+    border-radius: 3px;
+    background: var(--accent-soft);
+    font-family: var(--sans);
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    vertical-align: 2px;
+    white-space: nowrap;
+}
+
 /* ---------------------------------------------------------- About (home) */
 
 .profile {

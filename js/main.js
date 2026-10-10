@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <article id="proj-${p.slug}" class="project-post-content" hidden>
                         <header class="project-header">
                             <p class="eyebrow">${meta}</p>
-                            <h1 class="project-title">${escapeHtml(p.title)}</h1>
+                            <h1 class="project-title">${escapeHtml(p.title)}${p.status ? `<span class="status-badge">${escapeHtml(p.status)}</span>` : ''}</h1>
                         </header>
                         <div class="project-content-text prose">${body}</div>
                     </article>`;

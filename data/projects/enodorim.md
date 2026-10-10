@@ -2,6 +2,8 @@ Interactive simulator of human olfaction: an odorant reaches the nose, binds odo
 
 Site: [kammmran.github.io/ENodorIM](https://kammmran.github.io/ENodorIM/#/) &middot; Code: [github.com/kammmran/ENodorIM](https://github.com/kammmran/ENodorIM)
 
+**Status: ongoing.** Under active development since October 2026.
+
 Part of a research project on predicting the fragrance of chemical mixtures, with the DIFACQUIM group at the School of Chemistry, UNAM.
 
 ## What it does
