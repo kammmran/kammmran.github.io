@@ -4,8 +4,6 @@ Site: [kammmran.github.io/ENodorIM](https://kammmran.github.io/ENodorIM/#/) &mid
 
 **Status: ongoing.** Under active development since October 2026.
 
-Part of a research project on predicting the fragrance of chemical mixtures, with the DIFACQUIM group at the School of Chemistry, UNAM.
-
 ## What it does
 
 The centre of the project is the receptor step. Which of the ~400 human odorant receptors respond comes from measured cell-assay data (M2OR); every later stage shows what that activation pattern leads to. Every value on screen is labelled `measured`, `predicted` or `schematic`.
