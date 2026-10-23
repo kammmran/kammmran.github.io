@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academy - Kamran Heydarov</title>
+    <meta name="description" content="Free browser tools for students and researchers. Everything runs in your browser.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+    <script src="js/theme.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navbar" aria-label="Main">
+            <a class="nav-brand" href="index.html">Kamran Heydarov</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">About</a></li>
+                <li><a href="projects.html" class="nav-link">Projects</a></li>
+                <li><a href="cv.html" class="nav-link">CV</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+            </ul>
+            <button id="theme-toggle" class="theme-toggle" type="button" hidden>Dark mode</button>
+        </nav>
+    </header>
+
+    <main class="page">
+        <header class="page-header">
+            <div class="page-header-row">
+                <div>
+                    <h1 class="page-title">Academy</h1>
+                    <p class="page-lede">Free tools for students and researchers. Everything runs in your browser - nothing is uploaded.</p>
+                </div>
+                <input id="tool-search" class="tool-search" type="search" placeholder="Search tools" aria-label="Search tools" autocomplete="off">
+            </div>
+        </header>
+
+        <section class="section tool-group" aria-labelledby="g-study">
+            <h2 class="section-title" id="g-study">Study</h2>
+            <ul class="tool-list">
+                <li data-keywords="spaced repetition sm2 anki memorize study cards"><a class="tool-link" href="tools/flashcards.html"><span class="tool-name">Flashcards</span><span class="tool-desc">Build decks and review them with spaced repetition.</span></a></li>
+                <li data-keywords="timer focus break study session tomato productivity"><a class="tool-link" href="tools/pomodoro.html"><span class="tool-name">Pomodoro Timer</span><span class="tool-desc">Focus sessions and breaks, with a daily streak.</span></a></li>
+                <li data-keywords="grade point average 4.0 5.0 european ects cumulative semester"><a class="tool-link" href="tools/gpa.html"><span class="tool-name">GPA Calculator</span><span class="tool-desc">Semester and cumulative GPA on 4.0, 5.0, 100-point or ECTS scales.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-writing">
+            <h2 class="section-title" id="g-writing">Writing</h2>
+            <ul class="tool-list">
+                <li data-keywords="character sentence paragraph reading time density compare"><a class="tool-link" href="tools/word-counter.html"><span class="tool-name">Word Counter</span><span class="tool-desc">Words, characters, reading time and top words.</span></a></li>
+                <li data-keywords="flesch kincaid gunning fog smog coleman liau ari grade level heatmap"><a class="tool-link" href="tools/readability.html"><span class="tool-name">Readability</span><span class="tool-desc">Six readability scores and your hardest sentences.</span></a></li>
+                <li data-keywords="editor preview github gfm export html pdf"><a class="tool-link" href="tools/markdown.html"><span class="tool-name">Markdown Editor</span><span class="tool-desc">Live preview, export to HTML or PDF.</span></a></li>
+                <li data-keywords="case converter uppercase lowercase title camel snake kebab whitespace find replace sort dedupe"><a class="tool-link" href="tools/text-utils.html"><span class="tool-name">Text Utilities</span><span class="tool-desc">Change case, find and replace, sort and dedupe.</span></a></li>
+                <li data-keywords="compare text difference"><a class="tool-link" href="tools/diff.html"><span class="tool-name">Diff Checker</span><span class="tool-desc">Compare two texts by line, word or character.</span></a></li>
+                <li data-keywords="math equation katex render formula document export png svg tikz pgfplots tikz-cd diagram"><a class="tool-link" href="tools/latex-preview.html"><span class="tool-name">LaTeX Preview</span><span class="tool-desc">Render equations and TikZ diagrams live.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-literature">
+            <h2 class="section-title" id="g-literature">Literature &amp; citations</h2>
+            <ul class="tool-list">
+                <li data-keywords="scholar arxiv pubmed semantic openalex connected papers"><a class="tool-link" href="tools/lit-search.html"><span class="tool-name">Literature Search</span><span class="tool-desc">One query across Google Scholar, arXiv, PubMed and more.</span></a></li>
+                <li data-keywords="target journal topic impact open access issn openalex sources"><a class="tool-link" href="tools/journal-finder.html"><span class="tool-name">Journal Finder</span><span class="tool-desc">Find journals by topic, with impact and open-access status.</span></a></li>
+                <li data-keywords="references citing papers graph doi openalex"><a class="tool-link" href="tools/citation-network.html"><span class="tool-name">Citation Network</span><span class="tool-desc">See what a paper cites and what cites it.</span></a></li>
+                <li data-keywords="crossref reference metadata apa mla chicago"><a class="tool-link" href="tools/doi-lookup.html"><span class="tool-name">DOI Lookup</span><span class="tool-desc">Turn a DOI into an APA, MLA or Chicago citation.</span></a></li>
+                <li data-keywords="pubmed citation medline ncbi apa mla chicago bibtex"><a class="tool-link" href="tools/pmid-lookup.html"><span class="tool-name">PMID Lookup</span><span class="tool-desc">Turn a PubMed ID into a citation or BibTeX.</span></a></li>
+                <li data-keywords="bibtex ris csl json endnote zotero mendeley format reference apa"><a class="tool-link" href="tools/cite-convert.html"><span class="tool-name">Citation Converter</span><span class="tool-desc">Convert between BibTeX, RIS and CSL-JSON.</span></a></li>
+                <li data-keywords="references library bibtex doi import export tag"><a class="tool-link" href="tools/bibliography.html"><span class="tool-name">Bibliography Manager</span><span class="tool-desc">Collect, tag and export your references.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-stats">
+            <h2 class="section-title" id="g-stats">Statistics</h2>
+            <ul class="tool-list">
+                <li data-keywords="mean median mode standard deviation variance quartiles correlation regression scatter histogram"><a class="tool-link" href="tools/statistics.html"><span class="tool-name">Statistics</span><span class="tool-desc">Summary stats, histogram, correlation and regression.</span></a></li>
+                <li data-keywords="distributions normal binomial poisson t-distribution combinations permutations factorial p-value"><a class="tool-link" href="tools/probability.html"><span class="tool-name">Probability</span><span class="tool-desc">Normal, binomial, Poisson and t distributions, with p-values.</span></a></li>
+                <li data-keywords="decision tree t-test anova chi-square regression mann whitney which test non-parametric"><a class="tool-link" href="tools/stat-test-recommender.html"><span class="tool-name">Statistical Test Recommender</span><span class="tool-desc">Answer a few questions, get the right test.</span></a></li>
+                <li data-keywords="fixed random effects forest plot heterogeneity i2 pooled effect size inverse variance"><a class="tool-link" href="tools/meta-analysis.html"><span class="tool-name">Meta-analysis</span><span class="tool-desc">Fixed and random effects, I² and a forest plot.</span></a></li>
+                <li data-keywords="flow diagram systematic review screening identification included excluded svg png 2020"><a class="tool-link" href="tools/prisma.html"><span class="tool-name">PRISMA Diagram</span><span class="tool-desc">A PRISMA 2020 flow diagram as SVG or PNG.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-data">
+            <h2 class="section-title" id="g-data">Data &amp; math</h2>
+            <ul class="tool-list">
+                <li data-keywords="bar line pie scatter graph plot visualization png export"><a class="tool-link" href="tools/chart.html"><span class="tool-name">Chart Generator</span><span class="tool-desc">Paste data, get a bar, line, pie or scatter chart.</span></a></li>
+                <li data-keywords="graph data extractor chart to csv scatter line log axis calibrate recover points engauge"><a class="tool-link" href="tools/plot-digitizer.html"><span class="tool-name">Plot Digitizer</span><span class="tool-desc">Pull data points out of a chart image.</span></a></li>
+                <li data-keywords="csv tidy trim duplicates empty rows normalize headers profile columns export"><a class="tool-link" href="tools/data-cleaner.html"><span class="tool-name">Dataset Cleaner</span><span class="tool-desc">Trim, dedupe and profile a CSV file.</span></a></li>
+                <li data-keywords="yaml formatter validator tree converter"><a class="tool-link" href="tools/json-viewer.html"><span class="tool-name">JSON / CSV Viewer</span><span class="tool-desc">Format, validate and convert JSON and CSV.</span></a></li>
+                <li data-keywords="length mass weight temperature time storage energy pressure area volume speed angle frequency power"><a class="tool-link" href="tools/unit-converter.html"><span class="tool-name">Unit Converter</span><span class="tool-desc">Length, mass, energy, pressure and more.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-chemistry">
+            <h2 class="section-title" id="g-chemistry">Chemistry</h2>
+            <ul class="tool-list">
+                <li data-keywords="elements atomic number weight electronegativity groups periods 118"><a class="tool-link" href="tools/periodic-table.html"><span class="tool-name">Periodic Table</span><span class="tool-desc">All 118 elements with their properties.</span></a></li>
+                <li data-keywords="molar mass formula elemental composition moles hydrate"><a class="tool-link" href="tools/mol-weight.html"><span class="tool-name">Molecular Weight</span><span class="tool-desc">Molar mass and composition from a formula.</span></a></li>
+                <li data-keywords="chemical balance coefficients reaction stoichiometry"><a class="tool-link" href="tools/equation-balancer.html"><span class="tool-name">Equation Balancer</span><span class="tool-desc">Balance a chemical equation.</span></a></li>
+                <li data-keywords="moles grams limiting reagent reaction amounts mass"><a class="tool-link" href="tools/stoichiometry.html"><span class="tool-name">Stoichiometry</span><span class="tool-desc">Moles and grams for every species in a reaction.</span></a></li>
+                <li data-keywords="dilution concentration solution c1v1 c2v2 moles volume mass"><a class="tool-link" href="tools/molarity.html"><span class="tool-name">Molarity &amp; Dilution</span><span class="tool-desc">Make solutions and dilute stocks (C1V1 = C2V2).</span></a></li>
+                <li data-keywords="poh acid base hydrogen ion concentration hydroxide strong scale"><a class="tool-link" href="tools/ph.html"><span class="tool-name">pH Calculator</span><span class="tool-desc">Convert between pH, pOH, [H+] and [OH-].</span></a></li>
+                <li data-keywords="pv nrt pressure volume moles temperature kelvin"><a class="tool-link" href="tools/gas-law.html"><span class="tool-name">Ideal Gas Law</span><span class="tool-desc">Solve PV = nRT for any variable.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-cheminformatics">
+            <h2 class="section-title" id="g-cheminformatics">Cheminformatics</h2>
+            <ul class="tool-list">
+                <li data-keywords="molecule structure formula descriptors lipinski logp tpsa rule of five openchemlib"><a class="tool-link" href="tools/smiles.html"><span class="tool-name">SMILES Validator</span><span class="tool-desc">Formula, mass, 2D structure and a Lipinski check.</span></a></li>
+                <li data-keywords="editor draw structure smiles molfile mol sdf sd file chemdraw 2d builder"><a class="tool-link" href="tools/sketcher.html"><span class="tool-name">Molecule Sketcher</span><span class="tool-desc">Draw a structure, get SMILES, molfile or SDF.</span></a></li>
+                <li data-keywords="molecular descriptors batch mw logp tpsa hbond donors acceptors rings rotatable lipinski csv"><a class="tool-link" href="tools/descriptors.html"><span class="tool-name">Descriptor Table</span><span class="tool-desc">MW, cLogP, TPSA and more for a list of SMILES.</span></a></li>
+                <li data-keywords="canonical smiles batch normalize deduplicate isomeric clean validate list"><a class="tool-link" href="tools/canonicalize.html"><span class="tool-name">SMILES Canonicalizer</span><span class="tool-desc">Canonicalize a list of SMILES and find duplicates.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-biology">
+            <h2 class="section-title" id="g-biology">Biology</h2>
+            <ul class="tool-list">
+                <li data-keywords="sequence gc content reverse complement transcription translation open reading frame orf fasta tm"><a class="tool-link" href="tools/dna-analyzer.html"><span class="tool-name">DNA / RNA Analyzer</span><span class="tool-desc">GC content, reverse complement, translation and ORFs.</span></a></li>
+                <li data-keywords="pairwise needleman wunsch smith waterman global local identity similarity gaps dna protein"><a class="tool-link" href="tools/sequence-align.html"><span class="tool-name">Sequence Alignment</span><span class="tool-desc">Global or local pairwise alignment.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-figures">
+            <h2 class="section-title" id="g-figures">Figures &amp; slides</h2>
+            <ul class="tool-list">
+                <li data-keywords="color converter hex rgb hsl hsv cmyk oklch hwb wheel"><a class="tool-link" href="tools/color-picker.html"><span class="tool-name">Color Picker</span><span class="tool-desc">Convert between HEX, RGB, HSL and more.</span></a></li>
+                <li data-keywords="wcag accessibility ratio aa aaa text a11y"><a class="tool-link" href="tools/contrast.html"><span class="tool-name">Contrast Checker</span><span class="tool-desc">WCAG contrast ratio with an AA/AAA check.</span></a></li>
+                <li data-keywords="data viz colors colorblind safe sequential diverging categorical viridis colorbrewer okabe ito charts"><a class="tool-link" href="tools/viz-palette.html"><span class="tool-name">Data-viz Palette</span><span class="tool-desc">Colorblind-safe palettes for charts.</span></a></li>
+                <li data-keywords="figure composite grid panels labels arrange combine export png publication"><a class="tool-link" href="tools/multi-panel.html"><span class="tool-name">Multi-Panel Creator</span><span class="tool-desc">Combine images into one A/B/C labelled figure.</span></a></li>
+                <li data-keywords="academic conference research poster a0 a1 template columns sections print pdf layout"><a class="tool-link" href="tools/poster-generator.html"><span class="tool-name">Poster Generator</span><span class="tool-desc">Build a conference poster and print it to PDF.</span></a></li>
+                <li data-keywords="markdown slides presentation present full screen print pdf speaker notes presenter view timer math katex handout export html"><a class="tool-link" href="tools/slide-deck.html"><span class="tool-name">Slide Deck</span><span class="tool-desc">Markdown slides with speaker notes, math and PDF export.</span></a></li>
+            </ul>
+        </section>
+
+        <section class="section tool-group" aria-labelledby="g-pdf">
+            <h2 class="section-title" id="g-pdf">PDF &amp; files</h2>
+            <ul class="tool-list">
+                <li data-keywords="combine join"><a class="tool-link" href="tools/pdf-merge.html"><span class="tool-name">PDF Merge</span><span class="tool-desc">Combine several PDFs into one.</span></a></li>
+                <li data-keywords="extract pages range"><a class="tool-link" href="tools/pdf-split.html"><span class="tool-name">PDF Split</span><span class="tool-desc">Extract pages or page ranges from a PDF.</span></a></li>
+                <li data-keywords="extract content selectable"><a class="tool-link" href="tools/pdf-to-text.html"><span class="tool-name">PDF to Text</span><span class="tool-desc">Extract the text from a PDF.</span></a></li>
+                <li data-keywords="ocr text recognition tesseract scan screenshot"><a class="tool-link" href="tools/ocr.html"><span class="tool-name">Image OCR</span><span class="tool-desc">Read text from images and screenshots.</span></a></li>
+                <li data-keywords="combine photos pictures jpg png convert single document"><a class="tool-link" href="tools/images-to-pdf.html"><span class="tool-name">Images to PDF</span><span class="tool-desc">Combine images into a single PDF.</span></a></li>
+            </ul>
+        </section>
+
+        <p id="tool-empty" class="tool-empty" hidden>No tools match your search.</p>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span>&copy; 2026 Kamran Heydarov</span>
+            <ul class="footer-links">
+                <li><a href="mailto:k.a.heydarov@gmail.com">Email</a></li>
+                <li><a href="https://github.com/kammmran" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href="docs/cv.pdf">CV</a></li>
+            </ul>
+        </div>
+    </footer>
+
+    <script>
+        // Filter the tool list as you type; every word must match.
+        const search = document.getElementById('tool-search');
+        const groups = Array.from(document.querySelectorAll('.tool-group'));
+        const empty = document.getElementById('tool-empty');
+
+        search.addEventListener('input', () => {
+            const words = search.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+            let anyShown = false;
+            groups.forEach(group => {
+                let shown = 0;
+                group.querySelectorAll('.tool-list li').forEach(item => {
+                    const text = (item.textContent + ' ' + item.dataset.keywords).toLowerCase();
+                    const match = words.every(w => text.includes(w));
+                    item.hidden = !match;
+                    if (match) shown++;
+                });
+                group.hidden = shown === 0;
+                if (shown) anyShown = true;
+            });
+            empty.hidden = anyShown;
+        });
+
+        // "/" jumps to the search box
+        document.addEventListener('keydown', e => {
+            if (e.key === '/' && document.activeElement !== search) {
+                e.preventDefault();
+                search.focus();
+            }
+        });
+    </script>
+</body>
+</html>

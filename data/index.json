@@ -1,0 +1,173 @@
+[
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "mylovely-mice",
+    "file": "data/projects/mylovely-mice.md",
+    "date": "2026-10"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "ENodorIM: From Molecule to Smell",
+    "short": "ENodorIM",
+    "status": "Ongoing",
+    "file": "data/projects/enodorim.md",
+    "date": "2026-10"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "Chemical Space Analysis of Ionic Liquids",
+    "short": "IL Chemical Space",
+    "file": "data/projects/il-chemical-space.md",
+    "date": "2026-03"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "AI-Driven Modelling of Element Migration in Oil-Contaminated Soils",
+    "short": "Geochemical Soil Modelling",
+    "file": "data/projects/geochem-soils.md",
+    "date": "2026"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "ILQSPR: QSPR Modelling of IL-Solvent Mixtures",
+    "short": "ILQSPR",
+    "file": "data/projects/ilqspr.md",
+    "date": "2025"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "pyionics",
+    "file": "data/projects/pyionics.md",
+    "date": "2025-03"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "ChemGraph",
+    "file": "data/projects/chemgraph.md",
+    "date": "2025-02"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "ChemGraph (Old Version - KNIME Based)",
+    "short": "ChemGraph (KNIME version)",
+    "file": "data/projects/chemgraph-old-version-knime-based.md",
+    "date": "2025"
+  },
+  {
+    "type": "project",
+    "category": "Research & Engineering",
+    "title": "TEMA HX design",
+    "file": "data/projects/tema-hx-design.md",
+    "date": "2025"
+  },
+  {
+    "type": "project",
+    "category": "Software & Tools",
+    "title": "Academy - Tools for Students & Researchers",
+    "short": "Academy",
+    "file": "data/projects/academy.md",
+    "date": "2026-05-23"
+  },
+  {
+    "type": "project",
+    "category": "Software & Tools",
+    "title": "marimo4obs - Obsidian Plugin",
+    "short": "marimo4obs",
+    "file": "data/projects/marimo4obs.md",
+    "date": "2026"
+  },
+  {
+    "type": "project",
+    "category": "Software & Tools",
+    "title": "press.asoiu.edu.az",
+    "file": "data/projects/press.md",
+    "date": "2026-02-20"
+  },
+  {
+    "type": "project",
+    "category": "Software & Tools",
+    "title": "Mapology",
+    "file": "data/projects/mapology.md",
+    "date": "2026-02-20"
+  },
+  {
+    "type": "project",
+    "category": "Software & Tools",
+    "title": "LIMS",
+    "file": "data/projects/lims.md",
+    "date": "2026-02-28"
+  },
+  {
+    "type": "project",
+    "category": "Software & Tools",
+    "title": "TruthRadar",
+    "file": "data/projects/truthradar.md",
+    "date": "2026-02-25"
+  },
+  {
+    "type": "project",
+    "category": "Games",
+    "title": "PyDOOM-DL",
+    "file": "data/projects/pydoom-dl.md",
+    "date": "2026-10"
+  },
+  {
+    "type": "project",
+    "category": "Games",
+    "title": "Chron Shift",
+    "file": "data/projects/chron-shift.md",
+    "date": "2026-04-20"
+  },
+  {
+    "type": "project",
+    "category": "Games",
+    "title": "OxGame",
+    "file": "data/projects/oxgame.md",
+    "date": "2022"
+  },
+  {
+    "type": "project",
+    "category": "Ventures & Outreach",
+    "title": "MentorCorp: Specialized Consultancy Group for Targeted Mentorship and Research in Management Practices",
+    "short": "MentorCorp",
+    "slug": "mentorcorp",
+    "file": "data/projects/mentorcorp-specialized-consultancy-group-for-targeted-mentorship-and-research-in-management-practices.md",
+    "date": "2024-01"
+  },
+  {
+    "type": "project",
+    "category": "Ventures & Outreach",
+    "title": "YOUNGH",
+    "file": "data/projects/youngh.md",
+    "date": "2024-01"
+  },
+  {
+    "type": "project",
+    "category": "Ventures & Outreach",
+    "title": "Science Club",
+    "file": "data/projects/science-club.md",
+    "date": "2023"
+  },
+  {
+    "type": "project",
+    "category": "Ventures & Outreach",
+    "title": "EVO ECO",
+    "file": "data/projects/evo-eco.md",
+    "date": "2025"
+  },
+  {
+    "type": "project",
+    "category": "Ventures & Outreach",
+    "title": "FreeBee",
+    "file": "data/projects/freebee.md",
+    "date": "2025"
+  }
+]

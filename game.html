@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CHRONO SHIFT - Combat Edition</title>
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body class="menu">
+<canvas id="bg"></canvas>
+<canvas id="gameCanvas" width="1200" height="680" style="display:none"></canvas>
+
+<!-- MENU -->
+<div class="panel" id="menuPanel">
+  <div class="gt">CHRONO SHIFT</div>
+  <div class="gsub">COMBAT EDITION</div>
+  <div class="gbest" id="menuBest">BEST: 0</div>
+  <div class="menu-btns">
+    <button class="btn" onclick="showPanel('modePanel')">▶ PLAY</button>
+    <button class="btn btn-g" onclick="openHomeBase()">🏠 HOME BASE</button>
+    <button class="btn btn-g" onclick="showPanel('howPanel')">❓ MANUAL</button>
+    <button class="btn btn-g" onclick="showPanel('settingsPanel')">⚙ SETTINGS</button>
+    <button class="btn btn-g" onclick="showPanel('readmePanel')">📄 README</button>
+  </div>
+</div>
+
+<!-- HOME BASE - single-screen dashboard. Each tile opens a modal with the section's content. -->
+<div class="page" id="homePanel">
+  <div class="page-header">
+    <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
+    <div class="page-title">🏠 HOME BASE</div>
+    <div class="page-header-right">
+      <div class="hb-coin" style="margin:0;padding:6px 14px;font-size:13px">🪙 <span id="hbCoinTotal">0</span></div>
+      <button class="btn" style="margin:0;padding:9px 20px;font-size:12px;max-width:none;width:auto" onclick="showPanel('modePanel')">▶ QUICK PLAY</button>
+    </div>
+  </div>
+  <div class="page-body hb-no-scroll">
+    <div class="page-body-inner hb-dashboard">
+
+      <!-- Stats strip -->
+      <div class="page-stats">
+        <div class="page-stat coin"><div class="lbl">COINS</div><div class="val" id="hbStatCoins">0</div></div>
+        <div class="page-stat"><div class="lbl">BEST SCORE</div><div class="val" id="hbStatBest">0</div></div>
+        <div class="page-stat"><div class="lbl">ACHIEVEMENTS</div><div class="val" id="hbStatAchv">0/0</div></div>
+        <div class="page-stat"><div class="lbl">GUNS OWNED</div><div class="val" id="hbStatGuns">0/0</div></div>
+      </div>
+
+      <!-- Compact equipped loadout (always visible - at-a-glance reference) -->
+      <div class="hb-equipped-bar">
+        <span class="hb-equipped-label">🎯 LOADOUT</span>
+        <div class="eq-strip eq-strip-compact" id="hbEqStrip"></div>
+      </div>
+
+      <!-- 9-tile dashboard. Each tile opens a modal via openHbModal(). Counts populated by JS. -->
+      <div class="hb-tile-grid" id="hbTileGrid"></div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── HOME BASE MODALS ─────────── -->
+<!-- Each modal wraps the original section content. Existing element IDs (hbStoreGrid, etc.)
+     are preserved so all buildHomeXxx renderers keep targeting the right place. -->
+
+<div class="hb-modal-bg" id="hbModal_roster" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">★</span><span class="hb-modal-title">ROSTER</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Click UPGRADE on any character to spend coins on stat tracks.</div>
+      <div class="char-grid" id="hbCharGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_store" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🔫</span><span class="hb-modal-title">GUN STORE</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Buy guns with coins. Equip up to 3 into slots 1 · 2 · 3.</div>
+      <div class="hb-store-grid" id="hbStoreGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_skins" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🎨</span><span class="hb-modal-title">WEAPON SKINS</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Cosmetic variants per gun. Shop skins cost coins; loot-tier skins drop from loot boxes.</div>
+      <div class="hb-skins-grid" id="hbSkinsGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_daily" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">📅</span><span class="hb-modal-title">DAILY MISSIONS</span><span class="hb-daily-timer" id="hbDailyTimer" style="margin-left:auto;margin-right:12px;font-size:11px;color:#888;letter-spacing:1px;font-weight:600"></span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Three missions per day. Rewards auto-credit when you complete one.</div>
+      <div class="hb-daily-grid" id="hbDailyGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_achv" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🏆</span><span class="hb-modal-title">ACHIEVEMENTS</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="hb-achv-grid" id="hbAchvGrid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_loot" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">📦</span><span class="hb-modal-title">LOOT BOXES</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Buy mystery boxes (300🪙), open boxes earned from bosses, level-clears, and daily missions.</div>
+      <div class="hb-loot-row" id="hbLootRow"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_leaderboard" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🏆</span><span class="hb-modal-title">GLOBAL LEADERBOARD</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Top 50 by best score. Updates live (Firebase required).</div>
+      <div class="hb-lb" id="hbLeaderboard"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_friends" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal">
+    <div class="hb-modal-head"><span class="hb-modal-ico">👥</span><span class="hb-modal-title">FRIENDS</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Add friends by their 6-char code. See their best score at a glance.</div>
+      <div class="hb-fr" id="hbFriends"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hb-modal-bg" id="hbModal_coupon" onclick="if(event.target===this)closeHbModal()">
+  <div class="hb-modal hb-modal-narrow">
+    <div class="hb-modal-head"><span class="hb-modal-ico">🎟</span><span class="hb-modal-title">REDEEM COUPON</span><button class="hb-modal-close" onclick="closeHbModal()">✕</button></div>
+    <div class="hb-modal-body">
+      <div class="page-section-sub">Enter a code. One-shot per browser; codes can grant coins.</div>
+      <div class="hb-coupon-row">
+        <input type="text" id="hbCouponInput" placeholder="Enter code" maxlength="32" autocomplete="off">
+        <button class="btn" style="max-width:140px;padding:10px 18px;margin:0;width:auto" onclick="applyCoupon()">APPLY</button>
+      </div>
+      <div id="hbCouponMsg" class="hb-coupon-msg"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SETTINGS - full-page -->
+<div class="page" id="settingsPanel">
+  <div class="page-header">
+    <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
+    <div class="page-title">⚙ SETTINGS</div>
+  </div>
+  <div class="page-body">
+    <div class="page-body-inner" style="max-width:760px">
+
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">🎵</span>AUDIO</div>
+        <div class="set-row">
+          <div class="lbl">Music</div>
+          <div class="ctl"><label class="toggle"><input type="checkbox" id="musicOn" checked><span>ON</span></label></div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Music Track</div>
+          <div class="ctl">
+            <select id="musicTrack" class="sel-ctl">
+              <option value="1">1 · NEON DRIFT</option>
+              <option value="2">2 · CHRONO PULSE</option>
+              <option value="3">3 · VOID RUSH</option>
+            </select>
+          </div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">Music Volume</div>
+          <div class="ctl"><input type="range" id="volMusic" min="0" max="100" value="50"></div>
+        </div>
+        <div class="set-row">
+          <div class="lbl">SFX Volume</div>
+          <div class="ctl"><input type="range" id="volSfx" min="0" max="100" value="80"></div>
+        </div>
+      </div>
+
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">⌨</span>QUICK CONTROLS</div>
+        <div class="page-section-sub">Read-only reference. Full controls in the MANUAL page.</div>
+        <div class="cg">
+          <div class="ci"><span class="ck">Move</span><span class="cd">A · D · ← →</span></div>
+          <div class="ci"><span class="ck">Jump · Dbl Jump</span><span class="cd">W · ↑ · Space</span></div>
+          <div class="ci"><span class="ck">Dash</span><span class="cd">Shift (hold Jump = up)</span></div>
+          <div class="ci"><span class="ck">Shoot</span><span class="cd">Click · X</span></div>
+          <div class="ci"><span class="ck">Skills</span><span class="cd">Q · E · R</span></div>
+          <div class="ci"><span class="ck">Weapons</span><span class="cd">1 · 2 · 3</span></div>
+          <div class="ci"><span class="ck">Co-op</span><span class="cd">G (AEGIS / LIFTER)</span></div>
+          <div class="ci"><span class="ck">Rewind</span><span class="cd">B</span></div>
+        </div>
+      </div>
+
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">📦</span>SAVE DATA</div>
+        <div class="page-section-sub">Your coins, upgrades, owned guns, achievements, and best score are stored locally in this browser.</div>
+        <div class="set-row">
+          <div class="lbl">Reset all progress</div>
+          <div class="ctl">
+            <button class="set-danger-btn" onclick="resetAllProgress()">⚠ RESET</button>
+            <span class="hint">Wipes coins, upgrades, inventory, achievements, coupons, best score.</span>
+          </div>
+        </div>
+        <div id="resetMsg" class="hb-coupon-msg" style="margin-top:8px"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- README - full-page -->
+<div class="page" id="readmePanel">
+  <div class="page-header">
+    <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
+    <div class="page-title">📄 README</div>
+  </div>
+  <div class="page-body">
+    <div class="page-body-inner rd-page">
+
+      <div class="page-section">
+        <div style="margin-bottom:10px">
+          <span class="ver-pill">v2.0.0</span>
+          <span class="build-pill">COMBAT EDITION</span>
+        </div>
+        <h3 style="margin-top:4px">CHRONO SHIFT</h3>
+        <p>A neon-soaked vertical platformer where timing wins fights. Pick a mode, pick a map, pick a hero - then climb. Solo, local two-player split-screen, or online co-op via a 6-character room code.</p>
+      </div>
+
+      <div class="page-grid-2">
+
+        <div class="page-section">
+          <div class="page-section-title"><span class="ico">🎯</span>OBJECTIVE</div>
+          <p>Climb upward to the portal at the top of the map. HARD / PRO require all enemies dead first. PRO enemies shoot back. In <b>ENDLESS</b> mode there is no portal - keep climbing until you die.</p>
+        </div>
+
+        <div class="page-section">
+          <div class="page-section-title"><span class="ico">🗺</span>MAPS</div>
+          <ul>
+            <li><b>NEON ASCENT</b> - beginner climb, wide platforms.</li>
+            <li><b>CHRONO SPIRE</b> - crumbling platforms required.</li>
+            <li><b>VOID FOUNDRY</b> - lava floor, dense saws, big gaps. LIFTER recommended.</li>
+            <li><b>ENDLESS</b> - procedural climb; difficulty ramps every 1000m.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <div class="page-section">
+        <div class="page-section-title"><span class="ico">✨</span>WHAT'S NEW IN THIS BUILD</div>
+        <ul>
+          <li><b>Home Base hub.</b> Roster, gun store, coupon entry, achievements all in one full-screen page.</li>
+          <li><b>Gun Store.</b> 5 new buyable guns (Shotgun, Sniper, Rail Gun, Flame, Rocket) with a 3-slot equip loadout.</li>
+          <li><b>Coupon system.</b> Redeem codes for coins. Try <code style="background:rgba(255,200,0,.15);padding:2px 6px;border-radius:4px;color:#ffcc00">kammmran</code>.</li>
+          <li><b>Endless mode.</b> No portal, no level break - climb until you die. Difficulty ramps per 1000m.</li>
+          <li><b>Achievements.</b> 6 milestones tracking distance, kills, score, and level progress.</li>
+          <li><b>Classic gold coins.</b> The coin pickup got a proper spinning-gold-coin look.</li>
+        </ul>
+      </div>
+
+      <div class="page-grid-2">
+        <div class="page-section">
+          <div class="page-section-title"><span class="ico">💾</span>SAVE DATA</div>
+          <p>Everything persists in browser localStorage: coins, upgrades, owned guns, equipped loadout, achievements, redeemed coupons, best score. Clear it from Settings → Reset All Progress.</p>
+        </div>
+        <div class="page-section">
+          <div class="page-section-title"><span class="ico">👤</span>CREDITS</div>
+          <p>Built by Kamran Heydarov · 2026 · part of <i>kamranheydarov.tech</i>.</p>
+          <p>Audio synthesized at runtime via WebAudio - no external assets.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODE SELECT -->
+<div class="panel" id="modePanel" style="min-width:760px;max-width:90vw">
+  <div class="pt">SELECT MODE</div>
+  <div class="mode-grid">
+    <div class="mode-card sel" id="mc0" onclick="selMode(0)">
+      <div class="mc-icon">🎯</div>
+      <div class="mc-name">1 PLAYER</div>
+      <div class="mc-desc">Solo run. WASD/arrows · Q E R skills · 1/2/3 weapons · Click/X shoot.</div>
+    </div>
+    <div class="mode-card" id="mc1" onclick="selMode(1)">
+      <div class="mc-icon">🎮</div>
+      <div class="mc-name">2 PLAYERS · LOCAL</div>
+      <div class="mc-desc">Same keyboard. P1: WASD + F + 1/2/3. P2: arrows + / + 7/8/9.</div>
+    </div>
+    <div class="mode-card" id="mc2" onclick="selMode(2)">
+      <div class="mc-icon">🌐</div>
+      <div class="mc-name">2 PLAYERS · ONLINE</div>
+      <div class="mc-desc">Co-op across two browsers. One friend hosts (gets a code), the other joins with that code.</div>
+    </div>
+    <div class="mode-card" id="mc3" onclick="selMode(3)">
+      <div class="mc-icon">⚔</div>
+      <div class="mc-name">BATTLE ROYALE · 2-6P</div>
+      <div class="mc-desc">Last fighter standing. Friendly fire on. Solo vs bots, or invite friends with a room code.</div>
+    </div>
+  </div>
+  <div class="pt" style="font-size:22px;margin-top:12px">DIFFICULTY</div>
+  <div class="diff-grid">
+    <div class="dc easy" id="dc0" onclick="selDiff(0)"><div class="dc-name" style="color:var(--g)">EASY</div><div class="dc-sub">Chill & explore</div></div>
+    <div class="dc normal sel" id="dc1" onclick="selDiff(1)"><div class="dc-name" style="color:var(--c)">NORMAL</div><div class="dc-sub">Balanced challenge</div></div>
+    <div class="dc hard" id="dc2" onclick="selDiff(2)"><div class="dc-name" style="color:var(--o)">HARD</div><div class="dc-sub">Fast & furious</div></div>
+    <div class="dc pro" id="dc3" onclick="selDiff(3)"><div class="dc-name" style="color:var(--r)">PRO</div><div class="dc-sub">Enemies shoot back!</div></div>
+  </div>
+  <button class="btn btn-g" onclick="showPanel('menuPanel')" style="margin-right:10px">← BACK</button>
+  <button class="btn" onclick="showPanel('mapPanel')">NEXT ▶</button>
+</div>
+
+<!-- MAP SELECT -->
+<div class="panel" id="mapPanel" style="min-width:760px;max-width:90vw">
+  <div class="pt">SELECT MAP</div>
+  <div class="mode-grid">
+    <div class="mode-card sel" id="mp0" onclick="selMap(0)">
+      <div class="mc-icon">🌆</div>
+      <div class="mc-name">NEON ASCENT</div>
+      <div class="mc-desc">Beginner climb. Wide platforms, only a few hazards.</div>
+    </div>
+    <div class="mode-card" id="mp1" onclick="selMap(1)">
+      <div class="mc-icon">🗼</div>
+      <div class="mc-name">CHRONO SPIRE</div>
+      <div class="mc-desc">Twisting spire. Crumbling platforms required.</div>
+    </div>
+    <div class="mode-card" id="mp2" onclick="selMap(2)">
+      <div class="mc-icon">🌋</div>
+      <div class="mc-name">VOID FOUNDRY</div>
+      <div class="mc-desc">Hard. Lava floor, dense saws, big gaps. Co-op LIFTER recommended.</div>
+    </div>
+    <div class="mode-card" id="mp3" onclick="selMap(3)">
+      <div class="mc-icon">♾</div>
+      <div class="mc-name">ENDLESS</div>
+      <div class="mc-desc">Procedural climb that never ends. Difficulty ramps every 1000m.</div>
+    </div>
+    <div class="mode-card" id="mp4" onclick="selMap(4)">
+      <div class="mc-icon">🎲</div>
+      <div class="mc-name">MIX</div>
+      <div class="mc-desc">Random theme each level - surprise climb.</div>
+    </div>
+  </div>
+  <button class="btn btn-g" onclick="showPanel('modePanel')" style="margin-right:10px">← BACK</button>
+  <button class="btn" onclick="openCharPanel()">NEXT ▶</button>
+</div>
+
+<!-- CHARACTER LOBBY -->
+<div class="panel" id="charPanel" style="min-width:1040px;max-width:96vw">
+  <div class="pt">CHOOSE CHARACTER</div>
+  <div class="psub" id="charHint" style="margin-bottom:10px">Pick your hero. Co-op specialists (AEGIS, LIFTER) only help in 2-player.</div>
+
+  <div class="char-layout">
+    <!-- LEFT: character pickers + actions -->
+    <div class="char-main">
+      <div id="p1CharSection">
+        <div class="char-side-label" style="color:var(--c)">★ PLAYER 1</div>
+        <div class="char-grid">
+          <div class="char-card sel" id="p1c0" onclick="selChar(0,0)" data-c="#00f5ff">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00f5ff,#a100ff)"></div>
+            <div class="cc-name">NEON</div><div class="cc-tag">balanced</div>
+          </div>
+          <div class="char-card" id="p1c1" onclick="selChar(0,1)" data-c="#ff3366">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ff3366,#ff8800)"></div>
+            <div class="cc-name">CRIMSON</div><div class="cc-tag">fast · low jump</div>
+          </div>
+          <div class="char-card" id="p1c2" onclick="selChar(0,2)" data-c="#00ff88">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ff88,#00aa66)"></div>
+            <div class="cc-name">EMERALD</div><div class="cc-tag">slow · high jump</div>
+          </div>
+          <div class="char-card" id="p1c3" onclick="selChar(0,3)" data-c="#ffcc00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff00d4)"></div>
+            <div class="cc-name">VOID</div><div class="cc-tag">well-rounded</div>
+          </div>
+          <div class="char-card coop" id="p1c4" onclick="selChar(0,4)" data-c="#00ffaa">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ffaa,#0066ff)"></div>
+            <div class="cc-name">AEGIS</div><div class="cc-tag">⊕ shield ally</div>
+          </div>
+          <div class="char-card coop" id="p1c5" onclick="selChar(0,5)" data-c="#ffaa00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffaa00,#ff5500)"></div>
+            <div class="cc-name">LIFTER</div><div class="cc-tag">⊕ boost ally</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="p2CharSection" style="display:none;margin-top:14px">
+        <div class="char-side-label" style="color:var(--r)">★ PLAYER 2</div>
+        <div class="char-grid">
+          <div class="char-card" id="p2c0" onclick="selChar(1,0)" data-c="#00f5ff">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00f5ff,#a100ff)"></div>
+            <div class="cc-name">NEON</div><div class="cc-tag">balanced</div>
+          </div>
+          <div class="char-card sel" id="p2c1" onclick="selChar(1,1)" data-c="#ff3366">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ff3366,#ff8800)"></div>
+            <div class="cc-name">CRIMSON</div><div class="cc-tag">fast · low jump</div>
+          </div>
+          <div class="char-card" id="p2c2" onclick="selChar(1,2)" data-c="#00ff88">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ff88,#00aa66)"></div>
+            <div class="cc-name">EMERALD</div><div class="cc-tag">slow · high jump</div>
+          </div>
+          <div class="char-card" id="p2c3" onclick="selChar(1,3)" data-c="#ffcc00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffcc00,#ff00d4)"></div>
+            <div class="cc-name">VOID</div><div class="cc-tag">well-rounded</div>
+          </div>
+          <div class="char-card coop" id="p2c4" onclick="selChar(1,4)" data-c="#00ffaa">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#00ffaa,#0066ff)"></div>
+            <div class="cc-name">AEGIS</div><div class="cc-tag">⊕ shield ally</div>
+          </div>
+          <div class="char-card coop" id="p2c5" onclick="selChar(1,5)" data-c="#ffaa00">
+            <div class="cc-swatch" style="background:linear-gradient(135deg,#ffaa00,#ff5500)"></div>
+            <div class="cc-name">LIFTER</div><div class="cc-tag">⊕ boost ally</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px">
+        <button class="btn btn-g" onclick="showPanel('mapPanel')" style="margin-right:10px">← BACK</button>
+        <button class="btn" onclick="launchGame()">LAUNCH ▶</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: cloud-driven leaderboard side panel (live, top 50 by bestScore) -->
+    <aside class="char-lb-side" id="charLbSide">
+      <div class="char-lb-head">
+        <span class="char-lb-ico">🏆</span>
+        <span class="char-lb-title">GLOBAL TOP 50</span>
+      </div>
+      <div class="char-lb-body" id="charLbBody">
+        <div class="hb-cloud-empty" style="padding:14px;font-size:11px">Loading…</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="char-coin-pill" id="charCoinPill">🪙 <span id="charCoinTotal">0</span></div>
+</div>
+
+<!-- UPGRADE PANEL - opened from a character card's UPGRADE button. -->
+<div class="panel" id="upgradePanel" style="min-width:540px;max-width:92vw">
+  <div class="pt" id="upgTitle">UPGRADES - NEON</div>
+  <div class="ps">Coins: <span id="upgCoins">0</span> 🪙</div>
+  <div class="upg-list" id="upgList"></div>
+  <div style="margin-top:14px">
+    <button class="btn" onclick="openHomeBase()">← BACK TO HOME BASE</button>
+  </div>
+</div>
+
+<!-- MANUAL - full-page with tabs -->
+<div class="page" id="howPanel">
+  <div class="page-header">
+    <button class="page-back" onclick="showPanel('menuPanel')">← MENU</button>
+    <div class="page-title">❓ MANUAL</div>
+  </div>
+  <div class="page-body">
+    <div class="page-body-inner" style="max-width:1100px">
+
+      <div class="tab-bar" id="manualTabBar">
+        <button class="tab-btn on"  onclick="switchManualTab('controls')">CONTROLS</button>
+        <button class="tab-btn"     onclick="switchManualTab('characters')">CHARACTERS</button>
+        <button class="tab-btn"     onclick="switchManualTab('weapons')">WEAPONS</button>
+        <button class="tab-btn"     onclick="switchManualTab('hazards')">HAZARDS</button>
+        <button class="tab-btn"     onclick="switchManualTab('objective')">OBJECTIVE</button>
+      </div>
+
+      <!-- CONTROLS -->
+      <div class="tab-pane on" id="tabControls">
+        <div class="page-grid-2">
+          <div class="page-section">
+            <div class="page-section-title"><span class="ico">🎯</span>1 PLAYER</div>
+            <div class="cg">
+              <div class="ci"><span class="ck">← → / A D</span><span class="cd">Move</span></div>
+              <div class="ci"><span class="ck">↑ / W / Space</span><span class="cd">Jump · Double Jump</span></div>
+              <div class="ci"><span class="ck">Shift</span><span class="cd">Dash (hold Jump = up)</span></div>
+              <div class="ci"><span class="ck">Click / X</span><span class="cd">Shoot (auto-aim)</span></div>
+              <div class="ci"><span class="ck">Q · E · R</span><span class="cd">Skills 1 · 2 · 3</span></div>
+              <div class="ci"><span class="ck">1 · 2 · 3</span><span class="cd">Equipped weapons</span></div>
+              <div class="ci"><span class="ck">G</span><span class="cd">Co-op (AEGIS / LIFTER)</span></div>
+              <div class="ci"><span class="ck">B</span><span class="cd">Rewind time</span></div>
+            </div>
+          </div>
+          <div class="page-section">
+            <div class="page-section-title"><span class="ico">👥</span>2 PLAYERS · LOCAL</div>
+            <div class="cg">
+              <div class="ci p1"><span class="ck">P1 · A D</span><span class="cd">Move</span></div>
+              <div class="ci p1"><span class="ck">P1 · W</span><span class="cd">Jump</span></div>
+              <div class="ci p1"><span class="ck">P1 · LShift</span><span class="cd">Dash</span></div>
+              <div class="ci p1"><span class="ck">P1 · F</span><span class="cd">Shoot</span></div>
+              <div class="ci p1"><span class="ck">P1 · 1 · 2 · 3</span><span class="cd">Skills</span></div>
+              <div class="ci p1"><span class="ck">P1 · Q</span><span class="cd">Cycle weapon</span></div>
+              <div class="ci p1"><span class="ck">P1 · G</span><span class="cd">Co-op</span></div>
+              <div class="ci p2"><span class="ck">P2 · ← →</span><span class="cd">Move</span></div>
+              <div class="ci p2"><span class="ck">P2 · ↑</span><span class="cd">Jump</span></div>
+              <div class="ci p2"><span class="ck">P2 · RShift</span><span class="cd">Dash</span></div>
+              <div class="ci p2"><span class="ck">P2 · /</span><span class="cd">Shoot</span></div>
+              <div class="ci p2"><span class="ck">P2 · 7 · 8 · 9</span><span class="cd">Skills</span></div>
+              <div class="ci p2"><span class="ck">P2 · P</span><span class="cd">Cycle weapon</span></div>
+              <div class="ci p2"><span class="ck">P2 · L</span><span class="cd">Co-op</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHARACTERS -->
+      <div class="tab-pane" id="tabCharacters">
+        <div class="page-section">
+          <div class="page-section-title"><span class="ico">🦸</span>HEROES</div>
+          <div class="page-section-sub">All characters share the same kit slots (Q/E/R) but each has a unique 3-skill set. Co-op specialists shine in 2-player.</div>
+          <div class="cg">
+            <div class="ci"><span class="ck" style="color:#00f5ff">NEON</span><span class="cd">Balanced. Shield Pulse · Time Bomb · Overdrive.</span></div>
+            <div class="ci"><span class="ck" style="color:#ff3366">CRIMSON</span><span class="cd">Fast / low jump. Blade Burst · Flame Trail · Adrenaline.</span></div>
+            <div class="ci"><span class="ck" style="color:#00ff88">EMERALD</span><span class="cd">Slow / high jump. Bloom Heal · Vine Snare · Sky Leap.</span></div>
+            <div class="ci"><span class="ck" style="color:#ffcc00">VOID</span><span class="cd">Well-rounded. Phase Shift · Void Bomb · Singularity.</span></div>
+            <div class="ci"><span class="ck" style="color:#00ffaa">AEGIS · CO-OP</span><span class="cd">Shields teammate (G). Bulwark · Reflect Wave · Group Aegis.</span></div>
+            <div class="ci"><span class="ck" style="color:#ffaa00">LIFTER · CO-OP</span><span class="cd">Boosts teammate skyward (G) - essential on VOID FOUNDRY. Updraft · Stomp · Catapult Pulse.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WEAPONS -->
+      <div class="tab-pane" id="tabWeapons">
+        <div class="page-section">
+          <div class="page-section-title"><span class="ico">🔫</span>WEAPON ROSTER</div>
+          <div class="page-section-sub">Pistol/Plasma/TimeGun are free. The rest are bought from Home Base → Gun Store. Equip any 3 into slots 1 · 2 · 3.</div>
+          <div class="wpn-ref-grid">
+            <div class="wpn-ref"><div class="ico">🔫</div><div class="meta"><div class="nm">PISTOL</div><div class="desc">Infinite ammo, fast RoF, dmg 1. Reliable default.</div></div></div>
+            <div class="wpn-ref"><div class="ico">⚡</div><div class="meta"><div class="nm">PLASMA</div><div class="desc">Pierce, dmg 2, fast RoF. Eats lines of enemies.</div></div></div>
+            <div class="wpn-ref"><div class="ico">❄</div><div class="meta"><div class="nm">TIME GUN</div><div class="desc">Freezes targets for 3s. Crowd-control.</div></div></div>
+            <div class="wpn-ref"><div class="ico">💥</div><div class="meta"><div class="nm">SHOTGUN · 600🪙</div><div class="desc">5 pellets, wide spread, mid range. Devastating up close.</div></div></div>
+            <div class="wpn-ref"><div class="ico">🎯</div><div class="meta"><div class="nm">SNIPER · 900🪙</div><div class="desc">Pierce, dmg 5, slow RoF. One-shots basics.</div></div></div>
+            <div class="wpn-ref"><div class="ico">⚙</div><div class="meta"><div class="nm">RAIL GUN · 1200🪙</div><div class="desc">Pierce, dmg 3, fast bullet. Sustained DPS line.</div></div></div>
+            <div class="wpn-ref"><div class="ico">🔥</div><div class="meta"><div class="nm">FLAME · 800🪙</div><div class="desc">Short range, sustained DPS, huge ammo pool.</div></div></div>
+            <div class="wpn-ref"><div class="ico">🚀</div><div class="meta"><div class="nm">ROCKET · 1500🪙</div><div class="desc">AOE explosion, dmg 4. Groups die in one shot.</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HAZARDS -->
+      <div class="tab-pane" id="tabHazards">
+        <div class="page-grid-2">
+          <div class="page-section">
+            <div class="page-section-title"><span class="ico">⚠</span>TRAPS</div>
+            <div class="cg">
+              <div class="ci"><span class="ck" style="color:#ff2255">SPIKES</span><span class="cd">−15 HP and knockback.</span></div>
+              <div class="ci"><span class="ck" style="color:#ff5555">SAWS</span><span class="cd">−20 HP and knockback.</span></div>
+              <div class="ci"><span class="ck" style="color:#ff5500">LAVA</span><span class="cd">Instant kill (Foundry only).</span></div>
+              <div class="ci"><span class="ck" style="color:#ff8844">CRUMBLE</span><span class="cd">Falls 45 frames after first touch.</span></div>
+            </div>
+          </div>
+          <div class="page-section">
+            <div class="page-section-title"><span class="ico">🩸</span>HEALTH & DROPS</div>
+            <p class="rd" style="font-size:13px">No auto-regen. Pink ❤ heal drops are scattered across the map and also drop from kills. Plasma + time-gun ammo also drops from kills.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OBJECTIVE -->
+      <div class="tab-pane" id="tabObjective">
+        <div class="page-section">
+          <div class="page-section-title"><span class="ico">🎯</span>HOW TO WIN</div>
+          <p class="rd" style="font-size:14px">Climb up to the portal at the TOP of the map. HARD / PRO require all enemies dead first; the portal stays locked otherwise. PRO enemies shoot back.</p>
+          <p class="rd" style="font-size:14px">In <b style="color:var(--c)">ENDLESS</b> mode there is no portal. The map regenerates as you reach the top and the difficulty ramps every 1000m. The run ends only when your HP hits 0.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Cloud sign-in card. Lives at body root so it's positioned to the viewport, not a panel.
+     Two variants are toggled by refreshCloudUI(): signed-out (CTA card) and signed-in (user
+     chip with a popover menu). Hidden entirely when Firebase isn't configured. -->
+<div id="cloudCard" class="cloud-card" style="display:none">
+  <!-- Signed-out state -->
+  <button id="cloudSignInBtn" class="cloud-signin" onclick="cloudPillClick()">
+    <span class="cloud-signin-glyph">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <path fill="#4285F4" d="M22.5 12.27c0-.79-.07-1.55-.2-2.27H12v4.3h5.92a5.07 5.07 0 0 1-2.2 3.32v2.77h3.56c2.08-1.92 3.27-4.74 3.27-8.12z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.99 7.28-2.68l-3.56-2.77c-.99.66-2.26 1.05-3.72 1.05-2.86 0-5.28-1.93-6.15-4.53H2.18v2.86A11 11 0 0 0 12 23z"/>
+        <path fill="#FBBC05" d="M5.85 14.07A6.6 6.6 0 0 1 5.5 12c0-.72.13-1.42.35-2.07V7.07H2.18A11 11 0 0 0 1 12c0 1.78.43 3.46 1.18 4.93l3.67-2.86z"/>
+        <path fill="#EA4335" d="M12 5.4c1.62 0 3.07.56 4.21 1.65l3.16-3.16A11 11 0 0 0 12 1 11 11 0 0 0 2.18 7.07l3.67 2.86C6.72 7.33 9.14 5.4 12 5.4z"/>
+      </svg>
+    </span>
+    <span class="cloud-signin-text">
+      <span class="cloud-signin-label">Sign in with Google</span>
+      <span class="cloud-signin-sub">Sync scores, leaderboard, friends</span>
+    </span>
+  </button>
+  <!-- Signed-in state (initially hidden, shown by refreshCloudUI when user is signed in) -->
+  <div id="cloudUserChip" class="cloud-user-chip" style="display:none" onclick="toggleCloudMenu(event)">
+    <img id="cloudAvatar" class="cloud-avatar" alt="">
+    <div class="cloud-user-meta">
+      <div class="cloud-user-name" id="cloudName">Player</div>
+      <div class="cloud-user-status"><span class="cloud-online-dot"></span><span>Online</span></div>
+    </div>
+    <span class="cloud-user-caret">▾</span>
+    <!-- Popover menu - shows on click. Profile actions live here. -->
+    <div class="cloud-menu" id="cloudMenu" onclick="event.stopPropagation()">
+      <div class="cloud-menu-code">
+        <span class="cloud-menu-code-label">YOUR CODE</span>
+        <span class="cloud-menu-code-val" id="cloudMyCode">-</span>
+      </div>
+      <button class="cloud-menu-item" onclick="openHomeBase();closeCloudMenu();">🏠 Open Home Base</button>
+      <button class="cloud-menu-item" onclick="openHbModal('leaderboard');showPanel('homePanel');closeCloudMenu();">🏆 Leaderboard</button>
+      <button class="cloud-menu-item" onclick="openHbModal('friends');showPanel('homePanel');closeCloudMenu();">👥 Friends</button>
+      <button class="cloud-menu-item danger" onclick="Cloud.signOut();closeCloudMenu();">⎋ Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loot box reveal modal - populated by openLootBox() in script.js -->
+<div id="lootModalBg" class="loot-modal-bg" onclick="if(event.target===this)closeLootModal()">
+  <div class="loot-modal">
+    <div class="loot-modal-title">📦 LOOT REVEAL</div>
+    <div id="lootModalPrize" class="loot-modal-prize">-</div>
+    <div id="lootModalDetail" class="loot-modal-detail">-</div>
+    <button class="loot-modal-close" onclick="closeLootModal()">AWESOME</button>
+  </div>
+</div>
+
+<!-- Firebase SDK + cloud wrapper. Optional: cloud features silently disable when js/firebase-config.js
+     is missing or contains the placeholder API key (see js/firebase-config.example.js). -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js" onerror="console.log('[Cloud] js/firebase-config.js not present - cloud features disabled.')"></script>
+<script src="js/cloud.js"></script>
+
+<script src="js/game.js"></script>
+</body>
+</html>

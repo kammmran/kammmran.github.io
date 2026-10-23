@@ -1,0 +1,40 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node / build artifacts (in case anything is added later)
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+
+# Env files
+.env
+.env.local
+.env.*.local
+
+# Firebase config (real one) - keep the .example file in git for the template.
+js/firebase-config.js
+js/firebase-config.example.js
+
+
+*.md
+!data/projects/*.md
+!data/projects/**/*.md
+!data/posts/*.md
+!data/posts/**/*.md

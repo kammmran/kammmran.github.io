@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kamran Heydarov</title>
+    <meta name="description" content="Kamran Heydarov, M.Sc. student in Chemoinformatics at the University of Strasbourg. QSPR modelling, machine learning and open-source software for ionic liquids.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500&family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+    <script src="js/theme.js"></script>
+    <script src="js/mouse.js" defer></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="navbar" aria-label="Main">
+            <a class="nav-brand" href="index.html">Kamran Heydarov</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link active" aria-current="page">About</a></li>
+                <li><a href="projects.html" class="nav-link">Projects</a></li>
+                <li><a href="cv.html" class="nav-link">CV</a></li>
+                <li><a href="contact.html" class="nav-link">Contact</a></li>
+            </ul>
+            <button id="theme-toggle" class="theme-toggle" type="button" hidden>Dark mode</button>
+        </nav>
+    </header>
+
+    <main class="page">
+        <header class="profile">
+            <h1 class="profile-name">Kamran Heydarov</h1>
+            <p class="profile-role">M.Sc. student in Chemoinformatics</p>
+            <p class="profile-affiliation">University of Strasbourg</p>
+            <ul class="profile-links">
+                <li><a href="mailto:k.a.heydarov@gmail.com">Email</a></li>
+                <li><a href="https://github.com/kammmran" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href="https://pypi.org/project/pyionics/" target="_blank" rel="noopener">PyPI</a></li>
+                <li><a href="docs/cv.pdf">CV (PDF)</a></li>
+            </ul>
+        </header>
+
+        <div class="about-grid">
+            <div class="about-main">
+                <section class="section bio" aria-labelledby="about-title">
+                    <h2 class="section-title" id="about-title">About</h2>
+                    <p>I am a Chemoinformatics M.Sc. student at the University of Strasbourg, working where physical chemistry, molecular modelling and machine learning meet.</p>
+                    <p>My work covers the full QSPR workflow: curating experimental data from chemical databases, computing and selecting molecular descriptors, training and validating ensemble models, and turning them into documented tools that non-specialists can use. I build and maintain open-source Python software for ionic liquid data and properties, including <a href="projects.html#pyionics">pyionics</a> and <a href="projects.html#ilqspr">ILQSPR</a>.</p>
+                    <p>I am particularly interested in data-driven design of ionic liquids and sustainable solvents.</p>
+                </section>
+
+                <section class="section" aria-labelledby="interests-title">
+                    <h2 class="section-title" id="interests-title">Research interests</h2>
+                    <ul class="interest-list">
+                        <li>QSPR modelling and machine learning for physicochemical properties</li>
+                        <li>Ionic liquids and sustainable solvents</li>
+                        <li>Curation of experimental chemical data</li>
+                        <li>Open-source scientific software</li>
+                        <li>Computational chemistry (DFT)</li>
+                    </ul>
+                </section>
+
+                <section class="section" aria-labelledby="work-title">
+                    <h2 class="section-title" id="work-title">Selected work</h2>
+                    <ol class="work-list">
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#enodorim">ENodorIM: from molecule to smell</a><span class="status-badge">Ongoing</span>
+                            <p class="work-meta">Interactive olfaction simulator &middot; 2026 - present</p>
+                            <p class="work-desc">Simulates the path from an odorant to a conscious smell, with receptor responses taken from measured cell-assay data and a shipped comparison of similarity-based and learned predictors for new molecules.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#enodorim">Details</a></li>
+                                <li><a class="tag-link" href="https://kammmran.github.io/ENodorIM/#/" target="_blank" rel="noopener">App</a></li>
+                                <li><a class="tag-link" href="https://github.com/kammmran/ENodorIM" target="_blank" rel="noopener">Code</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#il-chemical-space">Chemical space analysis of ionic liquids</a>
+                            <p class="work-meta">M1 research internship &middot; With Dr. Shamkhal Baybekov &middot; 2026</p>
+                            <p class="work-desc">Curated NIST ILThermo into clean density, refractive index and melting point datasets and mapped their chemical space with Mordred descriptors, scaffolds and UMAP.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#il-chemical-space">Details</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#ilqspr">ILQSPR: QSPR modelling of ionic liquid-solvent mixtures</a>
+                            <p class="work-meta">With Dr. Shamkhal Baybekov &middot; 2025 - present &middot; Manuscript in preparation</p>
+                            <p class="work-desc">Consensus XGBoost models that predict the density and refractive index of ionic liquids, pure and mixed with water, ethanol or isopropanol (R<sup>2</sup> = 0.90-0.96).</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#ilqspr">Details</a></li>
+                                <li><a class="tag-link" href="https://github.com/sbaybekov/qspr-il-density-refractive-index" target="_blank" rel="noopener">Code</a></li>
+                                <li><a class="tag-link" href="https://qspr-il-density-refractive-index.streamlit.app/" target="_blank" rel="noopener">App</a></li>
+                                <li><a class="tag-link" href="https://ilqspr.readthedocs.io/en/latest/" target="_blank" rel="noopener">Docs</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#geochem-soils">AI-driven modelling of element migration in oil-contaminated soils</a>
+                            <p class="work-meta">UFAZ Research Call &middot; 2026 - 2027</p>
+                            <p class="work-desc">Machine learning models for how heavy metals and PAHs move through soils of the Absheron Peninsula, to support remediation planning.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#geochem-soils">Details</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#pyionics">pyionics</a>
+                            <p class="work-meta">Python library &middot; 2025 - present</p>
+                            <p class="work-desc">Access to NIST ILThermo data on ionic liquids: download datasets, convert them to CSV or TSV, merge them and add SMILES.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#pyionics">Details</a></li>
+                                <li><a class="tag-link" href="https://pypi.org/project/pyionics/" target="_blank" rel="noopener">PyPI</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#chemgraph">ChemGraph</a>
+                            <p class="work-meta">Process simulation software &middot; Executive Director &middot; 2025 - 2026</p>
+                            <p class="work-desc">An open-source web tool for designing and simulating process flow diagrams, supported by ASOIU and used in teaching and research.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#chemgraph">Details</a></li>
+                            </ul>
+                        </li>
+                        <li class="work-item">
+                            <a class="work-title" href="projects.html#academy">Academy</a>
+                            <p class="work-meta">Browser tools for students and researchers &middot; 2026</p>
+                            <p class="work-desc">A free collection of single-purpose tools for working with text, PDFs and data. Everything runs in the browser; nothing is uploaded.</p>
+                            <ul class="tag-links">
+                                <li><a class="tag-link" href="projects.html#academy">Details</a></li>
+                                <li><a class="tag-link" href="academy.html">Open</a></li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p><a href="projects.html">All projects</a></p>
+                </section>
+
+                <section class="section" aria-labelledby="news-title">
+                    <h2 class="section-title" id="news-title">Recent highlights</h2>
+                    <ul class="news">
+                        <li><span class="news-date">2026</span><span>Started <a href="projects.html#enodorim">ENodorIM</a>, an ongoing interactive simulator of human olfaction.</span></li>
+                        <li><span class="news-date">2026</span><span>Joined the UFAZ research project on <a href="projects.html#geochem-soils">AI-driven modelling of oil-contaminated soils</a>, leading the machine learning work.</span></li>
+                        <li><span class="news-date">2026</span><span>Presented a poster on QSPR models for ionic liquid mixtures at the <a href="https://infochim.chimie.unistra.fr/-strasbourg-summer-school-in-chemoinformatics-2026-.html" target="_blank" rel="noopener">Strasbourg Summer School in Chemoinformatics (CS3-2026)</a> (<a href="https://infochim.u-strasbg.fr/IMG/pdf/p34_kamran_heydarov_abstract_poster_cs3-2026.pdf" target="_blank" rel="noopener">abstract</a>).</span></li>
+                        <li><span class="news-date">2026</span><span>Completed my M1 research internship on the <a href="projects.html#il-chemical-space">chemical space of ionic liquids</a>.</span></li>
+                        <li><span class="news-date">2026</span><span><a href="projects.html#chron-shift">Chron Shift</a> was selected as one of the top 15 studios for the Xsolla-IDDA Baku game incubator.</span></li>
+                        <li><span class="news-date">2026</span><span>Built the website of the <a href="https://asoiu.edu.az/mpmc2026" target="_blank" rel="noopener">MacroFrontiers 2026</a> international conference.</span></li>
+                        <li><span class="news-date">2026</span><span>Released <a href="projects.html#marimo4obs">marimo4obs</a>, an Obsidian plugin for marimo notebooks.</span></li>
+                        <li><span class="news-date">2025</span><span>Joined ASOIU as Django Developer and Chief Specialist, working on the university's <a href="projects.html#press">scholarly publishing platforms</a>.</span></li>
+                        <li><span class="news-date">2025</span><span>Graduated with a B.Sc. in Chemical Engineering from ASOIU.</span></li>
+                    </ul>
+                </section>
+            </div>
+
+            <aside class="about-aside">
+                <section class="section" aria-labelledby="education-title">
+                    <h2 class="section-title" id="education-title">Education</h2>
+                    <ul class="entries">
+                        <li class="entry">
+                            <p class="entry-title">M.Sc. in Chemoinformatics</p>
+                            <p class="entry-sub">University of Strasbourg</p>
+                            <p class="entry-meta">Expected Jun 2027 &middot; Baku</p>
+                        </li>
+                        <li class="entry">
+                            <p class="entry-title">B.Sc. in Chemical Engineering</p>
+                            <p class="entry-sub">Azerbaijan State Oil and Industry University</p>
+                            <p class="entry-meta">Jun 2025 &middot; Baku</p>
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="section" aria-labelledby="experience-title">
+                    <h2 class="section-title" id="experience-title">Experience</h2>
+                    <ul class="entries">
+                        <li class="entry">
+                            <p class="entry-title">M1 Research Intern</p>
+                            <p class="entry-sub">Chemoinformatics and Computational Chemistry Research Group, ASOIU</p>
+                            <p class="entry-meta">Mar - Jun 2026</p>
+                        </li>
+                        <li class="entry">
+                            <p class="entry-title">Django Developer &amp; Chief Specialist</p>
+                            <p class="entry-sub">Azerbaijan State Oil and Industry University</p>
+                            <p class="entry-meta">Sep 2025 - Jun 2026</p>
+                        </li>
+                        <li class="entry">
+                            <p class="entry-title">Executive Editor</p>
+                            <p class="entry-sub">Baku Mathematical Journal</p>
+                        </li>
+                        <li class="entry">
+                            <p class="entry-title">Data-Oriented Lab Assistant</p>
+                            <p class="entry-sub">Azerbaijan State Oil and Industry University</p>
+                            <p class="entry-meta">Sep 2023 - Feb 2025</p>
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="section" aria-labelledby="tools-title">
+                    <h2 class="section-title" id="tools-title">Methods &amp; tools</h2>
+                    <p class="inline-list">Python, RDKit, Mordred, scikit-learn, XGBoost, UMAP, KNIME, DFT, Django, Streamlit, LaTeX</p>
+                </section>
+
+                <section class="section" aria-labelledby="languages-title">
+                    <h2 class="section-title" id="languages-title">Languages</h2>
+                    <p class="inline-list">Azerbaijani (native), Turkish (native), English (fluent), Russian (B1), French (A2)</p>
+                </section>
+            </aside>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <span>&copy; 2026 Kamran Heydarov</span>
+            <ul class="footer-links">
+                <li><a href="mailto:k.a.heydarov@gmail.com">Email</a></li>
+                <li><a href="https://github.com/kammmran" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href="docs/cv.pdf">CV</a></li>
+            </ul>
+        </div>
+    </footer>
+    <a class="mouse-link" href="https://kammmran.github.io/mylovely-mice/" aria-label="Explore mylovely-mice" title="Explore mylovely-mice">
+        <svg class="mouse-icon" viewBox="0 0 144 104" width="84" height="61" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+            <defs>
+                <radialGradient id="mouse-fur" cx=".42" cy=".3" r=".76">
+                    <stop stop-color="#b2a393"/><stop offset=".4" stop-color="#928577"/><stop offset=".8" stop-color="#6b6158"/><stop offset="1" stop-color="#504944"/>
+                </radialGradient>
+                <radialGradient id="mouse-head" cx=".45" cy=".42" r=".7">
+                    <stop stop-color="#bcad9b"/><stop offset=".58" stop-color="#948574"/><stop offset="1" stop-color="#6b6057"/>
+                </radialGradient>
+                <radialGradient id="mouse-ear" cx=".56" cy=".45" r=".65">
+                    <stop stop-color="#e3b8ac"/><stop offset=".65" stop-color="#bd8f85"/><stop offset="1" stop-color="#8a7168"/>
+                </radialGradient>
+                <linearGradient id="mouse-tail-skin" x1="6" y1="78" x2="49" y2="53" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#cfaaa0"/><stop offset="1" stop-color="#a97c73"/>
+                </linearGradient>
+            </defs>
+            <ellipse cx="85" cy="55" rx="41" ry="23" fill="#201b18" opacity=".12"/>
+            <g class="mouse-tail">
+                <path d="M48 55C33 56 32 80 17 79 5 78 3 68 9 62" stroke="url(#mouse-tail-skin)" stroke-width="4" stroke-linecap="round"/>
+                <path d="M48 54C32 55 33 78 17 78 7 77 5 69 9 63" stroke="#e4c1b5" stroke-width=".8" stroke-linecap="round"/>
+                <path d="m39 63 3 2m-7 4 3 2m-7 4 2 2m-9 0v3m-7-4-1 3" stroke="#906e65" stroke-width=".7" opacity=".55"/>
+            </g>
+            <g class="mouse-paws" fill="#cba296" stroke="#8e6c64" stroke-width=".7" stroke-linecap="round">
+                <g class="mouse-paw mouse-paw-a" style="transform-origin: 63px 32px"><path d="M62 32c-4-7-8-7-11-5l-3 4 10 5Z"/><path d="m49 29 5 1m-3-3 5 2"/></g>
+                <g class="mouse-paw mouse-paw-b" style="transform-origin: 63px 72px"><path d="M62 72c-4 7-8 7-11 5l-3-4 10-5Z"/><path d="m49 75 5-1m-3 3 5-2"/></g>
+                <g class="mouse-paw mouse-paw-b mouse-paw-front" style="transform-origin: 104px 36px"><path d="M102 37c4-5 8-6 11-4l3 4-11 3Z"/><path d="m111 34 2 3m-6-2 3 3"/></g>
+                <g class="mouse-paw mouse-paw-a mouse-paw-front" style="transform-origin: 104px 68px"><path d="M102 67c4 5 8 6 11 4l3-4-11-3Z"/><path d="m111 70 2-3m-6 2 3-3"/></g>
+            </g>
+            <g class="mouse-body">
+                <path d="M43 53c-1-15 10-25 27-26 16-2 34 9 38 22 4 15-16 30-35 29-18 0-30-9-30-25Z" fill="url(#mouse-fur)" stroke="#625950" stroke-width=".7"/>
+                <path d="M49 48c5-16 27-20 43-7M48 57c6 15 26 18 40 11" stroke="#c5b6a3" stroke-width="2" opacity=".24" stroke-linecap="round"/>
+                <g stroke="#d2c3af" stroke-width=".7" opacity=".45" stroke-linecap="round">
+                    <path d="m53 40 5-3m-3 9 5-3m0-8 5-2m-5 18 7-3m-2-8 6-2m1-7 5 1m-6 13 7-1m-6 8 6-1m2-12 7 2m-4 9 6 1m-27 7 6 2m-15-3 5 4m4 2 6 2m2-8 7 2m0 8 6-1m-1-10 6-1m1 7 5-2m-4-15 6 2m-39-1 3-2"/>
+                </g>
+                <g stroke="#514a44" stroke-width=".6" opacity=".3" stroke-linecap="round">
+                    <path d="m52 51 6-2m2-10 5-1m-4 19 5 2m6-21 6 1m-6 10 7 1m-2 14 5-1m2-15 6 2m-39 9 3 3m11 6 4 1"/>
+                </g>
+            </g>
+            <g class="mouse-head">
+                <g class="mouse-ear mouse-ear-far">
+                    <path d="M92 40C79 35 80 20 91 20c11-1 16 14 10 22Z" fill="url(#mouse-fur)" stroke="#6b6057" stroke-width=".8"/>
+                    <path d="M92 36c-9-4-9-13-1-13 8 0 11 10 7 15Z" fill="url(#mouse-ear)"/>
+                </g>
+                <path d="M91 37c12-7 22 0 29 8l13 7c-7 6-10 6-15 10-8 7-20 8-28 1-8-7-8-19 1-26Z" fill="url(#mouse-head)" stroke="#73665c" stroke-width=".6"/>
+                <path d="M100 44c9-3 15 2 22 8-7 7-13 9-20 7" fill="#c6b6a1" opacity=".35"/>
+                <g class="mouse-ear mouse-ear-near">
+                    <path d="M95 62c-14-1-20 14-10 20 11 7 23-4 19-16Z" fill="url(#mouse-fur)" stroke="#6b6057" stroke-width=".8"/>
+                    <path d="M95 66c-10-1-14 9-7 13 8 4 15-3 12-11Z" fill="url(#mouse-ear)"/>
+                    <path d="M89 77c-4-4-1-9 4-9" stroke="#eac9ba" stroke-width="1" opacity=".65" stroke-linecap="round"/>
+                </g>
+                <g class="mouse-eyes">
+                    <ellipse cx="115" cy="43" rx="3.1" ry="2.7" fill="#25201e"/>
+                    <ellipse cx="115" cy="61" rx="3.1" ry="2.7" fill="#25201e"/>
+                    <circle cx="116" cy="42" r=".9" fill="#fff1df"/>
+                    <circle cx="116" cy="60" r=".9" fill="#fff1df"/>
+                </g>
+                <path d="m126 49 5 1c3 1 3 3 0 4l-5 1Z" fill="#cb9c92"/>
+                <path d="m129 51 2 1" stroke="#f0cdc0" stroke-width="1" stroke-linecap="round"/>
+                <g class="mouse-whiskers" stroke="#b6a99b" stroke-width=".65" stroke-linecap="round" opacity=".9">
+                    <path d="M124 49c6-8 12-10 18-11m-18 13 18-4m-18 7 18 4m-18-3c6 7 12 10 17 12"/>
+                </g>
+                <path d="m103 41 5 3m-4 10 6-1m-4 10 5-3" stroke="#e0ceba" stroke-width=".7" opacity=".55" stroke-linecap="round"/>
+            </g>
+        </svg>
+    </a>
+</body>
+</html>
